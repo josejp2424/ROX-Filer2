@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ROX-Filer.svg" alt="Rox-Filer2 logo" width="180">
+  <img src="ROX-Filer.svg" alt="Rox-Filer2 logo" width="220">
 </p>
 
 <h1 align="center">Rox-Filer2</h1>
