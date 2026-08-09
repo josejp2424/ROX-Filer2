@@ -15,7 +15,7 @@
 ---
 
 <p align="center">
-  <img src="screenshot/rox-desktop-demo-slow.png"
+  <img src="screenshot/rox-desktop-demo-slow.gif"
        alt="Rox-Filer2 desktop demonstration">
 </p>
 
