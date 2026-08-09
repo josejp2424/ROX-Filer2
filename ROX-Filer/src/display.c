@@ -555,6 +555,21 @@ void display_set_autoselect(FilerWindow *filer_window, const gchar *leaf)
 		filer_window->auto_select = new;
 }
 
+/* Persist the user's preferred icon size for future filer windows.
+ * New filer instances already read display_icon_size from the normal ROX
+ * Options file; the historical size buttons only changed the current window.
+ * Keep using the existing option system rather than adding another config. */
+void display_set_default_size(DisplayStyle style)
+{
+	char value[16];
+
+	if (style < LARGE_ICONS || style > AUTO_SIZE_ICONS)
+		return;
+
+	g_snprintf(value, sizeof(value), "%d", (int) style);
+	option_set("display_icon_size", value);
+}
+
 /* Change the icon size (wraps) */
 void display_change_size(FilerWindow *filer_window, gboolean bigger)
 {
@@ -568,19 +583,27 @@ void display_change_size(FilerWindow *filer_window, gboolean bigger)
 			new = bigger ? HUGE_ICONS : SMALL_ICONS;
 			break;
 		case HUGE_ICONS:
+			/* If Automatic currently resolved to Huge, pressing Bigger
+			 * still means "make Huge my preference". */
 			if (bigger)
-				return;
-			new = LARGE_ICONS;
+				new = HUGE_ICONS;
+			else
+				new = LARGE_ICONS;
 			break;
 		default:
+			/* SMALL_ICONS, including Automatic resolved to Small. */
 			if (!bigger)
-				return;
-			new = LARGE_ICONS;
+				new = SMALL_ICONS;
+			else
+				new = LARGE_ICONS;
 			break;
 	}
 
-	display_set_layout(filer_window, new, filer_window->details_type,
-			   FALSE);
+	if (filer_window->display_style_wanted != new)
+		display_set_layout(filer_window, new, filer_window->details_type,
+				   FALSE);
+
+	display_set_default_size(new);
 }
 
 ViewData *display_create_viewdata(FilerWindow *filer_window, DirItem *item)

@@ -311,6 +311,24 @@ void bookmarks_add_uri(const EscapedPath *uri)
 	g_free(path);
 }
 
+/* Add a local directory directly to the bookmarks list.
+ * Used by the filer context menu so a folder can be bookmarked without
+ * entering it first. */
+void bookmarks_add_path(const gchar *path)
+{
+	gchar *canonical;
+
+	if (!path || !*path)
+		return;
+
+	canonical = g_canonicalize_filename(path, NULL);
+	if (g_file_test(canonical, G_FILE_TEST_IS_DIR))
+		bookmarks_add_dir((const guchar *) canonical);
+	else
+		delayed_error(_("'%s' isn't a directory"), canonical);
+	g_free(canonical);
+}
+
 /****************************************************************
  *			INTERNAL FUNCTIONS			*
  ****************************************************************/

@@ -154,16 +154,16 @@ static Tool all_tools[] = {
 
 	/* r69: controles de tamaño explícitos. Antes los dos botones se
 	 * llamaban "Size" y reducir dependía de un clic secundario oculto. */
-	{N_("Smaller Icons"), ROX_ICON_ZOOM_OUT, N_("Smaller Icons"),
-	 toolbar_zoom_out_clicked, DROP_NONE, TRUE,
+	{N_("Bigger Icons"), ROX_ICON_ZOOM_IN, N_("Bigger Icons"),
+	 toolbar_zoom_in_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
 	{N_("Automatic"), ROX_ICON_ZOOM_FIT, N_("Automatic size mode"),
 	 toolbar_autosize_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
-	{N_("Bigger Icons"), ROX_ICON_ZOOM_IN, N_("Bigger Icons"),
-	 toolbar_zoom_in_clicked, DROP_NONE, TRUE,
+	{N_("Smaller Icons"), ROX_ICON_ZOOM_OUT, N_("Smaller Icons"),
+	 toolbar_zoom_out_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
 	{N_("Details"), ROX_ICON_SHOW_DETAILS, N_("Left: toggle List View\n"
@@ -207,11 +207,11 @@ static Tool all_tools[] = {
 
 void toolbar_init(void)
 {
-	option_add_int(&o_toolbar, "toolbar_type", TOOLBAR_NORMAL);
+	option_add_int(&o_toolbar, "toolbar_type", TOOLBAR_LARGE);
 	option_add_int(&o_toolbar_info, "toolbar_show_info", 1);
 	option_add_string(&o_toolbar_disable, "toolbar_disable",
 					ROX_ICON_CLOSE);
-	option_add_int(&o_toolbar_min_width, "toolbar_min_width", 1);
+	option_add_int(&o_toolbar_min_width, "toolbar_min_width", 0);
 	option_add_notify(option_notify);
 
 	option_register_widget("tool-options", build_tool_options);
@@ -401,22 +401,14 @@ static void toolbar_home_clicked(GtkWidget *widget, FilerWindow *filer_window)
 static void toolbar_bookmarks_clicked(GtkWidget *widget,
 				      FilerWindow *filer_window)
 {
-	GdkEvent	*event;
-
+	(void) widget;
 	g_return_if_fail(filer_window != NULL);
 
-	event = get_current_event(GDK_BUTTON_PRESS);
-	if (event->type == GDK_BUTTON_PRESS &&
-			((GdkEventButton *) event)->button == 1)
-	{
-		bookmarks_show_menu(filer_window);
-	}
-	else if (event->type == GDK_BUTTON_RELEASE &&
-			((GdkEventButton *) event)->button != 1)
-	{
-		bookmarks_edit();
-	}
-	gdk_event_free(event);
+	/* GtkToolButton::clicked is emitted after the button release.  The old
+	 * code asked for a BUTTON_PRESS event here, which made a normal left
+	 * click unreliable.  Editing is already available from the bookmarks
+	 * menu itself, so a normal click should always open that menu. */
+	bookmarks_show_menu(filer_window);
 }
 
 static void toolbar_back_clicked(GtkWidget *widget, FilerWindow *filer_window)
@@ -454,6 +446,7 @@ static void toolbar_autosize_clicked(GtkWidget *widget, FilerWindow *filer_windo
 	{
 		display_set_layout(filer_window, AUTO_SIZE_ICONS, filer_window->details_type,
 				TRUE);
+		display_set_default_size(AUTO_SIZE_ICONS);
 	}
 	gdk_event_free((GdkEvent *) bev);
 }
@@ -613,6 +606,31 @@ static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window)
 	filer_pair_open(filer_window, NULL, NULL);
 }
 
+static void toolbar_compact_tool_item(GtkToolItem *item)
+{
+    static GtkCssProvider *provider = NULL;
+    GtkWidget *child;
+
+    if (!item || !GTK_IS_BIN(item))
+        return;
+    child = gtk_bin_get_child(GTK_BIN(item));
+    if (!child)
+        return;
+
+    if (!provider) {
+        provider = gtk_css_provider_new();
+        gtk_css_provider_load_from_data(provider,
+            "* { padding-top: 1px; padding-bottom: 1px;"
+            " padding-left: 4px; padding-right: 4px;"
+            " margin-top: 0; margin-bottom: 0;"
+            " min-height: 0; min-width: 0; }",
+            -1, NULL);
+    }
+    gtk_style_context_add_provider(gtk_widget_get_style_context(child),
+        GTK_STYLE_PROVIDER(provider),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
 /* If filer_window is NULL, the toolbar is for the options window */
 static GtkWidget *create_toolbar(FilerWindow *filer_window)
 {
@@ -623,6 +641,9 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 	int width;
 
 	bar = gtk_toolbar_new();
+	/* Let GTK move items to its overflow menu when the window is narrow
+	 * instead of making the toolbar dictate a very large natural width. */
+	gtk_toolbar_set_show_arrow(GTK_TOOLBAR(bar), TRUE);
 	if (filer_window)
 	{
 		filer_window->toolbar_back = NULL;
@@ -649,6 +670,7 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 		GtkRequisition drive_req;
 
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), drive_item, -1);
+		toolbar_compact_tool_item(drive_item);
 		gtk_separator_tool_item_set_draw(
 			GTK_SEPARATOR_TOOL_ITEM(separator), TRUE);
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), separator, -1);
@@ -692,6 +714,7 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 		GtkToolItem *trash_item = rox_trash_toolbar_button_new(filer_window);
 		GtkRequisition trash_req;
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), trash_item, -1);
+		toolbar_compact_tool_item(trash_item);
 		gtk_widget_get_preferred_size(GTK_WIDGET(trash_item), NULL, &trash_req);
 		width += trash_req.width;
 	}
@@ -795,8 +818,13 @@ static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 		gtk_tool_button_set_label(GTK_TOOL_BUTTON(item), _(tool->label));
 	}
 
+	/* GTK3 themes (especially under Wayland) may give homogeneous toolbar
+	 * items a lot of extra horizontal space. Keep each item at its natural
+	 * icon/label width; the overflow arrow handles narrow windows. */
+	gtk_tool_item_set_homogeneous(item, FALSE);
 	gtk_tool_item_set_tooltip_text(item, _(tool->tip));
 	gtk_toolbar_insert(GTK_TOOLBAR(bar), item, -1);
+	toolbar_compact_tool_item(item);
 
 	button = GTK_WIDGET(item);
 	gtk_widget_set_can_focus(button, FALSE);

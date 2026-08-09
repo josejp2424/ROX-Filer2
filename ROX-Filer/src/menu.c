@@ -76,6 +76,7 @@
 #include "search_integration.h"
 #include "xdg_apps.h"
 #include "custom_actions.h"
+#include "trash.h"
 
 static gboolean input_trace_enabled(void)
 {
@@ -230,6 +231,8 @@ static void menu_options_changed(void);
 static void search_current_folders(gpointer data, guint action, GtkWidget *widget);
 static void choose_application_selected(gpointer data, guint action, GtkWidget *widget);
 static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget);
+static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget);
+static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget);
 static void open_paired_windows(gpointer data, guint action, GtkWidget *widget);
 static void realign_paired_windows(gpointer data, guint action, GtkWidget *widget);
 
@@ -261,6 +264,9 @@ static GtkWidget    *filer_paste_item;      /* Paste in the main menu */
 static GtkWidget    *filer_file_cut_item;   /* Cut in quick file menu */
 static GtkWidget    *filer_file_copy_item;  /* Copy in quick file menu */
 static GtkWidget    *filer_file_paste_item; /* Paste in quick file menu */
+static GtkWidget    *filer_add_bookmark_item;
+static GtkWidget    *filer_restore_item;
+static GtkWidget    *filer_move_to_trash_item;
 static GtkWidget	*file_shift_item;	/* Shift Open label */
 static GtkWidget    *filer_duplicate_item;
 static GtkWidget    *filer_link_item;
@@ -324,6 +330,7 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 /* Buscar en la carpeta seleccionada queda al comienzo del menú. Para archivos
  * no compatibles se oculta dinámicamente en show_filer_menu(). */
 {">" N_("Search in This Folder..."), "<Ctrl>F", search_current_folders, 0, "<IconItem>", "edit-find"},
+{">" N_("Add to Bookmarks"),	NULL, add_selected_bookmark, 0, "<IconItem>", ROX_ICON_BOOKMARKS},
 {">",				NULL, NULL, 0, "<Separator>"},
 /* Rox-Filer2: keep clipboard operations visible in the quick file menu too. */
 {">" N_("Cut"),			NULL, file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
@@ -333,6 +340,8 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Duplicate..."),	"<Ctrl>D", file_op, FILE_DUPLICATE_ITEM, "<IconItem>", ROX_ICON_COPY},
 {">" N_("Rename..."),		"F2", file_op, FILE_RENAME_ITEM, "<IconItem>", "document-edit"},
 {">" N_("Link..."),		NULL, file_op, FILE_LINK_ITEM, "<IconItem>", ROX_ICON_SYMLINK},
+/* Rox-Filer2: Restore is visible only while browsing the freedesktop Trash. */
+{">" N_("Restore"),		NULL, restore_selected_from_trash, 0, "<IconItem>", "edit-undo"},
 /* Modificado por josejp2424 (2026): Delete usa la papelera estándar y
  * Shift+Delete conserva el borrado permanente tradicional. */
 {">" N_("Move to Trash"),	"Delete", file_op, FILE_TRASH, "<IconItem>", ROX_ICON_TRASH},
@@ -398,7 +407,6 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Shell Command..."),	"<Shift>exclam", mini_buffer, MINI_SHELL, "<IconItem>", ROX_ICON_TERMINAL},
 {">" N_("Open Terminal Here"),	"F4", xterm_here, FALSE, "<IconItem>", ROX_ICON_TERMINAL},
 {">" N_("Switch to Terminal"),	NULL, xterm_here, TRUE, "<IconItem>", ROX_ICON_TERMINAL},
-{N_("About Rox-Filer2..."),	NULL, menu_rox_help, HELP_ABOUT, "<IconItem>", ROX_ICON_DIALOG_INFO},
 };
 
 
@@ -463,6 +471,9 @@ gboolean ensure_filer_menu(void)
 	filer_copy_to_backgrounds = item;
 	GET_SSMENU_ITEM(item, "filer", "File", "Search in This Folder...");
 	filer_search_item = item;
+	GET_SSMENU_ITEM(filer_add_bookmark_item, "filer", "File", "Add to Bookmarks");
+	GET_SSMENU_ITEM(filer_restore_item, "filer", "File", "Restore");
+	GET_SSMENU_ITEM(filer_move_to_trash_item, "filer", "File", "Move to Trash");
 	GET_SSMENU_ITEM(item, "filer", "Window", "Open Paired Windows");
 	filer_pair_open_item = item;
 	GET_SSMENU_ITEM(item, "filer", "Window", "Realign Paired Windows");
@@ -476,6 +487,11 @@ gboolean ensure_filer_menu(void)
 	gtk_widget_set_no_show_all(filer_open_terminal_here, TRUE);
 	gtk_widget_set_no_show_all(filer_run_in_terminal, TRUE);
 	gtk_widget_set_no_show_all(filer_search_item, TRUE);
+	gtk_widget_set_no_show_all(filer_add_bookmark_item, TRUE);
+	gtk_widget_set_no_show_all(filer_restore_item, TRUE);
+	gtk_widget_set_no_show_all(filer_move_to_trash_item, TRUE);
+	gtk_widget_hide(filer_add_bookmark_item);
+	gtk_widget_hide(filer_restore_item);
 	gtk_widget_set_no_show_all(filer_pair_open_item, TRUE);
 	gtk_widget_set_no_show_all(filer_pair_realign_item, TRUE);
 
@@ -492,6 +508,20 @@ gboolean ensure_filer_menu(void)
 	items = gtk_container_get_children(GTK_CONTAINER(filer_menu));
 	filer_file_item = menu_item_get_label_widget(GTK_WIDGET(g_list_nth(items, 1)->data));
 	g_list_free(items);
+
+	/* Rox-Filer2 r95: the old File/Dir submenu is now the single item context
+	 * menu.  Detach it from the general menu instead of showing a menu inside
+	 * another menu.  Keep an explicit reference because GtkMenuItem used to
+	 * own the submenu. */
+	{
+		GtkWidget *file_parent = gtk_widget_get_parent(filer_file_item);
+		if (GTK_IS_MENU_ITEM(file_parent)) {
+			g_object_ref(filer_file_menu);
+			gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_parent), NULL);
+			gtk_widget_set_no_show_all(file_parent, TRUE);
+			gtk_widget_hide(file_parent);
+		}
+	}
 
 	/* Shift Open... label: obtenerlo por ruta, sin depender del orden del menú. */
 	file_shift_item = menu_item_get_label_widget(filer_shift_open_item);
@@ -849,8 +879,10 @@ void show_popup_menu(GtkWidget *menu, GdkEvent *event, int item)
 	g_return_if_fail(GTK_IS_MENU(menu));
 
 	gtk_widget_show_all(menu);
+	gtk_menu_shell_deselect(GTK_MENU_SHELL(menu));
 	gtk_menu_popup_at_pointer(GTK_MENU(menu), event);
-	select_nth_item(GTK_MENU_SHELL(menu), item);
+	if (item >= 0)
+		select_nth_item(GTK_MENU_SHELL(menu), item);
 }
 
 /* Hide the popup menu, if any */
@@ -924,9 +956,10 @@ static void clipboardcb(
 void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 {
 	DirItem		*file_item = NULL;
-	GdkModifierType	state = 0;
 	int		n_selected;
 	int             n_added = 0;
+	gboolean        item_context;
+	gboolean        in_trash;
 
 	g_return_if_fail(event != NULL);
 
@@ -948,21 +981,17 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 
 	window_with_focus = filer_window;
 
-	if (event->type == GDK_BUTTON_PRESS)
-		state = ((GdkEventButton *) event)->state;
-	else if (event->type == GDK_KEY_PRESS)
-		state = ((GdkEventKey *) event)->state;
-
-	if (n_selected == 0 && iter && iter->peek(iter) != NULL)
-	{
-		filer_window->temp_item_selected = TRUE;
-		view_set_selected(filer_window->view, iter, TRUE);
-		n_selected = view_count_selected(filer_window->view);
-	}
-	else
-	{
-		filer_window->temp_item_selected = FALSE;
-	}
+	/* Right-clicking an unselected item must act on that item, not on a
+	 * previous selection somewhere else in the view. Preserve a deliberate
+	 * multi-selection only when the clicked item is already part of it. */
+	item_context = iter && iter->peek(iter) != NULL;
+	if (item_context && !view_get_selected(filer_window->view, iter))
+		view_select_only(filer_window->view, iter);
+	if (event->type == GDK_KEY_PRESS && n_selected > 0)
+		item_context = TRUE;
+	filer_window->temp_item_selected = FALSE;
+	n_selected = view_count_selected(filer_window->view);
+	in_trash = rox_trash_filer_is_trash(filer_window);
 
 	/* Cut/Copy are valid for one or many selected items, but not for an
 	 * empty background click.  Keep the quick file menu consistent with the
@@ -1019,6 +1048,12 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		gtk_widget_hide(filer_copy_to_backgrounds);
 		gtk_widget_hide(filer_open_with_item);
 		gtk_widget_hide(filer_search_item);
+		gtk_widget_hide(filer_add_bookmark_item);
+		gtk_widget_hide(filer_restore_item);
+		if (in_trash)
+			gtk_widget_hide(filer_move_to_trash_item);
+		else
+			gtk_widget_show(filer_move_to_trash_item);
 		gtk_widget_hide(filer_pair_open_item);
 		gtk_widget_hide(filer_pair_realign_item);
 		if (filer_pair_is_enabled()) {
@@ -1054,6 +1089,13 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				file_item = filer_selected_item(filer_window);
 				if (item_is_wallpaper_image(file_item))
 					gtk_widget_show(filer_copy_to_backgrounds);
+				if (file_item && file_item->base_type == TYPE_DIRECTORY &&
+				    !in_trash)
+					gtk_widget_show(filer_add_bookmark_item);
+				if (in_trash) {
+					gtk_menu_item_set_label(GTK_MENU_ITEM(filer_restore_item), _("Restore"));
+					gtk_widget_show(filer_restore_item);
+				}
 				{
 					const gchar *terminal_path = (const gchar *) make_path(
 						filer_window->sym_path, file_item->leafname);
@@ -1082,6 +1124,11 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				shade_file_menu_items(TRUE);
 				g_string_printf(buffer, _("%d items"),
 						 n_selected);
+				if (in_trash) {
+					gtk_menu_item_set_label(GTK_MENU_ITEM(filer_restore_item),
+						_("Restore Selected"));
+					gtk_widget_show(filer_restore_item);
+				}
 				break;
 		}
 		gtk_label_set_text(GTK_LABEL(file_label), buffer->str);
@@ -1121,21 +1168,14 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 						file_item->leafname), R_OK) : 0) == 0);
 #endif
 
-	if (n_selected && o_menu_quick.int_value)
-		popup_menu = (state & GDK_CONTROL_MASK)
-					? filer_menu
-					: filer_file_menu;
-	else
-		popup_menu = (state & GDK_CONTROL_MASK)
-					? filer_file_menu
-					: filer_menu;
+	/* One visible context menu only. */
+	popup_menu = item_context ? filer_file_menu : filer_menu;
 
 	updating_menu--;
 
 	INPUT_TRACE("popup chosen=%p quick=%d n_added=%d",
 		(void *) popup_menu, o_menu_quick.int_value, n_added);
-	show_popup_menu(popup_menu, event,
-			popup_menu == filer_file_menu ? n_added : 1);
+	show_popup_menu(popup_menu, event, -1);
 }
 
 static void menu_closed(GtkWidget *widget)
@@ -1234,12 +1274,18 @@ static void change_size_auto(gpointer data, guint action, GtkWidget *widget)
 		return;
 
 	if (window_with_focus->display_style_wanted == AUTO_SIZE_ICONS)
-		display_set_layout(window_with_focus,
-				   window_with_focus->display_style,
+	{
+		DisplayStyle actual = window_with_focus->display_style;
+		display_set_layout(window_with_focus, actual,
 				   window_with_focus->details_type, FALSE);
+		display_set_default_size(actual);
+	}
 	else
+	{
 		display_set_layout(window_with_focus, AUTO_SIZE_ICONS,
 				   window_with_focus->details_type, FALSE);
+		display_set_default_size(AUTO_SIZE_ICONS);
+	}
 }
 
 static void set_with(gpointer data, guint action, GtkWidget *widget)
@@ -1992,6 +2038,38 @@ static void add_file_action_selected(gpointer data, guint action, GtkWidget *wid
 		return;
 	custom_actions_add_for_paths(paths, GTK_WINDOW(window_with_focus->window));
 	destroy_glist(&paths);
+}
+
+static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget)
+{
+	DirItem *item;
+	const gchar *path;
+
+	(void) data;
+	(void) action;
+	(void) widget;
+
+	if (!window_with_focus ||
+	    view_count_selected(window_with_focus->view) != 1)
+		return;
+
+	item = filer_selected_item(window_with_focus);
+	if (!item || item->base_type != TYPE_DIRECTORY)
+		return;
+
+	path = (const gchar *) make_path(window_with_focus->sym_path,
+					   item->leafname);
+	bookmarks_add_path(path);
+}
+
+static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget)
+{
+	(void) data;
+	(void) action;
+	(void) widget;
+
+	if (window_with_focus)
+		rox_trash_restore_selected(window_with_focus);
 }
 
 static void search_current_folders(gpointer data, guint action, GtkWidget *widget)

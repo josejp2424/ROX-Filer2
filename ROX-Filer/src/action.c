@@ -127,6 +127,7 @@ struct _GUIside
 
 	int		abort_attempts;
 	gboolean	finishing;	/* Completion/pipe cleanup already handled */
+	guint		delayed_show_id; /* Don't flash progress for fast operations */
 };
 
 /* These don't need to be in a structure because we fork() before
@@ -411,6 +412,58 @@ static void show_settype_help(gpointer data)
 	gtk_widget_show_all(help);
 }
 
+#define ACTION_PROGRESS_DELAY_MS 500
+
+/* Inspired by Thunar's progress-window behaviour: the operation starts
+ * immediately, but a short operation should not flash a dialog on screen.
+ * If it is still running after the delay, show the normal ROX ABox. */
+static gboolean delayed_action_show_cb(gpointer data)
+{
+	GUIside *gui_side = data;
+
+	if (!gui_side)
+		return G_SOURCE_REMOVE;
+
+	gui_side->delayed_show_id = 0;
+	if (!gui_side->finishing && gui_side->abox &&
+	    !gtk_widget_get_visible(GTK_WIDGET(gui_side->abox)))
+		gtk_widget_show(GTK_WIDGET(gui_side->abox));
+
+	return G_SOURCE_REMOVE;
+}
+
+static void action_show_now(GUIside *gui_side)
+{
+	if (!gui_side || !gui_side->abox)
+		return;
+
+	if (gui_side->delayed_show_id)
+	{
+		g_source_remove(gui_side->delayed_show_id);
+		gui_side->delayed_show_id = 0;
+	}
+
+	if (!gtk_widget_get_visible(GTK_WIDGET(gui_side->abox)))
+		gtk_widget_show(GTK_WIDGET(gui_side->abox));
+}
+
+static void action_show_if_slow(GUIside *gui_side)
+{
+	g_return_if_fail(gui_side != NULL);
+
+	/* Count the action window immediately so normal lifetime accounting
+	 * remains correct even if the hidden window is destroyed before the
+	 * 500 ms timer fires. */
+	number_of_windows++;
+
+	if (gui_side->delayed_show_id)
+		g_source_remove(gui_side->delayed_show_id);
+
+	gui_side->delayed_show_id =
+		g_timeout_add(ACTION_PROGRESS_DELAY_MS,
+			      delayed_action_show_cb, gui_side);
+}
+
 /* Agregado por josejp2424: implementación del cierre fiable de los
  * diálogos de operaciones cuando el proceso hijo confirma que terminó. */
 static void finish_action(GUIside *gui_side)
@@ -453,6 +506,13 @@ static void finish_action(GUIside *gui_side)
 	 * de errores o información evita consumo continuo de CPU. */
 	abox_stop_operation_animation(abox);
 
+	/* A short successful operation may finish without ever showing its
+	 * progress window. Errors or informational results must never remain
+	 * hidden. */
+	if ((gui_side->errors || gui_side->show_info) &&
+	    !gtk_widget_get_visible(GTK_WIDGET(abox)))
+		action_show_now(gui_side);
+
 	if (gui_side->errors)
 	{
 		guchar *report;
@@ -480,9 +540,15 @@ static void process_message(GUIside *gui_side, const gchar *buffer)
 		return;
 	}
 	else if (*buffer == '?')
+	{
+		action_show_now(gui_side);
 		abox_ask(abox, buffer + 1);
+	}
 	else if (*buffer == 'C')
+	{
+		action_show_now(gui_side);
 		abox_ask_conflict(abox, buffer + 1);
+	}
 	else if (*buffer == 's')
 		dir_check_this(buffer + 1);	/* Update this item */
 	else if (*buffer == '=')
@@ -943,6 +1009,11 @@ static void destroy_action_window(GtkWidget *widget, gpointer data)
 		close(gui_side->from_child);
 	if (gui_side->input_tag)
 		g_source_remove(gui_side->input_tag);
+	if (gui_side->delayed_show_id)
+	{
+		g_source_remove(gui_side->delayed_show_id);
+		gui_side->delayed_show_id = 0;
+	}
 
 	g_free(gui_side);
 
@@ -1037,6 +1108,7 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 	gui_side->entry_string_func = NULL;
 	gui_side->abort_attempts = 0;
 	gui_side->finishing = FALSE;
+	gui_side->delayed_show_id = 0;
 
 	gui_side->abox = ABOX(abox);
 	g_signal_connect(abox, "destroy",
@@ -2901,8 +2973,7 @@ void action_trash(GList *paths)
 		return;
 
 	log_info_paths("Trash", paths, NULL);
-	number_of_windows++;
-	gtk_widget_show(abox);
+	action_show_if_slow(gui_side);
 }
 
 /* Modificado por josejp2424 (2026): conserva el motor histórico para usos
@@ -2973,8 +3044,7 @@ void action_delete_permanently(GList *paths)
 		return;
 
 	log_info_paths("Delete permanently", paths, NULL);
-	number_of_windows++;
-	gtk_widget_show(abox);
+	action_show_if_slow(gui_side);
 }
 
 /* Change the permissions of the selected items */
@@ -3189,8 +3259,7 @@ void action_copy(GList *paths, const char *dest, const char *leaf, int quiet)
 
 	log_info_paths_leaf("Copy", paths, dest, leaf);
 
-	number_of_windows++;
-	gtk_widget_show(abox);
+	action_show_if_slow(gui_side);
 }
 
 /* If leaf is NULL then the file is not renamed.
@@ -3244,8 +3313,7 @@ void action_move(GList *paths, const char *dest, const char *leaf, int quiet)
 
 	log_info_paths_leaf("Move", paths, dest, leaf);
 
-	number_of_windows++;
-	gtk_widget_show(abox);
+	action_show_if_slow(gui_side);
 }
 
 /* If leaf is NULL then the link will have the same name */
@@ -3277,8 +3345,7 @@ void action_link(GList *paths, const char *dest, const char *leaf,
 
 	log_info_paths_leaf("Link", paths, dest, leaf);
 
-	number_of_windows++;
-	gtk_widget_show(abox);
+	action_show_if_slow(gui_side);
 }
 
 /* Eject these paths */

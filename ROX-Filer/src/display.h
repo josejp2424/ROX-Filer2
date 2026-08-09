@@ -72,6 +72,7 @@ void draw_large_icon(cairo_t *cr, const GdkRectangle *area,
 		     gboolean selected, GdkRGBA *color);
 gboolean display_is_truncated(FilerWindow *filer_window, int i);
 void display_change_size(FilerWindow *filer_window, gboolean bigger);
+void display_set_default_size(DisplayStyle style);
 
 ViewData *display_create_viewdata(FilerWindow *filer_window, DirItem *item);
 void display_update_view(FilerWindow *filer_window,

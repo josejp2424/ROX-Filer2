@@ -157,6 +157,7 @@ static gboolean minibuffer_show_cb(FilerWindow *filer_window);
 static FilerWindow *find_filer_window(const char *sym_path, FilerWindow *diff);
 static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class);
 static void filer_add_signals(FilerWindow *filer_window);
+static gboolean filer_about_link(GtkLinkButton *button, gpointer data);
 
 static void set_selection_state(FilerWindow *filer_window, gboolean normal);
 static void filer_next_thumb(GObject *window, const gchar *path);
@@ -2189,26 +2190,45 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	gtk_box_pack_end(GTK_BOX(vbox), filer_window->minibuffer_area,
 				FALSE, TRUE, 0);
 
-	/* And the thumbnail progress bar (also hidden) */
+	/* Thumbnail progress bar. The old visual Cancel button was removed;
+	 * internal thumbnail cancellation is still used when scanning finishes
+	 * or a filer operation requires it. */
+	filer_window->thumb_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+	gtk_box_pack_end(GTK_BOX(vbox), filer_window->thumb_bar,
+			FALSE, TRUE, 0);
+
+	filer_window->thumb_progress = gtk_progress_bar_new();
+	gtk_box_pack_start(GTK_BOX(filer_window->thumb_bar),
+			filer_window->thumb_progress, TRUE, TRUE, 0);
+
+	/* Small, unobtrusive About link at the bottom-right of the filer GUI.
+	 * GtkLinkButton automatically follows the theme's link/accent colour. */
 	{
-		GtkWidget *cancel;
+		GtkWidget *about_row;
+		GtkWidget *about_link;
+		GtkWidget *about_label;
+		PangoAttrList *attrs;
 
-		filer_window->thumb_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-		gtk_box_pack_end(GTK_BOX(vbox), filer_window->thumb_bar,
-				FALSE, TRUE, 0);
+		about_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		about_link = gtk_link_button_new_with_label("about:rox-filer2",
+				_("About"));
+		gtk_button_set_relief(GTK_BUTTON(about_link), GTK_RELIEF_NONE);
+		gtk_widget_set_can_focus(about_link, FALSE);
+		gtk_widget_set_tooltip_text(about_link, _("About Rox-Filer2"));
 
-		filer_window->thumb_progress = gtk_progress_bar_new();
+		about_label = gtk_bin_get_child(GTK_BIN(about_link));
+		if (GTK_IS_LABEL(about_label)) {
+			attrs = pango_attr_list_new();
+			pango_attr_list_insert(attrs, pango_attr_scale_new(0.85));
+			gtk_label_set_attributes(GTK_LABEL(about_label), attrs);
+			pango_attr_list_unref(attrs);
+		}
 
-		gtk_box_pack_start(GTK_BOX(filer_window->thumb_bar),
-				filer_window->thumb_progress, TRUE, TRUE, 0);
-
-		cancel = gtk_button_new_with_label(_("Cancel"));
-		gtk_widget_set_can_focus(cancel, FALSE); /* Modificado por josejp2424: GTK3 */
-		gtk_box_pack_start(GTK_BOX(filer_window->thumb_bar),
-				cancel, FALSE, TRUE, 0);
-		g_signal_connect_swapped(cancel, "clicked",
-				G_CALLBACK(filer_cancel_thumbnails),
-				filer_window);
+		gtk_box_pack_end(GTK_BOX(about_row), about_link, FALSE, FALSE, 4);
+		gtk_box_pack_end(GTK_BOX(vbox), about_row, FALSE, FALSE, 0);
+		g_signal_connect(about_link, "activate-link",
+				G_CALLBACK(filer_about_link), filer_window);
+		gtk_widget_show_all(about_row);
 	}
 
 	gtk_widget_show(vbox);
@@ -2217,6 +2237,13 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 
 	gdk_window_set_role(gtk_widget_get_window(filer_window->window),
 			    filer_window->sym_path);
+}
+
+static gboolean filer_about_link(GtkLinkButton *button, gpointer data)
+{
+	(void)data;
+	menu_rox_help(NULL, HELP_ABOUT, GTK_WIDGET(button));
+	return TRUE;
 }
 
 static void filer_add_signals(FilerWindow *filer_window)

@@ -214,7 +214,7 @@ void rox_trash_open(FilerWindow *source_window)
     g_free(files);
 }
 
-static gboolean filer_is_trash(FilerWindow *filer_window)
+gboolean rox_trash_filer_is_trash(FilerWindow *filer_window)
 {
     gchar *files;
     gchar *canonical_files;
@@ -321,7 +321,7 @@ void rox_trash_restore_selected(FilerWindow *filer_window)
     GString *errors;
     guint restored = 0;
 
-    if (!filer_is_trash(filer_window)) {
+    if (!rox_trash_filer_is_trash(filer_window)) {
         delayed_error(_("Open the Trash and select the items you want to restore."));
         return;
     }
@@ -475,7 +475,7 @@ static void toolbar_trash_show_menu(GtkMenuToolButton *button, gpointer data)
     GtkWidget *empty = g_object_get_data(G_OBJECT(menu), "empty-item");
 
     gtk_widget_set_sensitive(restore,
-        filer_is_trash(filer_window) &&
+        rox_trash_filer_is_trash(filer_window) &&
         view_count_selected(filer_window->view) > 0);
     gtk_widget_set_sensitive(empty, !rox_trash_is_empty());
 }
@@ -491,6 +491,7 @@ GtkToolItem *rox_trash_toolbar_button_new(FilerWindow *filer_window)
 
     icon = image_new_icon(rox_trash_icon_name(), GTK_ICON_SIZE_LARGE_TOOLBAR);
     button = gtk_menu_tool_button_new(icon, _("Trash"));
+    gtk_tool_item_set_homogeneous(button, FALSE);
     gtk_tool_item_set_tooltip_text(button,
         _("Open the Trash; use the arrow to restore selected items or empty it"));
 

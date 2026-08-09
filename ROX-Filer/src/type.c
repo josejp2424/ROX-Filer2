@@ -545,7 +545,6 @@ MaskedPixmap *type_to_icon(MIME_type *type)
 	GdkPixbuf *loaded_pixbuf = NULL;
 	gchar *resolved_icon_name = NULL;
 	char	*type_name, *path;
-	time_t	now;
 
 	if (type == NULL)
 	{
@@ -553,18 +552,14 @@ MaskedPixmap *type_to_icon(MIME_type *type)
 		return im_unknown;
 	}
 
-	now = time(NULL);
-	/* Already got an image? */
+	/* GTK3/Freedesktop MIME icons are expensive to reload, especially SVG
+	 * themes. Keep the resolved icon in memory instead of discarding it every
+	 * two seconds. The GtkIconTheme::changed handler below invalidates this
+	 * cache when the active system icon theme really changes. */
 	if (type->image)
 	{
-		/* Yes - don't recheck too often */
-		if (abs(now - type->image_time) < 2)
-		{
-			g_object_ref(type->image);
-			return type->image;
-		}
-		g_object_unref(type->image);
-		type->image = NULL;
+		g_object_ref(type->image);
+		return type->image;
 	}
 
 again:
@@ -694,7 +689,7 @@ out:
 			type->media_type, type->subtype);
 	}
 
-	type->image_time = now;
+	type->image_time = time(NULL);
 
 	g_object_ref(type->image);
 	return type->image;
@@ -859,6 +854,13 @@ static void expire_timer(gpointer key, gpointer value, gpointer data)
 {
 	MIME_type *type = value;
 
+	/* With the persistent GTK3 MIME icon cache, invalidation must release the
+	 * cached image itself. This is called when the icon theme/options change. */
+	if (type->image)
+	{
+		g_object_unref(type->image);
+		type->image = NULL;
+	}
 	type->image_time = 0;
 }
 

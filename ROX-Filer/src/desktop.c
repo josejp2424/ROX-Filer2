@@ -49,6 +49,9 @@ typedef struct {
     gchar *uri;
     gchar *display_name;
     gboolean launcher;
+    gboolean home;
+    gboolean browser;
+    gboolean console;
     gboolean trash;
     GtkWidget *widget;
     GtkWidget *image;
@@ -114,6 +117,10 @@ static gchar *desktop_dir;
 static gchar *wallpaper_path;
 static GdkPixbuf *wallpaper_pixbuf;
 static gboolean show_volumes = TRUE;
+static gboolean desktop_show_home = TRUE;
+static gboolean desktop_show_browser = TRUE;
+static gboolean desktop_show_console = TRUE;
+static gboolean desktop_show_trash = TRUE;
 static gboolean show_drive_quick_action = TRUE;
 static gboolean drive_show_internal = TRUE;
 static gboolean drive_show_removable = TRUE;
@@ -167,6 +174,12 @@ static void show_desktop_item_menu(DesktopItem *item, GdkEventButton *event);
 static void show_desktop_menu(GdkEventButton *event);
 
 extern int number_of_windows;
+
+static gboolean desktop_item_is_builtin(const DesktopItem *item)
+{
+    return item && (item->home || item->browser ||
+                    item->console || item->trash);
+}
 
 static void desktop_backend_refresh(gpointer data)
 {
@@ -324,6 +337,10 @@ static gboolean desktop_save_preferences(GError **error)
                           wallpaper_mode_name(wallpaper_mode));
     g_key_file_set_boolean(kf, "Desktop", "ShowVolumes", show_volumes);
 
+    g_key_file_set_boolean(kf, "DesktopIcons", "ShowHome", desktop_show_home);
+    g_key_file_set_boolean(kf, "DesktopIcons", "ShowBrowser", desktop_show_browser);
+    g_key_file_set_boolean(kf, "DesktopIcons", "ShowConsole", desktop_show_console);
+    g_key_file_set_boolean(kf, "DesktopIcons", "ShowTrash", desktop_show_trash);
     g_key_file_set_integer(kf, "DesktopIcons", "IconSize", desktop_icon_size);
     g_key_file_set_boolean(kf, "DesktopIcons", "SingleClick", desktop_single_click);
     g_key_file_set_boolean(kf, "DesktopIcons", "SnapToGrid", desktop_snap_to_grid);
@@ -1082,6 +1099,60 @@ static void desktop_item_set_selected(DesktopItem *item,
         desktop_selected_item = NULL;
 }
 
+static gboolean desktop_spawn_first_available(const gchar *working_dir,
+                                               const gchar * const *commands,
+                                               GError **error)
+{
+    guint i;
+
+    for (i = 0; commands && commands[i]; i++) {
+        gchar *program = g_find_program_in_path(commands[i]);
+        gchar *argv[2];
+        gboolean ok;
+
+        if (!program)
+            continue;
+        argv[0] = program;
+        argv[1] = NULL;
+        ok = g_spawn_async(working_dir, argv, NULL, G_SPAWN_DEFAULT,
+                           NULL, NULL, NULL, error);
+        g_free(program);
+        return ok;
+    }
+
+    g_set_error(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                "%s", _("No suitable application was found"));
+    return FALSE;
+}
+
+static void desktop_launch_browser(void)
+{
+    static const gchar * const commands[] = {
+        "x-www-browser", "gnome-www-browser", NULL
+    };
+    GError *error = NULL;
+
+    if (!desktop_spawn_first_available(g_get_home_dir(), commands, &error)) {
+        show_desktop_error(_("Unable to start the web browser"),
+                           error ? error->message : NULL);
+        g_clear_error(&error);
+    }
+}
+
+static void desktop_launch_console(void)
+{
+    static const gchar * const commands[] = {
+        "x-terminal-emulator", "xterm", "urxvt", NULL
+    };
+    GError *error = NULL;
+
+    if (!desktop_spawn_first_available(g_get_home_dir(), commands, &error)) {
+        show_desktop_error(_("Unable to start the terminal"),
+                           error ? error->message : NULL);
+        g_clear_error(&error);
+    }
+}
+
 static void desktop_item_activate(DesktopItem *item)
 {
     GFile *file;
@@ -1090,6 +1161,14 @@ static void desktop_item_activate(DesktopItem *item)
     if (!item || !item->uri)
         return;
 
+    if (item->browser) {
+        desktop_launch_browser();
+        return;
+    }
+    if (item->console) {
+        desktop_launch_console();
+        return;
+    }
     if (item->trash) {
         rox_trash_open(NULL);
         return;
@@ -1153,7 +1232,8 @@ static void desktop_remove_selected_items(DesktopItem *fallback)
     count = 0;
     for (node = desktop_items; node; node = node->next) {
         DesktopItem *candidate = node->data;
-        if (candidate && candidate->selected && !candidate->trash)
+        if (candidate && candidate->selected &&
+            !desktop_item_is_builtin(candidate))
             count++;
     }
     if (count == 0)
@@ -1163,7 +1243,8 @@ static void desktop_remove_selected_items(DesktopItem *fallback)
         DesktopItem *selected = NULL;
         for (node = desktop_items; node; node = node->next) {
             DesktopItem *item = node->data;
-            if (item && item->selected && !item->trash) {
+            if (item && item->selected &&
+                !desktop_item_is_builtin(item)) {
                 selected = item;
                 break;
             }
@@ -1188,7 +1269,8 @@ static void desktop_remove_selected_items(DesktopItem *fallback)
         GFile *file;
         GError *error = NULL;
 
-        if (!item || !item->selected || !item->uri || item->trash)
+        if (!item || !item->selected || !item->uri ||
+            desktop_item_is_builtin(item))
             continue;
 
         file = g_file_new_for_uri(item->uri);
@@ -1276,13 +1358,15 @@ static void show_desktop_item_menu(DesktopItem *item, GdkEventButton *event)
         g_signal_connect(menu_item, "activate",
                          G_CALLBACK(desktop_item_menu_open), item);
 
-        menu_item = gtk_separator_menu_item_new();
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+        if (!desktop_item_is_builtin(item)) {
+            menu_item = gtk_separator_menu_item_new();
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
 
-        menu_item = menu_item_new_with_icon(_("_Move to Trash"), ROX_ICON_TRASH);
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
-        g_signal_connect(menu_item, "activate",
-                         G_CALLBACK(desktop_item_menu_remove), item);
+            menu_item = menu_item_new_with_icon(_("_Move to Trash"), ROX_ICON_TRASH);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+            g_signal_connect(menu_item, "activate",
+                             G_CALLBACK(desktop_item_menu_remove), item);
+        }
     }
 
     g_signal_connect_swapped(menu, "selection-done",
@@ -1458,7 +1542,7 @@ static gboolean desktop_item_key_press(GtkWidget *widget,
         case GDK_KEY_KP_Delete:
             if (item && item->trash)
                 rox_trash_empty(desktop_window ? GTK_WINDOW(desktop_window) : NULL);
-            else
+            else if (item && !desktop_item_is_builtin(item))
                 desktop_remove_selected_items(item);
             return TRUE;
         case GDK_KEY_Return:
@@ -1471,6 +1555,32 @@ static gboolean desktop_item_key_press(GtkWidget *widget,
         default:
             return FALSE;
     }
+}
+
+/* Apply the same visible hover feedback used by drive/partition
+ * buttons to every normal desktop object (files, launchers, Home and Trash).
+ * GtkEventBox does not reliably enter GTK_STATE_FLAG_PRELIGHT on every
+ * GTK3 backend/theme, so use an explicit CSS class on enter/leave. */
+static gboolean desktop_item_enter_notify(GtkWidget *widget,
+                                          GdkEventCrossing *event,
+                                          gpointer data)
+{
+    (void)event;
+    (void)data;
+    gtk_style_context_add_class(gtk_widget_get_style_context(widget),
+                                "rox-desktop-item-hover");
+    return FALSE;
+}
+
+static gboolean desktop_item_leave_notify(GtkWidget *widget,
+                                          GdkEventCrossing *event,
+                                          gpointer data)
+{
+    (void)event;
+    (void)data;
+    gtk_style_context_remove_class(gtk_widget_get_style_context(widget),
+                                   "rox-desktop-item-hover");
+    return FALSE;
 }
 
 static GtkWidget *desktop_item_widget_new(GdkPixbuf *icon,
@@ -1490,7 +1600,8 @@ static GtkWidget *desktop_item_widget_new(GdkPixbuf *icon,
                                 MAX(78, desktop_icon_size + 46));
     gtk_widget_add_events(event_box,
         GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
-        GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK);
+        GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK |
+        GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
     gtk_style_context_add_class(gtk_widget_get_style_context(event_box),
                                 "rox-desktop-item");
 
@@ -1522,6 +1633,10 @@ static GtkWidget *desktop_item_widget_new(GdkPixbuf *icon,
                      G_CALLBACK(desktop_item_button_release), item);
     g_signal_connect(event_box, "motion-notify-event",
                      G_CALLBACK(desktop_item_motion), item);
+    g_signal_connect(event_box, "enter-notify-event",
+                     G_CALLBACK(desktop_item_enter_notify), item);
+    g_signal_connect(event_box, "leave-notify-event",
+                     G_CALLBACK(desktop_item_leave_notify), item);
     g_signal_connect(event_box, "key-press-event",
                      G_CALLBACK(desktop_item_key_press), item);
     return event_box;
@@ -1533,34 +1648,95 @@ static gint desktop_sort_names(gconstpointer a, gconstpointer b)
                           *(const gchar * const *)b);
 }
 
-static void add_desktop_trash(void)
+static void desktop_add_builtin_item(DesktopItem *item, GIcon *gicon)
 {
-    DesktopItem *item;
-    GIcon *gicon;
     GdkPixbuf *icon;
 
-    if (!desktop_icon_layer)
+    if (!desktop_icon_layer || !item || !gicon) {
+        if (item)
+            desktop_item_free(item);
+        if (gicon)
+            g_object_unref(gicon);
         return;
+    }
 
-    item = g_new0(DesktopItem, 1);
-    item->uri = g_strdup("trash:///");
-    item->display_name = g_strdup(_("Trash"));
-    item->trash = TRUE;
-    gicon = g_themed_icon_new(rox_trash_icon_name());
     icon = pixbuf_from_gicon(gicon, desktop_icon_size);
     item->widget = desktop_item_widget_new(icon, item->display_name, item);
     desktop_items = g_list_append(desktop_items, item);
 
-    if (!desktop_item_load_position(item)) {
-        desktop_find_free_position(item);
-        desktop_item_save_position(item);
-    }
+    /* Built-in desktop objects have a deterministic priority order.
+     * Do not reuse an old saved coordinate here: Home must always be the
+     * first desktop icon when enabled, followed by Browser, Console and
+     * Trash. Normal ~/Desktop files are added afterwards and reflow around
+     * these reserved first slots. */
+    desktop_find_free_position(item);
+    desktop_item_save_position(item);
     desktop_item_clamp(item);
     gtk_fixed_put(GTK_FIXED(desktop_icon_layer), item->widget,
                   item->x, item->y);
 
     g_clear_object(&icon);
     g_object_unref(gicon);
+}
+
+/* Rox-Filer2: Home is a built-in desktop item, like Trash.
+ * It points to the real user home directory but is not itself a file in
+ * ~/Desktop. Its icon comes from the active GTK/Freedesktop icon theme. */
+static void add_desktop_home(void)
+{
+    DesktopItem *item = g_new0(DesktopItem, 1);
+    GFile *file = g_file_new_for_path(g_get_home_dir());
+    GIcon *gicon;
+
+    item->uri = g_file_get_uri(file);
+    item->display_name = g_strdup(_("Home"));
+    item->home = TRUE;
+    gicon = g_themed_icon_new("user-home");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "folder-home");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "folder");
+    desktop_add_builtin_item(item, gicon);
+    g_object_unref(file);
+}
+
+static void add_desktop_browser(void)
+{
+    DesktopItem *item = g_new0(DesktopItem, 1);
+    GIcon *gicon;
+
+    item->uri = g_strdup("rox-special://browser");
+    item->display_name = g_strdup(_("Browser"));
+    item->browser = TRUE;
+    gicon = g_themed_icon_new("web-browser");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "internet-web-browser");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "applications-internet");
+    desktop_add_builtin_item(item, gicon);
+}
+
+static void add_desktop_console(void)
+{
+    DesktopItem *item = g_new0(DesktopItem, 1);
+    GIcon *gicon;
+
+    item->uri = g_strdup("rox-special://console");
+    item->display_name = g_strdup(_("Console"));
+    item->console = TRUE;
+    gicon = g_themed_icon_new("utilities-terminal");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "terminal");
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "xterm");
+    desktop_add_builtin_item(item, gicon);
+}
+
+static void add_desktop_trash(void)
+{
+    DesktopItem *item = g_new0(DesktopItem, 1);
+    GIcon *gicon;
+
+    item->uri = g_strdup("trash:///");
+    item->display_name = g_strdup(_("Trash"));
+    item->trash = TRUE;
+    gicon = g_themed_icon_new(rox_trash_icon_name());
+    g_themed_icon_append_name(G_THEMED_ICON(gicon), "user-trash");
+    desktop_add_builtin_item(item, gicon);
 }
 
 static void add_desktop_files(void)
@@ -1764,8 +1940,20 @@ static void desktop_rebuild_icon_layer(void)
     if (!desktop_icon_layer)
         return;
     desktop_items_clear();
+
+    /* Built-ins are deliberately inserted before normal Desktop files.
+     * This guarantees their visual priority: Home first, then Browser,
+     * Console and finally Trash. */
+    if (desktop_show_home)
+        add_desktop_home();
+    if (desktop_show_browser)
+        add_desktop_browser();
+    if (desktop_show_console)
+        add_desktop_console();
+    if (desktop_show_trash)
+        add_desktop_trash();
+
     add_desktop_files();
-    add_desktop_trash();
     gtk_widget_show_all(desktop_icon_layer);
     desktop_reflow_items(TRUE);
 }
@@ -3177,6 +3365,15 @@ static void load_settings(void)
         ? g_key_file_get_boolean(kf, "Desktop", "ShowVolumes", NULL)
         : drive_config_boolean(kf, "Enabled", "desktop_drive_icons", TRUE);
 
+    desktop_show_home = !g_key_file_has_key(kf, "DesktopIcons", "ShowHome", NULL) ||
+        g_key_file_get_boolean(kf, "DesktopIcons", "ShowHome", NULL);
+    desktop_show_browser = !g_key_file_has_key(kf, "DesktopIcons", "ShowBrowser", NULL) ||
+        g_key_file_get_boolean(kf, "DesktopIcons", "ShowBrowser", NULL);
+    desktop_show_console = !g_key_file_has_key(kf, "DesktopIcons", "ShowConsole", NULL) ||
+        g_key_file_get_boolean(kf, "DesktopIcons", "ShowConsole", NULL);
+    desktop_show_trash = !g_key_file_has_key(kf, "DesktopIcons", "ShowTrash", NULL) ||
+        g_key_file_get_boolean(kf, "DesktopIcons", "ShowTrash", NULL);
+
     if (g_key_file_has_key(kf, "DesktopIcons", "IconSize", NULL))
         desktop_icon_size = g_key_file_get_integer(kf, "DesktopIcons",
                                                    "IconSize", NULL);
@@ -3525,7 +3722,7 @@ void desktop_start(void)
     gtk_css_provider_load_from_data(css,
         ".rox-desktop-item { background-color: transparent; border-radius: 5px; padding: 3px; }"
         ".rox-desktop-label { color: #ffffff; background-color: transparent; padding: 1px 3px; text-shadow: 1px 1px 2px #000000; }"
-        ".rox-desktop-item:hover { background-color: alpha(@theme_selected_bg_color,0.28); }"
+        ".rox-desktop-item:hover, .rox-desktop-item-hover { background-color: alpha(@theme_selected_bg_color,0.35); }"
         ".rox-desktop-item-selected { background-color: alpha(@theme_selected_bg_color,0.58); }"
         ".rox-desktop-item-selected .rox-desktop-label { color: @theme_selected_fg_color; text-shadow: none; }"
         ".rox-desktop-drive button { background-image: none; background-color: transparent; border-color: transparent; box-shadow: none; padding: 2px; }"
@@ -3629,12 +3826,95 @@ static void desktop_drives_button(GtkButton *button, gpointer data)
     desktop_show_drive_layout_dialog(desktop_window ? GTK_WINDOW(desktop_window) : NULL);
 }
 
+enum {
+    DESKTOP_TOGGLE_HOME,
+    DESKTOP_TOGGLE_BROWSER,
+    DESKTOP_TOGGLE_CONSOLE,
+    DESKTOP_TOGGLE_TRASH
+};
+
+static void desktop_builtin_toggle(GtkToggleButton *button, gpointer data)
+{
+    gboolean active = gtk_toggle_button_get_active(button);
+    GError *error = NULL;
+
+    switch (GPOINTER_TO_INT(data)) {
+        case DESKTOP_TOGGLE_HOME: desktop_show_home = active; break;
+        case DESKTOP_TOGGLE_BROWSER: desktop_show_browser = active; break;
+        case DESKTOP_TOGGLE_CONSOLE: desktop_show_console = active; break;
+        case DESKTOP_TOGGLE_TRASH: desktop_show_trash = active; break;
+        default: return;
+    }
+
+    if (!desktop_save_preferences(&error)) {
+        show_desktop_error(_("Unable to save desktop settings"),
+                           error ? error->message : NULL);
+        g_clear_error(&error);
+        return;
+    }
+    if (desktop_window)
+        desktop_reload();
+}
+
 static GList *build_desktop_tools(Option *option, xmlNode *node, guchar *label)
 {
-    GtkWidget *box, *wallpaper, *apps, *drives;
+    GtkWidget *box, *icons_label, *grid, *hint;
+    GtkWidget *home, *browser, *console, *trash;
+    GtkWidget *tools_label, *tools_grid, *wallpaper, *apps, *drives;
     (void)node; (void)label;
     g_return_val_if_fail(option == NULL, NULL);
-    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+
+    desktop_prepare_standalone_tool();
+    box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+
+    icons_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(icons_label), _("<b>Desktop icons</b>"));
+    gtk_widget_set_halign(icons_label, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(box), icons_label, FALSE, FALSE, 0);
+
+    grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 24);
+
+    home = gtk_check_button_new_with_label(_("Home"));
+    browser = gtk_check_button_new_with_label(_("Browser"));
+    console = gtk_check_button_new_with_label(_("Console"));
+    trash = gtk_check_button_new_with_label(_("Trash"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(home), desktop_show_home);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(browser), desktop_show_browser);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(console), desktop_show_console);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(trash), desktop_show_trash);
+
+    gtk_grid_attach(GTK_GRID(grid), home, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), browser, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), console, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), trash, 1, 1, 1, 1);
+
+    g_signal_connect(home, "toggled", G_CALLBACK(desktop_builtin_toggle),
+                     GINT_TO_POINTER(DESKTOP_TOGGLE_HOME));
+    g_signal_connect(browser, "toggled", G_CALLBACK(desktop_builtin_toggle),
+                     GINT_TO_POINTER(DESKTOP_TOGGLE_BROWSER));
+    g_signal_connect(console, "toggled", G_CALLBACK(desktop_builtin_toggle),
+                     GINT_TO_POINTER(DESKTOP_TOGGLE_CONSOLE));
+    g_signal_connect(trash, "toggled", G_CALLBACK(desktop_builtin_toggle),
+                     GINT_TO_POINTER(DESKTOP_TOGGLE_TRASH));
+    gtk_box_pack_start(GTK_BOX(box), grid, FALSE, FALSE, 0);
+
+    hint = gtk_label_new(_("Built-in desktop icons use the active system icon theme."));
+    gtk_label_set_xalign(GTK_LABEL(hint), 0.0);
+    gtk_label_set_line_wrap(GTK_LABEL(hint), TRUE);
+    gtk_style_context_add_class(gtk_widget_get_style_context(hint), "dim-label");
+    gtk_box_pack_start(GTK_BOX(box), hint, FALSE, FALSE, 0);
+
+    tools_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(tools_label), _("<b>Desktop settings</b>"));
+    gtk_widget_set_halign(tools_label, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(box), tools_label, FALSE, FALSE, 4);
+
+    tools_grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(tools_grid), 6);
+    gtk_grid_set_column_spacing(GTK_GRID(tools_grid), 6);
+
     wallpaper = gtk_button_new_with_label(_("Wallpaper"));
     gtk_button_set_image(GTK_BUTTON(wallpaper),
         gtk_image_new_from_icon_name("preferences-desktop-wallpaper", GTK_ICON_SIZE_BUTTON));
@@ -3644,12 +3924,19 @@ static GList *build_desktop_tools(Option *option, xmlNode *node, guchar *label)
     drives = gtk_button_new_with_label(_("Drive Icon Layout"));
     gtk_button_set_image(GTK_BUTTON(drives),
         gtk_image_new_from_icon_name("drive-harddisk", GTK_ICON_SIZE_BUTTON));
+
     g_signal_connect(wallpaper, "clicked", G_CALLBACK(desktop_wallpaper_button), NULL);
     g_signal_connect(apps, "clicked", G_CALLBACK(desktop_apps_button), NULL);
     g_signal_connect(drives, "clicked", G_CALLBACK(desktop_drives_button), NULL);
-    gtk_box_pack_start(GTK_BOX(box), wallpaper, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), apps, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), drives, FALSE, FALSE, 0);
+
+    gtk_widget_set_hexpand(wallpaper, TRUE);
+    gtk_widget_set_hexpand(apps, TRUE);
+    gtk_widget_set_hexpand(drives, TRUE);
+    gtk_grid_attach(GTK_GRID(tools_grid), wallpaper, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(tools_grid), apps, 1, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(tools_grid), drives, 0, 1, 2, 1);
+    gtk_box_pack_start(GTK_BOX(box), tools_grid, FALSE, FALSE, 0);
+
     return g_list_append(NULL, box);
 }
 
