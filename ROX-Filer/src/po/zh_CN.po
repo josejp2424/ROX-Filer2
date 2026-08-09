@@ -1,16 +1,19 @@
 # Modificado por josejp2424: catálogo revisado para la interfaz GTK3 y las funciones nuevas.
 # Copyright (C) 2001-2002 Free Software Foundation, Inc.
-# Chinese messages for ROX-Filer.
+# Chinese messages for Rox-Filer2.
 # Copyright (C) 2001 Free Software Foundation, Inc.
 # Babyfai Cheung <babyfai1@yahoo.com.hk>,2001.
 # Modified by simplified chinese puppy linux 217 translator 2007
-#
+# Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
+# Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
+# Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
+# Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: ROX-Filer 2.12-r57\n"
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
-"POT-Creation-Date: 2026-07-29 17:41-0300\n"
-"PO-Revision-Date: 2026-07-29 17:41-0300\n"
+"POT-Creation-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-04 19:00-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Simplified Chinese\n"
 "Language: zh_CN\n"
@@ -63,7 +66,6 @@ msgid "Find expression reference"
 msgstr "找寻表示式范例"
 
 #: action.c:204
-#, fuzzy
 msgid ""
 "<u>Quick Start</u>\n"
 "Just put the name of the file you're looking for in single quotes:\n"
@@ -79,14 +81,11 @@ msgid ""
 "<b>IsReg system(grep -q fred \"%\")</b> (contains the word 'fred')\n"
 "\n"
 "<u>Simple Tests</u>\n"
-"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</"
-"b> (types)\n"
-"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> "
-"(permissions)\n"
+"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</b> (types)\n"
+"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> (permissions)\n"
 "<b>IsEmpty, IsMine</b>\n"
 "<b>HasXattr</b> (extended attributes)\n"
-"A pattern in single quotes is a shell-style wildcard pattern to match. If "
-"it\n"
+"A pattern in single quotes is a shell-style wildcard pattern to match. If it\n"
 "contains a slash then the match is against the full path; otherwise it is\n"
 "against the leafname only.\n"
 "\n"
@@ -94,17 +93,14 @@ msgid ""
 "<b>&lt;, &lt;=, =, !=, &gt;, &gt;=, After, Before</b> (compare two values)\n"
 "<b>5 bytes, 1Kb, 2Mb, 3Gb</b> (file sizes)\n"
 "<b>2 secs|mins|hours|days|weeks|years  ago|hence</b> (times)\n"
-"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> "
-"(values)\n"
+"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> (values)\n"
 "\n"
 "<u>Specials</u>\n"
 "<b>system(command)</b> (true if 'command' returns with a zero exit status;\n"
 "a % in 'command' is replaced with the path of the current file)\n"
 "<b>prune</b> (false, and prevents searching the contents of a directory)\n"
-"<b>label '<i>color</i>'</b> (true if user.label matches <i>color</i> as a "
-"color)\n"
-"<b>xattr '<i>attr</i>'</b> (true if file has non-empty extended attribute "
-"<i>attr</i>)."
+"<b>label '<i>color</i>'</b> (true if user.label matches <i>color</i> as a color)\n"
+"<b>xattr '<i>attr</i>'</b> (true if file has non-empty extended attribute <i>attr</i>)."
 msgstr ""
 "<u>快速指引</u>\n"
 "只需将要搜寻的文件名称放进单引号中：\n"
@@ -120,13 +116,10 @@ msgstr ""
 "<b>IsReg system(grep -q fred \"%\")</b> (包合字词 'fred')\n"
 "\n"
 "<u>简单测试</u>\n"
-"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</"
-"b> (类别)\n"
-"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> (权"
-"限)\n"
+"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</b> (类别)\n"
+"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> (权限)\n"
 "<b>IsEmpty, IsMine</b>\n"
-"包含在单引号内的万用字元如 '*tmp*'，只会在当前的路径搜寻'tmp' 或 'tmpfile' 等"
-"文件。\n"
+"包含在单引号内的万用字元如 '*tmp*'，只会在当前的路径搜寻'tmp' 或 'tmpfile' 等文件。\n"
 "但若单引号内的万用字元为 '/*tmp*' ；即包含一个斜号 '/'，\n"
 "搜寻便会指向完整的路径，如 /tmp/file 等。\n"
 "\n"
@@ -134,12 +127,10 @@ msgstr ""
 "<b>&lt;, &lt;=, =, !=, &gt;, &gt;=, After, Before</b> (比较两个值)\n"
 "<b>5 bytes, 1Kb, 2Mb, 3Gb</b> (比较大小值)\n"
 "<b>2 secs|mins|hours|days|weeks|years  ago|hence</b> (比较时间值)\n"
-"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> (任何"
-"的值)\n"
+"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> (任何的值)\n"
 "\n"
 "<u>特殊</u>\n"
-"<b>system(command)</b> (搜寻条件为是，假如执行 'command(某个指令)' 回传为零并"
-"退出。\n"
+"<b>system(command)</b> (搜寻条件为是，假如执行 'command(某个指令)' 回传为零并退出。\n"
 "在指令'command' 内的 '%' 则代表文件的路径)\n"
 "<b>prune</b> (搜寻条件为否，避免搜寻某一目录的内容)。"
 
@@ -154,11 +145,9 @@ msgid ""
 "\n"
 "The format of a command is: <b>CHANGE, CHANGE, ...</b>\n"
 "Each <b>CHANGE</b> is: <b>WHO HOW PERMISSIONS</b>\n"
-"<b>WHO</b> is some combination of <b>u</b>, <b>g</b> and <b>o</b> which "
-"determines whether to\n"
+"<b>WHO</b> is some combination of <b>u</b>, <b>g</b> and <b>o</b> which determines whether to\n"
 "change the permissions for the User (owner), Group or Others.\n"
-"<b>HOW</b> is <b>+</b>, <b>-</b> or <b>=</b> to add, remove or set exactly "
-"the permissions.\n"
+"<b>HOW</b> is <b>+</b>, <b>-</b> or <b>=</b> to add, remove or set exactly the permissions.\n"
 "<b>PERMISSIONS</b> is some combination of the letters <b>rwxXstugo</b>\n"
 "\n"
 "Bracketed text and spaces are ignored.\n"
@@ -166,8 +155,7 @@ msgid ""
 "<u>Examples</u>\n"
 "<b>u+rw</b>: the file owner gains read and write permission\n"
 "<b>g=u</b>: the group permissions are set to be the same as the user's\n"
-"<b>o=u-w</b>: others get the same permissions as the owner, but without "
-"write permission\n"
+"<b>o=u-w</b>: others get the same permissions as the owner, but without write permission\n"
 "<b>a+x</b>: <b>a</b>ll get execute/access permission - same as <b>ugo+x</b>\n"
 "<b>a+X</b>: directories become accessable by everyone; files which were\n"
 "executable by anyone become executable by everyone\n"
@@ -182,11 +170,9 @@ msgstr ""
 "\n"
 "更改文件权限的指令方式为：<b>改变，改变，...</b>\n"
 "每个 <b>改变</b> 分别为： <b>谁人．怎样．权限</b>\n"
-"<b>谁人</b> 是一些字母的组合 <b>u</b>, <b>g</b> 及 <b>o</b> 用以判断权限是"
-"针\n"
+"<b>谁人</b> 是一些字母的组合 <b>u</b>, <b>g</b> 及 <b>o</b> 用以判断权限是针\n"
 "对谁个包括 User (owner) '用户'，Group '组别' 或 Others '其他'。\n"
-"<b>怎样</b> 是符号 <b>+</b>, <b>-</b> 或 <b>=</b> 用作 增加，减除或直接设定某"
-"些权限。\n"
+"<b>怎样</b> 是符号 <b>+</b>, <b>-</b> 或 <b>=</b> 用作 增加，减除或直接设定某些权限。\n"
 "<b>权限</b> 是一些字母的组合 <b>rwxXstugo</b>\n"
 "\n"
 "括号内的字母及空格会被忽略。\n"
@@ -210,26 +196,26 @@ msgstr "设定类型方式"
 
 #: action.c:324
 msgid ""
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
 "directories, devices, pipes or sockets, and then only\n"
 "on certain file systems and where the OS implements them.\n"
 msgstr ""
-"通常 ROX-Filer 会以常规文件的伸延名称\n"
+"通常 Rox-Filer2 会以常规文件的伸延名称\n"
 "来匹配每个文件的类型，要改变文件类型\n"
 "便必须把文件的伸延名称更改。\n"
 "\n"
 "新一代的文件系统，有一个名为 '扩展属性' \n"
 "的功能可对文件名称，存入更多附加参数。\n"
-"ROX-Filer 会对应文件的'user.mime_type'\n"
+"Rox-Filer2 会对应文件的'user.mime_type'\n"
 "扩展属性，来储存文件的类型。\n"
 "\n"
 "文件类型的设置只支持常规文件，不会对\n"
@@ -245,13 +231,17 @@ msgstr ""
 "程序终结 \n"
 
 #: action.c:447
-msgid "There was one error.\n"
-msgstr "发现错误.\n"
+msgid ""
+"There was one error.\n"
+msgstr ""
+"发现错误.\n"
 
 #: action.c:449
 #, c-format
-msgid "There were %d errors.\n"
-msgstr "发现 %d 错误\n"
+msgid ""
+"There were %d errors.\n"
+msgstr ""
+"发现 %d 错误\n"
 
 #: action.c:473
 msgid "ERROR reading"
@@ -309,13 +299,17 @@ msgstr "防写入的"
 
 #: action.c:959
 #, c-format
-msgid "'Deleting '%s'\n"
-msgstr "'正在删除 '%s'\n"
+msgid ""
+"'Deleting '%s'\n"
+msgstr ""
+"'正在删除 '%s'\n"
 
 #: action.c:972
 #, c-format
-msgid "'Directory '%s' deleted\n"
-msgstr "'目录 '%s' 已删除\n"
+msgid ""
+"'Directory '%s' deleted\n"
+msgstr ""
+"'目录 '%s' 已删除\n"
 
 #: action.c:1006
 #, c-format
@@ -324,8 +318,10 @@ msgstr "?弹出 '%s'?"
 
 #: action.c:1013
 #, c-format
-msgid "'Eject '%s'\n"
-msgstr "'正在弹出 '%s'\n"
+msgid ""
+"'Eject '%s'\n"
+msgstr ""
+"'正在弹出 '%s'\n"
 
 #: action.c:1032
 #, c-format
@@ -342,13 +338,17 @@ msgid "?Check '%s'?"
 msgstr "?检查 '%s'?"
 
 #: action.c:1068
-msgid "!Invalid find condition - change it and try again\n"
-msgstr "!非法的找寻设定-请更改后再尝试\n"
+msgid ""
+"!Invalid find condition - change it and try again\n"
+msgstr ""
+"!非法的找寻设定-请更改后再尝试\n"
 
 #: action.c:1078
 #, c-format
-msgid "'(while checking '%s')\n"
-msgstr "'(正当检查 '%s')\n"
+msgid ""
+"'(while checking '%s')\n"
+msgstr ""
+"'(正当检查 '%s')\n"
 
 #: action.c:1153 action.c:1178
 #, c-format
@@ -357,12 +357,16 @@ msgstr "?改变 '%s' 的权限?"
 
 #: action.c:1159
 #, c-format
-msgid "'Changing permissions of '%s'\n"
-msgstr "'正在改变 '%s' 的权限\n"
+msgid ""
+"'Changing permissions of '%s'\n"
+msgstr ""
+"'正在改变 '%s' 的权限\n"
 
 #: action.c:1176
-msgid "!Invalid mode command - change it and try again\n"
-msgstr "!非法指令模式-请更改后再试\n"
+msgid ""
+"!Invalid mode command - change it and try again\n"
+msgstr ""
+"!非法指令模式-请更改后再试\n"
 
 #: action.c:1234
 #, c-format
@@ -375,23 +379,31 @@ msgid "?Change type of '%s'?"
 msgstr "?改变 '%s' 的类型？"
 
 #: action.c:1254
-msgid "!Invalid type - change it and try again\n"
-msgstr "!非法类型-请更改后再试\n"
+msgid ""
+"!Invalid type - change it and try again\n"
+msgstr ""
+"!非法类型-请更改后再试\n"
 
 #: action.c:1276
 #, c-format
-msgid "'Changing type of '%s' to '%s'\n"
-msgstr "'正在改变类型从 '%s' 为 '%s'\n"
+msgid ""
+"'Changing type of '%s' to '%s'\n"
+msgstr ""
+"'正在改变类型从 '%s' 为 '%s'\n"
 
 #: action.c:1299
 #, c-format
-msgid "'Not changing type of directory '%s'\n"
-msgstr "'目录 '%s' 中的类型没有改变'\n"
+msgid ""
+"'Not changing type of directory '%s'\n"
+msgstr ""
+"'目录 '%s' 中的类型没有改变'\n"
 
 #: action.c:1305
 #, c-format
-msgid "'Non-regular file '%s' not changed\n"
-msgstr "非常规文件 '%s' 没有改变\n"
+msgid ""
+"'Non-regular file '%s' not changed\n"
+msgstr ""
+"非常规文件 '%s' 没有改变\n"
 
 #: action.c:1388 action.c:1581
 #, c-format
@@ -407,8 +419,10 @@ msgid "overwrite"
 msgstr "覆盖"
 
 #: action.c:1407
-msgid "'Trying copy anyway...\n"
-msgstr "'尝试硬复制..\n"
+msgid ""
+"'Trying copy anyway...\n"
+msgstr ""
+"'尝试硬复制..\n"
 
 #: action.c:1416
 #, c-format
@@ -417,12 +431,16 @@ msgstr "?复制%s 为 %s？"
 
 #: action.c:1420
 #, c-format
-msgid "'Copying %s as %s\n"
-msgstr "'正在复制 %s 为 %s\n"
+msgid ""
+"'Copying %s as %s\n"
+msgstr ""
+"'正在复制 %s 为 %s\n"
 
 #: action.c:1435 action.c:1630
-msgid "!ERROR: Destination already exists, but is not a directory\n"
-msgstr "!错误: 目标已存在，但不是一个目录\n"
+msgid ""
+"!ERROR: Destination already exists, but is not a directory\n"
+msgstr ""
+"!错误: 目标已存在，但不是一个目录\n"
 
 #: action.c:1514
 #, c-format
@@ -434,8 +452,10 @@ msgstr ""
 "复制 '%s' 失败\n"
 
 #: action.c:1600
-msgid "'Trying move anyway...\n"
-msgstr "'尝试强制移动...\n"
+msgid ""
+"'Trying move anyway...\n"
+msgstr ""
+"'尝试强制移动...\n"
 
 #: action.c:1609
 #, c-format
@@ -444,8 +464,10 @@ msgstr "?移动 %s 为 %s?"
 
 #: action.c:1613
 #, c-format
-msgid "'Moving %s as %s\n"
-msgstr "'正在移动 %s 为 %s\n"
+msgid ""
+"'Moving %s as %s\n"
+msgstr ""
+"'正在移动 %s 为 %s\n"
 
 #: action.c:1663
 #, c-format
@@ -457,17 +479,23 @@ msgstr ""
 "移动 %s 到 %s 失败\n"
 
 #: action.c:1685
-msgid "!ERROR: Can't copy object into itself\n"
-msgstr "!错误: 不能复制物件到本身内\n"
+msgid ""
+"!ERROR: Can't copy object into itself\n"
+msgstr ""
+"!错误: 不能复制物件到本身内\n"
 
 #: action.c:1700
-msgid "!ERROR: Can't move/rename object into itself\n"
-msgstr "!错误: 不能移动/改名物件到本身内\n"
+msgid ""
+"!ERROR: Can't move/rename object into itself\n"
+msgstr ""
+"!错误: 不能移动/改名物件到本身内\n"
 
 #: action.c:1712
 #, c-format
-msgid "'Linking %s as %s\n"
-msgstr "'链接 %s 为 %s\n"
+msgid ""
+"'Linking %s as %s\n"
+msgstr ""
+"'链接 %s 为 %s\n"
 
 #: action.c:1717
 #, c-format
@@ -476,13 +504,17 @@ msgstr "?链接 %s 为 %s?"
 
 #: action.c:1760
 #, c-format
-msgid "'Mounting %s\n"
-msgstr "'挂载 %s\n"
+msgid ""
+"'Mounting %s\n"
+msgstr ""
+"'挂载 %s\n"
 
 #: action.c:1761
 #, c-format
-msgid "'Unmounting %s\n"
-msgstr "'解除挂载 %s\n"
+msgid ""
+"'Unmounting %s\n"
+msgstr ""
+"'解除挂载 %s\n"
 
 #: action.c:1764
 #, c-format
@@ -513,8 +545,10 @@ msgstr ""
 "解除挂载失败\n"
 
 #: action.c:1795
-msgid "'(seems to be mounted now anyway)\n"
-msgstr "'(经已挂载)\n"
+msgid ""
+"'(seems to be mounted now anyway)\n"
+msgstr ""
+"'(经已挂载)\n"
 
 #: action.c:1844
 #, c-format
@@ -534,8 +568,10 @@ msgid "files"
 msgstr "文件"
 
 #: action.c:1854
-msgid "no directories)\n"
-msgstr "没有目录)\n"
+msgid ""
+"no directories)\n"
+msgstr ""
+"没有目录)\n"
 
 #: action.c:1858
 msgid "directory"
@@ -546,8 +582,10 @@ msgid "directories"
 msgstr "目录"
 
 #: action.c:1900
-msgid "!No mount points selected!\n"
-msgstr "!没有挂载点被标记！\n"
+msgid ""
+"!No mount points selected!\n"
+msgstr ""
+"!没有挂载点被标记！\n"
 
 #: action.c:1984
 msgid "?Another search?"
@@ -555,8 +593,10 @@ msgstr "?其他的搜寻？"
 
 #: action.c:2016 action.c:2050
 #, c-format
-msgid "!'%s' is a symbolic link\n"
-msgstr "!'%s' 是一符号链接\n"
+msgid ""
+"!'%s' is a symbolic link\n"
+msgstr ""
+"!'%s' 是一符号链接\n"
 
 #: action.c:2091
 msgid "You need to select some items to search through"
@@ -579,8 +619,8 @@ msgid "Mount / Unmount"
 msgstr "挂载 / 解除挂载"
 
 #: action.c:2197
-msgid "ROX-Filer does not yet support mount points on your system. Sorry."
-msgstr "ROX-Filer 对系统上的挂载点尚未支持"
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
+msgstr "Rox-Filer2 对系统上的挂载点尚未支持"
 
 #: action.c:2211 menu.c:246 tips:194
 msgid "Delete"
@@ -669,10 +709,9 @@ msgstr "复制"
 
 #: action.c:2425 action.c:2475 tips:209
 msgid "Ignore Older"
-msgstr ""
+msgstr "Ignore Older"
 
 #: action.c:2426 action.c:2476 tips:210
-#, fuzzy
 msgid "Silently ignore if source is older than destination."
 msgstr "只覆盖旧版本的文件"
 
@@ -681,16 +720,14 @@ msgid "Newer"
 msgstr "刷新"
 
 #: action.c:2430 action.c:2480 tips:208
-#, fuzzy
 msgid "Always over-write if source is newer than destination."
 msgstr "只覆盖旧版本的文件"
 
 #: action.c:2433 action.c:2483 tips:205
 msgid "Merge"
-msgstr ""
+msgstr "Merge"
 
 #: action.c:2434 action.c:2484 tips:206
-#, fuzzy
 msgid "Always merge directories."
 msgstr "目录"
 
@@ -744,11 +781,8 @@ msgstr "<失去标签>"
 
 #: appmenu.c:320
 #, c-format
-msgid ""
-"Symlink any programs you want into this directory. They will appear in the "
-"menu for all items of this type (%s/%s)."
-msgstr ""
-"链接任何合用程序到此目录内，该等程序将会出现于此类型 (%s/%s) 项目的菜单中"
+msgid "Symlink any programs you want into this directory. They will appear in the menu for all items of this type (%s/%s)."
+msgstr "链接任何合用程序到此目录内，该等程序将会出现于此类型 (%s/%s) 项目的菜单中"
 
 #: appmenu.c:347 menu.c:275
 msgid "Customise Menu..."
@@ -768,8 +802,10 @@ msgstr "标题"
 
 #: bookmarks.c:305
 #, c-format
-msgid "Can't bookmark non-local resource '%s'\n"
-msgstr "不能书签化非本地的资源 '%s'\n"
+msgid ""
+"Can't bookmark non-local resource '%s'\n"
+msgstr ""
+"不能书签化非本地的资源 '%s'\n"
 
 #: bookmarks.c:313 bookmarks.c:631
 #, c-format
@@ -844,22 +880,15 @@ msgid "With:"
 msgstr "改为："
 
 #: bulk_rename.c:114
-msgid ""
-"The first match in each filename will be replaced by this string. The only "
-"special characters are back-references from \\0 to \\9. To use them "
-"literally, they have to be escaped with a backslash."
-msgstr ""
-"每个文件名称的对应部份，会先被这字串取代。而只可使用的正则字符为逆向引用 \\0 "
-"至 \\9。"
+msgid "The first match in each filename will be replaced by this string. The only special characters are back-references from \\0 to \\9. To use them literally, they have to be escaped with a backslash."
+msgstr "每个文件名称的对应部份，会先被这字串取代。而只可使用的正则字符为逆向引用 \\0 至 \\9。"
 
 #: bulk_rename.c:120
 msgid "Apply"
 msgstr "套用"
 
 #: bulk_rename.c:123
-msgid ""
-"Do a search-and-replace in the New column. The files are not actually "
-"renamed until you click on the Rename button below."
+msgid "Do a search-and-replace in the New column. The files are not actually renamed until you click on the Rename button below."
 msgstr "完成搜寻取代后, 文件名称并未真正改变，必须点击下面 '改名' 的按钮."
 
 #: bulk_rename.c:142
@@ -884,8 +913,7 @@ msgid "%d names matched, but the results were all the same"
 msgstr "%d 个名称已匹配，但结果没有改变"
 
 #: bulk_rename.c:327
-msgid ""
-"Specify a regular expression to match, and a string to replace matches with."
+msgid "Specify a regular expression to match, and a string to replace matches with."
 msgstr "请指定一个常规表示式，及一个字串用以置换对应名称."
 
 #: bulk_rename.c:344
@@ -916,11 +944,8 @@ msgstr "文件 '%s' 经已存在"
 
 #: bulk_rename.c:455
 #, c-format
-msgid ""
-"Some of the New names contain / characters (eg '%s'). This will cause the "
-"files to end up in different directories. Continue?"
-msgstr ""
-"有些新名称含有 / 字符 (如 '%s')，这样会使生成的文件终结到不同的目录，继续?"
+msgid "Some of the New names contain / characters (eg '%s'). This will cause the files to end up in different directories. Continue?"
+msgstr "有些新名称含有 / 字符 (如 '%s')，这样会使生成的文件终结到不同的目录，继续?"
 
 #: bulk_rename.c:470
 msgid "None of the names have changed. Nothing to do!"
@@ -978,31 +1003,29 @@ msgid "Drag a directory here to bookmark it."
 msgstr "拖放一个目录到这处，将之纳入书签"
 
 #: dnd.c:581
-msgid "XDS protocol error: leafname may not contain '/'\n"
-msgstr "XDS 协定错误: 名称不存在'/'\n"
+msgid ""
+"XDS protocol error: leafname may not contain '/'\n"
+msgstr ""
+"XDS 协定错误: 名称不存在'/'\n"
 
 #: dnd.c:606
 msgid ""
-"XdndDirectSave0 target provided, but the atom XdndDirectSave0 (type text/"
-"plain) did not contain a leafname\n"
+"XdndDirectSave0 target provided, but the atom XdndDirectSave0 (type text/plain) did not contain a leafname\n"
 msgstr ""
-"XdndDirectSave0 目标已提供，但这 XdndDirectSave0 (类别 text/plain) 没有包含一"
-"个分支名称\n"
+"XdndDirectSave0 目标已提供，但这 XdndDirectSave0 (类别 text/plain) 没有包含一个分支名称\n"
 
 #: dnd.c:619
 msgid "Sorry - I require a target type of text/uri-list or XdndDirectSave0."
 msgstr "抱歉 - 需要一个 text/uri-list 类型或一个 XdndDirectSave0."
 
 #: dnd.c:622
-msgid ""
-"Sorry - I require a target type of text/uri-list or application/octet-stream."
+msgid "Sorry - I require a target type of text/uri-list or application/octet-stream."
 msgstr "抱歉 - 需要一个 text/uri-list 或 application/octet-stream 的类型."
 
 #: dnd.c:692
 #, c-format
 msgid ""
-"Failed to add some items to the pinboard, because they are on a remote "
-"machine. For example:\n"
+"Failed to add some items to the pinboard, because they are on a remote machine. For example:\n"
 "\n"
 "%s"
 msgstr ""
@@ -1019,8 +1042,10 @@ msgid "Remote app can't or won't send me the data - sorry"
 msgstr "远端机器上的程序，不会向本机送出资料 - 抱歉"
 
 #: dnd.c:813
-msgid "XDS protocol error: return code should be 'S', 'F' or 'E'\n"
-msgstr "XDS错误，回传码必须为'S','F'或'E'\n"
+msgid ""
+"XDS protocol error: return code should be 'S', 'F' or 'E'\n"
+msgstr ""
+"XDS错误，回传码必须为'S','F'或'E'\n"
 
 #: dnd.c:846
 msgid "Sorry, can't display a menu of actions for a remote file / raw data."
@@ -1040,19 +1065,15 @@ msgid "No URIs in the text/uri-list (nothing to do!)"
 msgstr "没有位址在 text/uri-list (没有任何操作！)"
 
 #: dnd.c:994
-msgid ""
-"Can't get data from remote machine (application/octet-stream not provided)"
+msgid "Can't get data from remote machine (application/octet-stream not provided)"
 msgstr "未能在远端机器上获得资料 (application/octet-stream 并未提供)"
 
 #: dnd.c:1017 menu.c:2380
-msgid ""
-"Some of these files are on a different machine - they will be ignored - sorry"
+msgid "Some of these files are on a different machine - they will be ignored - sorry"
 msgstr "某些文件是来自另一主机 - 这些会被忽略 - 抱歉"
 
 #: dnd.c:1024 menu.c:2388
-msgid ""
-"None of these files are on the local machine - I can't operate on multiple "
-"remote files - sorry."
+msgid "None of these files are on the local machine - I can't operate on multiple remote files - sorry."
 msgstr "没有任何文件是在本机上的 - 不能在多远端机器环境下操作 - 抱歉."
 
 #: dnd.c:1037
@@ -1077,9 +1098,7 @@ msgid "<nothing>"
 msgstr "<空的>"
 
 #: dropbox.c:237
-msgid ""
-"I can't show you the currently set item, because nothing is currently set. "
-"Drag something onto me!"
+msgid "I can't show you the currently set item, because nothing is currently set. Drag something onto me!"
 msgstr "未能显示设定中的项目，因没有项目存在. 请拖放东西到这里！"
 
 #: dropbox.c:261
@@ -1121,7 +1140,7 @@ msgstr ""
 
 #: filer.c:655
 msgid "Perform the same action in future for this mount point"
-msgstr ""
+msgstr "Perform the same action in future for this mount point"
 
 #: filer.c:662
 msgid "No change"
@@ -1134,12 +1153,10 @@ msgstr "解除挂载"
 #: filer.c:1137
 #, c-format
 msgid ""
-"Group %s is not set. Select some files and press Ctrl+%s to set the group. "
-"Press %s on its own to reselect the files later.\n"
+"Group %s is not set. Select some files and press Ctrl+%s to set the group. Press %s on its own to reselect the files later.\n"
 "Make sure NumLock is on if you use the keypad."
 msgstr ""
-"组别 %s 尚未设定，先选择某些文件再按键 Ctrl+%s 来设定组别，按键 %s 后完成可再"
-"重选其他文件.\n"
+"组别 %s 尚未设定，先选择某些文件再按键 Ctrl+%s 来设定组别，按键 %s 后完成可再重选其他文件.\n"
 "注意，键盘上的 NumLock 必须开启"
 
 #: filer.c:1822
@@ -1148,31 +1165,31 @@ msgstr "取消"
 
 #: filer.c:2106
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: filer.c:2108 find.c:1034
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: filer.c:2113
 msgid "S"
-msgstr ""
+msgstr "S"
 
 #: filer.c:2115
 msgid "T"
-msgstr ""
+msgstr "T"
 
 #: filer.c:2116
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: filer.c:2117
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: filer.c:2127
 msgid "All, "
-msgstr ""
+msgstr "All, "
 
 #: filer.c:2130
 #, c-format
@@ -1189,19 +1206,21 @@ msgstr "显示缩略图, "
 
 #: filer.c:2141
 msgid "Dirs only, "
-msgstr ""
+msgstr "Dirs only, "
 
 #: filer.c:2142
 msgid "Files only, "
-msgstr ""
+msgstr "Files only, "
 
 #: filer.c:2418
 msgid "Symbolic link to "
 msgstr "链接指向 "
 
 #: filer.c:2474
-msgid "This filename is not valid UTF-8. You should rename it.\n"
-msgstr "不是正确的 UTF-8 名称，请重新命名.\n"
+msgid ""
+"This filename is not valid UTF-8. You should rename it.\n"
+msgstr ""
+"不是正确的 UTF-8 名称，请重新命名.\n"
 
 #: filer.c:2792 menu.c:2573
 msgid "Item no longer exists!"
@@ -1253,231 +1272,231 @@ msgstr "过滤"
 
 #: find.c:532
 msgid "And"
-msgstr ""
+msgstr "And"
 
 #: find.c:556
 msgid "Not"
-msgstr ""
+msgstr "Not"
 
 #: find.c:599
 msgid "system"
-msgstr ""
+msgstr "system"
 
 #: find.c:607
 msgid "prune"
-msgstr ""
+msgstr "prune"
 
 #: find.c:701
 msgid "After"
-msgstr ""
+msgstr "After"
 
 #: find.c:703
 msgid "Before"
-msgstr ""
+msgstr "Before"
 
 #: find.c:798
 msgid "IsReg"
-msgstr ""
+msgstr "IsReg"
 
 #: find.c:800
 msgid "IsLink"
-msgstr ""
+msgstr "IsLink"
 
 #: find.c:802
 msgid "IsDir"
-msgstr ""
+msgstr "IsDir"
 
 #: find.c:804
 msgid "IsChar"
-msgstr ""
+msgstr "IsChar"
 
 #: find.c:806
 msgid "IsBlock"
-msgstr ""
+msgstr "IsBlock"
 
 #: find.c:808
 msgid "IsDev"
-msgstr ""
+msgstr "IsDev"
 
 #: find.c:810
 msgid "IsPipe"
-msgstr ""
+msgstr "IsPipe"
 
 #: find.c:812
 msgid "IsSocket"
-msgstr ""
+msgstr "IsSocket"
 
 #: find.c:814
 msgid "IsDoor"
-msgstr ""
+msgstr "IsDoor"
 
 #: find.c:816
 msgid "IsSUID"
-msgstr ""
+msgstr "IsSUID"
 
 #: find.c:818
 msgid "IsSGID"
-msgstr ""
+msgstr "IsSGID"
 
 #: find.c:820
 msgid "IsSticky"
-msgstr ""
+msgstr "IsSticky"
 
 #: find.c:822
 msgid "IsReadable"
-msgstr ""
+msgstr "IsReadable"
 
 #: find.c:824
 msgid "IsWriteable"
-msgstr ""
+msgstr "IsWriteable"
 
 #: find.c:826
 msgid "IsExecutable"
-msgstr ""
+msgstr "IsExecutable"
 
 #: find.c:828
 msgid "IsEmpty"
-msgstr ""
+msgstr "IsEmpty"
 
 #: find.c:830
 msgid "IsMine"
-msgstr ""
+msgstr "IsMine"
 
 #: find.c:832
 msgid "HasXattr"
-msgstr ""
+msgstr "HasXattr"
 
 #: find.c:897
 msgid "label"
-msgstr ""
+msgstr "label"
 
 #: find.c:899
 msgid "xattr"
-msgstr ""
+msgstr "xattr"
 
 #: find.c:1015
 msgid "Now"
-msgstr ""
+msgstr "Now"
 
 #: find.c:1028
 msgid "Byte"
-msgstr ""
+msgstr "Byte"
 
 #: find.c:1028
 msgid "Bytes"
-msgstr ""
+msgstr "Bytes"
 
 #: find.c:1030
 msgid "Kb"
-msgstr ""
+msgstr "Kb"
 
 #: find.c:1030
 msgid "K"
-msgstr ""
+msgstr "K"
 
 #: find.c:1032
 msgid "Mb"
-msgstr ""
+msgstr "Mb"
 
 #: find.c:1032
 msgid "M"
-msgstr ""
+msgstr "M"
 
 #: find.c:1034
 msgid "Gb"
-msgstr ""
+msgstr "Gb"
 
 #: find.c:1036
 msgid "Sec"
-msgstr ""
+msgstr "Sec"
 
 #: find.c:1036
 msgid "Secs"
-msgstr ""
+msgstr "Secs"
 
 #: find.c:1038
 msgid "Min"
-msgstr ""
+msgstr "Min"
 
 #: find.c:1038
 msgid "Mins"
-msgstr ""
+msgstr "Mins"
 
 #: find.c:1040
 msgid "Hour"
-msgstr ""
+msgstr "Hour"
 
 #: find.c:1040
 msgid "Hours"
-msgstr ""
+msgstr "Hours"
 
 #: find.c:1042
 msgid "Day"
-msgstr ""
+msgstr "Day"
 
 #: find.c:1042
 msgid "Days"
-msgstr ""
+msgstr "Days"
 
 #: find.c:1044
 msgid "Week"
-msgstr ""
+msgstr "Week"
 
 #: find.c:1044
 msgid "Weeks"
-msgstr ""
+msgstr "Weeks"
 
 #: find.c:1046
 msgid "Year"
-msgstr ""
+msgstr "Year"
 
 #: find.c:1046
 msgid "Years"
-msgstr ""
+msgstr "Years"
 
 #: find.c:1055
 msgid "Ago"
-msgstr ""
+msgstr "Ago"
 
 #: find.c:1057
 msgid "Hence"
-msgstr ""
+msgstr "Hence"
 
 #: find.c:1072
 msgid "atime"
-msgstr ""
+msgstr "atime"
 
 #: find.c:1074
 msgid "ctime"
-msgstr ""
+msgstr "ctime"
 
 #: find.c:1076
 msgid "mtime"
-msgstr ""
+msgstr "mtime"
 
 #: find.c:1078
 msgid "size"
-msgstr ""
+msgstr "size"
 
 #: find.c:1080
 msgid "inode"
-msgstr ""
+msgstr "inode"
 
 #: find.c:1082
 msgid "nlinks"
-msgstr ""
+msgstr "nlinks"
 
 #: find.c:1084
 msgid "uid"
-msgstr ""
+msgstr "uid"
 
 #: find.c:1086
 msgid "gid"
-msgstr ""
+msgstr "gid"
 
 #: find.c:1088
 msgid "blocks"
-msgstr ""
+msgstr "blocks"
 
 #: gtksavebox.c:249
 msgid "Save As:"
@@ -1489,9 +1508,9 @@ msgstr "未命名的"
 
 #: gtksavebox.c:474
 msgid ""
-"Remote application wants to use Direct Save, but I can't read the "
-"XdndDirectSave0 (type text/plain) property.\n"
+"Remote application wants to use Direct Save, but I can't read the XdndDirectSave0 (type text/plain) property.\n"
 msgstr ""
+"Remote application wants to use Direct Save, but I can't read the XdndDirectSave0 (type text/plain) property.\n"
 
 #: gtksavebox.c:599
 msgid ""
@@ -1506,6 +1525,8 @@ msgid ""
 "\n"
 "---\n"
 msgstr ""
+"\n"
+"---\n"
 
 #: gui_support.c:525
 #, c-format
@@ -1517,14 +1538,12 @@ msgstr "尝试以文本方式读取XML文件。发现文件 '%s' 已损坏."
 msgid ""
 "Error in '%s' file at line %d: \n"
 "\"%s\"\n"
-"This may be due to upgrading from a previous version of ROX-Filer. Open the "
-"Options window and try changing something and then changing it back (causing "
-"the file to be resaved).\n"
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the Options window and try changing something and then changing it back (causing the file to be resaved).\n"
 "Further errors will be ignored."
 msgstr ""
 "发现错误于文件 '%s' 的行数 %d：\n"
 "\"%s\"\n"
-"原因可能是从旧版本上升级 ROX-Filer，请打开选项窗口并点选储存确定.\n"
+"原因可能是从旧版本上升级 Rox-Filer2，请打开选项窗口并点选储存确定.\n"
 "往后的错误会被忽略."
 
 #: gui_support.c:1134
@@ -1538,15 +1557,13 @@ msgstr "未能打开文件 '%s': %s"
 
 #: gui_support.c:1515
 #, c-format
-msgid ""
-"Failed to load image '%s': reason not known, probably a corrupt image file"
+msgid "Failed to load image '%s': reason not known, probably a corrupt image file"
 msgstr "未能载入影像 '%s'： 原因不明，可能是文件损毁"
 
 #: gui_support.c:1581
 #, c-format
 msgid ""
-"This program (%s) cannot be run, as the 0launch command is not available. It "
-"can be downloaded from here:\n"
+"This program (%s) cannot be run, as the 0launch command is not available. It can be downloaded from here:\n"
 "\n"
 "http://0install.net/injector.html"
 msgstr ""
@@ -1555,22 +1572,20 @@ msgstr ""
 "http://0install.net/injector.html"
 
 #: i18n.c:39
-msgid ""
-"Note that you must save your choices and restart the filer for the new "
-"language setting to take full effect."
-msgstr "请重新启动ROX-Filer，新的语言设定才会完全生效"
+msgid "Note that you must save your choices and restart the filer for the new language setting to take full effect."
+msgstr "请重新启动Rox-Filer2，新的语言设定才会完全生效"
 
 #: icon.c:76
 msgid "(click to set)"
 msgstr "(点击以设定)"
 
 #: icon.c:131
-msgid "ROX-Filer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2"
+msgstr "Rox-Filer2"
 
 #: icon.c:132 menu.c:294
-msgid "About ROX-Filer..."
-msgstr "关于 ROX-Filer..."
+msgid "About Rox-Filer2..."
+msgstr "关于 Rox-Filer2..."
 
 #: icon.c:133 menu.c:295
 msgid "Show Help Files"
@@ -1623,7 +1638,7 @@ msgstr "移除项目"
 #: icon.c:318 log.c:111 menu.c:851
 #, c-format
 msgid "%s '%s'"
-msgstr ""
+msgstr "%s '%s'"
 
 #: icon.c:331
 msgid "Nothing"
@@ -1712,7 +1727,6 @@ msgid "<b>Contents indicate...</b>"
 msgstr "<b>内容指示为...</b>"
 
 #: infobox.c:315
-#, fuzzy
 msgid "<b>When all directories are closed</b>"
 msgstr "只记录已被复制的目录"
 
@@ -1872,13 +1886,12 @@ msgid "Sticky"
 msgstr "Sticky"
 
 #: infobox.c:1064
-#, fuzzy
 msgid "Do nothing"
 msgstr "<空的>"
 
 #: infobox.c:1070
 msgid "Ask"
-msgstr ""
+msgstr "Ask"
 
 #: infobox.c:1082
 msgid "Symbolic link"
@@ -1907,8 +1920,8 @@ msgid "Mount point (%s)"
 msgstr "挂载点 (%s)"
 
 #: log.c:54
-msgid "ROX-Filer started"
-msgstr "ROX-Filer 已启动"
+msgid "Rox-Filer2 started"
+msgstr "Rox-Filer2 已启动"
 
 #: log.c:115
 #, c-format
@@ -1930,20 +1943,30 @@ msgstr "动作"
 #: main.c:97
 msgid ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
 "to the extent permitted by law.\n"
-"You may redistribute copies of ROX-Filer\n"
+"You may redistribute copies of Rox-Filer2\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"
 msgstr ""
+"Copyright (C) 2005 Thomas Leonard.\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
+"to the extent permitted by law.\n"
+"You may redistribute copies of Rox-Filer2\n"
+"under the terms of the GNU General Public License.\n"
+"For more information about these matters, see the file named COPYING.\n"
 
 #: main.c:106
-msgid "Try `ROX-Filer/AppRun --help' for more information.\n"
+msgid ""
+"Try `Rox-Filer2/AppRun --help' for more information.\n"
 msgstr ""
+"Try `Rox-Filer2/AppRun --help' for more information.\n"
 
 #: main.c:109
-msgid "Try `ROX-Filer/AppRun -h' for more information.\n"
+msgid ""
+"Try `Rox-Filer2/AppRun -h' for more information.\n"
 msgstr ""
+"Try `Rox-Filer2/AppRun -h' for more information.\n"
 
 #: main.c:111
 msgid ""
@@ -1951,51 +1974,23 @@ msgid ""
 "you must use the short versions instead.\n"
 "\n"
 msgstr ""
-
-#: main.c:117
-#, c-format
-msgid ""
-"Usage: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Open each directory or file listed, or the current working\n"
-"directory if no arguments are given.\n"
+"NOTE: Your system does not support long options - \n"
+"you must use the short versions instead.\n"
 "\n"
-"  -b, --border=PANEL\topen PANEL as a border panel\n"
-"  -B, --bottom=PANEL\topen PAN as a bottom-edge panel\n"
-"  -c, --client-id=ID\tused for session management\n"
-"  -d, --dir=DIR\t\topen DIR as directory (not application)\n"
-"  -D, --close=DIR\tclose DIR and its subdirectories\n"
-"  -h, --help\t\tdisplay this help and exit\n"
-"  -l, --left=PANEL\topen PAN as a left-edge panel\n"
-"  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"
-"  -n, --new\t\tstart new copy; for debugging the filer\n"
-"  -p, --pinboard=PIN\tuse pinboard PIN as the pinboard\n"
-"  -r, --right=PANEL\topen PAN as a right-edge panel\n"
-"  -R, --RPC\t\tinvoke method call read from stdin\n"
-"  -s, --show=FILE\topen a directory showing FILE\n"
-"  -S, --rox-session\tuse default panel and pinboard options, and -n\n"
-"  -t, --top=PANEL\topen PANEL as a top-edge panel\n"
-"  -u, --user\t\tshow user name in each window \n"
-"  -U, --url=URL\t\topen file or directory in URI form\n"
-"  -v, --version\t\tdisplay the version information and exit\n"
-"  -x, --examine=FILE\tFILE has changed - re-examine it\n"
-"\n"
-"Report bugs to %s.\n"
-"Home page (including updated versions): http://rox.sourceforge.net/\n"
-msgstr ""
 
 #: main.c:239
 msgid ""
-"We got a BadWindow error from the X server. This might be due to this GTK "
-"bug (during drag-and-drop?):\n"
+"We got a BadWindow error from the X server. This might be due to this GTK bug (during drag-and-drop?):\n"
 "http://bugzilla.gnome.org/show_bug.cgi?id=152151\n"
 "Trying to continue..."
 msgstr ""
+"We got a BadWindow error from the X server. This might be due to this GTK bug (during drag-and-drop?):\n"
+"http://bugzilla.gnome.org/show_bug.cgi?id=152151\n"
+"Trying to continue..."
 
 #: main.c:401
-msgid ""
-"The -o argument is no longer used. You can turn on override redirect from "
-"the Options box instead."
-msgstr ""
+msgid "The -o argument is no longer used. You can turn on override redirect from the Options box instead."
+msgstr "The -o argument is no longer used. You can turn on override redirect from the Options box instead."
 
 #: main.c:532
 #, c-format
@@ -2004,37 +1999,41 @@ msgstr "执行用户为 '%s'"
 
 #: main.c:695
 #, c-format
-msgid "Compiled with GTK version %s\n"
+msgid ""
+"Compiled with GTK version %s\n"
 msgstr ""
+"Compiled with GTK version %s\n"
 
 #: main.c:696
 #, c-format
-msgid "Running with GTK version %d.%d.%d\n"
+msgid ""
+"Running with GTK version %d.%d.%d\n"
 msgstr ""
+"Running with GTK version %d.%d.%d\n"
 
 #: main.c:700
 msgid "features set at compile time"
-msgstr ""
+msgstr "features set at compile time"
 
 #: main.c:701
 msgid "Large File Support"
-msgstr ""
+msgstr "Large File Support"
 
 #: main.c:708
 msgid "Binary compatibility"
-msgstr ""
+msgstr "Binary compatibility"
 
 #: main.c:710
 msgid "Yes (can run with older glibc versions)"
-msgstr ""
+msgstr "Yes (can run with older glibc versions)"
 
 #: main.c:712
 msgid "No (apsymbols.h not found)"
-msgstr ""
+msgstr "No (apsymbols.h not found)"
 
 #: main.c:716
 msgid "Extended attribute support"
-msgstr ""
+msgstr "Extended attribute support"
 
 #: main.c:863
 #, c-format
@@ -2056,19 +2055,20 @@ msgid "Error creating '%s': %s"
 msgstr "错误创建 '%s': %s"
 
 #: main.c:980
-#, fuzzy
 msgid "Save"
 msgstr "另存为："
 
 #: main.c:985
 msgid "Start script"
-msgstr ""
+msgstr "Start script"
 
 #: main.c:1010
 msgid ""
-"Click to save a script to run ROX-Filer.\n"
+"Click to save a script to run Rox-Filer2.\n"
 "If you are using Zero Install you should use 0alias instead."
 msgstr ""
+"Click to save a script to run Rox-Filer2.\n"
+"If you are using Zero Install you should use 0alias instead."
 
 #: menu.c:211
 msgid "Display"
@@ -2119,17 +2119,14 @@ msgid "Sort by Type"
 msgstr "以类型排序"
 
 #: menu.c:226
-#, fuzzy
 msgid "Sort by Date (atime)"
 msgstr "以日期排序"
 
 #: menu.c:227
-#, fuzzy
 msgid "Sort by Date (ctime)"
 msgstr "以日期排序"
 
 #: menu.c:228
-#, fuzzy
 msgid "Sort by Date (mtime)"
 msgstr "以日期排序"
 
@@ -2174,13 +2171,12 @@ msgid "Save Current Display Settings..."
 msgstr "储存当前设定..."
 
 #: menu.c:242
-#, fuzzy
 msgid "Cut"
 msgstr "计算"
 
 #: menu.c:243
 msgid "Duplicate..."
-msgstr ""
+msgstr "Duplicate..."
 
 #: menu.c:244
 msgid "Rename..."
@@ -2190,13 +2186,11 @@ msgstr "改名..."
 msgid "Link..."
 msgstr "链接..."
 
-#: menu.c:249
-#, fuzzy
+#: menu.c
 msgid "Open With..."
 msgstr "图标，并显示..."
 
 #: menu.c:254
-#, fuzzy
 msgid "Extended attributes..."
 msgstr "扩展属性"
 
@@ -2234,7 +2228,7 @@ msgstr "条件式选择"
 
 #: menu.c:270
 msgid "Paste"
-msgstr ""
+msgstr "Paste"
 
 #: menu.c:272 toolbar.c:170
 msgid "New"
@@ -2327,15 +2321,11 @@ msgstr "以文字模式打开"
 
 #: menu.c:1136
 msgid ""
-"Extended attributes, used to store types, are not supported for this file or "
-"files.\n"
-"This may be due to lack of support from the filesystem or the C library, or "
-"it may simply be that the filesystem needs to be mounted with the right "
-"mount option ('user_xattr' on Linux)."
+"Extended attributes, used to store types, are not supported for this file or files.\n"
+"This may be due to lack of support from the filesystem or the C library, or it may simply be that the filesystem needs to be mounted with the right mount option ('user_xattr' on Linux)."
 msgstr ""
 "此文件不支持 '扩展属性'这个新功能.\n"
-"可能是阁下的文件系统或 C 函式库不支持，又或在挂载文件系统时,没有套用正确的参"
-"数，挂载选项 ('user_xattr' on Linux)."
+"可能是阁下的文件系统或 C 函式库不支持，又或在挂载文件系统时,没有套用正确的参数，挂载选项 ('user_xattr' on Linux)."
 
 #: menu.c:1142
 msgid "Setting type not supported for some of these files"
@@ -2347,15 +2337,11 @@ msgstr "相对链接(_R)"
 
 #: menu.c:1185
 msgid ""
-"If on, the symlink will store the path from the symlink to the target file. "
-"Use this if the symlink and the target will be moved together.\n"
-"If off, the path from the root directory is stored - use this if the symlink "
-"may move but the target will stay put."
+"If on, the symlink will store the path from the symlink to the target file. Use this if the symlink and the target will be moved together.\n"
+"If off, the path from the root directory is stored - use this if the symlink may move but the target will stay put."
 msgstr ""
-"开启后,链接会储存从本身到目标的路径，这选项适用于当链接及目标，会同时移动的时"
-"侯.\n"
-"关闭时,链接会储存从根目录到目标的路径，这选项适用于当链接移动，但目标不变的时"
-"侯."
+"开启后,链接会储存从本身到目标的路径，这选项适用于当链接及目标，会同时移动的时侯.\n"
+"关闭时,链接会储存从根目录到目标的路径，这选项适用于当链接移动，但目标不变的时侯."
 
 #: menu.c:1257
 msgid "New pathname is not absolute"
@@ -2388,36 +2374,27 @@ msgid "Error creating file: could not find the template for %s"
 msgstr "错误创建文件: 找不到样板予 %s"
 
 #: menu.c:1611
-#, fuzzy, c-format
+#, c-format
 msgid ""
-"The `Send To' menu provides a quick way to send some files to an "
-"application. The applications listed are those in the following "
-"directories:\n"
+"The `Send To' menu provides a quick way to send some files to an application. The applications listed are those in the following directories:\n"
 "\n"
 "%s\n"
 "%s\n"
 "The `Send To' menu may be opened by Shift+Menu clicking over a file.\n"
 "\n"
 "Advanced use:\n"
-"You can also create subdirectories called `.text_html', `.text', etc which "
-"will only be shown for files of that type and shared with the file menu. In "
-"addition, `.group' is shown only when multiple files are selected. `.all' is "
-"only for the menu."
+"You can also create subdirectories called `.text_html', `.text', etc which will only be shown for files of that type and shared with the file menu. In addition, `.group' is shown only when multiple files are selected. `.all' is only for the menu."
 msgstr ""
-"利用'传送至'此功能，你可快速的将要打开的文件发送到某个应用程序上，该等应用程"
-"序在以下的目录内:\n"
+"利用'传送至'此功能，你可快速的将要打开的文件发送到某个应用程序上，该等应用程序在以下的目录内:\n"
 "\n"
 "%s\n"
 "%s\n"
 "'传送至'功能，可用鼠标和Shift+Menu来快速打开.\n"
 "高级用法:\n"
-"您亦可建立子目录 `.text_html', `.text'等等，该子目录只会在打开该类型文件时出"
-"现。 `.group' 只会在选择多个文件时出现."
+"您亦可建立子目录 `.text_html', `.text'等等，该子目录只会在打开该类型文件时出现。 `.group' 只会在选择多个文件时出现."
 
 #: menu.c:1623
-msgid ""
-"I'll show you your SendTo directory now; you should symlink (Ctrl+Shift "
-"drag) any applications you want into it."
+msgid "I'll show you your SendTo directory now; you should symlink (Ctrl+Shift drag) any applications you want into it."
 msgstr "请将适用的程序以符号链接 (Ctrl+Shift并拖放)到'传送至'的目录内."
 
 #: menu.c:1626 menu.c:1666
@@ -2427,16 +2404,14 @@ msgstr "不容许自定 CHOICE 路径"
 #: menu.c:1659
 #, c-format
 msgid ""
-"Any files placed in your Templates directories will appear on the `New' "
-"menu. Choosing one of them will make a copy of it as the new file.\n"
+"Any files placed in your Templates directories will appear on the `New' menu. Choosing one of them will make a copy of it as the new file.\n"
 "\n"
 "The following directories contain templates:\n"
 "\n"
 "%s\n"
 "%s\n"
 msgstr ""
-"所有放在样板目录下的文件，也会出现在 `新增' 菜单中，点选它们时会自动复制一个"
-"新文件到目录内.\n"
+"所有放在样板目录下的文件，也会出现在 `新增' 菜单中，点选它们时会自动复制一个新文件到目录内.\n"
 "\n"
 "以下是包含样板文件的目录:\n"
 "\n"
@@ -2444,9 +2419,7 @@ msgstr ""
 "%s\n"
 
 #: menu.c:1664
-msgid ""
-"I'll show you your Templates directory now; you should place any template "
-"files you want inside it."
+msgid "I'll show you your Templates directory now; you should place any template files you want inside it."
 msgstr "现在显示您的样板文件目录；您可放进任何需要的样板文件 ."
 
 #: menu.c:2012
@@ -2458,30 +2431,26 @@ msgid "This is already the canonical name for this directory."
 msgstr "此目录已有规范性名称"
 
 #: menu.c:2141
-msgid ""
-"You can't open a second view onto this directory because the `Unique "
-"Windows' option is turned on in the Options window."
-msgstr ""
-"你不能对此目录打开第二个窗口，因为你已在选项->Filer窗口内选了「唯一的窗口」的"
-"功能."
+msgid "You can't open a second view onto this directory because the `Unique Windows' option is turned on in the Options window."
+msgstr "你不能对此目录打开第二个窗口，因为你已在选项->Filer窗口内选了「唯一的窗口」的功能."
 
 #: menu.c:2313
 msgid "The clipboard is empty."
-msgstr ""
+msgstr "The clipboard is empty."
 
 #: menu.c:2358
-#, fuzzy, c-format
+#, c-format
 msgid "Copy of %s"
 msgstr "?复制%s 为 %s？"
 
 #: menu.c:2364
-#, fuzzy, c-format
+#, c-format
 msgid "Copy(%d) of %s"
 msgstr "?复制%s 为 %s？"
 
 #: menu.c:2430
 msgid "Duplicate ... ?"
-msgstr ""
+msgstr "Duplicate ... ?"
 
 #: menu.c:2433
 msgid "Rename ... ?"
@@ -2500,7 +2469,6 @@ msgid "Properties of ... ?"
 msgstr "属性...？"
 
 #: menu.c:2446
-#, fuzzy
 msgid "Extended attributes of ... ?"
 msgstr "扩展属性"
 
@@ -2537,13 +2505,12 @@ msgid "Search inside ... ?"
 msgstr "搜索内部...？"
 
 #: menu.c:2474
-#, fuzzy
 msgid "Copy ... to clipboard ?"
 msgstr "复制...？"
 
 #: menu.c:2477
 msgid "Cut ... to clipboard ?"
-msgstr ""
+msgstr "Cut ... to clipboard ?"
 
 #: menu.c:2556
 msgid "You cannot do this to more than one item at a time"
@@ -2551,7 +2518,7 @@ msgstr "不可同时以此方式处理多个项目"
 
 #: menu.c:2583
 msgid "Duplicate"
-msgstr ""
+msgstr "Duplicate"
 
 #: menu.c:2588
 msgid "Rename"
@@ -2563,11 +2530,9 @@ msgstr "符号链接"
 
 #: menu.c:2628
 msgid ""
-"User-definable shortcuts are disabled by default in Gtk2, and you have not "
-"enabled them. You can turn this feature on by:\n"
+"User-definable shortcuts are disabled by default in Gtk2, and you have not enabled them. You can turn this feature on by:\n"
 "\n"
-"1) using an XSettings manager, such as ROX-Session or gnome-settings-daemon, "
-"or\n"
+"1) using an XSettings manager, such as ROX-Session or gnome-settings-daemon, or\n"
 "\n"
 "2) adding this line to ~/.gtkrc-2.0:\n"
 "\tgtk-can-change-accels = 1\n"
@@ -2588,8 +2553,7 @@ msgid ""
 "- Move the pointer over the item you want to use,\n"
 "- Press the key you want attached to it.\n"
 "\n"
-"The key will appear next to the menu item and you can just press that key "
-"without opening the menu in future."
+"The key will appear next to the menu item and you can just press that key without opening the menu in future."
 msgstr ""
 "对菜单上某一项目配置热键：\n"
 "\n"
@@ -2597,8 +2561,7 @@ msgstr ""
 "- 再以鼠标指向该项目,\n"
 "- 在键盘上按下某些你想配置的按键.\n"
 "\n"
-"对应的热键会出现在菜单的某个项目上，而日后你想打开这一项目，只须按下热键而不"
-"需先打开菜单."
+"对应的热键会出现在菜单的某个项目上，而日后你想打开这一项目，只须按下热键而不需先打开菜单."
 
 #: menu.c:2654
 msgid "Set keyboard shortcuts"
@@ -2625,16 +2588,11 @@ msgid "Pattern:"
 msgstr "式样："
 
 #: minibuffer.c:269
-msgid ""
-"Enter the name of a file and I'll display it for you. Press Tab to fill in "
-"the longest match. Escape to close the minibuffer."
-msgstr ""
-"输入文件名称前的字符，按下键盘的 Tab 键，会自动帮您找出匹配的文件，如要关闭小"
-"型命令框，请按下 Esc 键."
+msgid "Enter the name of a file and I'll display it for you. Press Tab to fill in the longest match. Escape to close the minibuffer."
+msgstr "输入文件名称前的字符，按下键盘的 Tab 键，会自动帮您找出匹配的文件，如要关闭小型命令框，请按下 Esc 键."
 
 #: minibuffer.c:275
-msgid ""
-"Enter a shell command to execute. Click on a file to add it to the buffer."
+msgid "Enter a shell command to execute. Click on a file to add it to the buffer."
 msgstr "在此输入指令，再以鼠标点击文件加进命令框来执行."
 
 #: minibuffer.c:280
@@ -2656,9 +2614,7 @@ msgstr ""
 "*.png 代表任何名称结尾为 '.png')"
 
 #: minibuffer.c:292
-msgid ""
-"Enter a pattern to match for files to be shown.  An empty filter turns the "
-"filter off."
+msgid "Enter a pattern to match for files to be shown.  An empty filter turns the filter off."
 msgstr "输入一个式样用以匹配要显示的文件，空的选择会关闭过滤规则."
 
 #: minibuffer.c:925
@@ -2668,7 +2624,7 @@ msgstr "非法的搜寻定义"
 #: mount.c:103
 #, c-format
 msgid "File system table \"%s\" not found, cannot monitor system mounts"
-msgstr ""
+msgstr "File system table \"%s\" not found, cannot monitor system mounts"
 
 #: mount.c:393
 #, c-format
@@ -2676,7 +2632,7 @@ msgid "%s total, %s used, %s free (%.1f %%)"
 msgstr "%s 总数, %s 已用, %s 空间 (%.1f %%)"
 
 #: options.c:275
-msgid "ROX-Filer has converted your Options file to the new XML format"
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
 msgstr "你旧的设定资源文件已转为新的XML格式."
 
 #: options.c:535 options.c:1256
@@ -2730,16 +2686,14 @@ msgstr "未能替化 '%s'"
 #: panel.c:329
 #, c-format
 msgid "Unable to save '%s'"
-msgstr ""
+msgstr "Unable to save '%s'"
 
 #: panel.c:532
 msgid "Your old panel file has been converted to the new XML format."
 msgstr "你的旧面板资源文件已转为新的XML格式."
 
 #: panel.c:640
-msgid ""
-"You have tried to close a panel via the window manager - I usually find that "
-"this is accidental... really close?"
+msgid "You have tried to close a panel via the window manager - I usually find that this is accidental... really close?"
 msgstr "你要从Window Manger中关闭面板，确定要关闭？"
 
 #: panel.c:741
@@ -2810,24 +2764,18 @@ msgid "Your old pinboard file has been converted to the new XML format."
 msgstr "你的旧桌面资源文件已转为新的XML格式."
 
 #: pinboard.c:730
-msgid ""
-"The backdrop handler must be an application directory. Drag an application "
-"directory into the Set Backdrop dialog box, or (for programmers) pass it to "
-"the SOAP SetBackdropApp method."
+msgid "The backdrop handler must be an application directory. Drag an application directory into the Set Backdrop dialog box, or (for programmers) pass it to the SOAP SetBackdropApp method."
 msgstr "桌面处理工具是一个程序目录，请于设定对话框内，拖进要加入的程序."
 
 #: pinboard.c:749
 msgid ""
-"You can only set the backdrop to an image or to a program which knows how to "
-"manage ROX-Filer's backdrop.\n"
+"You can only set the backdrop to an image or to a program which knows how to manage Rox-Filer2's backdrop.\n"
 "\n"
-"Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
-"element, as described in ROX-Filer's manual."
+"Programmers: the application's AppInfo.xml must contain the CanSetBackdrop element, as described in Rox-Filer2's manual."
 msgstr ""
-"只可给背景设为影像文件，或设给一个可管理 ROX-Filer 背景的程序.\n"
+"只可给背景设为影像文件，或设给一个可管理 Rox-Filer2 背景的程序.\n"
 "\n"
-"程序员注意: 程序内的 AppInfo.xml 必须包含 CanSetBackdrop 这元素，可参阅 ROX-"
-"Filer 的指南."
+"程序员注意: 程序内的 AppInfo.xml 必须包含 CanSetBackdrop 这元素，可参阅 Rox-Filer2 的指南."
 
 #: pinboard.c:769
 msgid "Set backdrop"
@@ -2854,9 +2802,7 @@ msgid "Scale"
 msgstr "调整"
 
 #: pinboard.c:798
-msgid ""
-"Scale the image to fit the backdrop area, regardless of image dimensions - "
-"overscale"
+msgid "Scale the image to fit the backdrop area, regardless of image dimensions - overscale"
 msgstr "调整影像致匹配全个背景区，不管影像的任何大小"
 
 #: pinboard.c:800
@@ -2884,16 +2830,11 @@ msgid "Drop an image here"
 msgstr "拖放图像到此处"
 
 #: pinboard.c:870
-msgid ""
-"No pinboard was in use... the 'Default' pinboard has been selected. Use 'rox "
-"-p=Default' to turn it on in future."
-msgstr ""
-"没有设定所用桌面，桌面将会选用缺省值，亦可用指令 'rox -p=Default' 来启动."
+msgid "No pinboard was in use... the 'Default' pinboard has been selected. Use 'rox -p=Default' to turn it on in future."
+msgstr "没有设定所用桌面，桌面将会选用缺省值，亦可用指令 'rox -p=Default' 来启动."
 
 #: pinboard.c:964
-msgid ""
-"Only files (and certain applications) can be used to set the background "
-"image."
+msgid "Only files (and certain applications) can be used to set the background image."
 msgstr "只有文件(及某些应用程序)才可用作设定背景"
 
 #: pinboard.c:1624
@@ -3003,13 +2944,10 @@ msgstr "%s: 没有工具处理 %s"
 #: run.c:394
 msgid ""
 "Application:\n"
-"This is an application directory - you can run it as a program, or open it "
-"(hold down Shift while you open it). Most applications provide their own "
-"help here, but this one doesn't."
+"This is an application directory - you can run it as a program, or open it (hold down Shift while you open it). Most applications provide their own help here, but this one doesn't."
 msgstr ""
 "应用程序：\n"
-"这是一个执行程序的目录 - 你可执行或打开它(打开时按下Shift键)，但此程序并没有"
-"帮助档."
+"这是一个执行程序的目录 - 你可执行或打开它(打开时按下Shift键)，但此程序并没有帮助档."
 
 #: run.c:478
 #, c-format
@@ -3028,20 +2966,14 @@ msgstr "无效的链接档 (或权限问题)：%s"
 
 #: run.c:573
 #, c-format
-msgid ""
-"No run action specified for files of this type (%s/%s) - you can set a run "
-"action by choosing `Set Run Action' from the File menu, or you can just drag "
-"the file to an application.%s"
-msgstr ""
-"没有标记的执行动作对应此类文件 (%s/%s) - 你可在菜单中的 `设定运行程序' 设入程"
-"式，或将此文件拖放到指定的程序上.%s"
+msgid "No run action specified for files of this type (%s/%s) - you can set a run action by choosing `Set Run Action' from the File menu, or you can just drag the file to an application.%s"
+msgstr "没有标记的执行动作对应此类文件 (%s/%s) - 你可在菜单中的 `设定运行程序' 设入程式，或将此文件拖放到指定的程序上.%s"
 
 #: run.c:579
 msgid ""
 "\n"
 "\n"
-"Note: If this is a computer program which you want to run, you need to set "
-"the execute bit by choosing Permissions from the File menu."
+"Note: If this is a computer program which you want to run, you need to set the execute bit by choosing Permissions from the File menu."
 msgstr ""
 "\n"
 "\n"
@@ -3050,25 +2982,17 @@ msgstr ""
 #: run.c:753
 #, c-format
 msgid ""
-"Executable '%s' is world-writeable! Refusing to run. Please change the "
-"permissions now (this problem may have been caused by a bug in earlier "
-"versions of the filer).\n"
+"Executable '%s' is world-writeable! Refusing to run. Please change the permissions now (this problem may have been caused by a bug in earlier versions of the filer).\n"
 "\n"
-"Having (non-symlink) run actions world-writeable means that other people who "
-"use your computer can replace your run actions with malicious versions.\n"
+"Having (non-symlink) run actions world-writeable means that other people who use your computer can replace your run actions with malicious versions.\n"
 "\n"
-"If you trust everyone who could write to these files then you needn't worry. "
-"Otherwise, you should check, or even just delete, all the existing run "
-"actions."
+"If you trust everyone who could write to these files then you needn't worry. Otherwise, you should check, or even just delete, all the existing run actions."
 msgstr ""
-"可执行档 '%s' 是一个共享写入的文件！现被拒绝执行。请先将其权限更改 (这个问题"
-"可能是源于早期版本的ROX-Filer 的一些臭虫)。\n"
+"可执行档 '%s' 是一个共享写入的文件！现被拒绝执行。请先将其权限更改 (这个问题可能是源于早期版本的Rox-Filer2 的一些臭虫)。\n"
 "\n"
-"在电脑上有共享写入的可执行文件(非链接性)，意味着您电脑上的其他用户可将这文件"
-"用恶意程序替换。\n"
+"在电脑上有共享写入的可执行文件(非链接性)，意味着您电脑上的其他用户可将这文件用恶意程序替换。\n"
 "\n"
-"假如您认为其他用户是可靠的，便无需理会这问题。否则，您便应该检查或删除所有这"
-"类文件"
+"假如您认为其他用户是可靠的，便无需理会这问题。否则，您便应该检查或删除所有这类文件"
 
 #: run.c:766
 msgid "go-w (Fix security problem)"
@@ -3146,6 +3070,9 @@ msgid ""
 "Center: Return to normal Icon View\n"
 "Right: cycle extra details"
 msgstr ""
+"Left: toggle List View\n"
+"Center: Return to normal Icon View\n"
+"Right: cycle extra details"
 
 #: toolbar.c:151
 msgid "Sort"
@@ -3160,7 +3087,6 @@ msgid "Hidden"
 msgstr "隐藏"
 
 #: toolbar.c:155
-#, fuzzy
 msgid ""
 "Left: Show/hide hidden files\n"
 "Center: Reset to defaults\n"
@@ -3171,10 +3097,9 @@ msgstr ""
 
 #: toolbar.c:161
 msgid "Dirs"
-msgstr ""
+msgstr "Dirs"
 
 #: toolbar.c:161
-#, fuzzy
 msgid ""
 "Left: Show dirs only\n"
 "Right: Show files only"
@@ -3192,10 +3117,13 @@ msgid ""
 "Center: New Blank file\n"
 "Right: Menu"
 msgstr ""
+"Left: New Directory\n"
+"Center: New Blank file\n"
+"Right: Menu"
 
 #: toolbar.c:176
-msgid "Show ROX-Filer help"
-msgstr "显示ROX-Filer帮助"
+msgid "Show Rox-Filer2 help"
+msgstr "显示Rox-Filer2帮助"
 
 #: toolbar.c:239
 #, c-format
@@ -3330,8 +3258,7 @@ msgid "Set run action"
 msgstr "设定执行的动作"
 
 #: type.c:996
-msgid ""
-"If a handler for the specific type isn't set up, use this as the default."
+msgid "If a handler for the specific type isn't set up, use this as the default."
 msgstr "如这些特殊类型还未设立处理工具，便以此为缺省值."
 
 #: type.c:998
@@ -3365,9 +3292,7 @@ msgid "_Use Command"
 msgstr "套用指令(_U)"
 
 #: type.c:1092
-msgid ""
-"A run action already exists and is quite a big program - are you sure you "
-"want to delete it?"
+msgid "A run action already exists and is quite a big program - are you sure you want to delete it?"
 msgstr "一个相同而颇大的程序正在执行中 - 你决定要删除它？"
 
 #: type.c:1103
@@ -3394,8 +3319,7 @@ msgstr "路径不存在，更改图标失败"
 
 #: usericons.c:199 usericons.c:628
 msgid ""
-"Unable to load image file -- maybe it's not in a format I understand, or "
-"maybe the permissions are wrong?\n"
+"Unable to load image file -- maybe it's not in a format I understand, or maybe the permissions are wrong?\n"
 "The icon has not been changed."
 msgstr ""
 "不能载入图档 -- 可能是格式不明，或文件权限错误？\n"
@@ -3420,8 +3344,7 @@ msgid "Set icon"
 msgstr "设定图标"
 
 #: usericons.c:291
-msgid ""
-"Use a copy of the image as the default for all files of these MIME types."
+msgid "Use a copy of the image as the default for all files of these MIME types."
 msgstr "用这个图像作为所有属于此种 MIME 类型的文件的缺省图标."
 
 #: usericons.c:293
@@ -3439,9 +3362,7 @@ msgid "For all files of type `%s' (%s/%s)"
 msgstr "对应此类型 `%s' (%s/%s)"
 
 #: usericons.c:306
-msgid ""
-"Add the file and image filenames to your personal list. The setting will be "
-"lost if the image or the file is moved."
+msgid "Add the file and image filenames to your personal list. The setting will be lost if the image or the file is moved."
 msgstr "加入文件名称或图像名称到个人列表中，假如文件或图像遗失,设置将会无效."
 
 #: usericons.c:309
@@ -3450,13 +3371,8 @@ msgid "Only for the file `%s'"
 msgstr "仅对应文件 `%s'"
 
 #: usericons.c:317
-msgid ""
-"Copy the image inside the directory, as a hidden file called '.DirIcon'. All "
-"users will then see the icon, and you can move the directory around safely. "
-"This is usually the best option if you can write to the directory."
-msgstr ""
-"复制图像进此目录并命名为 '.DirIcon', 让所有用户均可看见这个图标，假如您拥有这"
-"目录的写入权限；这将会是个最好的设置方式."
+msgid "Copy the image inside the directory, as a hidden file called '.DirIcon'. All users will then see the icon, and you can move the directory around safely. This is usually the best option if you can write to the directory."
+msgstr "复制图像进此目录并命名为 '.DirIcon', 让所有用户均可看见这个图标，假如您拥有这目录的写入权限；这将会是个最好的设置方式."
 
 #: usericons.c:323
 msgid "Copy image into directory"
@@ -3517,11 +3433,11 @@ msgstr "最后改动(_M)"
 
 #: view_details.c:1187
 msgid "Last _Changed"
-msgstr ""
+msgstr "Last _Changed"
 
 #: view_details.c:1199
 msgid "Last _Accessed"
-msgstr ""
+msgstr "Last _Accessed"
 
 #: xtypes.c:790 tips:300
 msgid "Extended attributes"
@@ -3540,9 +3456,7 @@ msgid "Never automatically resize"
 msgstr "永不自动改变窗口大小"
 
 #: tips:4
-msgid ""
-"You'll have to resize windows manually, using the window manager, the "
-"`Resize Window' menu entry or by double-clicking on the window background."
+msgid "You'll have to resize windows manually, using the window manager, the `Resize Window' menu entry or by double-clicking on the window background."
 msgstr "你将需要手动更改窗口大小或在菜单的`调整窗口大小`；或双击窗口背景改变它"
 
 #: tips:5
@@ -3550,9 +3464,7 @@ msgid "Resize when changing the display style"
 msgstr "在变更显示风格时改变大小"
 
 #: tips:6
-msgid ""
-"Changing the size of the icons or which details are displayed will resize "
-"the window for you."
+msgid "Changing the size of the icons or which details are displayed will resize the window for you."
 msgstr "当改变图标大小时或叙述时，窗口大小会自行调整"
 
 #: tips:7
@@ -3560,9 +3472,7 @@ msgid "Always resize"
 msgstr "永远改变大小"
 
 #: tips:8
-msgid ""
-"The filer will resize windows whenever it seems useful (that is, when "
-"changing directory or display style)."
+msgid "The filer will resize windows whenever it seems useful (that is, when changing directory or display style)."
 msgstr "当改变图标大小时或叙述时，及转变到其他目录时，窗口大小会自行调整."
 
 #: tips:9
@@ -3574,9 +3484,7 @@ msgid "%"
 msgstr "%"
 
 #: tips:11
-msgid ""
-"The largest size, as a percentage of the screen size, that the auto-resizer "
-"will resize a window to."
+msgid "The largest size, as a percentage of the screen size, that the auto-resizer will resize a window to."
 msgstr "窗口大小自行调整时，会跟据该百份比来限制窗口最大的值"
 
 #: tips:12
@@ -3588,9 +3496,7 @@ msgid "Short titlebar flags"
 msgstr "简化标题"
 
 #: tips:14
-msgid ""
-"Use single letters instead of words for Scanning, All and Thumbs indicators "
-"in the titlebar."
+msgid "Use single letters instead of words for Scanning, All and Thumbs indicators in the titlebar."
 msgstr "以单字母代替文件及缩略图全名作标题"
 
 #: tips:15
@@ -3598,44 +3504,31 @@ msgid "Unique windows"
 msgstr "唯一的窗口"
 
 #: tips:16
-msgid ""
-"If you open a directory and that directory is already displayed in another "
-"window, then this option causes the other window to be closed."
-msgstr ""
-"如你要打开一个目录而此目录已经存在于另一窗口内，开启此选项后你已经存在的窗口"
-"便会被关闭."
+msgid "If you open a directory and that directory is already displayed in another window, then this option causes the other window to be closed."
+msgstr "如你要打开一个目录而此目录已经存在于另一窗口内，开启此选项后你已经存在的窗口便会被关闭."
 
 #: tips:17
 msgid "Close window when dir missing"
-msgstr ""
+msgstr "Close window when dir missing"
 
 #: tips:18
-msgid ""
-"If a directory that is open in a window disappears, (deleted or unmounted) "
-"automatically close window."
-msgstr ""
+msgid "If a directory that is open in a window disappears, (deleted or unmounted) automatically close window."
+msgstr "If a directory that is open in a window disappears, (deleted or unmounted) automatically close window."
 
 #: tips:19
 msgid "New window on button 1"
 msgstr "按鼠标1(左)键以打开新窗口"
 
 #: tips:20
-msgid ""
-"Clicking with mouse button 1 (usually the left button) opens a directory in "
-"a new window with this turned on. Clicking with the button-2 (middle) will "
-"reuse the current window."
-msgstr ""
-"单击鼠标1(左)键以打开目录于新窗口内，单击鼠标2(中)键会打开目录于原有的窗口内."
+msgid "Clicking with mouse button 1 (usually the left button) opens a directory in a new window with this turned on. Clicking with the button-2 (middle) will reuse the current window."
+msgstr "单击鼠标1(左)键以打开目录于新窗口内，单击鼠标2(中)键会打开目录于原有的窗口内."
 
 #: tips:21
 msgid "Single-click navigation"
 msgstr "单击予阅览"
 
 #: tips:22 tips:139
-msgid ""
-"Clicking on an item opens it with this on. Hold down Control to select the "
-"item instead. If off, clicking once selects an item; double click to open "
-"things."
+msgid "Clicking on an item opens it with this on. Hold down Control to select the item instead. If off, clicking once selects an item; double click to open things."
 msgstr "单击项目以打开及浏览，反之则单击以选择，双击以打开."
 
 #: tips:23
@@ -3643,9 +3536,7 @@ msgid "Double-click on background resizes"
 msgstr "双击背景以调整大小"
 
 #: tips:24
-msgid ""
-"If on then double clicking on the window background resizes the window, just "
-"like clicking on the Automatic size mode button in the toolbar."
+msgid "If on then double clicking on the window background resizes the window, just like clicking on the Automatic size mode button in the toolbar."
 msgstr "如开启此功能，双击背景会自行调整窗口大小."
 
 #: tips:25
@@ -3657,9 +3548,7 @@ msgid "Directories come first (for sort by name)"
 msgstr "目录先行 (以名称排序)"
 
 #: tips:27
-msgid ""
-"If this is on then directories will always appear before anything else when "
-"sorting by name."
+msgid "If this is on then directories will always appear before anything else when sorting by name."
 msgstr "如打开此功能，则永远以目录先排序，并忽略其他排序方式及以名称排序."
 
 #: tips:28
@@ -3667,9 +3556,7 @@ msgid "Capitalised names first (for sort by name)"
 msgstr "大小写先行 (以名称排序)"
 
 #: tips:29
-msgid ""
-"If on, all filenames starting with a capital letter come before filenames "
-"starting with lowercase ones."
+msgid "If on, all filenames starting with a capital letter come before filenames starting with lowercase ones."
 msgstr "如打开此功能，则永远以大写名称先行，及小写名称在后."
 
 #: tips:31
@@ -3681,9 +3568,7 @@ msgid "Inherit options from source window"
 msgstr "从源窗口中继承选项"
 
 #: tips:33
-msgid ""
-"If this is on then display options for a new window are inherited from the "
-"source window if possible, otherwise they are set to the defaults below."
+msgid "If this is on then display options for a new window are inherited from the source window if possible, otherwise they are set to the defaults below."
 msgstr "如打开此功能，则新窗口会从源窗口之风格相同；反之，则以缺省值打开."
 
 #: tips:34
@@ -3707,9 +3592,7 @@ msgid "Show hidden files"
 msgstr "显示隐藏档"
 
 #: tips:43
-msgid ""
-"If this is on then files whose names start with a dot are shown too, "
-"otherwise they are hidden."
+msgid "If this is on then files whose names start with a dot are shown too, otherwise they are hidden."
 msgstr "如启动此功能，点文件也将被显示；否之，点文件会被隐藏."
 
 #: tips:44
@@ -3717,9 +3600,7 @@ msgid "Show extended attribute indicator"
 msgstr "显示扩展属性指标"
 
 #: tips:45
-msgid ""
-"If this is on then files which have one or more extended attributes set will "
-"have an emblem added to indicate this."
+msgid "If this is on then files which have one or more extended attributes set will have an emblem added to indicate this."
 msgstr "此选项可显示文件已设定的 一或多个扩展属性的特徵."
 
 #: tips:46 tips:47
@@ -3759,12 +3640,8 @@ msgid "Change at:"
 msgstr "改变于："
 
 #: tips:62
-msgid ""
-"When automatic icon sizing is selected: If the directory contains this many "
-"items then it will be shown using Small Icons, otherwise Large Icons will be "
-"used."
-msgstr ""
-"当目录中有太多项目时，会自行以小型图标来显示；反之，则以大型图标来显示."
+msgid "When automatic icon sizing is selected: If the directory contains this many items then it will be shown using Small Icons, otherwise Large Icons will be used."
+msgstr "当目录中有太多项目时，会自行以小型图标来显示；反之，则以大型图标来显示."
 
 #: tips:63
 msgid "Max width (Large icons):"
@@ -3775,12 +3652,8 @@ msgid "pixels"
 msgstr "像素"
 
 #: tips:65
-msgid ""
-"Text wider than this is broken onto two lines in Large Icons mode. In Huge "
-"Icons mode, text is wrapped when 50% wider than this."
-msgstr ""
-"在大图标模式下，文本文字如比此宽度长，则自动换行。在巨图标模式下，则会比宽度"
-"长百分之五十."
+msgid "Text wider than this is broken onto two lines in Large Icons mode. In Huge Icons mode, text is wrapped when 50% wider than this."
+msgstr "在大图标模式下，文本文字如比此宽度长，则自动换行。在巨图标模式下，则会比宽度长百分之五十."
 
 #: tips:66
 msgid "(Small Icons):"
@@ -3795,8 +3668,7 @@ msgid "Order large icons vertically"
 msgstr "大图标垂直排列"
 
 #: tips:70
-msgid ""
-"If this option is on, then large icons are arranged in columns, not rows."
+msgid "If this option is on, then large icons are arranged in columns, not rows."
 msgstr "开启选项，大型图标会以垂直方式排列"
 
 #: tips:71
@@ -3804,8 +3676,7 @@ msgid "Order small icons vertically"
 msgstr "小图标垂直排列"
 
 #: tips:72
-msgid ""
-"If this option is on, then small icons are arranged in columns, not rows."
+msgid "If this option is on, then small icons are arranged in columns, not rows."
 msgstr "开启选项，小型图标会以垂直方式排列"
 
 #: tips:75
@@ -3821,72 +3692,58 @@ msgid "Show full type"
 msgstr "显示详细类型"
 
 #: tips:78
-msgid ""
-"If this is on then the full description of each object's type will be show "
-"rather than a short summary of its basic type."
+msgid "If this is on then the full description of each object's type will be show rather than a short summary of its basic type."
 msgstr "更详尽的描述每一物件的类型"
 
 #: tips:79
-#, fuzzy
 msgid "Show Columns"
 msgstr "显示行列标题"
 
 #: tips:81
-#, fuzzy
 msgid "If this is on then Name column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:83
-#, fuzzy
 msgid "If this is on then Type column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:85
-#, fuzzy
 msgid "If this is on then Size column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:87
-#, fuzzy
 msgid "If this is on then Permissions column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:89
-#, fuzzy
 msgid "If this is on then Owner column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:91
-#, fuzzy
 msgid "If this is on then Group column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:92
-#, fuzzy
 msgid "Last Modified"
 msgstr "最后改动(_M)"
 
 #: tips:93
-#, fuzzy
 msgid "If this is on then Last Modified column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:94
 msgid "Last Changed"
-msgstr ""
+msgstr "Last Changed"
 
 #: tips:95
-#, fuzzy
 msgid "If this is on then Last Changed column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
 #: tips:96
-#, fuzzy
 msgid "Last Accessed"
 msgstr "'%s' 不接受存取"
 
 #: tips:97
-#, fuzzy
 msgid "If this is on then Last Accessed column will be shown in the list view."
 msgstr "以列表方式浏览时，行列标题会被显示"
 
@@ -3923,13 +3780,8 @@ msgid "Show totals of items"
 msgstr "显示项目总数"
 
 #: tips:106
-msgid ""
-"Show the number of items displayed in a filer window, as well as the number "
-"of hidden items (if any). When there's a selection, show the number of "
-"selected items and their combined size."
-msgstr ""
-"在窗口的工具栏显示项目总数，并会显示隐藏档数目；当以右键选文件时，还会显示其"
-"大小."
+msgid "Show the number of items displayed in a filer window, as well as the number of hidden items (if any). When there's a selection, show the number of selected items and their combined size."
+msgstr "在窗口的工具栏显示项目总数，并会显示隐藏档数目；当以右键选文件时，还会显示其大小."
 
 #: tips:107
 msgid "Select the buttons you want on the bar:"
@@ -3940,9 +3792,7 @@ msgid "Width of toolbar sets minimum width of window"
 msgstr "工具栏宽度决定窗口的最小宽度"
 
 #: tips:109
-msgid ""
-"Each filer window is constrained to be wide enough to show the whole of the "
-"toolbar"
+msgid "Each filer window is constrained to be wide enough to show the whole of the toolbar"
 msgstr "每一窗口必须有足够宽度来显示整个工具栏 "
 
 #: tips:110
@@ -3954,10 +3804,7 @@ msgid "Beep if Tab-completion fails"
 msgstr "哔声 当(Tab-自动完成)操作失败"
 
 #: tips:112
-msgid ""
-"When using the `Enter Path...' minibuffer and Tab is pressed, beep if "
-"nothing happens (eg, because there are several possibilities and the next "
-"letter varies)."
+msgid "When using the `Enter Path...' minibuffer and Tab is pressed, beep if nothing happens (eg, because there are several possibilities and the next letter varies)."
 msgstr "当启用`输入路径'小型命令框，在按下 Tab 键时没有作用，则会发出哔的响声"
 
 #: tips:113
@@ -3965,17 +3812,11 @@ msgid "Beep if there are several matches"
 msgstr "当找到数个匹配项时发出哔的报警声"
 
 #: tips:114
-msgid ""
-"When using the `Enter Path...' minibuffer and Tab is pressed, beep if there "
-"is more than one matching file, even though some more letters were added."
-msgstr ""
-"当启用`输入路径'小型命令框，在按下 Tab 键时，找到匹配的数目不止一个时则会发出"
-"哔的报警声声"
+msgid "When using the `Enter Path...' minibuffer and Tab is pressed, beep if there is more than one matching file, even though some more letters were added."
+msgstr "当启用`输入路径'小型命令框，在按下 Tab 键时，找到匹配的数目不止一个时则会发出哔的报警声声"
 
 #: tips:117
-msgid ""
-"When thumbnails are turned on, each image file in a directory is loaded and "
-"a small thumbnail of it is shown."
+msgid "When thumbnails are turned on, each image file in a directory is loaded and a small thumbnail of it is shown."
 msgstr "当目录内有影像或图片时，会以缩略图来预览."
 
 #: tips:118
@@ -3983,9 +3824,7 @@ msgid "Show image thumbnails"
 msgstr "显示影像档的缩略图"
 
 #: tips:119
-msgid ""
-"This is the default setting for new windows. Use the Display menu to turn "
-"thumbnails on and off for individual windows."
+msgid "This is the default setting for new windows. Use the Display menu to turn thumbnails on and off for individual windows."
 msgstr "这是新窗口的缺省值，可在菜单的显示内自行打开或关闭缩略图."
 
 #: tips:120
@@ -3997,13 +3836,8 @@ msgid "Thumbnails cache"
 msgstr "缩略图缓存区"
 
 #: tips:122
-msgid ""
-"To speed things up, the generated thumbnails are stored in the hidden ~/."
-"thumbnails directory. Click here to remove all the cached thumbnails. They "
-"will be created again as needed."
-msgstr ""
-"为了加速显示，~/.thumbnails 这个目录会自动建立；点击这处以清除缓存区内所有缩"
-"图，当有需要时它会再建立."
+msgid "To speed things up, the generated thumbnails are stored in the hidden ~/.thumbnails directory. Click here to remove all the cached thumbnails. They will be created again as needed."
+msgstr "为了加速显示，~/.thumbnails 这个目录会自动建立；点击这处以清除缓存区内所有缩图，当有需要时它会再建立."
 
 #: tips:123
 msgid "Manage thumbnails"
@@ -4014,9 +3848,7 @@ msgid "Pinboard"
 msgstr "桌面"
 
 #: tips:125
-msgid ""
-"When using a pinboard, you can drag files and applications onto the desktop "
-"background to create shortcuts to them."
+msgid "When using a pinboard, you can drag files and applications onto the desktop background to create shortcuts to them."
 msgstr "当启用桌面时，您可拖放文件或程序到桌面上它们会以捷径型式出现. "
 
 #: tips:126 tips:238
@@ -4060,9 +3892,7 @@ msgid "Fast scaling of images"
 msgstr "快速调整影像"
 
 #: tips:136
-msgid ""
-"Choose between the fast or slow method of scaling backdrop images.  The slow "
-"method can give better results."
+msgid "Choose between the fast or slow method of scaling backdrop images.  The slow method can give better results."
 msgstr "选择快慢方式来调整影像，慢方式可带来更高画质."
 
 #: tips:137
@@ -4078,9 +3908,7 @@ msgid "Keep icons within screen limits"
 msgstr "限制图标在可见屏幕上"
 
 #: tips:141
-msgid ""
-"If this is set, pinboard icons are always kept completely within screen "
-"limits, including the label."
+msgid "If this is set, pinboard icons are always kept completely within screen limits, including the label."
 msgstr "桌面内的图标和标签全显示在屏幕中"
 
 #: tips:142
@@ -4116,34 +3944,24 @@ msgid "Iconified windows"
 msgstr "图标化窗口"
 
 #: tips:150
-msgid ""
-"Most window managers provide a way to iconify (or 'minimise') windows, and "
-"various programs, including ROX-Filer, can be used to display the iconified "
-"windows."
-msgstr "ROX-Filer 可以图标化(或最小化)窗口."
+msgid "Most window managers provide a way to iconify (or 'minimise') windows, and various programs, including Rox-Filer2, can be used to display the iconified windows."
+msgstr "Rox-Filer2 可以图标化(或最小化)窗口."
 
 #: tips:152
 msgid "Show iconified windows"
 msgstr "图标化窗口"
 
 #: tips:153
-msgid ""
-"If this option is on, the filer will show each iconified window as a small "
-"button on the pinboard. Requires a compatible window manager, and the "
-"pinboard must be in use."
-msgstr ""
-"ROX-Filer 会将图标化(或最小化)窗口，以按钮型式放在桌面上，唯需要一个相容的窗"
-"口管理员配合，并 ROX-Filer 的桌面必须启动."
+msgid "If this option is on, the filer will show each iconified window as a small button on the pinboard. Requires a compatible window manager, and the pinboard must be in use."
+msgstr "Rox-Filer2 会将图标化(或最小化)窗口，以按钮型式放在桌面上，唯需要一个相容的窗口管理员配合，并 Rox-Filer2 的桌面必须启动."
 
 #: tips:154
 msgid "Show per workspace"
 msgstr "只显示当前工作区"
 
 #: tips:155
-msgid ""
-"If this option is on, the filer will only show iconified windows associated "
-"with the current workspace."
-msgstr "开启此选项，ROX-Filer 只会显示当前工作区内的已图标化(或最小化)窗口"
+msgid "If this option is on, the filer will only show iconified windows associated with the current workspace."
+msgstr "开启此选项，Rox-Filer2 只会显示当前工作区内的已图标化(或最小化)窗口"
 
 #: tips:156
 msgid "Iconify to the"
@@ -4178,14 +3996,8 @@ msgid "vertically"
 msgstr "垂直"
 
 #: tips:164
-msgid ""
-"Sometimes the filer doesn't know about your desktop furniture and puts "
-"iconified windows under (for example) the Gnome panel. You can define a top "
-"or bottom margin to avoid placing the icons there. The filer already knows "
-"about its own panel."
-msgstr ""
-"ROX-Filer 可能会忽略您的桌面环境布局，而将图标化窗口放到(例如)Gnome面板上，您"
-"可定义一个最顶或最底的边沿设置，以防止图标被放到这处"
+msgid "Sometimes the filer doesn't know about your desktop furniture and puts iconified windows under (for example) the Gnome panel. You can define a top or bottom margin to avoid placing the icons there. The filer already knows about its own panel."
+msgstr "Rox-Filer2 可能会忽略您的桌面环境布局，而将图标化窗口放到(例如)Gnome面板上，您可定义一个最顶或最底的边沿设置，以防止图标被放到这处"
 
 #: tips:165
 msgid "Top margin"
@@ -4224,12 +4036,8 @@ msgid "Desktop"
 msgstr "桌面配置"
 
 #: tips:174
-msgid ""
-"When run by a session manager program (such as ROX-Session) the filer can "
-"open up a panel and/or the pinboard.  Here you configure which."
-msgstr ""
-"在执行 session 管理员(如：ROX-Session)时，ROX-Filer 会启动其面板和桌面。您可"
-"在这处进行设定."
+msgid "When run by a session manager program (such as ROX-Session) the filer can open up a panel and/or the pinboard.  Here you configure which."
+msgstr "在执行 session 管理员(如：ROX-Session)时，Rox-Filer2 会启动其面板和桌面。您可在这处进行设定."
 
 #: tips:175
 msgid "Panel only"
@@ -4261,16 +4069,13 @@ msgstr "在此输入桌面名称"
 
 #: tips:183
 msgid "Changes here take effect the next time the filer is run."
-msgstr "改变会在下次 ROX-Filer 启动时生效"
+msgstr "改变会在下次 Rox-Filer2 启动时生效"
 
 #: tips:184
-#, fuzzy
 msgid ""
 "The session manager activates these options by\n"
 "using the -S or --rox-session argument to rox."
-msgstr ""
-"Session 管理器，可在启动 rox 时加入 -S 或 --rox-session 这些参数来打开此功"
-"能。"
+msgstr "Session 管理器，可在启动 rox 时加入 -S 或 --rox-session 这些参数来打开此功能。"
 
 #: tips:185
 msgid "Action windows"
@@ -4343,9 +4148,7 @@ msgid "Unmount command"
 msgstr "卸载指令"
 
 #: tips:215
-msgid ""
-"The command used to unmount a filesystem. If unsure, use \"umount\" (yes, "
-"without the first \"n\")."
+msgid "The command used to unmount a filesystem. If unsure, use \"umount\" (yes, without the first \"n\")."
 msgstr "用以卸载系统的指令，一般是 \"umount\"."
 
 #: tips:216
@@ -4369,26 +4172,16 @@ msgid "Allow dragging to icons in filer windows"
 msgstr "容许在窗口间拖放图标"
 
 #: tips:221
-msgid ""
-"When this is on you can drag a file over a sub-directory or program in a "
-"filer window. The item will highlight when you do this and dropping the file "
-"will put it into that directory, or load it into the program."
-msgstr ""
-"选项开启后你可将文件在子目录或程序上拖放，该项目会被加亮并拖放进你指定的目录"
-"内，或在你拖进的程序内执行."
+msgid "When this is on you can drag a file over a sub-directory or program in a filer window. The item will highlight when you do this and dropping the file will put it into that directory, or load it into the program."
+msgstr "选项开启后你可将文件在子目录或程序上拖放，该项目会被加亮并拖放进你指定的目录内，或在你拖进的程序内执行."
 
 #: tips:222
 msgid "Directories spring open"
 msgstr "目录弹出并打开"
 
 #: tips:223
-msgid ""
-"This option, which requires the above option to be turned on too, causes the "
-"highlighted directory to 'spring open' after the file is held over it for a "
-"short while."
-msgstr ""
-"此选项必须连带上一个选项同时开启，在指向加亮的目录时，使它在按着鼠标一段短时"
-"间内自动打开."
+msgid "This option, which requires the above option to be turned on too, causes the highlighted directory to 'spring open' after the file is held over it for a short while."
+msgstr "此选项必须连带上一个选项同时开启，在指向加亮的目录时，使它在按着鼠标一段短时间内自动打开."
 
 #: tips:224
 msgid "Spring delay:"
@@ -4399,13 +4192,8 @@ msgid "ms"
 msgstr "微秒"
 
 #: tips:226
-msgid ""
-"This option sets how long, in ms, you must hold a file over a directory "
-"before it will spring open. The above option must be turned on for this to "
-"have any effect."
-msgstr ""
-"此选项是用作是设定：你在加亮的目录上按着鼠标而引发该目录被自动打开的延迟时"
-"间，并会以 ms 微秒来计算"
+msgid "This option sets how long, in ms, you must hold a file over a directory before it will spring open. The above option must be turned on for this to have any effect."
+msgstr "此选项是用作是设定：你在加亮的目录上按着鼠标而引发该目录被自动打开的延迟时间，并会以 ms 微秒来计算"
 
 #: tips:227
 msgid "When dragging files with the left mouse button"
@@ -4420,9 +4208,7 @@ msgid "Copy the files"
 msgstr "复制文件"
 
 #: tips:230
-msgid ""
-"Note that you can still get the menu to appear, by dragging with Alt held "
-"down."
+msgid "Note that you can still get the menu to appear, by dragging with Alt held down."
 msgstr "注意，如想菜单再出现，可按着左键并同时按下键盘上的 Alt 键"
 
 #: tips:231
@@ -4434,9 +4220,7 @@ msgid "Move the files"
 msgstr "移动文件"
 
 #: tips:234
-msgid ""
-"Note that you can still get the menu to appear, by dragging with the left "
-"button and holding down the Alt key."
+msgid "Note that you can still get the menu to appear, by dragging with the left button and holding down the Alt key."
 msgstr "注意，如想菜单再出现，可按着左键并同时按下键盘上的 Alt 键"
 
 #: tips:235
@@ -4445,14 +4229,10 @@ msgstr "下载处理员"
 
 #: tips:236
 msgid ""
-"When you drag a file from a web browser or other remote source, this program "
-"will be run to download it. $1 is the URI dragged to the filer, and the "
-"current directory is the destination. Eg:\n"
+"When you drag a file from a web browser or other remote source, this program will be run to download it. $1 is the URI dragged to the filer, and the current directory is the destination. Eg:\n"
 "xterm -e wget $1"
 msgstr ""
-"当从浏览器或远端来源中拖放文件至本机时，此功能可自动将文件下载到相对目的地，"
-"设置方式用以下指令进行：其中 $1 是被拖进文件的位址；wget 是用以下载的程序，例"
-"如:\n"
+"当从浏览器或远端来源中拖放文件至本机时，此功能可自动将文件下载到相对目的地，设置方式用以下指令进行：其中 $1 是被拖进文件的位址；wget 是用以下载的程序，例如:\n"
 "xterm -e wget $1"
 
 #: tips:237
@@ -4484,9 +4264,7 @@ msgid "File menu on right-click"
 msgstr "右击为文件菜单"
 
 #: tips:247
-msgid ""
-"Show the File menu instead of the main menu when right-clicking with files "
-"selected (the main menu can be accessed by holding down Control)."
+msgid "Show the File menu instead of the main menu when right-clicking with files selected (the main menu can be accessed by holding down Control)."
 msgstr "当右击时以文件菜单代替主菜单显示，(如想显示主菜单请按下 Control 键)."
 
 #: tips:248
@@ -4499,42 +4277,35 @@ msgstr "当你从菜单选择“终端机”这程序将被启动"
 
 #: tips:250
 msgid "Open terminal with grave (`) key"
-msgstr ""
+msgstr "Open terminal with grave (`) key"
 
 #: tips:251
 msgid "Open terminal emulator when the backtick/tilde key is pressed."
-msgstr ""
+msgstr "Open terminal emulator when the backtick/tilde key is pressed."
 
 #: tips:252
 msgid "Keyboard shortcuts"
 msgstr "热键"
 
 #: tips:253
-#, fuzzy
 msgid "Applications"
 msgstr "ROX 应用程序"
 
 #: tips:254
 msgid "Show .desktop applications in \"Send To\" menu."
-msgstr ""
+msgstr "Show .desktop applications in \"Send To\" menu."
 
 #: tips:255
-msgid ""
-"Show applications installed via .desktop files (usually in /usr/share/"
-"applications and ~/.local/share/applications) in \"Send To\" menus."
-msgstr ""
+msgid "Show applications installed via .desktop files (usually in /usr/share/applications and ~/.local/share/applications) in \"Send To\" menus."
+msgstr "Show applications installed via .desktop files (usually in /usr/share/applications and ~/.local/share/applications) in \"Send To\" menus."
 
 #: tips:257
 msgid "MIME types"
 msgstr "MIME 类型"
 
 #: tips:258
-msgid ""
-"The filer uses a set of rules to work out the correct MIME type for each "
-"regular file, and then chooses a suitable icon for that type."
-msgstr ""
-"ROX-Filer是以一众既定规则来对应正确 MIME 类型，并会为每一常规文件的类型，配置"
-"一个合适的图标。"
+msgid "The filer uses a set of rules to work out the correct MIME type for each regular file, and then chooses a suitable icon for that type."
+msgstr "Rox-Filer2是以一众既定规则来对应正确 MIME 类型，并会为每一常规文件的类型，配置一个合适的图标。"
 
 #: tips:259
 msgid "Edit MIME rules"
@@ -4553,12 +4324,8 @@ msgid "Themes should be placed inside the ~/.icons directory."
 msgstr "图标布景必须放进 ~/.icons 目录内."
 
 #: tips:263
-msgid ""
-"Use the 'Set Icon...' dialog box to set the icon for each MIME type. Note "
-"that icons set this way override those from the selected theme."
-msgstr ""
-"请以“设定图标...”对话框来设定图标的 MIME 类型，注意，此设定会覆写图标布景的设"
-"定."
+msgid "Use the 'Set Icon...' dialog box to set the icon for each MIME type. Note that icons set this way override those from the selected theme."
+msgstr "请以“设定图标...”对话框来设定图标的 MIME 类型，注意，此设定会覆写图标布景的设定."
 
 #: tips:264
 msgid "Colours"
@@ -4593,9 +4360,7 @@ msgid "Socket:"
 msgstr "套节："
 
 #: tips:273
-msgid ""
-"Error, such as a symlink which points to a non-existant file, or a file "
-"which the filer does not have permission to examine."
+msgid "Error, such as a symlink which points to a non-existant file, or a file which the filer does not have permission to examine."
 msgstr "错误，此连结所指向的是一个不存在或你的权限不足以查看的文件."
 
 #: tips:274
@@ -4611,9 +4376,7 @@ msgid "Door:"
 msgstr "入口："
 
 #: tips:277
-msgid ""
-"Door files are a bit like sockets or pipes, and have only been seen on "
-"Solaris."
+msgid "Door files are a bit like sockets or pipes, and have only been seen on Solaris."
 msgstr "类似套节或管导的单元文件，只会用于 Solaris."
 
 #: tips:278
@@ -4634,11 +4397,11 @@ msgstr "兼容性"
 
 #: tips:282
 msgid "Command line program"
-msgstr ""
+msgstr "Command line program"
 
 #: tips:283
 msgid "Make script"
-msgstr ""
+msgstr "Make script"
 
 #: tips:284
 msgid "Window manager problems"
@@ -4649,12 +4412,7 @@ msgid "Override window manager control of the pinboard and panels"
 msgstr "取代窗口管理员对桌面及面板的控制权"
 
 #: tips:286
-msgid ""
-"Some window managers don't support the new Extended Window Manager Hints "
-"system, and so treat the pinboard and panels like normal windows. Turn this "
-"on to fix problems such as the pinboard coming to the front when you click "
-"on it, titlebars and other decorations appearing around windows, or having "
-"them appear in window-select lists."
+msgid "Some window managers don't support the new Extended Window Manager Hints system, and so treat the pinboard and panels like normal windows. Turn this on to fix problems such as the pinboard coming to the front when you click on it, titlebars and other decorations appearing around windows, or having them appear in window-select lists."
 msgstr "某些窗口管理员不支持伸延提示功能，此选项可解决相应问题"
 
 #: tips:287
@@ -4662,63 +4420,40 @@ msgid "Pass all backdrop mouse clicks to window manager"
 msgstr "将桌面鼠标功能交给窗口管理员"
 
 #: tips:288
-msgid ""
-"Normally, right clicking on the desktop background will open the pinboard "
-"menu and left clicking will clear the selection. Turn this on to forward the "
-"events to your window manager instead. Clicks on icons will not be forwarded."
-msgstr ""
-"在桌面背景上，启用窗口管理员所附带之鼠标功能，但对桌面上的图标，仍由 ROX-"
-"Filer 管理. "
+msgid "Normally, right clicking on the desktop background will open the pinboard menu and left clicking will clear the selection. Turn this on to forward the events to your window manager instead. Clicks on icons will not be forwarded."
+msgstr "在桌面背景上，启用窗口管理员所附带之鼠标功能，但对桌面上的图标，仍由 Rox-Filer2 管理. "
 
 #: tips:289
 msgid "Blackbox root menus hack"
 msgstr "Blackbox 根菜单改良"
 
 #: tips:290
-msgid ""
-"Blackbox, Fluxbox and similar window managers do not yet work well with the "
-"ROX-Filer pinboard. This option enables some workarounds. These window "
-"managers are expected to change their behaviour in new versions so that this "
-"isn't necessary."
-msgstr ""
-"Blackbox, Fluxbox 及某些窗口管理员不支持 ROX-Filer 桌面功能，点选此处可文件这"
-"些问题；但新版本的窗口管理员，已无须这个选项."
+msgid "Blackbox, Fluxbox and similar window managers do not yet work well with the Rox-Filer2 pinboard. This option enables some workarounds. These window managers are expected to change their behaviour in new versions so that this isn't necessary."
+msgstr "Blackbox, Fluxbox 及某些窗口管理员不支持 Rox-Filer2 桌面功能，点选此处可文件这些问题；但新版本的窗口管理员，已无须这个选项."
 
 #: tips:291
 msgid "Panel is a 'dock'"
 msgstr "面板是 'dock'"
 
 #: tips:292
-msgid ""
-"Makes sure panels stay against screen edges. Disable this option if the "
-"panel stays above other windows against your wishes. Requires a restart to "
-"take effect."
-msgstr ""
-"请先确认面板可置放在屏幕边沿。假如您不想面板盖在窗口的上层，关闭选项，并重新"
-"启动."
+msgid "Makes sure panels stay against screen edges. Disable this option if the panel stays above other windows against your wishes. Requires a restart to take effect."
+msgstr "请先确认面板可置放在屏幕边沿。假如您不想面板盖在窗口的上层，关闭选项，并重新启动."
 
 #: tips:293
 msgid "Panel stays on top"
 msgstr "面板置顶"
 
 #: tips:294
-msgid ""
-"Keeps the panel above other windows. Enable this option to make sure the "
-"dock option works correctly in some versions of compiz. May require a "
-"restart to take effect."
-msgstr ""
-"面板会覆盖在窗口上。但某些版本的 compiz 会对 dock 的功能出现错误，此选项须要"
-"重新启动。"
+msgid "Keeps the panel above other windows. Enable this option to make sure the dock option works correctly in some versions of compiz. May require a restart to take effect."
+msgstr "面板会覆盖在窗口上。但某些版本的 compiz 会对 dock 的功能出现错误，此选项须要重新启动。"
 
 #: tips:295
 msgid "Panel confined to work area"
-msgstr ""
+msgstr "Panel confined to work area"
 
 #: tips:296
-msgid ""
-"Keeps the panel confined to the work area specified by the Extended Window "
-"Manager Specification. Applies to new panels."
-msgstr ""
+msgid "Keeps the panel confined to the work area specified by the Extended Window Manager Specification. Applies to new panels."
+msgstr "Keeps the panel confined to the work area specified by the Extended Window Manager Specification. Applies to new panels."
 
 #: tips:297
 msgid "Drag and drop"
@@ -4729,32 +4464,20 @@ msgid "Don't use hostnames"
 msgstr "不用主机名称"
 
 #: tips:299
-msgid ""
-"Some older applications don't support XDND fully and may need to have this "
-"option turned on. Use this if dragging files to an application shows a + "
-"sign on the pointer but the drop doesn't work."
-msgstr ""
-"某些旧的应用程序不完全支持拖放来执行的功能，此选项便须要开启，以达致将文件拖"
-"到当鼠标出现 a + 符号的应用程序上."
+msgid "Some older applications don't support XDND fully and may need to have this option turned on. Use this if dragging files to an application shows a + sign on the pointer but the drop doesn't work."
+msgstr "某些旧的应用程序不完全支持拖放来执行的功能，此选项便须要开启，以达致将文件拖到当鼠标出现 a + 符号的应用程序上."
 
 #: tips:301
 msgid "Don't use extended attributes"
 msgstr "不用扩展属性"
 
 #: tips:302
-msgid ""
-"This disables the use of extended attributes available in newer operating "
-"systems and file systems.  With this option set the 'Set Type' menu entry is "
-"disabled, the MIME type of the file is only derived from the file name and "
-"the properties window does not report extended attributes."
-msgstr ""
-"如开启选项，在较新的操作系统和文件系统中的扩展属性功能会被关闭；而菜单中的 "
-"'另定类型' 选项亦会解除；MIME 的类别会由文件名或副档名决定；属性窗口亦不会报"
-"告文件的扩展属性."
+msgid "This disables the use of extended attributes available in newer operating systems and file systems.  With this option set the 'Set Type' menu entry is disabled, the MIME type of the file is only derived from the file name and the properties window does not report extended attributes."
+msgstr "如开启选项，在较新的操作系统和文件系统中的扩展属性功能会被关闭；而菜单中的 '另定类型' 选项亦会解除；MIME 的类别会由文件名或副档名决定；属性窗口亦不会报告文件的扩展属性."
 
 #: ../Templates.ui.h:1
-msgid "ROX-Filer log viewer"
-msgstr "ROX-Filer 操作记录"
+msgid "Rox-Filer2 log viewer"
+msgstr "Rox-Filer2 操作记录"
 
 #: ../Templates.ui.h:2
 msgid "Recently performed actions..."
@@ -4781,9 +4504,7 @@ msgid "Image only for applications"
 msgstr "程序档只显示图像"
 
 #: ../Templates.ui.h:8
-msgid ""
-"Applications in this panel have just an image, everything else has both an "
-"image and text."
+msgid "Applications in this panel have just an image, everything else has both an image and text."
 msgstr "面板上的程序档只以图像表达，其他的文件则有图像及文字叙述."
 
 #: ../Templates.ui.h:9
@@ -4811,13 +4532,8 @@ msgid "Do not cover panel"
 msgstr "不覆盖面板"
 
 #: ../Templates.ui.h:15
-msgid ""
-"Ask the window manager not to cover this panel when maximising windows, "
-"otherwise leave just 2 pixels at the edge of the screen to allow auto-"
-"raising. Some window managers may not honour this setting."
-msgstr ""
-"指示窗口管理员在最大化时，不覆盖面板。如不选用，只会留下 2 像素的屏幕边沿以自"
-"动提升。但有些窗口管理员会忽略此设定。"
+msgid "Ask the window manager not to cover this panel when maximising windows, otherwise leave just 2 pixels at the edge of the screen to allow auto-raising. Some window managers may not honour this setting."
+msgstr "指示窗口管理员在最大化时，不覆盖面板。如不选用，只会留下 2 像素的屏幕边沿以自动提升。但有些窗口管理员会忽略此设定。"
 
 #: ../Templates.ui.h:16
 msgid "<b>Panel style</b>"
@@ -4828,17 +4544,11 @@ msgid "Confine to Xinerama monitor"
 msgstr "区限多屏幕显示器"
 
 #: ../Templates.ui.h:18
-msgid ""
-"If you use multiple monitors with Xinerama, use this option to confine the "
-"panel to one monitor."
-msgstr ""
-"假如您在 Xorg 设定了 Xinerama(多屏幕功能)，便可在此区限面板被放到某个显示器"
-"上."
+msgid "If you use multiple monitors with Xinerama, use this option to confine the panel to one monitor."
+msgstr "假如您在 Xorg 设定了 Xinerama(多屏幕功能)，便可在此区限面板被放到某个显示器上."
 
 #: ../Templates.ui.h:19
-msgid ""
-"The monitor this panel is confined to when using Xinerama. The numbering "
-"starts from zero."
+msgid "The monitor this panel is confined to when using Xinerama. The numbering starts from zero."
 msgstr "面板在多屏幕显示时的显示器 (数目从 0开始)."
 
 #: ../Templates.ui.h:20
@@ -4865,74 +4575,33 @@ msgstr "顶部边沿"
 msgid "<b>Position</b>"
 msgstr "<b>位置</b>"
 
-#~ msgid "Show extra details"
-#~ msgstr "更详述"
-
-#~ msgid "Panel (obsolete)"
-#~ msgstr "面板(废掉的)"
-
-#~ msgid ""
-#~ "Enter the name of the panel to show here. This option is now only used "
-#~ "when upgrading from an old version."
-#~ msgstr "键入面板的名称，此选项只适用於从旧有板本升级的 ROX-Filer"
-
-#~ msgid ""
-#~ "Error scanning '%s':\n"
-#~ "%s"
-#~ msgstr ""
-#~ "错误扫描 '%s'：\n"
-#~ "%s"
-
-#~ msgid "Directory missing/deleted"
-#~ msgstr "目录已删除/或不存在"
-
-#~ msgid "Directory '%s' is not accessible"
-#~ msgstr "目录 '%s' 不接受存取"
-
-#~ msgid "Directory '%s' not found."
-#~ msgstr "找不到目录 '%s' "
-
-#~ msgid "Copy..."
-#~ msgstr "复制..."
-
-#~ msgid "Copy ... ?"
-#~ msgstr "复制...？"
-
-#~ msgid "?'%s' already exists - overwrite?"
-#~ msgstr "?'%s' 文件已存在-覆盖？"
-
-#~ msgid "Send To..."
-#~ msgstr "传送至..."
-
-# ROX-Filer 2.12 GTK3
+# Rox-Filer2 2.12 GTK3
 msgid "Fast and lightweight file manager, ported to GTK3."
 msgstr "快速轻量的文件管理器，已移植到 GTK3。"
 
-# ROX-Filer 2.12 GTK3
-msgid "Original author: Thomas Leonard"
-msgstr "原作者：Thomas Leonard"
+# Rox-Filer2 2.12 GTK3
+msgid "Original ROX-Filer author: Thomas Leonard"
+msgstr "Original ROX-Filer author: Thomas Leonard"
 
-# ROX-Filer 2.12 GTK3
+# Rox-Filer2 2.12 GTK3
 msgid "Original contributors: ROX Desktop contributors"
 msgstr "原始贡献者：ROX Desktop 贡献者"
 
-# ROX-Filer 2.12 GTK3
-msgid "GTK3 port and new features: josejp2424"
-msgstr "GTK3 移植和新功能：josejp2424"
+# Rox-Filer2 2.12 GTK3
+msgid "Rox-Filer2 continuation and development: josejp2424"
+msgstr "Rox-Filer2 continuation and development: josejp2424"
 
-# ROX-Filer 2.12 GTK3
-msgid "Maintainer of this GTK3 version: josejp2424"
-msgstr "此 GTK3 版本的维护者：josejp2424"
+# Rox-Filer2 2.12 GTK3
+msgid "Rox-Filer2 project maintainer: josejp2424"
+msgstr "Rox-Filer2 project maintainer: josejp2424"
 
-# ROX-Filer 2.12 GTK3
+# Rox-Filer2 2.12 GTK3
 msgid "Original ROX Desktop website"
 msgstr "ROX Desktop 原始网站"
 
-# ROX-Filer 2.12 GTK3
-msgid "This modified GTK3 version is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version."
+# Rox-Filer2 2.12 GTK3
+msgid "This modified GTK3 version is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version."
 msgstr "本程序是自由软件；您可以按照自由软件基金会发布的 GNU 通用公共许可证第 3 版或（由您选择）任何更新版本的条款重新发布和/或修改本程序。"
-
-# ROX-Filer 2.12 GTK3 r5 terminal integration
 
 #: menu.c
 msgid "Open Terminal Here"
@@ -4967,8 +4636,12 @@ msgid "Python 3 was not found. Install python3 or make the script executable wit
 msgstr "未找到 Python 3。请安装 python3，或使用有效的 shebang 使脚本可执行。"
 
 #: menu.c
-msgid "Failed to parse terminal command '%s':\n%s"
-msgstr "无法解析终端命令“%s”：\n%s"
+msgid ""
+"Failed to parse terminal command '%s':\n"
+"%s"
+msgstr ""
+"无法解析终端命令“%s”：\n"
+"%s"
 
 #: menu.c
 msgid "Terminal command is empty."
@@ -5039,8 +4712,8 @@ msgid "%s conflict policy"
 msgstr "%s 冲突策略"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "Some items already exist in the destination. Choose how ROX-Filer should handle all conflicts in this operation:"
-msgstr "目标位置中已有一些项目。请选择 ROX-Filer 应如何处理本次操作中的所有冲突："
+msgid "Some items already exist in the destination. Choose how Rox-Filer2 should handle all conflicts in this operation:"
+msgstr "目标位置中已有一些项目。请选择 Rox-Filer2 应如何处理本次操作中的所有冲突："
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
 msgid "_Continue"
@@ -5063,68 +4736,100 @@ msgid "Replace only if the source is newer"
 msgstr "仅当源文件较新时替换"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "!Failed to start rsync: %s\n"
-msgstr "!无法启动 rsync：%s\n"
+msgid ""
+"!Failed to start rsync: %s\n"
+msgstr ""
+"!无法启动 rsync：%s\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
 msgid "Unknown error"
 msgstr "未知错误"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "!rsync failed while processing '%s':\n%s\n"
-msgstr "!rsync 处理“%s”时失败：\n%s\n"
+msgid ""
+"!rsync failed while processing '%s':\n"
+"%s\n"
+msgstr ""
+"!rsync 处理“%s”时失败：\n"
+"%s\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "!rsync failed while processing '%s'\n"
-msgstr "!rsync 处理“%s”时失败\n"
+msgid ""
+"!rsync failed while processing '%s'\n"
+msgstr ""
+"!rsync 处理“%s”时失败\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "'Skipped existing destination '%s'\n"
-msgstr "'已跳过现有目标“%s”\n"
+msgid ""
+"'Skipped existing destination '%s'\n"
+msgstr ""
+"'已跳过现有目标“%s”\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "!Cannot replace non-empty directory '%s': %s\n"
-msgstr "!无法替换非空目录“%s”：%s\n"
+msgid ""
+"!Cannot replace non-empty directory '%s': %s\n"
+msgstr ""
+"!无法替换非空目录“%s”：%s\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "!Cannot replace '%s': %s\n"
-msgstr "!无法替换“%s”：%s\n"
+msgid ""
+"!Cannot replace '%s': %s\n"
+msgstr ""
+"!无法替换“%s”：%s\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "'Copied '%s' with rsync\n"
-msgstr "'已使用 rsync 复制“%s”\n"
+msgid ""
+"'Copied '%s' with rsync\n"
+msgstr ""
+"'已使用 rsync 复制“%s”\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "'Moved '%s' with rsync\n"
-msgstr "'已使用 rsync 移动“%s”\n"
+msgid ""
+"'Moved '%s' with rsync\n"
+msgstr ""
+"'已使用 rsync 移动“%s”\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
-msgid "rsync is not installed; using the classic ROX-Filer engine.\n"
-msgstr "未安装 rsync；将使用经典 ROX-Filer 引擎。\n"
+msgid ""
+"rsync is not installed; using the classic Rox-Filer2 engine.\n"
+msgstr ""
+"未安装 rsync；将使用经典 Rox-Filer2 引擎。\n"
 
 #. Agregado por josejp2424: motor rsync y política de conflictos.
 msgid "'%s' already exists - %s?"
 msgstr "“%s”已存在 — %s？"
 
 #. Agregado por josejp2424: copia rsync por lotes.
-msgid "!rsync batch copy failed:\n%s\n"
-msgstr "!rsync 批量复制失败：\n%s\n"
+msgid ""
+"!rsync batch copy failed:\n"
+"%s\n"
+msgstr ""
+"!rsync 批量复制失败：\n"
+"%s\n"
 
 #. Agregado por josejp2424: copia rsync por lotes.
-msgid "!rsync batch copy failed\n"
-msgstr "!rsync 批量复制失败\n"
+msgid ""
+"!rsync batch copy failed\n"
+msgstr ""
+"!rsync 批量复制失败\n"
 
 #. Agregado por josejp2424: copia rsync por lotes.
-msgid "'Fast rsync copy completed\n"
-msgstr "'rsync 快速复制已完成\n"
+msgid ""
+"'Fast rsync copy completed\n"
+msgstr ""
+"'rsync 快速复制已完成\n"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
-msgid "The filesystem containing '%s' does not support the standard Trash.\n"
-msgstr "包含“%s”的文件系统不支持标准回收站。\n"
+msgid ""
+"The filesystem containing '%s' does not support the standard Trash.\n"
+msgstr ""
+"包含“%s”的文件系统不支持标准回收站。\n"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
-msgid "Unable to move '%s' to the Trash: %s\n"
-msgstr "无法将“%s”移到回收站：%s\n"
+msgid ""
+"Unable to move '%s' to the Trash: %s\n"
+msgstr ""
+"无法将“%s”移到回收站：%s\n"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
 msgid "Move '%s' to the Trash?"
@@ -5139,12 +4844,24 @@ msgid "_Move to Trash"
 msgstr "移到回收站(_M)"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
-msgid "Permanently delete '%s'?\n\nThis action cannot be undone."
-msgstr "永久删除“%s”吗？\n\n此操作无法撤销。"
+msgid ""
+"Permanently delete '%s'?\n"
+"\n"
+"This action cannot be undone."
+msgstr ""
+"永久删除“%s”吗？\n"
+"\n"
+"此操作无法撤销。"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
-msgid "Permanently delete %d selected items?\n\nThis action cannot be undone."
-msgstr "永久删除选中的 %d 个项目吗？\n\n此操作无法撤销。"
+msgid ""
+"Permanently delete %d selected items?\n"
+"\n"
+"This action cannot be undone."
+msgstr ""
+"永久删除选中的 %d 个项目吗？\n"
+"\n"
+"此操作无法撤销。"
 
 #. Agregado por josejp2424 (2026): papelera estándar y borrado por lotes.
 msgid "_Delete Permanently"
@@ -5207,8 +4924,12 @@ msgid "The device could not be ejected."
 msgstr "无法弹出该设备。"
 
 #. Agregado por josejp2424 (2026): navegación y acciones de unidades.
-msgid "Left click: open or mount\nRight click: drive actions"
-msgstr "左键：打开或挂载\n右键：驱动器操作"
+msgid ""
+"Left click: open or mount\n"
+"Right click: drive actions"
+msgstr ""
+"左键：打开或挂载\n"
+"右键：驱动器操作"
 
 #. Agregado por josejp2424 (2026): navegación y acciones de unidades.
 msgid "Show partitions, mount, unmount and open them"
@@ -5342,11 +5063,6 @@ msgstr "打开桌面文件夹"
 #: desktop.c
 msgid "Refresh Desktop"
 msgstr "刷新桌面"
-
-#: main.c
-#, c-format
-msgid "Usage: ROX-Filer [OPTION]... [FILE]...\nOpen each directory or file listed, or the current working\ndirectory if no arguments are given.\n\nROX Desktop:\n      --desktop\tstart ROX Desktop with wallpaper, Desktop files and drives\n\nFile manager:\n  -c, --client-id=ID\tused for session management\n  -d, --dir=DIR\t\topen DIR as directory (not application)\n  -D, --close=DIR\tclose DIR and its subdirectories\n  -h, --help\t\tdisplay this help and exit\n  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n  -n, --new\t\tstart a separate filer instance\n  -R, --RPC\t\tinvoke method call read from stdin\n  -s, --show=FILE\topen a directory showing FILE\n  -u, --user\t\tshow user name in each window\n  -U, --url=URL\t\topen file or directory in URI form\n  -v, --version\t\tdisplay version information and exit\n  -x, --examine=FILE\tFILE has changed - re-examine it\n\nLegacy ROX desktop compatibility:\n  -b, --border=PANEL\topen PANEL as a border panel\n  -B, --bottom=PANEL\topen PANEL as a bottom-edge panel\n  -l, --left=PANEL\topen PANEL as a left-edge panel\n  -p, --pinboard=PIN\tuse the classic ROX pinboard\n  -r, --right=PANEL\topen PANEL as a right-edge panel\n  -S, --rox-session\tuse the classic panel and pinboard session\n  -t, --top=PANEL\topen PANEL as a top-edge panel\n\nReport bugs to %s.\nProject: https://github.com/josejp2424/ROX-Filer-gtk3\n"
-msgstr "用法：ROX-Filer [选项]... [文件]...\n打开列出的每个目录或文件；未给出参数时打开当前工作目录。\n\nROX Desktop：\n      --desktop\t启动带壁纸、桌面文件和驱动器的 ROX Desktop\n\n文件管理器：\n  -c, --client-id=ID\t用于会话管理\n  -d, --dir=DIR\t\t将 DIR 作为目录打开\n  -D, --close=DIR\t关闭 DIR 及其子目录\n  -h, --help\t\t显示此帮助并退出\n  -m, --mime-type=FILE\t输出 FILE 的 MIME 类型并退出\n  -n, --new\t\t启动独立的文件管理器实例\n  -R, --RPC\t\t调用从标准输入读取的方法\n  -s, --show=FILE\t打开目录并显示 FILE\n  -u, --user\t\t在每个窗口中显示用户名\n  -U, --url=URL\t\t以 URI 形式打开文件或目录\n  -v, --version\t\t显示版本信息并退出\n  -x, --examine=FILE\tFILE 已更改，重新检查\n\n传统 ROX 桌面兼容：\n  -b, --border=PANEL\t将 PANEL 作为边缘面板打开\n  -B, --bottom=PANEL\t在底部边缘打开 PANEL\n  -l, --left=PANEL\t在左侧边缘打开 PANEL\n  -p, --pinboard=PIN\t使用传统 ROX pinboard\n  -r, --right=PANEL\t在右侧边缘打开 PANEL\n  -S, --rox-session\t使用传统面板和 pinboard 会话\n  -t, --top=PANEL\t在顶部边缘打开 PANEL\n\n错误报告至 %s。\n项目：https://github.com/josejp2424/ROX-Filer-gtk3\n"
 
 #: desktop.c
 msgid "Wallpaper style:"
@@ -5674,7 +5390,6 @@ msgstr "排列驱动器图标..."
 msgid "Realign Drive Icons"
 msgstr "重新对齐驱动器图标"
 
-
 #: desktop.c
 msgid "Move the drive icons left or right one pixel at a time"
 msgstr "每次将驱动器图标向左或向右移动一个像素"
@@ -5685,19 +5400,19 @@ msgstr "每次将驱动器图标向上或向下移动一个像素"
 
 #: trash.c desktop.c toolbar.c
 msgid "Unable to create the Trash directory '%s': %s"
-msgstr ""
+msgstr "Unable to create the Trash directory '%s': %s"
 
 #: trash.c desktop.c toolbar.c
 msgid "Unable to create the Trash information directory '%s': %s"
-msgstr ""
+msgstr "Unable to create the Trash information directory '%s': %s"
 
 #: trash.c desktop.c toolbar.c
 msgid "Only local files can be moved to this Trash."
-msgstr ""
+msgstr "Only local files can be moved to this Trash."
 
 #: trash.c desktop.c toolbar.c
 msgid "Open the Trash and select the items you want to restore."
-msgstr ""
+msgstr "Open the Trash and select the items you want to restore."
 
 #: trash.c desktop.c toolbar.c
 msgid "Select one or more items to restore."
@@ -5705,23 +5420,29 @@ msgstr "请选择一个或多个要还原的项目。"
 
 #: trash.c desktop.c toolbar.c
 msgid "The Trash information for '%s' has no valid original path."
-msgstr ""
+msgstr "The Trash information for '%s' has no valid original path."
 
 #: trash.c desktop.c toolbar.c
 msgid "Cannot restore '%s' because '%s' already exists."
-msgstr ""
+msgstr "Cannot restore '%s' because '%s' already exists."
 
 #: trash.c desktop.c toolbar.c
 msgid "Cannot restore '%s' because its original folder no longer exists: %s"
-msgstr ""
+msgstr "Cannot restore '%s' because its original folder no longer exists: %s"
 
 #: trash.c desktop.c toolbar.c
 msgid "The Trash is already empty."
 msgstr "回收站已经为空。"
 
 #: trash.c desktop.c toolbar.c
-msgid "Permanently delete every item in the Trash?\n\nThis action cannot be undone."
+msgid ""
+"Permanently delete every item in the Trash?\n"
+"\n"
+"This action cannot be undone."
 msgstr ""
+"Permanently delete every item in the Trash?\n"
+"\n"
+"This action cannot be undone."
 
 #: trash.c desktop.c toolbar.c
 msgid "_Empty Trash"
@@ -5733,7 +5454,7 @@ msgstr "回收站"
 
 #: trash.c desktop.c toolbar.c
 msgid "Open the Trash; use the arrow to restore selected items or empty it"
-msgstr ""
+msgstr "Open the Trash; use the arrow to restore selected items or empty it"
 
 #: trash.c desktop.c toolbar.c
 msgid "Open Trash"
@@ -5753,7 +5474,7 @@ msgstr "还原项目..."
 
 #: trash.c desktop.c toolbar.c
 msgid "Unable to move one or more desktop items to the Trash"
-msgstr ""
+msgstr "Unable to move one or more desktop items to the Trash"
 
 #: trash.c
 msgid "One item was restored."
@@ -5763,3 +5484,1086 @@ msgstr[0] "已还原一个项目。"
 #: trash.c
 msgid "%u items were restored."
 msgstr "已还原 %u 个项目。"
+
+#: main.c
+msgid "open the desktop wallpaper manager"
+msgstr "打开桌面壁纸管理器"
+
+#: main.c
+msgid "open the desktop application manager"
+msgstr "打开桌面应用程序管理器"
+
+#: GTK3 modern options and integrations
+msgid "--pair accepts at most two folders."
+msgstr "--pair 最多接受两个文件夹。"
+
+#: GTK3 modern options and integrations
+msgid "Allow Rox-Filer2 to resize after directory and view changes."
+msgstr "允许 Rox-Filer2 在目录和视图更改后调整大小。"
+
+#: GTK3 modern options and integrations
+msgid "Allow dropping onto directory and application icons"
+msgstr "允许将项目拖放到目录和应用程序图标上"
+
+#: GTK3 modern options and integrations
+msgid "Allow the Search toolbar button"
+msgstr "启用工具栏中的搜索按钮"
+
+#: GTK3 modern options and integrations
+msgid "Apply operations recursively"
+msgstr "递归应用操作"
+
+#: GTK3 modern options and integrations
+msgid "Arrange large icons vertically"
+msgstr "纵向排列大图标"
+
+#: GTK3 modern options and integrations
+msgid "Arrange small icons vertically"
+msgstr "纵向排列小图标"
+
+#: GTK3 modern options and integrations
+msgid "Arrangement:"
+msgstr "排列方式："
+
+#: GTK3 modern options and integrations
+msgid "Automatic window size"
+msgstr "自动窗口大小"
+
+#: GTK3 modern options and integrations
+msgid "Beep when Tab completion fails"
+msgstr "Tab 补全失败时发出提示音"
+
+#: GTK3 modern options and integrations
+msgid "Beep when Tab completion has several matches"
+msgstr "Tab 补全有多个匹配项时发出提示音"
+
+#: GTK3 modern options and integrations
+msgid "Buttons"
+msgstr "按钮"
+
+#: GTK3 modern options and integrations
+msgid "Classic Compatibility"
+msgstr "经典兼容性"
+
+#: GTK3 modern options and integrations
+msgid "Classic pinboard and panels"
+msgstr "经典桌面板和面板"
+
+#: GTK3 modern options and integrations
+msgid "Close a filer window when its directory is deleted or an opened device is unmounted."
+msgstr "当窗口目录被删除或已打开设备被卸载时关闭文件管理器窗口。"
+
+#: GTK3 modern options and integrations
+msgid "Close windows when their directory disappears"
+msgstr "目录消失时关闭窗口"
+
+#: GTK3 modern options and integrations
+msgid "Command-line compatibility"
+msgstr "命令行兼容性"
+
+#: GTK3 modern options and integrations
+msgid "Copy, move and delete"
+msgstr "复制、移动和删除"
+
+#: GTK3 modern options and integrations
+msgid "Create a rox command script"
+msgstr "创建 rox 命令脚本"
+
+#: GTK3 modern options and integrations
+msgid "Custom directory"
+msgstr "自定义目录"
+
+#: GTK3 modern options and integrations
+msgid "Custom directory:"
+msgstr "自定义目录："
+
+#: GTK3 modern options and integrations
+msgid "Customise Legacy SendTo"
+msgstr "自定义旧版 SendTo"
+
+#: GTK3 modern options and integrations
+msgid "Default action-window settings"
+msgstr "操作窗口默认设置"
+
+#: GTK3 modern options and integrations
+msgid "Defaults for new windows"
+msgstr "新窗口默认设置"
+
+#: GTK3 modern options and integrations
+msgid "Desktop Applications"
+msgstr "桌面应用程序"
+
+#: GTK3 modern options and integrations
+msgid "Detailed list"
+msgstr "详细列表"
+
+#: GTK3 modern options and integrations
+msgid "Do not ask again for non-writable items"
+msgstr "不再询问不可写项目"
+
+#: GTK3 modern options and integrations
+msgid "Do not offer deleted directories or mount points that are no longer available."
+msgstr "不要提供已删除的目录或不再可用的挂载点。"
+
+#: GTK3 modern options and integrations
+msgid "Double-clicking the background resizes the window"
+msgstr "双击背景可调整窗口大小"
+
+#: GTK3 modern options and integrations
+msgid "Eject command:"
+msgstr "弹出命令："
+
+#: GTK3 modern options and integrations
+msgid "Enable paired-window features"
+msgstr "启用配对窗口功能"
+
+#: GTK3 modern options and integrations
+msgid "Enable the Window menu actions, toolbar action and --pair command."
+msgstr "启用“窗口”菜单操作、工具栏操作和 --pair 命令。"
+
+#: GTK3 modern options and integrations
+msgid "Enable the legacy SendTo directory menu"
+msgstr "启用旧版 SendTo 目录菜单"
+
+#: GTK3 modern options and integrations
+msgid "File Operations"
+msgstr "文件操作"
+
+#: GTK3 modern options and integrations
+msgid "First-window share"
+msgstr "第一个窗口所占比例"
+
+#: GTK3 modern options and integrations
+msgid "Follow symbolic links by default"
+msgstr "默认跟随符号链接"
+
+#: GTK3 modern options and integrations
+msgid "For example, hide Run in Terminal for a normal directory instead of showing it disabled."
+msgstr "例如，对普通目录隐藏“在终端中运行”，而不是显示为禁用。"
+
+#: GTK3 modern options and integrations
+msgid "Forward classic backdrop clicks to the window manager"
+msgstr "将经典背景点击转发给窗口管理器"
+
+#: GTK3 modern options and integrations
+msgid "Gap between windows:"
+msgstr "窗口间距："
+
+#: GTK3 modern options and integrations
+msgid "General"
+msgstr "常规"
+
+#: GTK3 modern options and integrations
+msgid "Hide native menu actions that do not apply"
+msgstr "隐藏不适用的原生菜单操作"
+
+#: GTK3 modern options and integrations
+msgid "Home directory"
+msgstr "主目录"
+
+#: GTK3 modern options and integrations
+msgid "Hover delay:"
+msgstr "悬停延迟："
+
+#: GTK3 modern options and integrations
+msgid "Huge"
+msgstr "超大"
+
+#: GTK3 modern options and integrations
+msgid "Icon details:"
+msgstr "图标详细信息："
+
+#: GTK3 modern options and integrations
+msgid "Icon view"
+msgstr "图标视图"
+
+#: GTK3 modern options and integrations
+msgid "Icons"
+msgstr "图标"
+
+#: GTK3 modern options and integrations
+msgid "Ignore missing directories in Recently Visited"
+msgstr "在“最近访问”中忽略缺失目录"
+
+#: GTK3 modern options and integrations
+msgid "Ignore older source files"
+msgstr "忽略较旧的源文件"
+
+#: GTK3 modern options and integrations
+msgid "Image previews"
+msgstr "图像预览"
+
+#: GTK3 modern options and integrations
+msgid "Include hidden items by default"
+msgstr "默认包含隐藏项目"
+
+#: GTK3 modern options and integrations
+msgid "Include subdirectories by default"
+msgstr "默认包含子目录"
+
+#: GTK3 modern options and integrations
+msgid "Individual filer windows can still enable or disable thumbnails from the Display menu or toolbar."
+msgstr "各文件管理器窗口仍可通过“显示”菜单或工具栏启用或禁用缩略图。"
+
+#: GTK3 modern options and integrations
+msgid "Inherit display settings from the source window"
+msgstr "继承来源窗口的显示设置"
+
+#: GTK3 modern options and integrations
+msgid "Initial directory:"
+msgstr "初始目录："
+
+#: GTK3 modern options and integrations
+msgid "Keep both windows on the same monitor"
+msgstr "将两个窗口保持在同一显示器上"
+
+#: GTK3 modern options and integrations
+msgid "Keep classic panels above other windows"
+msgstr "让经典面板位于其他窗口上方"
+
+#: GTK3 modern options and integrations
+msgid "Keep classic panels inside the work area"
+msgstr "让经典面板保持在工作区内"
+
+#: GTK3 modern options and integrations
+msgid "Large"
+msgstr "大"
+
+#: GTK3 modern options and integrations
+msgid "Large icons"
+msgstr "大图标"
+
+#: GTK3 modern options and integrations
+msgid "Largest automatic window size as a percentage of the usable monitor area."
+msgstr "自动窗口最大尺寸，占可用显示器区域的百分比。"
+
+#: GTK3 modern options and integrations
+msgid "Last accessed"
+msgstr "最后访问"
+
+#: GTK3 modern options and integrations
+msgid "Last modified"
+msgstr "最后修改"
+
+#: GTK3 modern options and integrations
+msgid "Last used directory"
+msgstr "上次使用的目录"
+
+#: GTK3 modern options and integrations
+msgid "Left and right"
+msgstr "左右排列"
+
+#: GTK3 modern options and integrations
+msgid "Limit for the Recently Visited menu. Back and Forward history remains independent for each filer window."
+msgstr "“最近访问”菜单的数量限制。每个文件管理器窗口的后退和前进历史记录保持独立。"
+
+#: GTK3 modern options and integrations
+msgid "Maximum automatic size:"
+msgstr "最大自动尺寸："
+
+#: GTK3 modern options and integrations
+msgid "Maximum large-icon label width:"
+msgstr "大图标标签最大宽度："
+
+#: GTK3 modern options and integrations
+msgid "Maximum remembered locations:"
+msgstr "最多记住的位置数："
+
+#: GTK3 modern options and integrations
+msgid "Maximum small-icon label width:"
+msgstr "小图标标签最大宽度："
+
+#: GTK3 modern options and integrations
+msgid "Menu icon size:"
+msgstr "菜单图标大小："
+
+#: GTK3 modern options and integrations
+msgid "Merge directories by default"
+msgstr "默认合并目录"
+
+#: GTK3 modern options and integrations
+msgid "Middle-button drag moves immediately"
+msgstr "中键拖动立即移动"
+
+#: GTK3 modern options and integrations
+msgid "Middle-button drag shows an action menu"
+msgstr "中键拖动显示操作菜单"
+
+#: GTK3 modern options and integrations
+msgid "Mount command:"
+msgstr "挂载命令："
+
+#: GTK3 modern options and integrations
+msgid "Navigation and Clicks"
+msgstr "导航和点击"
+
+#: GTK3 modern options and integrations
+msgid "Navigation history"
+msgstr "导航历史"
+
+#: GTK3 modern options and integrations
+msgid "Never resize automatically"
+msgstr "从不自动调整大小"
+
+#: GTK3 modern options and integrations
+msgid "New windows inherit the view, icon size and details from the window that opened them."
+msgstr "新窗口继承打开它的窗口的视图、图标大小和详细信息。"
+
+#: GTK3 modern options and integrations
+msgid "New, As User..."
+msgstr "新建，以其他用户身份…"
+
+#: GTK3 modern options and integrations
+msgid "No icons"
+msgstr "无图标"
+
+#: GTK3 modern options and integrations
+msgid "No paired windows are currently open."
+msgstr "当前没有打开的配对窗口。"
+
+#: GTK3 modern options and integrations
+msgid "No running ROX Desktop instance was found."
+msgstr "未找到正在运行的 ROX Desktop 实例。"
+
+#: GTK3 modern options and integrations
+msgid "Open Paired Windows"
+msgstr "打开配对窗口"
+
+#: GTK3 modern options and integrations
+msgid "Open ROX File Search"
+msgstr "打开 ROX 文件搜索"
+
+#: GTK3 modern options and integrations
+msgid "Open a terminal with the grave (`) key"
+msgstr "使用反引号键 (`) 打开终端"
+
+#: GTK3 modern options and integrations
+msgid "Open directories after hovering during a drag"
+msgstr "拖动时悬停后打开目录"
+
+#: GTK3 modern options and integrations
+msgid "Open directories in a new window with button 1"
+msgstr "用按钮 1 在新窗口中打开目录"
+
+#: GTK3 modern options and integrations
+msgid "Open directories with a single click"
+msgstr "单击打开目录"
+
+#: GTK3 modern options and integrations
+msgid "Open every item with a single click"
+msgstr "单击打开所有项目"
+
+#: GTK3 modern options and integrations
+msgid "Open two Rox-Filer2 windows side by side"
+msgstr "并排打开两个 Rox-Filer2 窗口"
+
+#: GTK3 modern options and integrations
+msgid "Open two filer windows when a normal Rox-Filer2 process starts."
+msgstr "启动普通 Rox-Filer2 进程时打开两个文件管理器窗口。"
+
+#: GTK3 modern options and integrations
+msgid "Opening items"
+msgstr "打开项目"
+
+#: GTK3 modern options and integrations
+msgid "Override window-manager control of classic pinboards and panels"
+msgstr "覆盖窗口管理器对经典桌面板和面板的控制"
+
+#: GTK3 modern options and integrations
+msgid "Paired Windows"
+msgstr "配对窗口"
+
+#: GTK3 modern options and integrations
+msgid "Paired windows are disabled in Options."
+msgstr "配对窗口已在“选项”中禁用。"
+
+#: GTK3 modern options and integrations
+msgid "Percentage of the available space assigned to the first window."
+msgstr "分配给第一个窗口的可用空间百分比。"
+
+#: GTK3 modern options and integrations
+msgid "Place capitalised names first"
+msgstr "大写开头的名称优先"
+
+#: GTK3 modern options and integrations
+msgid "Primary-button drag copies immediately"
+msgstr "主按钮拖动立即复制"
+
+#: GTK3 modern options and integrations
+msgid "Primary-button drag shows an action menu"
+msgstr "主按钮拖动显示操作菜单"
+
+#: GTK3 modern options and integrations
+msgid "Program used by Open Terminal Here and Run in Terminal."
+msgstr "“在此处打开终端”和“在终端中运行”所使用的程序。"
+
+#: GTK3 modern options and integrations
+msgid "ROX Desktop tools"
+msgstr "ROX Desktop 工具"
+
+#: GTK3 modern options and integrations
+msgid "ROX File Search"
+msgstr "ROX 文件搜索"
+
+#: GTK3 modern options and integrations
+msgid "ROX File Search is a separate GTK3 process. It follows the system GTK theme and can search one or several selected directories without increasing the normal memory use of Rox-Filer2."
+msgstr "ROX 文件搜索是独立的 GTK3 进程。它遵循系统 GTK 主题，可搜索一个或多个所选目录，而不会增加 Rox-Filer2 的正常内存占用。"
+
+#: GTK3 modern options and integrations
+msgid "ROX File Search is not installed or is not in PATH."
+msgstr "ROX 文件搜索未安装或不在 PATH 中。"
+
+#: GTK3 modern options and integrations
+msgid "Rox-Filer2 GTK3 project"
+msgstr "Rox-Filer2 GTK3 项目"
+
+#: GTK3 modern options and integrations
+msgid "Read classic SendTo entries from ROX configuration directories. This is disabled by default."
+msgstr "从 ROX 配置目录读取经典 SendTo 项目。默认禁用。"
+
+#: GTK3 modern options and integrations
+msgid "Realign Paired Windows"
+msgstr "重新对齐配对窗口"
+
+#: GTK3 modern options and integrations
+msgid "Realign Windows"
+msgstr "重新对齐窗口"
+
+#: GTK3 modern options and integrations
+msgid "Remember the last two directories"
+msgstr "记住最后两个目录"
+
+#: GTK3 modern options and integrations
+msgid "Replace when the source is newer"
+msgstr "源文件较新时替换"
+
+#: GTK3 modern options and integrations
+msgid "Resize after changing icon size, details or view type."
+msgstr "更改图标大小、详细信息或视图类型后调整大小。"
+
+#: GTK3 modern options and integrations
+msgid "Resize after changing the view"
+msgstr "更改视图后调整大小"
+
+#: GTK3 modern options and integrations
+msgid "Resize whenever useful"
+msgstr "在适当时调整大小"
+
+#: GTK3 modern options and integrations
+msgid "Same as the current window"
+msgstr "与当前窗口相同"
+
+#: GTK3 modern options and integrations
+msgid "Same as the default view"
+msgstr "与默认视图相同"
+
+#: GTK3 modern options and integrations
+msgid "Same directory as the first window"
+msgstr "与第一个窗口相同的目录"
+
+#: GTK3 modern options and integrations
+msgid "Search"
+msgstr "搜索"
+
+#: GTK3 modern options and integrations
+msgid "Search in Selected Folders..."
+msgstr "在所选文件夹中搜索…"
+
+#: GTK3 modern options and integrations
+msgid "Search in This Folder..."
+msgstr "在此文件夹中搜索…"
+
+#: GTK3 modern options and integrations
+msgid "Search in the current folder"
+msgstr "在当前文件夹中搜索"
+
+#: GTK3 modern options and integrations
+msgid "Second window"
+msgstr "第二个窗口"
+
+#: GTK3 modern options and integrations
+msgid "Select one or more folders to search."
+msgstr "选择一个或多个要搜索的文件夹。"
+
+#: GTK3 modern options and integrations
+msgid "Select the optional buttons to display. Partitions remains a permanent toolbar action."
+msgstr "选择要显示的可选按钮。“分区”始终保留为工具栏操作。"
+
+#: GTK3 modern options and integrations
+msgid "Show Search in This Folder in contextual menus"
+msgstr "在上下文菜单中显示“在此文件夹中搜索”"
+
+#: GTK3 modern options and integrations
+msgid "Show directories first"
+msgstr "目录优先显示"
+
+#: GTK3 modern options and integrations
+msgid "Show extended-attribute emblems"
+msgstr "显示扩展属性徽标"
+
+#: GTK3 modern options and integrations
+msgid "Show hidden files by default"
+msgstr "默认显示隐藏文件"
+
+#: GTK3 modern options and integrations
+msgid "Show image thumbnails by default"
+msgstr "默认显示图像缩略图"
+
+#: GTK3 modern options and integrations
+msgid "Show installed .desktop applications in application menus"
+msgstr "在应用程序菜单中显示已安装的 .desktop 应用程序"
+
+#: GTK3 modern options and integrations
+msgid "Show item and selection totals"
+msgstr "显示项目和选择总数"
+
+#: GTK3 modern options and integrations
+msgid "Show the File submenu directly on right-click"
+msgstr "右键单击时直接显示“文件”子菜单"
+
+#: GTK3 modern options and integrations
+msgid "Show the complete type description"
+msgstr "显示完整类型说明"
+
+#: GTK3 modern options and integrations
+msgid "Single-click files, folders and applications. Hold Control to select without opening."
+msgstr "单击打开文件、文件夹和应用程序。按住 Ctrl 可只选择而不打开。"
+
+#: GTK3 modern options and integrations
+msgid "Small"
+msgstr "小"
+
+#: GTK3 modern options and integrations
+msgid "Small icons"
+msgstr "小图标"
+
+#: GTK3 modern options and integrations
+msgid "Start automatically with paired windows"
+msgstr "自动以配对窗口启动"
+
+#: GTK3 modern options and integrations
+msgid "Start copy operations without an extra confirmation"
+msgstr "无需额外确认即可开始复制"
+
+#: GTK3 modern options and integrations
+msgid "Start link operations without an extra confirmation"
+msgstr "无需额外确认即可开始创建链接"
+
+#: GTK3 modern options and integrations
+msgid "Start mount operations without an extra confirmation"
+msgstr "无需额外确认即可开始挂载"
+
+#: GTK3 modern options and integrations
+msgid "Start move operations without an extra confirmation"
+msgstr "无需额外确认即可开始移动"
+
+#: GTK3 modern options and integrations
+msgid "Start permanent deletion without an extra confirmation"
+msgstr "无需额外确认即可开始永久删除"
+
+#: GTK3 modern options and integrations
+msgid "Stay on the selected filesystem by default"
+msgstr "默认停留在所选文件系统中"
+
+#: GTK3 modern options and integrations
+msgid "Terminal emulator:"
+msgstr "终端模拟器："
+
+#: GTK3 modern options and integrations
+msgid "The cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "缓存使用 Freedesktop 位置 ~/.cache/thumbnails/normal。"
+
+#: GTK3 modern options and integrations
+msgid "The clipboard does not contain a file list."
+msgstr "剪贴板中没有文件列表。"
+
+#: GTK3 modern options and integrations
+msgid "These buttons manage the desktop started with Rox-Filer2 --desktop. The classic pinboard remains separate."
+msgstr "这些按钮管理由 Rox-Filer2 --desktop 启动的桌面。经典桌面板保持独立。"
+
+#: GTK3 modern options and integrations
+msgid "This mode takes priority over the previous option: normal directories open with one click, while files and AppDirs require a double click."
+msgstr "此模式优先于上一选项：普通目录单击打开，而文件和 AppDir 需要双击。"
+
+#: GTK3 modern options and integrations
+msgid "Thumbnail cache"
+msgstr "缩略图缓存"
+
+#: GTK3 modern options and integrations
+msgid "Thumbnails are generated in the background. Until a preview is ready, Rox-Filer2 displays the normal MIME icon."
+msgstr "缩略图在后台生成。在预览准备好之前，Rox-Filer2 显示普通 MIME 图标。"
+
+#: GTK3 modern options and integrations
+msgid "Toolbar defines the minimum window width"
+msgstr "工具栏决定窗口最小宽度"
+
+#: GTK3 modern options and integrations
+msgid "Toolbar style:"
+msgstr "工具栏样式："
+
+#: GTK3 modern options and integrations
+msgid "Top and bottom"
+msgstr "顶部和底部"
+
+#: GTK3 modern options and integrations
+msgid "Treat classic panels as docks"
+msgstr "将经典面板视为停靠栏"
+
+#: GTK3 modern options and integrations
+msgid ""
+"Try `rox --help' for more information.\n"
+msgstr ""
+"请尝试 `Rox-Filer2 --help' 获取更多信息。\n"
+
+#: GTK3 modern options and integrations
+msgid ""
+"Try `rox -h' for more information.\n"
+msgstr ""
+"请尝试 `Rox-Filer2 -h' 获取更多信息。\n"
+
+#: GTK3 modern options and integrations
+msgid "Two filer windows"
+msgstr "两个文件管理器窗口"
+
+#: GTK3 modern options and integrations
+msgid "Unable to create the paired windows."
+msgstr "无法创建配对窗口。"
+
+#: GTK3 modern options and integrations
+msgid "Unable to start ROX File Search: %s"
+msgstr "无法启动 ROX 文件搜索：%s"
+
+#: GTK3 modern options and integrations
+msgid "Unmount command:"
+msgstr "卸载命令："
+
+#: GTK3 modern options and integrations
+msgid "Use brief operation messages"
+msgstr "使用简短的操作消息"
+
+#: GTK3 modern options and integrations
+msgid "Use compact title-bar indicators"
+msgstr "使用紧凑的标题栏指示器"
+
+#: GTK3 modern options and integrations
+msgid "Use one window for each directory"
+msgstr "每个目录使用一个窗口"
+
+#: GTK3 modern options and integrations
+msgid "Use short indicators for scanning, hidden items and thumbnails."
+msgstr "对扫描、隐藏项目和缩略图使用简短指示器。"
+
+#: GTK3 modern options and integrations
+msgid "Use small automatic icons after:"
+msgstr "在以下时间后使用自动小图标："
+
+#: GTK3 modern options and integrations
+msgid "Use the primary mouse button for a new window and the middle button to reuse the current one."
+msgstr "使用鼠标主按钮打开新窗口，使用中键复用当前窗口。"
+
+#: GTK3 modern options and integrations
+msgid "Used when Custom directory is selected above."
+msgstr "在上方选择“自定义目录”时使用。"
+
+#: GTK3 modern options and integrations
+msgid "View"
+msgstr "视图"
+
+#: GTK3 modern options and integrations
+msgid "Wallpaper"
+msgstr "壁纸"
+
+#: GTK3 modern options and integrations
+msgid "When a directory is already open, reuse its existing filer window instead of opening another copy."
+msgstr "目录已打开时，复用现有文件管理器窗口，而不是再打开一个副本。"
+
+#: GTK3 modern options and integrations
+msgid "Window size is controlled only by the user and window manager."
+msgstr "窗口大小仅由用户和窗口管理器控制。"
+
+#: GTK3 modern options and integrations
+msgid "_Open"
+msgstr "_打开"
+
+#: GTK3 modern options and integrations
+msgid "folders"
+msgstr "文件夹"
+
+#: GTK3 modern options and integrations
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "并排打开两个 Rox-Filer2 窗口"
+
+#: GTK3 modern options and integrations
+msgid "open two paired filer windows"
+msgstr "打开两个配对文件管理器窗口"
+
+#: GTK3 modern options and integrations
+msgid "realign the current paired windows"
+msgstr "重新对齐当前配对窗口"
+
+#: GTK3 modern options and integrations
+msgid "refresh the running ROX Desktop"
+msgstr "刷新正在运行的 ROX Desktop"
+
+msgid "Maximum file size for content search:"
+msgstr "内容搜索的最大文件大小："
+
+msgid "Larger files are skipped when searching inside file contents."
+msgstr "搜索文件内容时将跳过较大的文件。"
+
+msgid "Unable to launch %s: %s"
+msgstr "无法启动 %s：%s"
+
+msgid "Unnamed Application"
+msgstr "未命名应用程序"
+
+msgid "Choose Another Application..."
+msgstr "选择其他应用程序…"
+
+msgid "Add Custom Application..."
+msgstr "添加自定义应用程序…"
+
+msgid "The selected items do not share one MIME type."
+msgstr "所选项目没有相同的 MIME 类型。"
+
+msgid "Choose Another Application"
+msgstr "选择其他应用程序"
+
+msgid "Choose an application for the selected file type"
+msgstr "为所选文件类型选择应用程序"
+
+msgid "Remember this application for this file type"
+msgstr "记住此文件类型使用的应用程序"
+
+msgid "The command is empty."
+msgstr "命令为空。"
+
+msgid "Command '%s' was not found."
+msgstr "未找到命令“%s”。"
+
+msgid "Choose Icon"
+msgstr "选择图标"
+
+msgid "Icon file '%s' does not exist."
+msgstr "图标文件“%s”不存在。"
+
+msgid "Unable to create icon directory '%s': %s"
+msgstr "无法创建图标目录“%s”：%s"
+
+msgid "Invalid command."
+msgstr "无效命令。"
+
+msgid "Enter at least one valid MIME type."
+msgstr "请输入至少一个有效的 MIME 类型。"
+
+msgid "Unable to create applications directory '%s': %s"
+msgstr "无法创建应用程序目录“%s”：%s"
+
+msgid "Unable to install icon."
+msgstr "无法安装图标。"
+
+msgid "Unable to save '%s': %s"
+msgstr "无法保存“%s”：%s"
+
+msgid "The new desktop file '%s' could not be loaded."
+msgstr "无法加载新的 desktop 文件“%s”。"
+
+msgid "Edit Custom Application"
+msgstr "编辑自定义应用程序"
+
+msgid "Add Custom Application"
+msgstr "添加自定义应用程序"
+
+msgid "Run in a terminal"
+msgstr "在终端中运行"
+
+msgid "Show in the applications menu"
+msgstr "在应用程序菜单中显示"
+
+msgid "Set as default for these MIME types"
+msgstr "设为这些 MIME 类型的默认应用程序"
+
+msgid "Open the selected files after saving"
+msgstr "保存后打开所选文件"
+
+msgid "MIME types:"
+msgstr "MIME 类型："
+
+msgid "Enter a name for the application."
+msgstr "请输入应用程序名称。"
+
+msgid "Custom Applications"
+msgstr "自定义应用程序"
+
+msgid "MIME Types"
+msgstr "MIME 类型"
+
+msgid "Open Applications Folder"
+msgstr "打开应用程序文件夹"
+
+msgid "Remove the selected custom application?"
+msgstr "删除所选自定义应用程序？"
+
+msgid "Manage Custom Applications..."
+msgstr "管理自定义应用程序…"
+
+msgid "Open User Applications Folder"
+msgstr "打开用户应用程序文件夹"
+
+msgid "Show mimeapps.list"
+msgstr "显示 mimeapps.list"
+
+msgid "Unable to run custom action '%s'."
+msgstr "无法运行自定义操作“%s”。"
+
+msgid "Name and command are required."
+msgstr "名称和命令为必填项。"
+
+msgid "Select at least one target type."
+msgstr "请至少选择一种目标类型。"
+
+msgid "Select single, multiple or both selection modes."
+msgstr "请选择单选、多选或两种选择模式。"
+
+msgid "Unable to create actions directory '%s': %s"
+msgstr "无法创建操作目录“%s”：%s"
+
+msgid "Unable to save custom action '%s': %s"
+msgstr "无法保存自定义操作“%s”：%s"
+
+msgid "Edit Custom Action"
+msgstr "编辑自定义操作"
+
+msgid "Add Custom Action"
+msgstr "添加自定义操作"
+
+msgid "Symbolic links"
+msgstr "符号链接"
+
+msgid "Single selection"
+msgstr "单项选择"
+
+msgid "Multiple selection"
+msgstr "多项选择"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Targets:"
+msgstr "目标："
+
+msgid "Selection:"
+msgstr "选择："
+
+msgid "Custom Actions"
+msgstr "自定义操作"
+
+msgid "Targets"
+msgstr "目标"
+
+msgid "Open Actions Folder"
+msgstr "打开操作文件夹"
+
+msgid "Remove the selected custom action?"
+msgstr "删除所选自定义操作？"
+
+msgid "Manage Custom Actions..."
+msgstr "管理自定义操作…"
+
+#: GTK3 XDG applications and custom actions
+msgid "Actions are stored below ~/.local/share/rox-filer/actions. The historical SendTo directories are no longer read."
+msgstr "操作保存在 ~/.local/share/rox-filer/actions 下。旧版 SendTo 目录不再读取。"
+
+#: GTK3 XDG applications and custom actions
+msgid "Add"
+msgstr "添加"
+
+#: GTK3 XDG applications and custom actions
+msgid "Add Custom Application creates a user .desktop file, installs the selected icon below ~/.local/share/icons and can register it as the default application for one or more MIME types."
+msgstr "“添加自定义应用程序”会创建用户 .desktop 文件，将所选图标安装到 ~/.local/share/icons，并可将其注册为一个或多个 MIME 类型的默认应用程序。"
+
+#: GTK3 XDG applications and custom actions
+msgid "Choose"
+msgstr "选择"
+
+#: GTK3 XDG applications and custom actions
+msgid "Choose..."
+msgstr "选择…"
+
+#: GTK3 XDG applications and custom actions
+msgid "Command"
+msgstr "命令"
+
+#: GTK3 XDG applications and custom actions
+msgid "Context-menu actions"
+msgstr "上下文菜单操作"
+
+#: GTK3 XDG applications and custom actions
+msgid "Create actions for files, directories or symbolic links. Actions may be limited by MIME type and by single or multiple selection."
+msgstr "为文件、目录或符号链接创建操作。操作可按 MIME 类型以及单项或多项选择进行限制。"
+
+#: GTK3 XDG applications and custom actions
+msgid "Custom applications"
+msgstr "自定义应用程序"
+
+#: GTK3 XDG applications and custom actions
+msgid "Directories"
+msgstr "目录"
+
+#: GTK3 XDG applications and custom actions
+msgid "Edit"
+msgstr "编辑"
+
+#: GTK3 XDG applications and custom actions
+msgid "File Associations"
+msgstr "文件关联"
+
+#: GTK3 XDG applications and custom actions
+msgid "Files"
+msgstr "文件"
+
+#: GTK3 XDG applications and custom actions
+msgid "Icon:"
+msgstr "图标："
+
+#: GTK3 XDG applications and custom actions
+msgid "Menus and terminal"
+msgstr "菜单和终端"
+
+#: GTK3 XDG applications and custom actions
+msgid "Name:"
+msgstr "名称："
+
+#: GTK3 XDG applications and custom actions
+msgid "Open With"
+msgstr "打开方式"
+
+#: GTK3 XDG applications and custom actions
+msgid "Open With uses installed .desktop applications, GIO and the standard MIME association database."
+msgstr "“打开方式”使用已安装的 .desktop 应用程序、GIO 和标准 MIME 关联数据库。"
+
+#: GTK3 XDG applications and custom actions
+msgid "Remove"
+msgstr "删除"
+
+#: GTK3 XDG applications and custom actions
+msgid "The historical OpenWith and SendTo directories are ignored. Open With uses XDG/GIO, while extra commands use Custom Actions."
+msgstr "旧版 OpenWith 和 SendTo 目录会被忽略。“打开方式”使用 XDG/GIO，额外命令使用自定义操作。"
+
+#: GTK3 XDG applications and custom actions
+msgid "User applications are stored below ~/.local/share/applications and associations below ~/.config/mimeapps.list. Rox-Filer2 obtains the real paths from GLib for the active user."
+msgstr "用户应用程序保存在 ~/.local/share/applications，关联保存在 ~/.config/mimeapps.list。Rox-Filer2 通过 GLib 获取当前用户的实际路径。"
+
+#: GTK3 XDG applications and custom actions
+msgid "XDG applications"
+msgstr "XDG 应用程序"
+
+#: GTK3 r59 MIME applications and file actions
+#, c-format
+msgid "Open with %s"
+msgstr "使用 %s 打开"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Add File Action..."
+msgstr "添加文件操作…"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Manage Applications..."
+msgstr "管理应用程序…"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Manage File Actions..."
+msgstr "管理文件操作…"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "File Actions"
+msgstr "文件操作"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Add File Action"
+msgstr "添加文件操作"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Edit File Action"
+msgstr "编辑文件操作"
+
+#: GTK3 r59 MIME applications and file actions
+#, c-format
+msgid "Unable to run file action '%s'."
+msgstr "无法运行文件操作“%s”。"
+
+#: GTK3 r59 MIME applications and file actions
+#, c-format
+msgid "Unable to save file action '%s': %s"
+msgstr "无法保存文件操作“%s”：%s"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Remove the selected file action?"
+msgstr "删除所选文件操作？"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "MIME Types and File Actions"
+msgstr "MIME 类型和文件操作"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Applications for MIME types"
+msgstr "MIME 类型的应用程序"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Applications associated with the selected MIME type are shown directly at the top of the file menu, preserving the classic ROX tools workflow."
+msgstr "与所选 MIME 类型关联的应用程序会直接显示在文件菜单顶部，从而保留经典 ROX 工具前置的工作方式。"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Open With reads installed .desktop files, GIO and ~/.config/mimeapps.list. It also scans the real XDG application directories when a distribution has no updated MIME cache."
+msgstr "“打开方式”读取已安装的 .desktop 文件、GIO 和 ~/.config/mimeapps.list。当发行版没有更新的 MIME 缓存时，它还会扫描实际的 XDG 应用程序目录。"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "User applications are stored below ~/.local/share/applications and their icons below ~/.local/share/icons. Rox-Filer2 obtains the real paths from GLib for the active user."
+msgstr "用户应用程序保存在 ~/.local/share/applications，其图标保存在 ~/.local/share/icons。Rox-Filer2 通过 GLib 获取当前用户的实际路径。"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Actions for files and directories"
+msgstr "文件和目录操作"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Create commands for files, directories or symbolic links. Matching actions appear beside the MIME applications in the foreground of the contextual menu."
+msgstr "为文件、目录或符号链接创建命令。匹配的操作会与 MIME 应用程序一起显示在上下文菜单前部。"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "Actions are stored below ~/.local/share/rox-filer/actions and can be limited by MIME type and by single or multiple selection. Historical OpenWith and SendTo directories are not read."
+msgstr "操作保存在 ~/.local/share/rox-filer/actions 下，可按 MIME 类型以及单项或多项选择进行限制。不会读取旧版 OpenWith 和 SendTo 目录。"
+
+#: GTK3 r59 MIME applications and file actions
+msgid "MIME applications and matching file actions are shown directly in the selected-item menu. Historical OpenWith and SendTo directories are ignored."
+msgstr "MIME 应用程序和匹配的文件操作直接显示在所选项目菜单中。旧版 OpenWith 和 SendTo 目录会被忽略。"
+
+# GTK3 r60 application chooser and folder MIME handling
+msgid "Applications for %s"
+msgstr "用于 %s 的应用程序"
+
+msgid "No installed applications were found for this type. Add a custom application or command."
+msgstr "未找到适用于此类型的已安装应用程序。请添加自定义应用程序或命令。"
+
+msgid "Select an application or add a custom command."
+msgstr "请选择应用程序或添加自定义命令。"
+
+msgid "Open With reads installed .desktop files, GIO and ~/.config/mimeapps.list. It also scans the real XDG application directories when a distribution has no updated MIME cache. Folders are handled as inode/directory."
+msgstr "“打开方式”读取已安装的 .desktop 文件、GIO 和 ~/.config/mimeapps.list。当发行版没有更新的 MIME 缓存时，它还会扫描实际的 XDG 应用程序目录。文件夹按 inode/directory 处理。"
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

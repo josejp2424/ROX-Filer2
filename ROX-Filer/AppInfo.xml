@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Modificado por josejp2424: adaptación e integración para la versión GTK3. -->
+<!-- Rox-Filer2: continuación moderna de ROX-Filer por josejp2424. -->
 <AppInfo>
   <Summary xml:lang="en">A graphical file manager</Summary>
   <Summary xml:lang="de">Ein grafischer Dateimanager</Summary>
@@ -16,56 +16,56 @@
   <Summary xml:lang="ar">مدير ملفات رسومي</Summary>
   <About xml:lang="ca">
     <Purpose>Gestor de fitxers</Purpose>
-    <Authors>Thomas Leonard i col·laboradors; port GTK3 i noves funcions per josejp2424; manteniment GTK3 per josejp2424</Authors>
-    <License>Llicència Pública General GNU, versió 3 o posterior</License>
-    <Homepage>http://rox.sourceforge.net</Homepage>
+    <Authors>Thomas Leonard i col·laboradors; port GTK3 i noves funcions per josejp2424; manteniment GTK3 per josejp2424; Rox-Filer2: josejp2424</Authors>
+    <License>Llicència Pública General GNU, versió 2 o posterior</License>
+    <Homepage>https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="ar">
     <Purpose>مدير ملفات</Purpose>
-    <Authors>Thomas Leonard والمساهمون؛ نقل GTK3 والميزات الجديدة بواسطة josejp2424؛ صيانة إصدار GTK3 بواسطة josejp2424</Authors>
-    <License>رخصة جنو العمومية، الإصدار 3 أو أي إصدار لاحق</License>
-    <Homepage>http://rox.sourceforge.net</Homepage>
+    <Authors>Thomas Leonard والمساهمون؛ نقل GTK3 والميزات الجديدة بواسطة josejp2424؛ صيانة إصدار GTK3 بواسطة josejp2424; Rox-Filer2: josejp2424</Authors>
+    <License>رخصة جنو العمومية، الإصدار 2 أو أي إصدار لاحق</License>
+    <Homepage>https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="en">
     <Purpose>File manager</Purpose>
-    <Version>2.12-r57</Version>
-    <Authors>Thomas Leonard and contributors; GTK3 port and new features by josejp2424; GTK3 version maintained by josejp2424</Authors>
-    <License>GNU General Public License, version 3 or later</License>
-    <Homepage>http://rox.sourceforge.net</Homepage>
+    <Version>2.12-r82</Version>
+    <Authors>Original ROX-Filer author: Thomas Leonard and contributors; Rox-Filer2 continuation and development: josejp2424</Authors>
+    <License>GNU General Public License, version 2 or later</License>
+    <Homepage>https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="es">
 	  <Purpose label="Prop&#xF3;sito">Gestor de Archivos</Purpose>
-	  <Authors label="Autores">Thomas Leonard y otros</Authors>
+	  <Authors label="Autores">Autor original de ROX-Filer: Thomas Leonard y colaboradores; continuación y desarrollo de Rox-Filer2: josejp2424</Authors>
 	  <License label="Licencia">Licencia P&#xFA;blica General GNU</License>
-	  <Homepage label="P&#xE1;gina web"/>
+	  <Homepage label="P&#xE1;gina web">https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="de">
     <Purpose>Dateimanager</Purpose>
-    <Authors>Thomas Leonard und andere</Authors>
+    <Authors>Thomas Leonard und andere; Rox-Filer2: josejp2424</Authors>
   </About>
   <About xml:lang="fr">
     <Purpose label="Fonction">Gestionnaire de fichiers</Purpose>
-    <Authors label="Auteurs">Thomas Leonard et autres</Authors>
+    <Authors label="Auteurs">Thomas Leonard et autres; Rox-Filer2: josejp2424</Authors>
     <License label="Licence"/>
-    <Homepage label="Page web"/>
+    <Homepage label="Page web">https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="hu">
     <Purpose label="Feladat">Fájlkezelés</Purpose>
     <Version label="Verzió"/>
-    <Authors label="Szerzők">Thomas Leonard és mások</Authors>
+    <Authors label="Szerzők">Thomas Leonard és mások; Rox-Filer2: josejp2424</Authors>
     <License label="Licenc"/>
-    <Homepage label="Honlap"/>
+    <Homepage label="Honlap">https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="it">
     <Purpose label="Scopo">gestione file</Purpose>
     <Version label="Versione"/>
-    <Authors label="Autori">Thomas Leonard e altri</Authors>
+    <Authors label="Autori">Thomas Leonard e altri; Rox-Filer2: josejp2424</Authors>
     <License label="Licenza"/>
-    <Homepage label="Sito web"/>
+    <Homepage label="Sito web">https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
   </About>
   <About xml:lang="pl">
     <Purpose>Manager plików</Purpose>
-    <Authors>Thomas Leonard i inni</Authors>
+    <Authors>Thomas Leonard i inni; Rox-Filer2: josejp2424</Authors>
   </About>
   <About xml:lang="zh_CN">
     <Purpose label="功能">文件管理员</Purpose>
@@ -83,34 +83,22 @@
   </About>
   <About xml:lang="gl">
 	<Purpose label="Prop&#xF3;sito">Xestor de arquivos</Purpose>
-	<Authors label="Autores">Thomas Leonard e outros</Authors>
+	<Authors label="Autores">Thomas Leonard e outros; Rox-Filer2: josejp2424</Authors>
 	<License label="Licencia">Licencia P&#xFA;blica Xeral GNU</License>
-	<Homepage label="P&#xE1;xina web">http://rox.sourceforge.net</Homepage>
+	<Homepage label="P&#xE1;xina web">https://github.com/josejp2424/ROX-Filer-gtk3</Homepage>
  </About>
   <AppMenu>
-    <Item option="-p=Default">
-      <Label>Enable pinboard</Label>
-      <Label xml:lang="hu">Pinboard engedélyezése</Label>
-      <Label xml:lang="es">Habilitar el pinboard</Label>
-      <Label xml:lang="de">Pinwand einschalten</Label>
-      <Label xml:lang="fr">Activer le punaiseur</Label>
-      <Label xml:lang="pl">Włącza pulpit</Label>
-      <Label xml:lang="it">Attiva la bacheca</Label>
-      <Label xml:lang="zh_CN">启用桌面功能</Label>    
-      <Label xml:lang="zh_TW">啟用桌面功能</Label>
-	<Label xml:lang="gl">Activarar o taboleiro</Label>
-    </Item>
-    <Item option="-p=">
-      <Label>Disable pinboard</Label>
-      <Label xml:lang="hu">Pinboard tiltása</Label>
-      <Label xml:lang="es">Deshabilitar el pinboard</Label>
-      <Label xml:lang="de">Pinwand abschalten</Label>
-      <Label xml:lang="fr">Désactiver le punaiseur</Label>
-      <Label xml:lang="pl">Wyłącza pulpit</Label>
-      <Label xml:lang="it">Disattiva la bacheca</Label>
-      <Label xml:lang="zh_CN">停用桌面功能</Label>    
-      <Label xml:lang="zh_TW">停用桌面功能</Label>
-	<Label xml:lang="gl">Desactivar o taboleiro</Label>
+    <Item option="--desktop">
+      <Label>Start Rox-Filer2 Desktop</Label>
+      <Label xml:lang="es">Iniciar el escritorio Rox-Filer2</Label>
+      <Label xml:lang="de">Rox-Filer2 Desktop starten</Label>
+      <Label xml:lang="fr">Démarrer le bureau Rox-Filer2</Label>
+      <Label xml:lang="it">Avvia il desktop Rox-Filer2</Label>
+      <Label xml:lang="pt">Iniciar o ambiente de trabalho Rox-Filer2</Label>
+      <Label xml:lang="ca">Inicia l'escriptori Rox-Filer2</Label>
+      <Label xml:lang="gl">Iniciar o escritorio Rox-Filer2</Label>
+      <Label xml:lang="zh_CN">启动 Rox-Filer2 桌面</Label>
+      <Label xml:lang="zh_TW">啟動 Rox-Filer2 桌面</Label>
     </Item>
   </AppMenu>
 </AppInfo>

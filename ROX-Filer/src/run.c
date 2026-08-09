@@ -40,6 +40,7 @@
 #include "action.h"
 #include "icon.h"
 #include "choices.h"
+#include "xdg_apps.h"
 
 /* Static prototypes */
 static void write_data(gpointer data, gint fd, RoxInputCondition cond);
@@ -458,7 +459,7 @@ void examine(const gchar *path)
 		if (S_ISDIR(info.st_mode))
 			refresh_dirs(path);
 
-		/* If it's on the pinboard or a panel, update the icon... */
+		/* If it is referenced by a legacy panel, update the icon... */
 		icons_may_update(path);
 	}
 }
@@ -661,19 +662,20 @@ run_action_helper_err:
 			return TRUE;
 	}
 
-	report_error(
-		_("No default application is configured for files of this type (%s/%s) - "
-		"you can choose one with `Set Default Application' "
-		"from the File menu, or you can just drag the file to an "
-		"application.%s"),
-		type->media_type,
-		type->subtype,
-		type->executable ? _("\n\nNote: If this is a computer program which "
-				   "you want to run, you need to set the execute bit "
-				   "by choosing Permissions from the File menu.")
-				: "");
+	/* No default exists. Open the standard GTK application chooser instead of
+	 * falling back to the historical ROX OpenWith directories. The chooser also
+	 * offers Add Custom Application, which creates a user .desktop file and can
+	 * register it through GIO/mimeapps.list. */
+	{
+		GList *paths = g_list_prepend(NULL, (gpointer) path);
+		GtkWindow *parent = window_with_focus
+			? GTK_WINDOW(window_with_focus->window) : NULL;
 
-	return FALSE;
+		xdg_apps_choose_for_paths(paths, parent, TRUE);
+		g_list_free(paths);
+	}
+
+	return TRUE;
 }
 
 /* Called like run_diritem, when a mount-point is opened */
@@ -702,6 +704,88 @@ static void open_mountpoint(const guchar *full_path, DirItem *item,
 	}
 }
 
+/* Agregado por josejp2424 (2026): convertir una ruta local en URI para los
+ * códigos %u y %U del estándar Desktop Entry. */
+static gchar *desktop_argument_uri(const gchar *argument)
+{
+	gchar *uri;
+
+	if (!argument || !*argument)
+		return NULL;
+	if (strstr(argument, "://"))
+		return g_strdup(argument);
+	uri = g_filename_to_uri(argument, NULL, NULL);
+	return uri ? uri : g_strdup(argument);
+}
+
+/* Agregado por josejp2424 (2026): expandir códigos Desktop Entry dentro de
+ * un argumento. Esto cubre lanzadores que usan --option=%f además de los
+ * códigos independientes habituales. */
+static gchar *expand_desktop_token(const gchar *src, const char **args,
+		const gchar *desktop_file, const gchar *name, const gchar *icon,
+		gboolean *inserted_args)
+{
+	GString *out = g_string_new(NULL);
+	const gchar *p;
+
+	for (p = src; *p; p++)
+	{
+		const gchar *value = NULL;
+		gchar *uri = NULL;
+
+		if (*p != '%' || p[1] == '\0')
+		{
+			g_string_append_c(out, *p);
+			continue;
+		}
+
+		p++;
+		switch (*p)
+		{
+			case '%':
+				g_string_append_c(out, '%');
+				break;
+			case 'f':
+			case 'F':
+				if (args && args[0])
+					value = args[0];
+				*inserted_args = TRUE;
+				break;
+			case 'u':
+			case 'U':
+				if (args && args[0])
+				{
+					uri = desktop_argument_uri(args[0]);
+					value = uri;
+				}
+				*inserted_args = TRUE;
+				break;
+			case 'i':
+				value = icon;
+				break;
+			case 'c':
+				value = name;
+				break;
+			case 'k':
+				value = desktop_file;
+				break;
+			case 'd': case 'D': case 'n': case 'N':
+			case 'v': case 'm':
+				break;
+			default:
+				g_string_append_c(out, '%');
+				g_string_append_c(out, *p);
+				break;
+		}
+
+		if (value)
+			g_string_append(out, value);
+		g_free(uri);
+	}
+
+	return g_string_free(out, FALSE);
+}
+
 /* full_path is a .desktop file. Execute the application, using the Exec line
  * from the file.
  * Returns TRUE on success.
@@ -714,6 +798,8 @@ static gboolean run_desktop(const char *full_path,
 	char *exec = NULL;
 	char *terminal = NULL;
 	char *req_dir = NULL;
+	char *name = NULL;
+	char *icon = NULL;
 	gint argc = 0;
 	gchar **argv = NULL;
 	GPtrArray *expanded = NULL;
@@ -725,7 +811,9 @@ static gboolean run_desktop(const char *full_path,
 					&error,
 					"Desktop Entry", "Exec", &exec,
 					"Desktop Entry", "Terminal", &terminal,
-				        "Desktop Entry", "Path", &req_dir,
+					"Desktop Entry", "Path", &req_dir,
+					"Desktop Entry", "Name", &name,
+					"Desktop Entry", "Icon", &icon,
 					NULL);
 	if (error)
 	{
@@ -759,53 +847,71 @@ static gboolean run_desktop(const char *full_path,
 	{
 		const char *src = argv[i];
 
-		if (src[0] == '%' && src[1] != '\0' && src[2] == '\0')
+		if (g_strcmp0(src, "%F") == 0 || g_strcmp0(src, "%U") == 0)
 		{
-			/* We should treat these four differently. */
-			if (src[1] == 'f' || src[1] == 'F' ||
-			    src[1] == 'u' || src[1] == 'U')
+			int j;
+			for (j = 0; args && args[j]; j++)
 			{
-				int j;
-				for (j = 0; args && args[j]; j++)
+				if (src[1] == 'U')
+					g_ptr_array_add(expanded, desktop_argument_uri(args[j]));
+				else
 					g_ptr_array_add(expanded, g_strdup(args[j]));
-				inserted_args = TRUE;
 			}
-			else
-			{
-				delayed_error("Unsupported escape character in '%s' in '%s'",
-						exec, full_path);
-				goto err;
-			}
+			inserted_args = TRUE;
+			continue;
 		}
-		else
+		if (g_strcmp0(src, "%f") == 0 || g_strcmp0(src, "%u") == 0)
 		{
-			g_ptr_array_add(expanded, g_strdup(src));
+			if (args && args[0])
+			{
+				if (src[1] == 'u')
+					g_ptr_array_add(expanded, desktop_argument_uri(args[0]));
+				else
+					g_ptr_array_add(expanded, g_strdup(args[0]));
+			}
+			inserted_args = TRUE;
+			continue;
+		}
+		if (g_strcmp0(src, "%i") == 0)
+		{
+			if (icon && *icon)
+			{
+				g_ptr_array_add(expanded, g_strdup("--icon"));
+				g_ptr_array_add(expanded, g_strdup(icon));
+			}
+			continue;
+		}
+
+		{
+			gchar *token = expand_desktop_token(src, args, full_path,
+				name, icon, &inserted_args);
+			if (token && *token)
+				g_ptr_array_add(expanded, token);
+			else
+				g_free(token);
 		}
 	}
+
 	if (!inserted_args)
 	{
-		/* Many .desktop files don't include a % expansion. In that case
-		 * add the arguments here.
-		 */
 		int j;
 		for (j = 0; args && args[j]; j++)
 			g_ptr_array_add(expanded, g_strdup(args[j]));
 	}
 	g_ptr_array_add(expanded, NULL);
 
-	if(req_dir && req_dir[0])
+	if (req_dir && req_dir[0])
 		dir = req_dir;
 
 	success = rox_spawn(dir, (const gchar **) expanded->pdata);
 err:
 	if (error != NULL)
 		g_error_free(error);
-	if (exec != NULL)
-		g_free(exec);
-	if (terminal != NULL)
-		g_free(terminal);
-	if (req_dir != NULL)
-		g_free(req_dir);
+	g_free(exec);
+	g_free(terminal);
+	g_free(req_dir);
+	g_free(name);
+	g_free(icon);
 	if (argv != NULL)
 		g_strfreev(argv);
 	if (expanded != NULL)
@@ -817,16 +923,23 @@ err:
 	return success;
 }
 
+gboolean run_desktop_entry(const char *desktop_file,
+                           const char **args, const char *working_dir)
+{
+	return run_desktop(desktop_file, args,
+		working_dir && *working_dir ? working_dir : g_get_home_dir());
+}
+
 /* Open a regular file with the application selected by the standard
  * XDG/GIO association system. Returns FALSE only when no association exists,
  * allowing the optional compatibility helper to run afterwards. */
 static gboolean type_open(const char *path, MIME_type *type)
 {
 	GAppInfo *app;
-	GFile *file;
-	GList files = {0};
-	GError *error = NULL;
+	GList paths = {0};
 	gboolean launched;
+	GtkWindow *parent = window_with_focus
+		? GTK_WINDOW(window_with_focus->window) : NULL;
 
 	g_return_val_if_fail(path != NULL, FALSE);
 	g_return_val_if_fail(type != NULL, FALSE);
@@ -835,19 +948,13 @@ static gboolean type_open(const char *path, MIME_type *type)
 	if (!app)
 		return FALSE;
 
-	file = g_file_new_for_path(path);
-	files.data = file;
-	launched = g_app_info_launch(app, &files, NULL, &error);
-	g_object_unref(file);
+	paths.data = (gpointer) path;
+	launched = xdg_apps_launch_app_info(app, &paths, parent);
 	g_object_unref(app);
 
-	if (!launched) {
-		report_error(_("Unable to open '%s' with the default XDG application: %s"),
-			path, error ? error->message : _("Unknown error"));
-		g_clear_error(&error);
-		return TRUE;
-	}
-
-	return TRUE;
+	/* Si tanto GIO como el Exec= directo fallan, devolver FALSE permite que
+	 * open_file() muestre el selector de aplicaciones en vez de tragarse el
+	 * primer intento sin abrir nada. */
+	return launched;
 }
 

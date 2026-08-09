@@ -1,32 +1,38 @@
-			ROX-Filer
-			A RISC OS-like filer for X
-			by Thomas Leonard
+			Rox-Filer2
+			GTK3 file manager and desktop for X11 and Wayland
 
-ROX-Filer is a simple and easy to use graphical file manager for X11, the
-windowing system used on Unix and Unix-like operating systems. It is also
-the core component of the ROX Desktop:
+Rox-Filer2 continues the original ROX-Filer project created by Thomas Leonard.
+The current continuation, GTK3 work, native desktop mode and X11/Wayland
+backends are maintained by josejp2424.
 
-	http://rox.sourceforge.net
+The normal launcher automatically chooses the native display backend:
 
-To compile:
-	$ ROX-Filer/AppRun --compile
+	$ rox
 
-To install:
-	$ ./install.sh
+To force a backend:
 
-To run the installed file manager:
-	$ ROX-Filer
+	$ rox-x11
+	$ rox-wayland
 
-To start the new native desktop mode directly from the binary:
-	$ ROX-Filer --desktop
+To start the single integrated desktop:
 
-ROX Desktop manages the wallpaper, the real XDG Desktop directory and
-detected drives. Right-click an empty area of the desktop to change the
-wallpaper, open the Desktop folder or refresh the desktop.
+	$ rox --desktop
+	$ rox-x11 --desktop
+	$ rox-wayland --desktop
 
-The classic pinboard and panel command-line options remain available only for
-legacy compatibility while the new desktop mode is completed.
+The old named pinboard interface has been removed. Rox-Filer2 Desktop now
+manages the wallpaper, Desktop directory, desktop applications and drive icons
+through one desktop implementation with separate X11 and Wayland backends.
+Wayland desktop support uses Layer Shell on compatible compositors such as
+Labwc.
 
+Existing user settings intentionally remain in the historical
+~/.config/rox.sourceforge.net/ROX-Filer directory so upgrades keep the user's
+configuration.
+
+To compile the source AppDir:
+
+	$ ./ROX-Filer/AppRun --compile-only
 
 Conditions
 ~~~~~~~~~~
@@ -51,8 +57,9 @@ Please report any bugs to the mailing list:
 
 Credits
 ~~~~~~~
-ROX-Filer was created by Thomas Leonard, but many people have contributed to
-it one way or another...
+The original ROX-Filer was created by Thomas Leonard, with contributions from
+many people. Rox-Filer2 is the continuation maintained and developed by
+josejp2424.
 
 If you think you should be included here then write and tell me ;-)
 

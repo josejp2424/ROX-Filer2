@@ -184,7 +184,7 @@ static void abox_init(GTypeInstance *object, gpointer gclass)
 			NULL);
 	gtk_text_buffer_create_tag(
 			gtk_text_view_get_buffer(GTK_TEXT_VIEW(abox->log)),
-			"question", "weight", "bold",
+			"question", "weight", PANGO_WEIGHT_BOLD,
 			NULL);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);

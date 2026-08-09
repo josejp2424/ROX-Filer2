@@ -1,10 +1,10 @@
-# Swedish messages for ROX-Filer.
+# Swedish messages for Rox-Filer2.
 # Copyright (C) 2002 Free Software Foundation, Inc.
 # Marcus Lundblad <ml@update.uu.set>, 2002.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ROX-Filer 2.12-r57\n"
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-07-29 17:41-0300\n"
 "PO-Revision-Date: 2026-07-29 17:41-0300\n"
@@ -47,12 +47,12 @@ msgstr "Uttryck:"
 #: action.c:57
 #, fuzzy
 msgid "See the attr(5) man page for full details."
-msgstr "Se ROX-Filer-manualen f�r detaljer."
+msgstr "Se Rox-Filer2-manualen f�r detaljer."
 
 #: action.c:59
 #, fuzzy
 msgid "See the fsattr(5) man page for full details."
-msgstr "Se ROX-Filer-manualen f�r detaljer."
+msgstr "Se Rox-Filer2-manualen f�r detaljer."
 
 #: action.c:61
 msgid "You do not appear to have OS support."
@@ -177,13 +177,13 @@ msgstr "Find uttrycksreferens"
 
 #: action.c:324
 msgid ""
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
@@ -529,8 +529,8 @@ msgid "Mount / Unmount"
 msgstr "Montera/avmontera"
 
 #: action.c:2197
-msgid "ROX-Filer does not yet support mount points on your system. Sorry."
-msgstr "ROX-Filer st�djer tyv�rr �nnu inte monteringspunkter p� ditt system."
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
+msgstr "Rox-Filer2 st�djer tyv�rr �nnu inte monteringspunkter p� ditt system."
 
 #: action.c:2211 menu.c:246 tips:194
 msgid "Delete"
@@ -1489,14 +1489,14 @@ msgstr ""
 msgid ""
 "Error in '%s' file at line %d: \n"
 "\"%s\"\n"
-"This may be due to upgrading from a previous version of ROX-Filer. Open the "
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the "
 "Options window and try changing something and then changing it back (causing "
 "the file to be resaved).\n"
 "Further errors will be ignored."
 msgstr ""
 "Fel i filen '%s' p� rad %d: \n"
 "\"%s\"\n"
-"Detta kan bero p� en uppgradering fr�n en tidigare verson av ROX-Filer. "
+"Detta kan bero p� en uppgradering fr�n en tidigare verson av Rox-Filer2. "
 "�ppna inst�lliningar och klicka p� Spara.\n"
 "Fler av detta fel kommer ignoreras."
 
@@ -1538,13 +1538,13 @@ msgid "(click to set)"
 msgstr ""
 
 #: icon.c:131
-msgid "ROX-Filer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2"
+msgstr "Rox-Filer2"
 
 #: icon.c:132 menu.c:294
 #, fuzzy
-msgid "About ROX-Filer..."
-msgstr "Om ROX-Filer"
+msgid "About Rox-Filer2..."
+msgstr "Om Rox-Filer2"
 
 #: icon.c:133 menu.c:295
 #, fuzzy
@@ -1900,8 +1900,8 @@ msgstr "Mounteringspunkt (%s) "
 
 #: log.c:54
 #, fuzzy
-msgid "ROX-Filer started"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2 started"
+msgstr "Rox-Filer2"
 
 #: log.c:115
 #, fuzzy, c-format
@@ -1927,26 +1927,26 @@ msgstr "Program"
 #, fuzzy
 msgid ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
 "to the extent permitted by law.\n"
-"You may redistribute copies of ROX-Filer\n"
+"You may redistribute copies of Rox-Filer2\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"
 msgstr ""
 "Copyright (C) 2002 Thomas Leonard.\n"
-"ROX-Filer kommer med ABSOLUT INGEN GARANTI,\n"
+"Rox-Filer2 kommer med ABSOLUT INGEN GARANTI,\n"
 "i den grad det �r till�tet enligt lag.\n"
-"Du f�r �terdistribuera kopior av ROX-Filer\n"
+"Du f�r �terdistribuera kopior av Rox-Filer2\n"
 "under villkoren i GNU General Public License.\n"
 "F�r mer information om detta, se filen COPYING.\n"
 
 #: main.c:106
-msgid "Try `ROX-Filer/AppRun --help' for more information.\n"
-msgstr "Prova 'ROX-Filer/AppRun --help' f�r mer information.\n"
+msgid "Try `Rox-Filer2/AppRun --help' for more information.\n"
+msgstr "Prova 'Rox-Filer2/AppRun --help' f�r mer information.\n"
 
 #: main.c:109
-msgid "Try `ROX-Filer/AppRun -h' for more information.\n"
-msgstr "Prova 'ROX-Filer/AppRun -h' f�r mer information.\n"
+msgid "Try `Rox-Filer2/AppRun -h' for more information.\n"
+msgstr "Prova 'Rox-Filer2/AppRun -h' f�r mer information.\n"
 
 #: main.c:111
 msgid ""
@@ -1956,63 +1956,6 @@ msgid ""
 msgstr ""
 "NOTERA: Ditt system st�djer inte l�nga kommandoradsparametrar - \n"
 "du m�ste anv�nda de korta ist�llet.\n"
-
-#: main.c:117
-#, fuzzy, c-format
-msgid ""
-"Usage: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Open each directory or file listed, or the current working\n"
-"directory if no arguments are given.\n"
-"\n"
-"  -b, --border=PANEL\topen PANEL as a border panel\n"
-"  -B, --bottom=PANEL\topen PAN as a bottom-edge panel\n"
-"  -c, --client-id=ID\tused for session management\n"
-"  -d, --dir=DIR\t\topen DIR as directory (not application)\n"
-"  -D, --close=DIR\tclose DIR and its subdirectories\n"
-"  -h, --help\t\tdisplay this help and exit\n"
-"  -l, --left=PANEL\topen PAN as a left-edge panel\n"
-"  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"
-"  -n, --new\t\tstart new copy; for debugging the filer\n"
-"  -p, --pinboard=PIN\tuse pinboard PIN as the pinboard\n"
-"  -r, --right=PANEL\topen PAN as a right-edge panel\n"
-"  -R, --RPC\t\tinvoke method call read from stdin\n"
-"  -s, --show=FILE\topen a directory showing FILE\n"
-"  -S, --rox-session\tuse default panel and pinboard options, and -n\n"
-"  -t, --top=PANEL\topen PANEL as a top-edge panel\n"
-"  -u, --user\t\tshow user name in each window \n"
-"  -U, --url=URL\t\topen file or directory in URI form\n"
-"  -v, --version\t\tdisplay the version information and exit\n"
-"  -x, --examine=FILE\tFILE has changed - re-examine it\n"
-"\n"
-"Report bugs to %s.\n"
-"Home page (including updated versions): http://rox.sourceforge.net/\n"
-msgstr ""
-"Anv�ndning: ROX-Filer/AppRun [VALM�JLIGHETER]... [FIL]...\n"
-"�ppna alla kataloger eller filer, eller den nuvarande arbets-\n"
-"katalogen om inget annat �r givet.\n"
-"\n"
-"  -b, --bottom=PANEL\t�ppna PANEL som en underkantspanel\n"
-"  -c, --client-id=ID\tanv�nd som sessionshanterare\n"
-"  -d, --dir=KATALOG\t\t�ppna KATALOG som katalog (inte program)\n"
-"  -D, --close=KATALOG\tst�ng KATALOG och dess underkataloger\n"
-"  -h, --help\t\tvisa denna hj�lp och avsluta\n"
-"  -l, --left=PANEL\t�ppna PANEL som en v�nsterkantspanel\n"
-"  -m, --mime-type=FIL\tskriv ut MIME-typen f�r FIL och avsluta\n"
-"  -n, --new\t\tstarta en ny 'filer', �ven om en redan �r ig�ng\n"
-"  -o, --override\tf�rbig� f�nsterhanterarens kontroll av paneler\n"
-"  -p, --pinboard=SKRIVBORD\tanv�nd skrivbord SKRIVBORD som skrivbord\n"
-"  -r, --right=PANEL\t�ppna PANEL som en h�gerkantspanel\n"
-"  -R, --RPC\t\tk�r metodanrop l�st fr�n stdin\n"
-"  -s, --show=FIL\t�ppna den katalog som inneh�ller FIL\n"
-"  -t, --top=PANEL\t�ppna PANEL som eb toppkantspanel\n"
-"  -u, --user\t\tvisa anv�ndarnamn i alla f�nster \n"
-"  -v, --version\t\tvisa versionsinformationen och avsluta\n"
-"  -x, --examine=FIL\tFIL har �ndrats - unders�k den igen\n"
-"\n"
-"Den nyeste versionen finns p�:\n"
-"\thttp://rox.sourceforge.net\n"
-"\n"
-"Rapportera fel till <tal197@users.sourceforge.net>.\n"
 
 #: main.c:239
 msgid ""
@@ -2096,7 +2039,7 @@ msgstr ""
 
 #: main.c:1010
 msgid ""
-"Click to save a script to run ROX-Filer.\n"
+"Click to save a script to run Rox-Filer2.\n"
 "If you are using Zero Install you should use 0alias instead."
 msgstr ""
 
@@ -2193,7 +2136,7 @@ msgstr "Visa g�mda"
 #: menu.c:235
 #, fuzzy
 msgid "Filter Files..."
-msgstr "ROX-Filer: fil(1) siger..."
+msgstr "Rox-Filer2: fil(1) siger..."
 
 #: menu.c:236
 msgid "Filter Directories With Files"
@@ -2722,7 +2665,7 @@ msgstr ""
 
 #: options.c:275
 #, fuzzy
-msgid "ROX-Filer has converted your Options file to the new XML format"
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
 msgstr "Din gamla panelfil har blivit konverterad till det nya XML-formatet."
 
 #: options.c:535 options.c:1256
@@ -2877,16 +2820,16 @@ msgstr ""
 #: pinboard.c:749
 msgid ""
 "You can only set the backdrop to an image or to a program which knows how to "
-"manage ROX-Filer's backdrop.\n"
+"manage Rox-Filer2's backdrop.\n"
 "\n"
 "Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
-"element, as described in ROX-Filer's manual."
+"element, as described in Rox-Filer2's manual."
 msgstr ""
 "Du kan endast s�tta bakgrunden till en bild eller ett program som k�nner "
-"tillhur det anv�nder ROX-Filers bakgrund\n"
+"tillhur det anv�nder Rox-Filer2s bakgrund\n"
 "\n"
 "Programmerare: applikationens AppInfo.xml m�ste inneh�lla elementet "
-"CanSetBackdrop som beskrivs i ROX-Filers manual"
+"CanSetBackdrop som beskrivs i Rox-Filer2s manual"
 
 #: pinboard.c:769
 #, fuzzy
@@ -3260,8 +3203,8 @@ msgid ""
 msgstr ""
 
 #: toolbar.c:176
-msgid "Show ROX-Filer help"
-msgstr "Visa ROX-Filers hj�lp"
+msgid "Show Rox-Filer2 help"
+msgstr "Visa Rox-Filer2s hj�lp"
 
 #: toolbar.c:239
 #, c-format
@@ -4263,12 +4206,12 @@ msgstr "Minimerade f�nster"
 #, fuzzy
 msgid ""
 "Most window managers provide a way to iconify (or 'minimise') windows, and "
-"various programs, including ROX-Filer, can be used to display the iconified "
+"various programs, including Rox-Filer2, can be used to display the iconified "
 "windows."
 msgstr ""
 "De flesta f�nsterhanterare tillhandah�ller ett s�tt att minimera "
 "(ikonifiera)\n"
-"f�nster och vissa program, som ROX-Filer, kan anv�ndas f�r att visa "
+"f�nster och vissa program, som Rox-Filer2, kan anv�ndas f�r att visa "
 "minimerade\n"
 "f�nster. Om detta �r p�slaget visas varje minimerat katalogf�nster som en\n"
 "liten knapp p� sk�rmen. Kr�ver en kompatibel f�nsterhanterare."
@@ -4877,7 +4820,7 @@ msgstr ""
 #: tips:290
 msgid ""
 "Blackbox, Fluxbox and similar window managers do not yet work well with the "
-"ROX-Filer pinboard. This option enables some workarounds. These window "
+"Rox-Filer2 pinboard. This option enables some workarounds. These window "
 "managers are expected to change their behaviour in new versions so that this "
 "isn't necessary."
 msgstr ""
@@ -4949,8 +4892,8 @@ msgstr ""
 
 #: ../Templates.ui.h:1
 #, fuzzy
-msgid "ROX-Filer log viewer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2 log viewer"
+msgstr "Rox-Filer2"
 
 #: ../Templates.ui.h:2
 msgid "Recently performed actions..."
@@ -5642,8 +5585,8 @@ msgstr "R�ttigheter"
 #~ msgid "Unknown error"
 #~ msgstr "Ok�nt fel"
 
-#~ msgid "Show ROX-Filer Help"
-#~ msgstr "Vis ROX-Filer Hj�lp"
+#~ msgid "Show Rox-Filer2 Help"
+#~ msgstr "Vis Rox-Filer2 Hj�lp"
 
 #~ msgid "The label must contain at least one character!"
 #~ msgstr "Title skal indeholde i hvertfald et tegn!"
@@ -5899,3 +5842,24 @@ msgstr[1] ""
 #: trash.c
 msgid "%u items were restored."
 msgstr ""
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "open two Rox-Filer2 windows side by side"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

@@ -51,7 +51,7 @@ void log_init()
 {
 	log = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-	log_info_paths(_("ROX-Filer started"), NULL, NULL);
+	log_info_paths(_("Rox-Filer2 started"), NULL, NULL);
 
 #if 0
 	GList *paths = NULL;

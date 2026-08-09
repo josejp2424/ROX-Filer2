@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: ROX-Filer 2.12-r57\n"
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-07-29 17:41-0300\n"
 "PO-Revision-Date: 2026-07-29 17:41-0300\n"
@@ -204,26 +204,26 @@ msgstr "Referéncia para a definición de tipo"
 
 #: action.c:324
 msgid ""
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
 "directories, devices, pipes or sockets, and then only\n"
 "on certain file systems and where the OS implements them.\n"
 msgstr ""
-"Normalmente «ROX-Filer» determina o tipo dun ficheiro regular\n"
+"Normalmente «Rox-Filer2» determina o tipo dun ficheiro regular\n"
 "buscando un patrón  no seu nome. Para cambiar o tipo do ficheiro\n"
 "ten que renomeá-lo.\n"
 "\n"
 "Algúns sistemas novos de ficheiros son compatibles con algo chamado\n"
 "'Atributos Estendidos' que poden ser usados para gardar datos adicionais\n"
-"de cada ficheiro como parámetros nomeados. «ROX-Filer» usa o atributo\n"
+"de cada ficheiro como parámetros nomeados. «Rox-Filer2» usa o atributo\n"
 "«user.mime_type» para gardar os tipos de ficheiro.\n"
 "\n"
 "Os tipos de ficheiro só son compatibles con ficheiros regulares, e non\n"
@@ -574,9 +574,9 @@ msgid "Mount / Unmount"
 msgstr "Montar / Desmontar"
 
 #: action.c:2197
-msgid "ROX-Filer does not yet support mount points on your system. Sorry."
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
 msgstr ""
-"«ROX-Filer» ainda non é compatible con puntos de montaxe no seu sistema. "
+"«Rox-Filer2» ainda non é compatible con puntos de montaxe no seu sistema. "
 "Desculpe."
 
 #: action.c:2211 menu.c:246 tips:194
@@ -1550,7 +1550,7 @@ msgstr ""
 msgid ""
 "Error in '%s' file at line %d: \n"
 "\"%s\"\n"
-"This may be due to upgrading from a previous version of ROX-Filer. Open the "
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the "
 "Options window and try changing something and then changing it back (causing "
 "the file to be resaved).\n"
 "Further errors will be ignored."
@@ -1605,12 +1605,12 @@ msgid "(click to set)"
 msgstr "(prema para definir)"
 
 #: icon.c:131
-msgid "ROX-Filer"
-msgstr "«ROX-Filer»"
+msgid "Rox-Filer2"
+msgstr "«Rox-Filer2»"
 
 #: icon.c:132 menu.c:294
-msgid "About ROX-Filer..."
-msgstr "Acerca de «ROX-Filer»..."
+msgid "About Rox-Filer2..."
+msgstr "Acerca de «Rox-Filer2»..."
 
 #: icon.c:133 menu.c:295
 msgid "Show Help Files"
@@ -1945,8 +1945,8 @@ msgid "Mount point (%s)"
 msgstr "Punto de montaxe (%s)"
 
 #: log.c:54
-msgid "ROX-Filer started"
-msgstr "«ROX-Filer» activado"
+msgid "Rox-Filer2 started"
+msgstr "«Rox-Filer2» activado"
 
 #: log.c:115
 #, c-format
@@ -1968,26 +1968,26 @@ msgstr "Acción"
 #: main.c:97
 msgid ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
 "to the extent permitted by law.\n"
-"You may redistribute copies of ROX-Filer\n"
+"You may redistribute copies of Rox-Filer2\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"
 msgstr ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"«ROX-Filer» non ten ABSOLUTAMENTE NINGUNHA GARANTIA,\n"
+"«Rox-Filer2» non ten ABSOLUTAMENTE NINGUNHA GARANTIA,\n"
 "en toda a estensión permitida pola lei.\n"
-"Vostede pode redistribuir copias de «ROX-Filer»\n"
+"Vostede pode redistribuir copias de «Rox-Filer2»\n"
 "baixo os termos da GNU General Public License.\n"
 "Para mais información sobre a licencia, vexa o ficheiro «COPYING».\n"
 
 #: main.c:106
-msgid "Try `ROX-Filer/AppRun --help' for more information.\n"
-msgstr "Use «ROX-Filer/AppRun --help» para mais información.\n"
+msgid "Try `Rox-Filer2/AppRun --help' for more information.\n"
+msgstr "Use «Rox-Filer2/AppRun --help» para mais información.\n"
 
 #: main.c:109
-msgid "Try `ROX-Filer/AppRun -h' for more information.\n"
-msgstr "Use «ROX-Filer/AppRun -h» para mais información.\n"
+msgid "Try `Rox-Filer2/AppRun -h' for more information.\n"
+msgstr "Use «Rox-Filer2/AppRun -h» para mais información.\n"
 
 #: main.c:111
 msgid ""
@@ -1998,67 +1998,6 @@ msgstr ""
 "NOTA: O seu sistema non é compatible con opcións longas - \n"
 "no seu lugar debe utilizar as versións curtas.\n"
 "\n"
-
-#: main.c:117
-#, c-format
-msgid ""
-"Usage: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Open each directory or file listed, or the current working\n"
-"directory if no arguments are given.\n"
-"\n"
-"  -b, --border=PANEL\topen PANEL as a border panel\n"
-"  -B, --bottom=PANEL\topen PAN as a bottom-edge panel\n"
-"  -c, --client-id=ID\tused for session management\n"
-"  -d, --dir=DIR\t\topen DIR as directory (not application)\n"
-"  -D, --close=DIR\tclose DIR and its subdirectories\n"
-"  -h, --help\t\tdisplay this help and exit\n"
-"  -l, --left=PANEL\topen PAN as a left-edge panel\n"
-"  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"
-"  -n, --new\t\tstart new copy; for debugging the filer\n"
-"  -p, --pinboard=PIN\tuse pinboard PIN as the pinboard\n"
-"  -r, --right=PANEL\topen PAN as a right-edge panel\n"
-"  -R, --RPC\t\tinvoke method call read from stdin\n"
-"  -s, --show=FILE\topen a directory showing FILE\n"
-"  -S, --rox-session\tuse default panel and pinboard options, and -n\n"
-"  -t, --top=PANEL\topen PANEL as a top-edge panel\n"
-"  -u, --user\t\tshow user name in each window \n"
-"  -U, --url=URL\t\topen file or directory in URI form\n"
-"  -v, --version\t\tdisplay the version information and exit\n"
-"  -x, --examine=FILE\tFILE has changed - re-examine it\n"
-"\n"
-"Report bugs to %s.\n"
-"Home page (including updated versions): http://rox.sourceforge.net/\n"
-msgstr ""
-"Uso: ROX-Filer/AppRun [OPCIÓN]... [FICHEIRO]...\n"
-"Abrir cada directorio ou ficheiro listado, ou o directorio de\n"
-"traballo actual se non se fornece ningún argumento.\n"
-"\n"
-"  -b, --border=PANEL\tabrir PANEL como un panel de bordo\n"
-"  -B, --bottom=PANEL\tabrir PANEL como un panel no bordo\n"
-"                                    \tinferior da pantalla\n"
-"  -c, --client-id=ID\tusado para a xestión da sesión\n"
-"  -d, --dir=DIR\t\tabrir DIR como un directorio (non como aplicativo)\n"
-"  -D, --close=DIR\tpechar DIR e os seus subdirectorios\n"
-"  -h, --help\t\tamosar esta axuda e sair\n"
-"  -l, --left=PAINEL\tabrir PANEL como un panel no bordo\n"
-"                            \tesquerdo da pantalla\n"
-"  -m, --mime-type=FILE\timprime o tipo MIME de FILE e saet\n"
-"  -n, --new\t\tinicia unha nova copia; para debug do filer\n"
-"  -p, --pinboard=PIN\tusar o taboleiro PIN como escritorio\n"
-"  -r, --right=PANEL\tabrir PANEL como un panel no bordo\n"
-"                               \tdereito da pantalla\n"
-"  -R, --RPC\t\tinvocar method call read from stdin\n"
-"  -s, --show=FILE\tabrir o directorio amosando FILE\n"
-"  -S, --rox-session\tusar as opcións predeterminadas de panel e escritorio, "
-"e -n\n"
-"  -t, --top=PANEL\tabrir PANEL como un panel no bordol\n"
-"                            \tsuperior da pantalla\n"
-"  -u, --user\t\tamosar o nome de usuario en cada fiestra \n"
-"  -v, --version\t\tamosa información da versión e sae\n"
-"  -x, --examine=FILE\tFICHEIRO cambiou - volver a analisar\n"
-"\n"
-"Informar de erros a %s.\n"
-"Páxina web (incluindo versións actualizadas): http://rox.sourceforge.net/\n"
 
 #: main.c:239
 msgid ""
@@ -2149,7 +2088,7 @@ msgstr ""
 
 #: main.c:1010
 msgid ""
-"Click to save a script to run ROX-Filer.\n"
+"Click to save a script to run Rox-Filer2.\n"
 "If you are using Zero Install you should use 0alias instead."
 msgstr ""
 
@@ -2790,8 +2729,8 @@ msgid "%s total, %s used, %s free (%.1f %%)"
 msgstr "%s total, %s usado, %s libre (%.1f %%)"
 
 #: options.c:275
-msgid "ROX-Filer has converted your Options file to the new XML format"
-msgstr "ROX-Filer converteu o seu ficheiro de opcións a o novo formato XML"
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
+msgstr "Rox-Filer2 converteu o seu ficheiro de opcións a o novo formato XML"
 
 #: options.c:535 options.c:1256
 msgid "(use default)"
@@ -2939,16 +2878,16 @@ msgstr ""
 #: pinboard.c:749
 msgid ""
 "You can only set the backdrop to an image or to a program which knows how to "
-"manage ROX-Filer's backdrop.\n"
+"manage Rox-Filer2's backdrop.\n"
 "\n"
 "Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
-"element, as described in ROX-Filer's manual."
+"element, as described in Rox-Filer2's manual."
 msgstr ""
-"Só poderá crear un fondo con unha imaxen o un programa para que «ROX-Filer» "
+"Só poderá crear un fondo con unha imaxen o un programa para que «Rox-Filer2» "
 "saiba como manexala.\n"
 "\n"
 "Programadores: o aplicativo AppInfo.xml debe conter o elemento "
-"CanSetBackdrop, tal como se describe no manual de «ROX-Filer»."
+"CanSetBackdrop, tal como se describe no manual de «Rox-Filer2»."
 
 #: pinboard.c:769
 msgid "Set backdrop"
@@ -3326,8 +3265,8 @@ msgid ""
 msgstr ""
 
 #: toolbar.c:176
-msgid "Show ROX-Filer help"
-msgstr "Amosar axuda de «ROX-Filer»"
+msgid "Show Rox-Filer2 help"
+msgstr "Amosar axuda de «Rox-Filer2»"
 
 #: toolbar.c:239
 #, c-format
@@ -4335,12 +4274,12 @@ msgstr "Fiestras como iconas"
 #: tips:150
 msgid ""
 "Most window managers provide a way to iconify (or 'minimise') windows, and "
-"various programs, including ROX-Filer, can be used to display the iconified "
+"various programs, including Rox-Filer2, can be used to display the iconified "
 "windows."
 msgstr ""
 "A maioría de xestores de fiestras proporcionan unha forma de "
 "«iconificar» (ou «minimizar»), as fiestras, e diversos programas, entre eles "
-"«ROX-Filer», poden utilizar para amosar as fiestras coma iconas."
+"«Rox-Filer2», poden utilizar para amosar as fiestras coma iconas."
 
 #: tips:152
 msgid "Show iconified windows"
@@ -4486,7 +4425,7 @@ msgstr "Poña o nome do taboleiro que vai a ser amosado"
 
 #: tips:183
 msgid "Changes here take effect the next time the filer is run."
-msgstr "Os cambios só terán efecto despois de que inicie de novo «ROX-Filer»"
+msgstr "Os cambios só terán efecto despois de que inicie de novo «Rox-Filer2»"
 
 #: tips:184
 #, fuzzy
@@ -4933,12 +4872,12 @@ msgstr "Menus de «Blackbox» cortados"
 #: tips:290
 msgid ""
 "Blackbox, Fluxbox and similar window managers do not yet work well with the "
-"ROX-Filer pinboard. This option enables some workarounds. These window "
+"Rox-Filer2 pinboard. This option enables some workarounds. These window "
 "managers are expected to change their behaviour in new versions so that this "
 "isn't necessary."
 msgstr ""
 "Blackbox, Fluxbox e xestores de fiestras similares ainda non traballan ben "
-"co taboleiro de ROX-Filer. Esta opción soluciona algúns problemas. Agardamos "
+"co taboleiro de Rox-Filer2. Esta opción soluciona algúns problemas. Agardamos "
 "que estos xestores de fiestras muden o seu comportamento en novas versions "
 "de xeito que isto non sexa necesario."
 
@@ -5015,8 +4954,8 @@ msgstr ""
 "nome e a caixa das propiedades non informa delas."
 
 #: ../Templates.ui.h:1
-msgid "ROX-Filer log viewer"
-msgstr "Visor do rexistro de «ROX-Filer»"
+msgid "Rox-Filer2 log viewer"
+msgstr "Visor do rexistro de «Rox-Filer2»"
 
 #: ../Templates.ui.h:2
 msgid "Recently performed actions..."
@@ -5258,3 +5197,24 @@ msgstr[1] ""
 #: trash.c
 msgid "%u items were restored."
 msgstr ""
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "open two Rox-Filer2 windows side by side"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

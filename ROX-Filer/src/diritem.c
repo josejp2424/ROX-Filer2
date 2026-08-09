@@ -137,8 +137,8 @@ void diritem_restat(
 					target_path == path ? parent : NULL))
 				item->flags |= ITEM_FLAG_MOUNT_POINT
 						| ITEM_FLAG_MOUNTED;
-			else if (g_hash_table_lookup(fstab_mounts,
-							target_path))
+			else if (fstab_mounts &&
+				 g_hash_table_lookup(fstab_mounts, target_path))
 				item->flags |= ITEM_FLAG_MOUNT_POINT;
 		}
 
@@ -279,7 +279,13 @@ static void examine_dir(const guchar *path, DirItem *item,
 	if (!tmp)
 		tmp = g_string_new(NULL);
 
-	check_globicon(path, item);
+	/* Modificado por josejp2424 (2026): la carpeta personal siempre usa
+	 * user-home. No permitir que /root/.DirIcon ni GlobIcons reemplacen el
+	 * icono estándar del tema. Las demás carpetas conservan su comportamiento. */
+	if (path_is_home_dir(path))
+		item->_image = pixmap_home_icon();
+	else
+		check_globicon(path, item);
 
 	if (item->flags & ITEM_FLAG_MOUNT_POINT)
 	{

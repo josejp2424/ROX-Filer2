@@ -13,7 +13,7 @@
  * more details.
  */
 
-/* wrapped.c - a small wrapping label used by the pinboard and panel.
+/* wrapped.c - a small wrapping label used by panel icons.
  *
  * GTK3 port: this widget now uses the GTK3 draw and preferred-size virtual
  * functions.  It no longer reads GtkWidget internals or uses GtkStyle,

@@ -1,24 +1,47 @@
 #!/bin/sh
-# autor josejp2424
 set -eu
 
 PROJECT_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 APP_DIR="$PROJECT_ROOT/ROX-Filer"
 PACKAGE_BASE="$PROJECT_ROOT/package-base"
 OUTPUT_DIR="$PROJECT_ROOT/output"
-PACKAGE_NAME="rox-filer"
-DEB_VERSION="2.12+gtk3.v-57"
-DISPLAY_VERSION="2.12-r57"
+PACKAGE_NAME="rox-filer2"
+
+# Keep package/version naming in sync with Rox-Filer2 itself.
+# AppInfo.xml is the canonical source, e.g. 2.12-r82 -> 2.12+gtk3.v-82.
+DISPLAY_VERSION=$(
+    sed -n 's/^[[:space:]]*<Version>\([^<][^<]*\)<\/Version>[[:space:]]*$/\1/p' \
+        "$APP_DIR/AppInfo.xml" | head -n 1
+)
+
+if [ -z "$DISPLAY_VERSION" ]; then
+    echo "ERROR: unable to read Rox-Filer2 version from $APP_DIR/AppInfo.xml" >&2
+    exit 1
+fi
+
+BASE_VERSION=${DISPLAY_VERSION%-r*}
+REVISION=${DISPLAY_VERSION##*-r}
+if [ "$BASE_VERSION" = "$DISPLAY_VERSION" ] || [ -z "$REVISION" ]; then
+    echo "ERROR: unsupported Rox-Filer2 version format: $DISPLAY_VERSION" >&2
+    exit 1
+fi
+case "$REVISION" in
+    *[!0-9]*)
+        echo "ERROR: unsupported Rox-Filer2 revision in version: $DISPLAY_VERSION" >&2
+        exit 1
+        ;;
+esac
+DEB_VERSION="${BASE_VERSION}+gtk3.v-${REVISION}"
 SKIP_COMPILE=0
 
 usage() {
     cat <<USAGE
 Usage: $0 [--skip-compile] [--clean]
 
-  --skip-compile  Package the existing ROX-Filer/ROX-Filer binary.
+  --skip-compile  Package the existing Rox-Filer2-compatible ROX-Filer/ROX-Filer binary.
   --clean         Remove generated package output and ROX-Filer/build.
 
-Without options, the script compiles ROX-Filer and then creates:
+Without options, the script compiles Rox-Filer2 and then creates:
   - a Debian .deb package;
   - the complete Debian package directory;
   - a portable root filesystem directory and tar.gz archive.
@@ -52,7 +75,7 @@ if [ ! -x "$PROJECT_ROOT/rox-find/rox-find" ]; then
     exit 1
 fi
 
-if [ ! -d "$PACKAGE_BASE/usr/local/apps/ROX-Filer/ROX" ]; then
+if [ ! -d "$PACKAGE_BASE/usr/local/apps/Rox-Filer/ROX" ]; then
     echo "ERROR: supplied ROX package directory is missing." >&2
     exit 1
 fi
@@ -86,19 +109,20 @@ cp -a "$PACKAGE_BASE/." "$PACKAGE_DIR/"
 # The user's supplied ROX directory is preserved exactly.
 SUPPLIED_ROX_TMP="$OUTPUT_DIR/.supplied-ROX.$$"
 rm -rf "$SUPPLIED_ROX_TMP"
-cp -a "$PACKAGE_BASE/usr/local/apps/ROX-Filer/ROX" "$SUPPLIED_ROX_TMP"
+cp -a "$PACKAGE_BASE/usr/local/apps/Rox-Filer/ROX" "$SUPPLIED_ROX_TMP"
 
-rm -rf "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
-mkdir -p "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
-cp -a "$APP_DIR/." "$PACKAGE_DIR/usr/local/apps/ROX-Filer/"
-rm -rf "$PACKAGE_DIR/usr/local/apps/ROX-Filer/ROX"
-cp -a "$SUPPLIED_ROX_TMP" "$PACKAGE_DIR/usr/local/apps/ROX-Filer/ROX"
+rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer" "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
+mkdir -p "$PACKAGE_DIR/usr/local/apps/Rox-Filer"
+cp -a "$APP_DIR/." "$PACKAGE_DIR/usr/local/apps/Rox-Filer/"
+rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
+cp -a "$SUPPLIED_ROX_TMP" "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
 rm -rf "$SUPPLIED_ROX_TMP"
+ln -s Rox-Filer "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
 
 # Runtime packages must not contain compiler output or C source files.
 rm -rf \
-    "$PACKAGE_DIR/usr/local/apps/ROX-Filer/build" \
-    "$PACKAGE_DIR/usr/local/apps/ROX-Filer/src"
+    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/build" \
+    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/src"
 
 # Install the native ROX File Search companion application.
 install -Dm0755 "$PROJECT_ROOT/rox-find/rox-find" \
@@ -144,7 +168,7 @@ chmod 0644 "$PACKAGE_DIR/DEBIAN/md5sums"
 mkdir -p "$PORTABLE_DIR"
 cp -a "$PACKAGE_DIR/usr" "$PORTABLE_DIR/usr"
 cat > "$PORTABLE_DIR/PACKAGE-INFO.txt" <<INFO
-ROX-Filer $DISPLAY_VERSION
+Rox-Filer2 $DISPLAY_VERSION
 Architecture: $ARCH
 
 This directory is a portable filesystem tree. Copy or package its usr/

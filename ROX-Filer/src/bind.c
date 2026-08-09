@@ -29,7 +29,6 @@
 #include "bind.h"
 
 Option o_new_button_1, o_single_click, o_single_click_dirs;
-static Option o_single_pinboard;
 static Option o_dclick_resizes;
 
 /****************************************************************
@@ -41,7 +40,6 @@ void bind_init(void)
 	option_add_int(&o_new_button_1, "bind_new_button_1", FALSE);
 	option_add_int(&o_single_click, "bind_single_click", TRUE);
 	option_add_int(&o_single_click_dirs, "bind_single_click_dirs", FALSE);
-	option_add_int(&o_single_pinboard, "bind_single_pinboard", TRUE);
 	option_add_int(&o_dclick_resizes, "bind_dclick_resizes", TRUE);
 }
 
@@ -55,11 +53,9 @@ BindAction bind_lookup_bev_full(BindContext context, GdkEventButton *event,
 	gint	menu_button = 3; /* o_menu_button_2.int_value ? 2 : 3; */
 	gboolean shift = (event->state & GDK_SHIFT_MASK) != 0;
 	gboolean ctrl = (event->state & GDK_CONTROL_MASK) != 0;
-	gboolean icon  = context == BIND_PINBOARD_ICON ||
-				context == BIND_PANEL_ICON;
+	gboolean icon  = context == BIND_PANEL_ICON;
 	gboolean item = icon || context == BIND_DIRECTORY_ICON;
-	gboolean background = context == BIND_PINBOARD ||
-				context == BIND_PANEL ||
+	gboolean background = context == BIND_PANEL ||
 				context == BIND_DIRECTORY;
 
 	gboolean press = event->type == GDK_BUTTON_PRESS;
@@ -69,14 +65,11 @@ BindAction bind_lookup_bev_full(BindContext context, GdkEventButton *event,
 
 	gboolean dclick = event->type == GDK_2BUTTON_PRESS;
 	gboolean dclick_mode =
-		(context == BIND_DIRECTORY_ICON && !single_click_item) ||
-		(context == BIND_PINBOARD_ICON && !o_single_pinboard.int_value);
+		(context == BIND_DIRECTORY_ICON && !single_click_item);
 
 	if (b > 3)
 		return ACT_IGNORE;
 
-	if (context == BIND_PINBOARD_ICON || context == BIND_PINBOARD)
-		menu_button = 3;	/* Must work with window manager */
 
 	if (b == menu_button)
 		return press ? ACT_POPUP_MENU : ACT_IGNORE;
@@ -118,7 +111,6 @@ BindAction bind_lookup_bev_full(BindContext context, GdkEventButton *event,
 BindAction bind_lookup_bev(BindContext context, GdkEventButton *event)
 {
 	gboolean single_click_item =
-		context == BIND_DIRECTORY_ICON ? o_single_click.int_value :
-		context == BIND_PINBOARD_ICON ? o_single_pinboard.int_value : TRUE;
+		context == BIND_DIRECTORY_ICON ? o_single_click.int_value : TRUE;
 	return bind_lookup_bev_full(context, event, single_click_item);
 }

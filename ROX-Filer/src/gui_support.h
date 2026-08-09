@@ -72,6 +72,7 @@ void centre_window(GdkWindow *window, int x, int y);
 void wink_widget(GtkWidget *widget);
 void destroy_on_idle(GtkWidget *widget);
 gint rox_spawn(const gchar *dir, const gchar **argv);
+void rox_debug_log(const gchar *category, const gchar *format, ...) G_GNUC_PRINTF(2, 3);
 const char *rox_icon_name(const char *icon_name);
 const char *rox_icon_fallback_name(const char *icon_name);
 GtkWidget *image_new_icon(const char *icon_name, GtkIconSize size);

@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include <gtk/gtk.h>
 #include <gio/gio.h>
@@ -57,7 +58,6 @@
 #include "mount.h"
 #include "minibuffer.h"
 #include "i18n.h"
-#include "pinboard.h"
 #include "dir.h"
 #include "diritem.h"
 #include "appmenu.h"
@@ -74,6 +74,8 @@
 #include "desktop.h"
 #include "filer_pair.h"
 #include "search_integration.h"
+#include "xdg_apps.h"
+#include "custom_actions.h"
 
 static gboolean input_trace_enabled(void)
 {
@@ -98,7 +100,6 @@ typedef enum {
 	FILE_COPY_TO_BACKGROUNDS,
 	FILE_RUN_ACTION,
 	FILE_SET_ICON,
-	FILE_SEND_TO,
 	FILE_TRASH,
 	FILE_DELETE,
 	FILE_USAGE,
@@ -123,7 +124,22 @@ typedef enum {
 	TERMINAL_RUN_NONE = 0,
 	TERMINAL_RUN_DIRECT,
 	TERMINAL_RUN_SHELL,
+	TERMINAL_RUN_BASH,
+	TERMINAL_RUN_ASH,
+	TERMINAL_RUN_DASH,
+	TERMINAL_RUN_ZSH,
+	TERMINAL_RUN_KSH,
+	TERMINAL_RUN_FISH,
 	TERMINAL_RUN_PYTHON,
+	TERMINAL_RUN_PERL,
+	TERMINAL_RUN_RUBY,
+	TERMINAL_RUN_LUA,
+	TERMINAL_RUN_TCL,
+	TERMINAL_RUN_PHP,
+	TERMINAL_RUN_NODE,
+	TERMINAL_RUN_AWK,
+	TERMINAL_RUN_SED,
+	TERMINAL_RUN_SHEBANG,
 	TERMINAL_RUN_APPIMAGE_NEEDS_EXEC
 } TerminalRunMode;
 
@@ -134,10 +150,8 @@ static gboolean filer_keys_need_init = TRUE;
 static GtkWidget *popup_menu = NULL;	/* Currently open menu */
 
 static gint updating_menu = 0;		/* Non-zero => ignore activations */
-static GList *send_to_paths = NULL;
-
-static Option o_menu_iconsize, o_menu_xterm, o_menu_xterm_grave, o_menu_quick, o_menu_xdg_apps;
-static Option o_menu_legacy_sendto, o_menu_hide_unavailable;
+static Option o_menu_iconsize, o_menu_xterm, o_menu_xterm_grave, o_menu_quick;
+static Option o_menu_hide_unavailable;
 
 /* clipboard targets */
 static const GtkTargetEntry clipboard_targets[] = {
@@ -164,8 +178,6 @@ static gboolean link_cb(GObject *savebox,
 			const gchar *initial, const gchar *path);
 static void select_nth_item(GtkMenuShell *shell, int n);
 static void new_file_type(gchar *templ);
-static void do_send_to(gchar *templ);
-static void show_send_to_menu(GList *paths, GdkEvent *event);
 static GList *set_keys_button(Option *option, xmlNode *node, guchar *label);
 
 /* Note that for most of these callbacks none of the arguments are used. */
@@ -209,8 +221,15 @@ static TerminalRunMode terminal_run_mode_for_item(const gchar *path,
 static gboolean spawn_terminal_runner(const gchar *working_dir,
 					  const gchar *path,
 					  TerminalRunMode mode);
+static gboolean terminal_build_argv(gboolean execute_command,
+				    const gchar *command_path,
+				    GPtrArray **argv_out);
+static gchar *terminal_create_runner(const gchar *path, const gchar *working_dir,
+					 TerminalRunMode mode);
 static void menu_options_changed(void);
 static void search_current_folders(gpointer data, guint action, GtkWidget *widget);
+static void choose_application_selected(gpointer data, guint action, GtkWidget *widget);
+static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget);
 static void open_paired_windows(gpointer data, guint action, GtkWidget *widget);
 static void realign_paired_windows(gpointer data, guint action, GtkWidget *widget);
 
@@ -238,11 +257,16 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *widget)
 static GtkWidget	*filer_menu;		/* The popup filer menu */
 static GtkWidget	*filer_file_item;	/* The File '' label */
 static GtkWidget	*filer_file_menu;	/* The File '' menu */
+static GtkWidget    *filer_paste_item;      /* Paste in the main menu */
+static GtkWidget    *filer_file_cut_item;   /* Cut in quick file menu */
+static GtkWidget    *filer_file_copy_item;  /* Copy in quick file menu */
+static GtkWidget    *filer_file_paste_item; /* Paste in quick file menu */
 static GtkWidget	*file_shift_item;	/* Shift Open label */
 static GtkWidget    *filer_duplicate_item;
 static GtkWidget    *filer_link_item;
 static GtkWidget    *filer_shift_open_item;
 static GtkWidget    *filer_set_run_action_item;
+static GtkWidget    *filer_open_with_item;
 static GtkWidget    *filer_set_icon_item;
 static GtkWidget	*filer_auto_size_menu;	/* The Automatic item */
 static GtkWidget	*filer_hidden_menu;	/* The Show Hidden item */
@@ -297,8 +321,15 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Refresh"),		"F5", refresh, 0, "<IconItem>", ROX_ICON_REFRESH},
 {">" N_("Save Current Display Settings..."),	 NULL, save_settings, 0, "<IconItem>", ROX_ICON_SAVE},
 {N_("File"),			NULL, NULL, 0, "<Branch>", "text-x-generic"},
-{">" N_("Copy"),		"<Ctrl>C", file_op, FILE_COPY_TO_CLIPBOARD, "<IconItem>", ROX_ICON_COPY},
-{">" N_("Cut"),		"<Ctrl>X", file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
+/* Buscar en la carpeta seleccionada queda al comienzo del menú. Para archivos
+ * no compatibles se oculta dinámicamente en show_filer_menu(). */
+{">" N_("Search in This Folder..."), "<Ctrl>F", search_current_folders, 0, "<IconItem>", "edit-find"},
+{">",				NULL, NULL, 0, "<Separator>"},
+/* Rox-Filer2: keep clipboard operations visible in the quick file menu too. */
+{">" N_("Cut"),			NULL, file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
+{">" N_("Copy"),			NULL, file_op, FILE_COPY_TO_CLIPBOARD, "<IconItem>", ROX_ICON_COPY},
+{">" N_("Paste"),			NULL, paste_from_clipboard, 0, "<IconItem>", ROX_ICON_PASTE},
+{">",				NULL, NULL, 0, "<Separator>"},
 {">" N_("Duplicate..."),	"<Ctrl>D", file_op, FILE_DUPLICATE_ITEM, "<IconItem>", ROX_ICON_COPY},
 {">" N_("Rename..."),		"F2", file_op, FILE_RENAME_ITEM, "<IconItem>", "document-edit"},
 {">" N_("Link..."),		NULL, file_op, FILE_LINK_ITEM, "<IconItem>", ROX_ICON_SYMLINK},
@@ -308,7 +339,11 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Delete Permanently..."), "<Shift>Delete", file_op, FILE_DELETE, "<IconItem>", ROX_ICON_DELETE},
 {">",				NULL, NULL, 0, "<Separator>"},
 {">" N_("Shift Open"),   	NULL, file_op, FILE_OPEN_FILE, "<IconItem>", ROX_ICON_OPEN},
-{">" N_("Open With..."),		NULL, file_op, FILE_SEND_TO, "<IconItem>", ROX_ICON_EXECUTE},
+/* Modificado por josejp2424 (2026): las aplicaciones MIME principales ya se
+ * muestran directamente arriba. Este elemento abre siempre el selector XDG,
+ * incluso cuando la caché MIME de la distribución está incompleta. */
+{">" N_("Open With..."),	NULL, choose_application_selected, 0, "<IconItem>", ROX_ICON_EXECUTE},
+{">" N_("Add File Action..."), NULL, add_file_action_selected, 0, "<IconItem>", "list-add"},
 /* Agregado por josejp2424 (2026): visible sólo para imágenes compatibles y
  * situado inmediatamente debajo de Open With. */
 {">" N_("Copy to Backgrounds..."), NULL, file_op, FILE_COPY_TO_BACKGROUNDS, "<IconItem>", "preferences-desktop-wallpaper"},
@@ -327,7 +362,6 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Set Type..."),		NULL, file_op, FILE_SET_TYPE, "<IconItem>", "text-x-generic"},
 {">" N_("Permissions"),		NULL, file_op, FILE_CHMOD_ITEMS, "<IconItem>", "dialog-password"},
 {">",				NULL, NULL, 0, "<Separator>"},
-{">" N_("Search in This Folder..."), "<Ctrl>F", search_current_folders, 0, "<IconItem>", "rox-find"},
 {N_("Select"),	    		NULL, NULL, 0, "<Branch>", ROX_ICON_SELECT},
 {">" N_("Select All"),	    	"<Ctrl>A", select_all, 0, "<IconItem>", ROX_ICON_SELECT},
 {">" N_("Clear Selection"),	NULL, clear_selection, 0, "<IconItem>", ROX_ICON_CLEAR},
@@ -336,6 +370,8 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Select If..."),	"<Shift>question", mini_buffer, MINI_SELECT_IF, "<IconItem>", ROX_ICON_FIND},
 {N_("Options..."),		NULL, menu_show_options, 0, "<IconItem>", ROX_ICON_PREFERENCES},
 {"",				NULL, NULL, 0, "<Separator>"},
+{N_("Cut"),			"<Ctrl>X", file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
+{N_("Copy"),			"<Ctrl>C", file_op, FILE_COPY_TO_CLIPBOARD, "<IconItem>", ROX_ICON_COPY},
 {N_("Paste"),			"<Ctrl>V", paste_from_clipboard, 0, "<IconItem>", ROX_ICON_PASTE},
 {"",				NULL, NULL, 0, "<Separator>"},
 {N_("New"),			NULL, NULL, 0, "<Branch>", ROX_ICON_NEW},
@@ -362,7 +398,7 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Shell Command..."),	"<Shift>exclam", mini_buffer, MINI_SHELL, "<IconItem>", ROX_ICON_TERMINAL},
 {">" N_("Open Terminal Here"),	"F4", xterm_here, FALSE, "<IconItem>", ROX_ICON_TERMINAL},
 {">" N_("Switch to Terminal"),	NULL, xterm_here, TRUE, "<IconItem>", ROX_ICON_TERMINAL},
-{N_("About ROX-Filer..."),	NULL, menu_rox_help, HELP_ABOUT, "<IconItem>", ROX_ICON_DIALOG_INFO},
+{N_("About Rox-Filer2..."),	NULL, menu_rox_help, HELP_ABOUT, "<IconItem>", ROX_ICON_DIALOG_INFO},
 };
 
 
@@ -401,10 +437,15 @@ gboolean ensure_filer_menu(void)
 
 	GET_MENU_ITEM(filer_menu, "filer");
 	GET_SMENU_ITEM(filer_file_menu, "filer", "File");
+	GET_SMENU_ITEM(filer_paste_item, "filer", "Paste");
+	GET_SSMENU_ITEM(filer_file_cut_item, "filer", "File", "Cut");
+	GET_SSMENU_ITEM(filer_file_copy_item, "filer", "File", "Copy");
+	GET_SSMENU_ITEM(filer_file_paste_item, "filer", "File", "Paste");
 	GET_SSMENU_ITEM(filer_duplicate_item, "filer", "File", "Duplicate...");
 	GET_SSMENU_ITEM(filer_link_item, "filer", "File", "Link...");
 	GET_SSMENU_ITEM(filer_shift_open_item, "filer", "File", "Shift Open");
 	GET_SSMENU_ITEM(filer_set_run_action_item, "filer", "File", "Set Default Application...");
+	GET_SSMENU_ITEM(filer_open_with_item, "filer", "File", "Open With...");
 	GET_SSMENU_ITEM(filer_set_icon_item, "filer", "File", "Set Icon...");
 	GET_SSMENU_ITEM(filer_hidden_menu, "filer", "Display", "Show Hidden");
 	GET_SSMENU_ITEM(filer_filter_dirs_menu, "filer", "Display", "Filter Directories With Files");
@@ -429,6 +470,8 @@ gboolean ensure_filer_menu(void)
 	/* Modificado por josejp2424 (2026): show_popup_menu() usa show_all();
 	 * no-show-all permite ocultar esta acción para archivos no compatibles. */
 	gtk_widget_set_no_show_all(filer_copy_to_backgrounds, TRUE);
+	gtk_widget_set_no_show_all(filer_open_with_item, TRUE);
+	gtk_widget_hide(filer_open_with_item);
 	gtk_widget_hide(filer_copy_to_backgrounds);
 	gtk_widget_set_no_show_all(filer_open_terminal_here, TRUE);
 	gtk_widget_set_no_show_all(filer_run_in_terminal, TRUE);
@@ -486,12 +529,31 @@ void menu_init(void)
 		g_free(menurc);
 	}
 
-	option_add_string(&o_menu_xterm, "menu_xterm", "xterm");
+	{
+		static const gchar *candidates[] = {
+			"defaultterminal", "x-terminal-emulator", "xterm",
+			"urxvt", "lxterminal", "xfce4-terminal",
+			"mate-terminal", "gnome-terminal", "konsole",
+			"foot", "kitty", "alacritty", NULL
+		};
+		const gchar *terminal_default = "xterm";
+		gint i;
+
+		for (i = 0; candidates[i] != NULL; i++)
+		{
+			gchar *found = g_find_program_in_path(candidates[i]);
+			if (found)
+			{
+				terminal_default = candidates[i];
+				g_free(found);
+				break;
+			}
+		}
+		option_add_string(&o_menu_xterm, "menu_xterm", terminal_default);
+	}
 	option_add_int(&o_menu_xterm_grave, "menu_xterm_grave", TRUE);
 	option_add_int(&o_menu_iconsize, "menu_iconsize", MIS_SMALL);
-	option_add_int(&o_menu_quick, "menu_quick", FALSE);
-	option_add_int(&o_menu_xdg_apps, "menu_xdg_apps", TRUE);
-	option_add_int(&o_menu_legacy_sendto, "menu_legacy_sendto", FALSE);
+	option_add_int(&o_menu_quick, "menu_quick", TRUE);
 	option_add_int(&o_menu_hide_unavailable, "menu_hide_unavailable", TRUE);
 	option_add_saver(save_menus);
 
@@ -603,7 +665,7 @@ void position_menu(GtkMenu *menu, gint *x, gint *y,
 	*push_in = FALSE;
 }
 
-static GtkWidget *make_send_to_item(DirItem *ditem, const char *label,
+static GtkWidget *make_directory_menu_item(DirItem *ditem, const char *label,
 				MenuIconStyle style)
 {
 	GtkWidget *item;
@@ -691,7 +753,7 @@ static GList *menu_from_dir(GtkWidget *menu, GHashTable *menu_entries,
 		ditem = diritem_new((const guchar *) "");
 		diritem_restat((const guchar *) fname, ditem, NULL);
 
-		item = make_send_to_item(ditem, leaf, style);
+		item = make_directory_menu_item(ditem, leaf, style);
 
 		if (menu_entries)
 			g_hash_table_add(menu_entries, g_strdup(leaf));
@@ -848,7 +910,11 @@ static void clipboardcb(
 		gpointer p)
 {
 	if (gtk_selection_data_get_length(data) > 0)
-		menu_set_items_shaded(filer_menu, FALSE, 5, 1);
+	{
+		gtk_widget_set_sensitive(filer_paste_item, TRUE);
+		if (filer_file_paste_item)
+			gtk_widget_set_sensitive(filer_file_paste_item, TRUE);
+	}
 	else if (GPOINTER_TO_INT(p))
 		gtk_clipboard_request_contents(
 				clipboard, text_uri_list, clipboardcb, GUINT_TO_POINTER(0));
@@ -876,7 +942,8 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 
 	updating_menu++;
 
-	/* Remove previous AppMenu, if any */
+	/* Remove dynamic MIME tools and previous AppMenu, if any. */
+	xdg_apps_remove_mime_tools();
 	appmenu_remove();
 
 	window_with_focus = filer_window;
@@ -897,32 +964,22 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		filer_window->temp_item_selected = FALSE;
 	}
 
-	/* Determine whether to shade "Paste" option */
-	menu_set_items_shaded(filer_menu, TRUE, 5, 1);
+	/* Cut/Copy are valid for one or many selected items, but not for an
+	 * empty background click.  Keep the quick file menu consistent with the
+	 * top-level Ctrl+X/Ctrl+C actions. */
+	if (filer_file_cut_item)
+		gtk_widget_set_sensitive(filer_file_cut_item, n_selected > 0);
+	if (filer_file_copy_item)
+		gtk_widget_set_sensitive(filer_file_copy_item, n_selected > 0);
+
+	/* Determine whether to shade "Paste" without depending on its
+	 * numeric position in the main menu. */
+	gtk_widget_set_sensitive(filer_paste_item, FALSE);
+	if (filer_file_paste_item)
+		gtk_widget_set_sensitive(filer_file_paste_item, FALSE);
 	gtk_clipboard_request_contents(
 			clipboard, gnome_copied_files, clipboardcb, GUINT_TO_POINTER(1));
 
-	/* Short-cut to the Send To menu */
-	if ((state & GDK_SHIFT_MASK) && o_menu_legacy_sendto.int_value)
-	{
-		GList *paths;
-
-		updating_menu--;
-
-		if (n_selected == 0)
-		{
-			report_error(
-				_("You should Shift+Menu click over a file to "
-				"send it somewhere"));
-			return;
-		}
-
-		paths = filer_selected_items(filer_window);
-
-		show_send_to_menu(paths, event); /* (paths eaten) */
-
-		return;
-	}
 
 	{
 		GtkWidget	*file_label;
@@ -960,6 +1017,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 			gtk_widget_set_sensitive(filer_run_in_terminal, FALSE);
 		}
 		gtk_widget_hide(filer_copy_to_backgrounds);
+		gtk_widget_hide(filer_open_with_item);
 		gtk_widget_hide(filer_search_item);
 		gtk_widget_hide(filer_pair_open_item);
 		gtk_widget_hide(filer_pair_realign_item);
@@ -974,6 +1032,12 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				_("Search in This Folder..."));
 			gtk_widget_show(filer_search_item);
 		}
+
+		/* Applications associated with the MIME type are inserted directly at
+		 * the start of this menu below. Open With remains a normal, reliable
+		 * command which opens the complete chooser for files and directories. */
+		if (n_selected > 0)
+			gtk_widget_show(filer_open_with_item);
 
 		switch (n_selected)
 		{
@@ -1029,6 +1093,16 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 			n_added = appmenu_add(make_path(filer_window->sym_path,
 							file_item->leafname),
 						file_item, filer_file_menu);
+
+		/* Keep MIME applications and matching file actions in the foreground,
+		 * as in classic ROX, while using XDG/GIO underneath. */
+		if (n_selected > 0)
+		{
+			GList *mime_paths = filer_selected_items(filer_window);
+			n_added += xdg_apps_add_mime_tools(filer_file_menu, mime_paths,
+				GTK_WINDOW(filer_window->window));
+			destroy_glist(&mime_paths);
+		}
 	}
 
 	update_new_files_menu(get_menu_icon_style());
@@ -1077,6 +1151,7 @@ static void menu_closed(GtkWidget *widget)
 		window_with_focus->temp_item_selected = FALSE;
 	}
 
+	xdg_apps_remove_mime_tools();
 	appmenu_remove();
 }
 
@@ -1367,6 +1442,16 @@ static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 	g_object_set_data(G_OBJECT(savebox), "check_relative", check_relative);
 
 	gtk_window_set_title(GTK_WINDOW(savebox), action);
+	/* En algunos gestores de ventanas ligeros el diálogo de renombrado podía
+	 * abrirse detrás de la ventana del filer y parecer que no existía. Mantenerlo
+	 * asociado a la ventana activa y presentarlo explícitamente. */
+	if (window_with_focus && GTK_IS_WINDOW(window_with_focus->window))
+	{
+		gtk_window_set_transient_for(GTK_WINDOW(savebox),
+			GTK_WINDOW(window_with_focus->window));
+		gtk_window_set_destroy_with_parent(GTK_WINDOW(savebox), TRUE);
+		gtk_window_set_position(GTK_WINDOW(savebox), GTK_WIN_POS_CENTER_ON_PARENT);
+	}
 
 	if (g_utf8_validate(path, -1, NULL))
 		gtk_savebox_set_pathname(GTK_SAVEBOX(savebox), path);
@@ -1386,6 +1471,7 @@ static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 	g_object_unref(image);
 
 	gtk_widget_show(savebox);
+	gtk_window_present(GTK_WINDOW(savebox));
 	return savebox;
 }
 
@@ -1461,7 +1547,13 @@ static void src_dest_action_item(const gchar *path, MaskedPixmap *image,
 static gboolean rename_cb(GObject *savebox,
 			  const gchar *current, const gchar *new)
 {
-	return action_with_leaf(action_move, current, new);
+	gboolean result;
+	(void)savebox;
+	rox_debug_log("RENAME", "current=%s new=%s",
+		current ? current : "", new ? new : "");
+	result = action_with_leaf(action_move, current, new);
+	rox_debug_log("RENAME", "result=%s", result ? "ok" : "failed");
+	return result;
 }
 
 static gboolean link_cb(GObject *savebox,
@@ -1713,13 +1805,6 @@ static gboolean new_file_type_cb(GObject *savebox,
 	return TRUE;
 }
 
-static void do_send_to(gchar *templ)
-{
-	g_return_if_fail(send_to_paths != NULL);
-
-	run_with_files(templ, send_to_paths);
-}
-
 static void new_file_type(gchar *templ)
 {
 	const gchar *leaf;
@@ -1835,54 +1920,6 @@ void show_menu_new(FilerWindow *filer_window)
 	show_popup_menu(menu, NULL, 1);
 }
 
-static void customise_send_to(gpointer data)
-{
-	GPtrArray	*path;
-	guchar		*save;
-	GString		*dirs;
-	int		i;
-
-	dirs = g_string_new(NULL);
-
-	path = choices_list_xdg_dirs("", SITE);
-	for (i = 0; i < path->len; i++)
-	{
-		guchar *old = (guchar *) path->pdata[i];
-
-		g_string_append(dirs, old);
-		g_string_append(dirs, "/SendTo\n");
-	}
-	choices_free_list(path);
-
-	save = choices_find_xdg_path_save("", "SendTo", SITE, TRUE);
-	if (save)
-		mkdir(save, 0777);
-
-	info_message(
-		_("The `Send To' menu provides a quick way to send some files "
-		"to an application. The applications listed are those in "
-		"the following directories:\n\n%s\n%s\n"
-		"The `Send To' menu may be opened by Shift+Menu clicking "
-		"over a file.\n\n"
-		"Advanced use:\n"
-		"You can also create subdirectories called "
-		"`.text_html', `.text', etc which will only be "
-		"shown for files of that type and shared with the file menu. "
-		"In addition, `.group' is shown only when multiple files are selected. "
-		"`.all' is only for the menu."),
-		dirs->str,
-		save ? _("I'll show you your SendTo directory now; you should "
-			"symlink (Ctrl+Shift drag) any applications you want "
-			"into it.")
-		     : _("Your CHOICESPATH variable setting prevents "
-			 "customisations - sorry."));
-
-	g_string_free(dirs, TRUE);
-
-	if (save)
-		filer_opendir(save, NULL, NULL);
-}
-
 static void customise_new(gpointer data, guint action, GtkWidget *widget)
 {
 	(void) data;
@@ -1926,397 +1963,35 @@ static void customise_new(gpointer data, guint action, GtkWidget *widget)
 		filer_opendir(save, NULL, NULL);
 }
 
-/* Add everything in the directory <Choices>/SendTo/[.type[_subtype]]
- * to the menu.
- */
-static void add_sendto(GtkWidget *menu, const gchar *type, const gchar *subtype)
+
+static void choose_application_selected(gpointer data, guint action, GtkWidget *widget)
 {
-		GList *widgets = NULL;
-		GHashTable *menu_entries;
-		GHashTableIter hash_table_iter;
-		gpointer key, value;
+	GList *paths;
 
-		menu_entries = g_hash_table_new(g_str_hash, g_str_equal);
+	(void)data; (void)action; (void)widget;
+	if (!window_with_focus)
+		return;
 
-		if (o_menu_legacy_sendto.int_value)
-			widgets = add_sendto_shared(menu, menu_entries, type, subtype, (CallbackFn) do_send_to);
-        widgets = g_list_concat(widgets,
-            add_sendto_desktop_items(menu, menu_entries, type, subtype, (CallbackFn) do_send_to));
-		if (widgets)
-			gtk_menu_shell_append(GTK_MENU_SHELL(menu),
-					gtk_menu_item_new());
-
-		g_hash_table_iter_init (&hash_table_iter, menu_entries);
-		while (g_hash_table_iter_next (&hash_table_iter, &key, &value)) {
-			g_free(key);
-		}
-
-		g_hash_table_destroy(menu_entries);
-
-		g_list_free(widgets);	/* TODO: Get rid of this */
-}
-GList *add_sendto_shared(GtkWidget *menu, GHashTable *menu_entries,
-		const gchar *type, const gchar *subtype, CallbackFn swapped_func)
-{
-	gchar *searchdir;
-	GPtrArray *paths;
-	GList *widgets = NULL;
-	int i;
-
-	if (subtype)
-		searchdir = g_strdup_printf("SendTo/.%s_%s", type, subtype);
-	else if (type)
-		searchdir = g_strdup_printf("SendTo/.%s", type);
-	else
-		searchdir = g_strdup("SendTo");
-
-	paths = choices_list_xdg_dirs(searchdir, SITE);
-	g_free(searchdir);
-
-	for (i = 0; i < paths->len; i++)
-	{
-		guchar	*dir = (guchar *) paths->pdata[i];
-
-		widgets = g_list_concat(widgets,
-				menu_from_dir(menu, menu_entries, dir, get_menu_icon_style(),
-					swapped_func, FALSE, FALSE, TRUE)
-			);
-	}
-
-	choices_free_list(paths);
-	return widgets;
-}
-GList *add_sendto_desktop_items(GtkWidget *menu, GHashTable *menu_entries,
-        const gchar *type, const gchar *subtype, CallbackFn swapped_func)
-{
-	GList *widgets = NULL;
-	GError *error = NULL;
-	DirItem *ditem;
-	GtkWidget *item;
-	const gchar *xdg_data_dirs_env;
-	gchar **xdg_data_dirs;
-	gchar *xdg_data_home;
-	GList *apps_dirs = NULL;
-	GList *list_iter;
-	GList *list_iter2;
-	gchar **iter;
-	gchar *mimeinfo_path;
-	gchar *desktop_files_str;
-	gchar **desktop_files;
-	gchar *mime_type;
-	gchar *label;
-	gchar *not_show_in;
-	gchar *only_show_in;
-	gchar *full_path;
-	GHashTable *desktop_entries;
-	GHashTableIter hash_table_iter;
-	gpointer key, value;
-
-	if (!o_menu_xdg_apps.int_value)
-		return widgets;
-
-	if (!type || !subtype)
-		return widgets;
-
-	desktop_entries = g_hash_table_new(g_str_hash, g_str_equal);
-
-	mime_type = g_strjoin("/", type, subtype, NULL);
-
-	xdg_data_dirs_env = g_getenv("XDG_DATA_DIRS");
-
-	if (!xdg_data_dirs_env || !strcmp(xdg_data_dirs_env, ""))
-		xdg_data_dirs_env = "/usr/local/share:/usr/share";
-
-	xdg_data_dirs = g_strsplit(xdg_data_dirs_env, ":", -1);
-
-	xdg_data_home = g_strdup(g_getenv("XDG_DATA_HOME"));
-
-	if (xdg_data_home && !strcmp(xdg_data_home, "")) {
-		g_free(xdg_data_home);
-		xdg_data_home = NULL;
-	}
-
-	if (!xdg_data_home)
-		xdg_data_home = g_strjoin("/", g_getenv("HOME"), ".local", "share", NULL);
-
-	apps_dirs = g_list_append(apps_dirs,
-			g_strjoin("/", xdg_data_home, "applications", NULL));
-
-	for (iter = xdg_data_dirs; *iter; iter++) {
-		apps_dirs = g_list_append(
-				apps_dirs, g_strjoin("/", *iter, "applications", NULL));
-	}
-	g_strfreev(xdg_data_dirs);
-
-	/* Iterate over applications dirs in XDG_DATA_HOME and XDG_DATA_DIRS. */
-	for (list_iter = apps_dirs; list_iter; list_iter = g_list_next(list_iter)) {
-		if (!list_iter->data)
-			continue;
-
-		mimeinfo_path = g_strjoin("/", list_iter->data, "mimeinfo.cache", NULL);
-		error = NULL;
-		desktop_files_str = get_value_from_desktop_file(
-				mimeinfo_path, "MIME Cache", mime_type, &error);
-
-		g_free(mimeinfo_path);
-
-		if (error) {
-			g_error_free(error);
-			continue;
-		}
-
-		if (!desktop_files_str) {
-			continue;
-		}
-
-		desktop_files = g_strsplit(desktop_files_str, ";", -1);
-		iter = desktop_files;
-
-		/* Iterate over all desktop files associated with the given mimetype. */
-		for (iter = desktop_files; *iter; iter++) {
-			if (!strcmp(*iter, "")) {
-				g_free(*iter);
-				continue;
-			}
-			if (g_hash_table_contains(desktop_entries, *iter)) {
-				/* Item already added to menu. */
-				g_free(*iter);
-				continue;
-			}
-			/* Look for .desktop file in applications subdir of XDG_DATA_HOME and XDG_DATA_DIRS. */
-			for (list_iter2 = apps_dirs; list_iter2; list_iter2 = g_list_next(list_iter2)) {
-				if (!list_iter2->data)
-					continue;
-				error = NULL;
-				label = NULL;
-				only_show_in = NULL;
-				not_show_in = NULL;
-				full_path = g_strjoin("/", list_iter2->data, *iter, NULL);
-				if (!get_values_from_desktop_file(full_path, &error,
-							"Desktop Entry", "OnlyShowIn", &only_show_in,
-							"Desktop Entry", "NotShowIn", &not_show_in,
-							"Desktop Entry", "Name", &label,
-							NULL)) {
-					if (error) {
-						g_error_free(error);
-					}
-					if (label) {
-						g_free(label);
-					}
-					if (only_show_in) {
-						g_free(only_show_in);
-					}
-					if (not_show_in) {
-						g_free(not_show_in);
-					}
-					g_free(full_path);
-					continue;
-				}
-				if (!label) {
-					g_free(full_path);
-					continue;
-				}
-				if (menu_entries && g_hash_table_contains(menu_entries, label)) {
-					g_free(full_path);
-					g_free(label);
-					g_free(only_show_in);
-					g_free(not_show_in);
-					continue;
-				}
-				if (only_show_in) {
-					gchar **envs = g_strsplit(only_show_in, ";", -1);
-					int i = 0;
-					gboolean show = FALSE;
-					while (envs[i]) {
-						if (strcmp(envs[i], "ROX") == 0) {
-							show = TRUE;
-							break;
-						};
-						i++;
-					}
-					g_strfreev(envs);
-					g_free(only_show_in);
-					if (!show) {
-						if (label) {
-							g_free(label);
-						}
-						if (not_show_in) {
-							g_free(not_show_in);
-						}
-						g_free(full_path);
-						continue;
-					}
-				}
-				if (not_show_in) {
-					gchar **envs = g_strsplit(not_show_in, ";", -1);
-					int i = 0;
-					gboolean show = TRUE;
-					while (envs[i]) {
-						if (strcmp(envs[i], "ROX") == 0) {
-							show = FALSE;
-							break;
-						};
-						i++;
-					}
-					g_strfreev(envs);
-					g_free(not_show_in);
-					if (!show) {
-						if (label) {
-							g_free(label);
-						}
-						if (only_show_in) {
-							g_free(only_show_in);
-						}
-						g_free(full_path);
-						continue;
-					}
-				}
-
-				ditem = diritem_new((const guchar *) "");
-				diritem_restat((const guchar *) full_path, ditem, NULL);
-
-				item = make_send_to_item(ditem, label, get_menu_icon_style());
-
-				g_signal_connect_swapped(item, "activate",
-						G_CALLBACK(swapped_func), full_path);
-				if (menu)
-					gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-
-				widgets = g_list_append(widgets, item);
-				g_hash_table_add(desktop_entries, *iter);
-				if (menu_entries)
-					g_hash_table_add(menu_entries, g_strdup(label));
-
-				g_signal_connect_swapped(item, "destroy",
-						G_CALLBACK(g_free), full_path);
-
-				g_free(label);
-				break;
-			}
-			if (!g_hash_table_contains(desktop_entries, *iter)) {
-				g_free(*iter);
-			}
-		}
-		g_free(desktop_files);
-		g_free(desktop_files_str);
-	}
-
-	for (list_iter = apps_dirs; list_iter; list_iter = g_list_next(list_iter)) {
-		g_free(list_iter->data);
-	}
-	g_list_free(apps_dirs);
-
-	g_hash_table_iter_init (&hash_table_iter, desktop_entries);
-	while (g_hash_table_iter_next (&hash_table_iter, &key, &value)) {
-		g_free(key);
-	}
-
-	g_hash_table_destroy(desktop_entries);
-	g_free(mime_type);
-	g_free(xdg_data_home);
-
-	return widgets;
+	paths = filer_selected_items(window_with_focus);
+	if (!paths)
+		return;
+	xdg_apps_choose_for_paths(paths, GTK_WINDOW(window_with_focus->window), FALSE);
+	destroy_glist(&paths);
 }
 
-/* Scan the SendTo dir and create and show the Send To menu.
- * The 'paths' list and every path in it is claimed, and will be
- * freed later -- don't free it yourself!
- */
-static void show_send_to_menu(GList *paths, GdkEvent *event)
+static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget)
 {
-	GtkWidget	*menu, *item;
+	GList *paths;
 
-	menu = rox_menu_new();
+	(void)data; (void)action; (void)widget;
+	if (!window_with_focus)
+		return;
 
-	if (g_list_length(paths) == 1)
-	{
-		DirItem	*item;
-
-		item = diritem_new((const guchar *) "");
-		diritem_restat(paths->data, item, NULL);
-
-		add_sendto(menu,
-			   item->mime_type->media_type,
-			   item->mime_type->subtype);
-
-		add_sendto(menu, item->mime_type->media_type, NULL);
-
-		diritem_free(item);
-	}
-	else
-	{
-		GList *rover;
-		gboolean same=TRUE, same_media=TRUE;
-		MIME_type *type=NULL;
-		DirItem	*item;
-
-		item = diritem_new((const guchar *) "");
-		for(rover=paths; rover; rover=g_list_next(rover))
-		{
-			diritem_restat(rover->data, item, NULL);
-			if(!type)
-				type=item->mime_type;
-			else
-			{
-				if(type!=item->mime_type)
-				{
-					same=FALSE;
-					if(strcmp(type->media_type,
-						  item->mime_type->media_type)!=0)
-					{
-						same_media=FALSE;
-						break;
-					}
-				}
-			}
-		}
-		diritem_free(item);
-
-		if(type)
-		{
-			if(same)
-				add_sendto(menu, type->media_type,
-					   type->subtype);
-			if(same_media)
-				add_sendto(menu, type->media_type, NULL);
-		}
-
-		add_sendto(menu, "group", NULL);
-	}
-
-	add_sendto(menu, NULL, NULL);
-
-	if (o_menu_legacy_sendto.int_value) {
-		item = gtk_menu_item_new_with_label(_("Customise Legacy SendTo"));
-		g_signal_connect_swapped(item, "activate",
-				G_CALLBACK(customise_send_to), NULL);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	}
-
-	if (send_to_paths)
-		destroy_glist(&send_to_paths);
-
-	send_to_paths = paths;
-
-	g_signal_connect(menu, "selection-done", G_CALLBACK(menu_closed), NULL);
-
-	popup_menu = menu;
-	show_popup_menu(menu, event, 0);
-}
-
-static void send_to(FilerWindow *filer_window)
-{
-	GList		*paths;
-	GdkEvent	*event;
-
-	paths = filer_selected_items(filer_window);
-	event = gtk_get_current_event();
-
-	/* Eats paths */
-	show_send_to_menu(paths, event);
-
-	if (event)
-		gdk_event_free(event);
+	paths = filer_selected_items(window_with_focus);
+	if (!paths)
+		return;
+	custom_actions_add_for_paths(paths, GTK_WINDOW(window_with_focus->window));
+	destroy_glist(&paths);
 }
 
 static void search_current_folders(gpointer data, guint action, GtkWidget *widget)
@@ -2374,60 +2049,183 @@ static gboolean path_has_suffix_case(const gchar *path, const gchar *suffix)
 	return g_ascii_strcasecmp(path + path_len - suffix_len, suffix) == 0;
 }
 
-static TerminalRunMode terminal_run_mode_for_item(const gchar *path,
-						   const DirItem *item)
+static gchar *path_read_shebang(const gchar *path)
 {
-	if (!path || !item)
-		return TERMINAL_RUN_NONE;
-	if (item->base_type != TYPE_FILE &&
-	    !g_file_test(path, G_FILE_TEST_IS_REGULAR))
-		return TERMINAL_RUN_NONE;
+	gchar buffer[4097];
+	gint fd;
+	ssize_t got;
+	gchar *line_end;
+	gchar *line;
 
-	/* Executable binaries, executable scripts and executable AppImages are
-	 * all launched directly so their shebang or ELF loader is honoured. */
-	if (access(path, X_OK) == 0)
-		return TERMINAL_RUN_DIRECT;
+	if (!path)
+		return NULL;
 
-	/* Common non-executable scripts are still useful from the context menu. */
-	if (path_has_suffix_case(path, ".py") || path_has_suffix_case(path, ".pyw"))
-		return TERMINAL_RUN_PYTHON;
-	if (path_has_suffix_case(path, ".sh"))
-		return TERMINAL_RUN_SHELL;
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+	got = read(fd, buffer, sizeof(buffer) - 1);
+	close(fd);
+	if (got < 2)
+		return NULL;
 
-	/* Show the action for an AppImage without execute permission so the user
-	 * gets a clear, translated explanation instead of a silent disabled item. */
-	if (path_has_suffix_case(path, ".AppImage"))
-		return TERMINAL_RUN_APPIMAGE_NEEDS_EXEC;
+	buffer[got] = '\0';
+	/* Accept a UTF-8 BOM for scripts copied from editors. */
+	line = buffer;
+	if (got >= 5 && (guchar) line[0] == 0xef &&
+	    (guchar) line[1] == 0xbb && (guchar) line[2] == 0xbf)
+		line += 3;
+	if (line[0] != '#' || line[1] != '!')
+		return NULL;
 
-	return TERMINAL_RUN_NONE;
+	line_end = strpbrk(line, "\r\n");
+	if (line_end)
+		*line_end = '\0';
+	line = g_strstrip(line + 2);
+	return *line ? g_strdup(line) : NULL;
 }
 
-static gboolean spawn_terminal_runner(const gchar *working_dir,
-					  const gchar *path,
-					  TerminalRunMode mode)
+static gboolean path_has_shebang(const gchar *path)
 {
-	static const gchar runner_script[] =
-		"target=$1\n"
-		"mode=$2\n"
-		"message=$3\n"
-		"case \"$mode\" in\n"
-		"  direct) \"$target\" ;;\n"
-		"  shell) /bin/sh \"$target\" ;;\n"
-		"  python) python3 \"$target\" ;;\n"
-		"  *) exit 126 ;;\n"
-		"esac\n"
-		"status=$?\n"
-		"printf '\\n%s\\n' \"$message\"\n"
-		"IFS= read -r answer\n"
-		"exit \"$status\"\n";
+	gchar *line = path_read_shebang(path);
+	gboolean result = line != NULL;
+	g_free(line);
+	return result;
+}
+
+static gboolean terminal_program_available(const gchar *program)
+{
+	gchar *found;
+	gboolean available;
+
+	if (!program || !*program)
+		return FALSE;
+	if (g_path_is_absolute(program))
+		return access(program, X_OK) == 0;
+
+	found = g_find_program_in_path(program);
+	available = found != NULL;
+	g_free(found);
+	return available;
+}
+
+/* Scripts sin shebang no declaran un intérprete. Para los tipos de shell,
+ * usar el shell de la sesión (normalmente Bash en Essora/Puppy), luego Bash
+ * si está disponible y finalmente /bin/sh. Los scripts con #! conservan
+ * siempre el intérprete explícito. */
+static gchar *terminal_default_shell(void)
+{
+	const gchar *configured = g_getenv("SHELL");
+	gchar *found;
+
+	if (configured && *configured && terminal_program_available(configured))
+		return g_strdup(configured);
+	found = g_find_program_in_path("bash");
+	if (found)
+		return found;
+	if (access("/bin/sh", X_OK) == 0)
+		return g_strdup("/bin/sh");
+	return g_strdup("sh");
+}
+
+/* Validate the interpreter named by #! before opening a terminal. This turns
+ * a silent-looking failure into a precise error, including /usr/bin/env forms. */
+static gboolean terminal_shebang_available(const gchar *path)
+{
+	gchar *shebang = path_read_shebang(path);
+	gchar **argv = NULL;
+	gint argc = 0;
 	GError *error = NULL;
-	const gchar *terminal_command = (const gchar *) o_menu_xterm.value;
-	gchar **terminal_argv = NULL;
-	gint terminal_argc = 0;
-	GPtrArray *argv;
-	const gchar *mode_name;
+	const gchar *program = NULL;
 	gint i;
-	gboolean success;
+	gboolean available = FALSE;
+
+	if (!shebang || !g_shell_parse_argv(shebang, &argc, &argv, &error) ||
+	    argc < 1)
+	{
+		delayed_error(_("Unable to parse the script interpreter '%s': %s"),
+			shebang ? shebang : "",
+			error ? error->message : _("Unknown error"));
+		goto out;
+	}
+
+	program = argv[0];
+	{
+		gchar *base = g_path_get_basename(program);
+		gboolean uses_env = g_strcmp0(base, "env") == 0;
+		g_free(base);
+		if (uses_env)
+		{
+			/* Find the command after env options and optional NAME=VALUE pairs. */
+			program = NULL;
+			for (i = 1; i < argc; i++)
+			{
+				if (g_strcmp0(argv[i], "-S") == 0)
+					continue;
+				if (argv[i][0] == '-' && !program)
+					continue;
+				if (strchr(argv[i], '=') && !program)
+					continue;
+				program = argv[i];
+				break;
+			}
+		}
+	}
+
+	if (!program || !*program)
+	{
+		delayed_error(_("Unable to parse the script interpreter '%s': %s"),
+			shebang, _("Unknown error"));
+		goto out;
+	}
+
+	available = terminal_program_available(program);
+	if (!available)
+		delayed_error(_("Program %s not found - deleted?"), program);
+
+out:
+	g_clear_error(&error);
+	g_strfreev(argv);
+	g_free(shebang);
+	return available;
+}
+
+static gboolean terminal_arg_is_exec_marker(const gchar *arg)
+{
+	return arg &&
+		(strcmp(arg, "-e") == 0 ||
+		 strcmp(arg, "--execute") == 0 ||
+		 strcmp(arg, "-x") == 0 ||
+		 strcmp(arg, "--") == 0);
+}
+
+static gboolean terminal_name_is(const gchar *name, const gchar *candidate)
+{
+	return name && candidate && g_ascii_strcasecmp(name, candidate) == 0;
+}
+
+/* Parse the configured terminal once and adapt the command separator to the
+ * terminal family. The executed payload is a temporary script path, which is
+ * accepted both by terminals that expect argv and those that expect a single
+ * command after -e. */
+static gboolean terminal_build_argv(gboolean execute_command,
+				    const gchar *command_path,
+				    GPtrArray **argv_out)
+{
+	const gchar *terminal_command = (const gchar *) o_menu_xterm.value;
+	const gchar *diagnostic_terminal = g_getenv("ROX_DIAGNOSTIC_TERMINAL");
+	gchar **parsed = NULL;
+	gint argc = 0;
+	GError *error = NULL;
+	GPtrArray *argv;
+	gchar *program_name;
+	gint i;
+
+	g_return_val_if_fail(argv_out != NULL, FALSE);
+	*argv_out = NULL;
+
+	if (g_getenv("ROX_DIAGNOSTIC") && diagnostic_terminal &&
+	    *diagnostic_terminal)
+		terminal_command = diagnostic_terminal;
 
 	if (!terminal_command || !*terminal_command)
 	{
@@ -2435,57 +2233,568 @@ static gboolean spawn_terminal_runner(const gchar *working_dir,
 		return FALSE;
 	}
 
-	if (!g_shell_parse_argv(terminal_command,
-				&terminal_argc, &terminal_argv, &error))
+	if (!g_shell_parse_argv(terminal_command, &argc, &parsed, &error))
 	{
 		delayed_error(_("Failed to parse terminal command '%s':\n%s"),
-			terminal_command,
-			error ? error->message : "");
+			terminal_command, error ? error->message : "");
 		if (error)
 			g_error_free(error);
 		return FALSE;
 	}
 
-	if (terminal_argc < 1)
+	if (argc < 1 || !parsed || !parsed[0] || !*parsed[0])
 	{
-		g_strfreev(terminal_argv);
+		g_strfreev(parsed);
 		delayed_error(_("Terminal command is empty."));
 		return FALSE;
 	}
 
-	switch (mode)
+	argv = g_ptr_array_new_with_free_func(g_free);
+	for (i = 0; i < argc; i++)
+		g_ptr_array_add(argv, g_strdup(parsed[i]));
+	g_strfreev(parsed);
+
+	program_name = g_path_get_basename((const gchar *) g_ptr_array_index(argv, 0));
+
+	if (!execute_command)
 	{
-		case TERMINAL_RUN_DIRECT: mode_name = "direct"; break;
-		case TERMINAL_RUN_SHELL: mode_name = "shell"; break;
-		case TERMINAL_RUN_PYTHON: mode_name = "python"; break;
-		default:
-			g_strfreev(terminal_argv);
-			return FALSE;
+		/* A user may have saved "xterm -e" in older ROX versions. That is
+		 * valid for Run in Terminal, but opening an empty terminal must not
+		 * leave a dangling execute switch. */
+		while (argv->len > 1 && terminal_arg_is_exec_marker(
+			(const gchar *) g_ptr_array_index(argv, argv->len - 1)))
+			g_ptr_array_remove_index(argv, argv->len - 1);
+	}
+	else if (command_path && *command_path)
+	{
+		if (argv->len > 0 && terminal_arg_is_exec_marker(
+			(const gchar *) g_ptr_array_index(argv, argv->len - 1)))
+		{
+			/* Respect an explicit -e, -x, --execute or -- configured by the
+			 * user and append only the runner. */
+		}
+		else if (terminal_name_is(program_name, "gnome-terminal") ||
+			 terminal_name_is(program_name, "mate-terminal") ||
+			 terminal_name_is(program_name, "kgx") ||
+			 terminal_name_is(program_name, "ptyxis"))
+		{
+			g_ptr_array_add(argv, g_strdup("--"));
+		}
+		else if (terminal_name_is(program_name, "xfce4-terminal") ||
+			 terminal_name_is(program_name, "terminator"))
+		{
+			g_ptr_array_add(argv, g_strdup("-x"));
+		}
+		else if (terminal_name_is(program_name, "wezterm"))
+		{
+			gboolean has_start = FALSE;
+			for (i = 1; i < (gint) argv->len; i++)
+				if (terminal_name_is((const gchar *) g_ptr_array_index(argv, i), "start"))
+					has_start = TRUE;
+			if (!has_start)
+				g_ptr_array_add(argv, g_strdup("start"));
+			g_ptr_array_add(argv, g_strdup("--"));
+		}
+		else if (!(terminal_name_is(program_name, "foot") ||
+			   terminal_name_is(program_name, "kitty")))
+		{
+			/* xterm, rxvt/urxvt, lxterminal, konsole, qterminal,
+			 * alacritty, defaultterminal and x-terminal-emulator. */
+			g_ptr_array_add(argv, g_strdup("-e"));
+		}
+
+		g_ptr_array_add(argv, g_strdup(command_path));
 	}
 
-	argv = g_ptr_array_new_with_free_func(g_free);
-	for (i = 0; i < terminal_argc; i++)
-		g_ptr_array_add(argv, g_strdup(terminal_argv[i]));
-	g_strfreev(terminal_argv);
-
-	/* ROX defaults to xterm. Puppy defaultterminal and xterm-compatible
-	 * launchers accept -e followed by the command and separate arguments. */
-	if (terminal_argc < 1 ||
-	    (strcmp((const gchar *) g_ptr_array_index(argv, terminal_argc - 1), "-e") != 0 &&
-	     strcmp((const gchar *) g_ptr_array_index(argv, terminal_argc - 1), "--execute") != 0))
-		g_ptr_array_add(argv, g_strdup("-e"));
-	g_ptr_array_add(argv, g_strdup("sh"));
-	g_ptr_array_add(argv, g_strdup("-c"));
-	g_ptr_array_add(argv, g_strdup(runner_script));
-	g_ptr_array_add(argv, g_strdup("rox-run-in-terminal"));
-	g_ptr_array_add(argv, g_strdup(path));
-	g_ptr_array_add(argv, g_strdup(mode_name));
-	g_ptr_array_add(argv, g_strdup(_("Script completed. Press RETURN to close the terminal.")));
+	g_free(program_name);
 	g_ptr_array_add(argv, NULL);
+	*argv_out = argv;
+	return TRUE;
+}
 
-	success = rox_spawn(working_dir, (const gchar **) argv->pdata) != 0;
+static gchar *terminal_create_runner(const gchar *path, const gchar *working_dir,
+					 TerminalRunMode mode)
+{
+	const gchar *command = NULL;
+	gchar *dynamic_command = NULL;
+	gchar *quoted_target;
+	gchar *quoted_working_dir;
+	gchar *quoted_message;
+	gchar *contents;
+	gchar *runner_path = NULL;
+	GError *error = NULL;
+	gint fd;
+	FILE *stream;
+	gboolean write_failed;
+
+	switch (mode)
+	{
+		case TERMINAL_RUN_DIRECT:
+			command = "\"$target\"";
+			break;
+		case TERMINAL_RUN_SHELL:
+		{
+			gchar *shell = terminal_default_shell();
+			gchar *quoted_shell = g_shell_quote(shell);
+			dynamic_command = g_strdup_printf("%s \"$target\"", quoted_shell);
+			command = dynamic_command;
+			g_free(quoted_shell);
+			g_free(shell);
+			break;
+		}
+		case TERMINAL_RUN_BASH:
+			command = "bash \"$target\"";
+			break;
+		case TERMINAL_RUN_ASH:
+			command = "ash \"$target\"";
+			break;
+		case TERMINAL_RUN_DASH:
+			command = "dash \"$target\"";
+			break;
+		case TERMINAL_RUN_ZSH:
+			command = "zsh \"$target\"";
+			break;
+		case TERMINAL_RUN_KSH:
+			command = "ksh \"$target\"";
+			break;
+		case TERMINAL_RUN_FISH:
+			command = "fish \"$target\"";
+			break;
+		case TERMINAL_RUN_PYTHON:
+			command = "python3 \"$target\"";
+			break;
+		case TERMINAL_RUN_PERL:
+			command = "perl \"$target\"";
+			break;
+		case TERMINAL_RUN_RUBY:
+			command = "ruby \"$target\"";
+			break;
+		case TERMINAL_RUN_LUA:
+			command = "lua \"$target\"";
+			break;
+		case TERMINAL_RUN_TCL:
+			command = "tclsh \"$target\"";
+			break;
+		case TERMINAL_RUN_PHP:
+			command = "php \"$target\"";
+			break;
+		case TERMINAL_RUN_NODE:
+			command = "node \"$target\"";
+			break;
+		case TERMINAL_RUN_AWK:
+			command = "awk -f \"$target\"";
+			break;
+		case TERMINAL_RUN_SED:
+			command = "sed -f \"$target\"";
+			break;
+		case TERMINAL_RUN_SHEBANG:
+		{
+			gchar *shebang = path_read_shebang(path);
+			gchar **interpreter_argv = NULL;
+			gint interpreter_argc = 0;
+			GString *builder;
+			gint i;
+
+			if (!shebang || !g_shell_parse_argv(shebang,
+					&interpreter_argc, &interpreter_argv, &error) ||
+			    interpreter_argc < 1)
+			{
+				delayed_error(_("Unable to parse the script interpreter '%s': %s"),
+					shebang ? shebang : "",
+					error ? error->message : _("Unknown error"));
+				g_clear_error(&error);
+				g_free(shebang);
+				g_strfreev(interpreter_argv);
+				return NULL;
+			}
+
+			builder = g_string_new(NULL);
+			for (i = 0; i < interpreter_argc; i++)
+			{
+				gchar *quoted = g_shell_quote(interpreter_argv[i]);
+				if (i > 0)
+					g_string_append_c(builder, ' ');
+				g_string_append(builder, quoted);
+				g_free(quoted);
+			}
+			g_string_append(builder, " \"$target\"");
+			dynamic_command = g_string_free(builder, FALSE);
+			command = dynamic_command;
+			g_free(shebang);
+			g_strfreev(interpreter_argv);
+			break;
+		}
+		default:
+			return NULL;
+	}
+
+	fd = g_file_open_tmp("rox-run-terminal-XXXXXX", &runner_path, &error);
+	if (fd < 0)
+	{
+		delayed_error("%s", error ? error->message : "Unable to create terminal runner");
+		g_clear_error(&error);
+		g_free(dynamic_command);
+		return NULL;
+	}
+
+	quoted_target = g_shell_quote(path);
+	quoted_working_dir = g_shell_quote(working_dir && *working_dir
+		? working_dir : g_get_home_dir());
+	quoted_message = g_shell_quote(_("Script completed. Press RETURN to close the terminal."));
+	contents = g_strdup_printf(
+		"#!/bin/sh\n"
+		"rm -f -- \"$0\"\n"
+		"target=%s\n"
+		"workdir=%s\n"
+		"message=%s\n"
+		"if ! cd -- \"$workdir\"; then\n"
+		"  printf 'Unable to enter script directory: %%s\n' \"$workdir\" >&2\n"
+		"  status=1\n"
+		"else\n"
+		"  %s\n"
+		"  status=$?\n"
+		"fi\n"
+		"printf '\\n%%s\\n' \"$message\"\n"
+		"IFS= read -r answer || true\n"
+		"exit \"$status\"\n",
+		quoted_target, quoted_working_dir, quoted_message, command);
+	g_free(quoted_target);
+	g_free(quoted_working_dir);
+	g_free(quoted_message);
+	g_free(dynamic_command);
+
+	stream = fdopen(fd, "w");
+	if (!stream)
+	{
+		close(fd);
+		unlink(runner_path);
+		delayed_error("Unable to write terminal runner: %s", g_strerror(errno));
+		g_free(contents);
+		g_free(runner_path);
+		return NULL;
+	}
+	write_failed = fputs(contents, stream) == EOF;
+	if (fclose(stream) != 0)
+		write_failed = TRUE;
+	if (write_failed)
+	{
+		unlink(runner_path);
+		delayed_error("Unable to write terminal runner: %s", g_strerror(errno));
+		g_free(contents);
+		g_free(runner_path);
+		return NULL;
+	}
+	g_free(contents);
+
+	if (chmod(runner_path, 0700) != 0)
+	{
+		unlink(runner_path);
+		delayed_error("Unable to make terminal runner executable: %s", g_strerror(errno));
+		g_free(runner_path);
+		return NULL;
+	}
+
+	return runner_path;
+}
+
+static gboolean remove_terminal_runner_later(gpointer data)
+{
+	gchar *path = data;
+	if (path)
+	{
+		unlink(path);
+		g_free(path);
+	}
+	return G_SOURCE_REMOVE;
+}
+
+static TerminalRunMode terminal_run_mode_for_item(const gchar *path,
+					   const DirItem *item)
+{
+	if (!path || !item)
+		return TERMINAL_RUN_NONE;
+	if (item->base_type != TYPE_FILE &&
+	    !g_file_test(path, G_FILE_TEST_IS_REGULAR))
+		return TERMINAL_RUN_NONE;
+
+	if (item->mime_type == application_x_desktop)
+		return TERMINAL_RUN_NONE;
+
+	/* AppImages must keep their native executable loader. */
+	if (path_has_suffix_case(path, ".AppImage"))
+		return access(path, X_OK) == 0
+			? TERMINAL_RUN_DIRECT : TERMINAL_RUN_APPIMAGE_NEEDS_EXEC;
+
+	/* Parse the interpreter ourselves even when the file is executable. This
+	 * handles CRLF shebangs and /usr/bin/env -S more reliably than asking the
+	 * kernel to interpret every script directly. */
+	if (path_has_shebang(path))
+		return TERMINAL_RUN_SHEBANG;
+
+	/* Sin shebang, la extensión es solamente un respaldo. No ejecutar un
+	 * archivo .bash con /bin/sh: los bashisms fallan aunque el script sea válido. */
+	if (path_has_suffix_case(path, ".bash"))
+		return TERMINAL_RUN_BASH;
+	if (path_has_suffix_case(path, ".ash"))
+		return TERMINAL_RUN_ASH;
+	if (path_has_suffix_case(path, ".dash"))
+		return TERMINAL_RUN_DASH;
+	if (path_has_suffix_case(path, ".zsh"))
+		return TERMINAL_RUN_ZSH;
+	if (path_has_suffix_case(path, ".ksh"))
+		return TERMINAL_RUN_KSH;
+	if (path_has_suffix_case(path, ".fish"))
+		return TERMINAL_RUN_FISH;
+	if (item->mime_type == application_x_shellscript ||
+	    path_has_suffix_case(path, ".sh"))
+		return TERMINAL_RUN_SHELL;
+
+	if ((item->mime_type &&
+	     g_strcmp0(item->mime_type->media_type, "text") == 0 &&
+	     item->mime_type->subtype &&
+	     strstr(item->mime_type->subtype, "python") != NULL) ||
+	    path_has_suffix_case(path, ".py") ||
+	    path_has_suffix_case(path, ".pyw"))
+		return TERMINAL_RUN_PYTHON;
+	if (path_has_suffix_case(path, ".pl"))
+		return TERMINAL_RUN_PERL;
+	if (path_has_suffix_case(path, ".rb"))
+		return TERMINAL_RUN_RUBY;
+	if (path_has_suffix_case(path, ".lua"))
+		return TERMINAL_RUN_LUA;
+	if (path_has_suffix_case(path, ".tcl"))
+		return TERMINAL_RUN_TCL;
+	if (path_has_suffix_case(path, ".php"))
+		return TERMINAL_RUN_PHP;
+	if (path_has_suffix_case(path, ".js") ||
+	    path_has_suffix_case(path, ".mjs") ||
+	    path_has_suffix_case(path, ".cjs"))
+		return TERMINAL_RUN_NODE;
+	if (path_has_suffix_case(path, ".awk"))
+		return TERMINAL_RUN_AWK;
+	if (path_has_suffix_case(path, ".sed"))
+		return TERMINAL_RUN_SED;
+
+	/* Un texto ejecutable sin #! es normalmente un script shell antiguo.
+	 * Ejecutarlo directamente termina en ENOEXEC; usar el shell de sesión.
+	 * Los binarios nativos siguen ejecutándose directamente. */
+	if (access(path, X_OK) == 0)
+	{
+		if (item->mime_type &&
+		    g_strcmp0(item->mime_type->media_type, "text") == 0)
+			return TERMINAL_RUN_SHELL;
+		return TERMINAL_RUN_DIRECT;
+	}
+
+	return TERMINAL_RUN_NONE;
+}
+
+static const gchar *terminal_run_mode_name(TerminalRunMode mode)
+{
+	switch (mode)
+	{
+		case TERMINAL_RUN_DIRECT: return "direct";
+		case TERMINAL_RUN_SHELL: return "sh";
+		case TERMINAL_RUN_BASH: return "bash";
+		case TERMINAL_RUN_ASH: return "ash";
+		case TERMINAL_RUN_DASH: return "dash";
+		case TERMINAL_RUN_ZSH: return "zsh";
+		case TERMINAL_RUN_KSH: return "ksh";
+		case TERMINAL_RUN_FISH: return "fish";
+		case TERMINAL_RUN_PYTHON: return "python";
+		case TERMINAL_RUN_PERL: return "perl";
+		case TERMINAL_RUN_RUBY: return "ruby";
+		case TERMINAL_RUN_LUA: return "lua";
+		case TERMINAL_RUN_TCL: return "tcl";
+		case TERMINAL_RUN_PHP: return "php";
+		case TERMINAL_RUN_NODE: return "node";
+		case TERMINAL_RUN_AWK: return "awk";
+		case TERMINAL_RUN_SED: return "sed";
+		case TERMINAL_RUN_SHEBANG: return "shebang";
+		case TERMINAL_RUN_APPIMAGE_NEEDS_EXEC: return "appimage-needs-exec";
+		default: return "none";
+	}
+}
+
+static gboolean spawn_terminal_runner(const gchar *working_dir,
+					  const gchar *path,
+					  TerminalRunMode mode)
+{
+	GPtrArray *argv = NULL;
+	gchar *runner_path;
+	gboolean success;
+
+	rox_debug_log("TERMINAL", "path=%s mode=%s cwd=%s configured=%s",
+		path ? path : "", terminal_run_mode_name(mode),
+		working_dir ? working_dir : "",
+		(const gchar *) o_menu_xterm.value ? (const gchar *) o_menu_xterm.value : "");
+
+	if (mode == TERMINAL_RUN_SHEBANG && !terminal_shebang_available(path))
+		return FALSE;
+
+	{
+		const gchar *required = NULL;
+		gchar *found = NULL;
+
+		switch (mode)
+		{
+			case TERMINAL_RUN_BASH: required = "bash"; break;
+			case TERMINAL_RUN_ASH: required = "ash"; break;
+			case TERMINAL_RUN_DASH: required = "dash"; break;
+			case TERMINAL_RUN_ZSH: required = "zsh"; break;
+			case TERMINAL_RUN_KSH: required = "ksh"; break;
+			case TERMINAL_RUN_FISH: required = "fish"; break;
+			case TERMINAL_RUN_PYTHON: required = "python3"; break;
+			case TERMINAL_RUN_PERL: required = "perl"; break;
+			case TERMINAL_RUN_RUBY: required = "ruby"; break;
+			case TERMINAL_RUN_LUA: required = "lua"; break;
+			case TERMINAL_RUN_TCL: required = "tclsh"; break;
+			case TERMINAL_RUN_PHP: required = "php"; break;
+			case TERMINAL_RUN_NODE: required = "node"; break;
+			case TERMINAL_RUN_AWK: required = "awk"; break;
+			case TERMINAL_RUN_SED: required = "sed"; break;
+			default: break;
+		}
+
+		if (required)
+		{
+			found = g_find_program_in_path(required);
+			if (!found)
+			{
+				delayed_error(_("Program %s not found - deleted?"), required);
+				return FALSE;
+			}
+			g_free(found);
+		}
+	}
+
+	runner_path = terminal_create_runner(path, working_dir, mode);
+	if (!runner_path)
+		return FALSE;
+
+	rox_debug_log("TERMINAL", "runner=%s", runner_path);
+	if (!terminal_build_argv(TRUE, runner_path, &argv))
+	{
+		unlink(runner_path);
+		g_free(runner_path);
+		return FALSE;
+	}
+
+	{
+		gchar *joined = g_strjoinv(" | ", (gchar **) argv->pdata);
+		gint child = rox_spawn(working_dir, (const gchar **) argv->pdata);
+		success = child != 0;
+		rox_debug_log("TERMINAL", "argv=%s spawn=%s pid=%d",
+			joined ? joined : "", success ? "ok" : "failed", child);
+		g_free(joined);
+	}
 	g_ptr_array_free(argv, TRUE);
+
+	if (!success)
+		unlink(runner_path);
+	else
+		g_timeout_add_seconds(600, remove_terminal_runner_later,
+			g_strdup(runner_path));
+	g_free(runner_path);
 	return success;
+}
+
+gboolean menu_diagnose_rename_dialog(const gchar *path)
+{
+	DirItem *item;
+	MaskedPixmap *image;
+	GtkWidget *dialog;
+	gchar *leaf;
+	gboolean visible;
+	gboolean realized;
+
+	if (!path || !g_file_test(path, G_FILE_TEST_EXISTS))
+	{
+		g_printerr("DIAG_RENAME_ERROR=missing:%s\n", path ? path : "");
+		return FALSE;
+	}
+
+	leaf = g_path_get_basename(path);
+	item = diritem_new((const guchar *) leaf);
+	diritem_restat((const guchar *) path, item, NULL);
+	g_free(leaf);
+
+	image = di_image(item);
+	if (!image)
+	{
+		g_printerr("DIAG_RENAME_ERROR=no-icon:%s\n", path);
+		diritem_free(item);
+		return FALSE;
+	}
+
+	/* savebox_show() consumes one reference. */
+	g_object_ref(image);
+	dialog = savebox_show(_("Rename"), path, image, rename_cb,
+		GDK_ACTION_MOVE);
+	if (!dialog)
+	{
+		g_printerr("DIAG_RENAME_ERROR=no-dialog:%s\n", path);
+		diritem_free(item);
+		return FALSE;
+	}
+
+	while (gtk_events_pending())
+		gtk_main_iteration();
+	visible = gtk_widget_get_visible(dialog);
+	realized = gtk_widget_get_realized(dialog);
+	g_print("DIAG_RENAME_VISIBLE=%d\n", visible ? 1 : 0);
+	g_print("DIAG_RENAME_REALIZED=%d\n", realized ? 1 : 0);
+	g_print("DIAG_RENAME_TITLE=%s\n",
+		gtk_window_get_title(GTK_WINDOW(dialog)));
+
+	gtk_widget_destroy(dialog);
+	while (gtk_events_pending())
+		gtk_main_iteration();
+	diritem_free(item);
+	return visible && realized;
+}
+
+gboolean menu_diagnose_run_in_terminal(const gchar *path)
+{
+	DirItem item = {0};
+	TerminalRunMode mode;
+	gchar *directory;
+	gboolean launched;
+
+	if (!path || !g_file_test(path, G_FILE_TEST_IS_REGULAR))
+	{
+		g_printerr("DIAG_TERMINAL_ERROR=not-a-regular-file:%s\n",
+			path ? path : "");
+		return FALSE;
+	}
+
+	item.base_type = TYPE_FILE;
+	item.mime_type = type_from_path(path);
+	mode = terminal_run_mode_for_item(path, &item);
+	g_print("DIAG_TERMINAL_PATH=%s\n", path);
+	g_print("DIAG_TERMINAL_MODE=%s\n", terminal_run_mode_name(mode));
+	{
+		const gchar *diagnostic_terminal = g_getenv("ROX_DIAGNOSTIC_TERMINAL");
+		const gchar *effective_terminal =
+			(g_getenv("ROX_DIAGNOSTIC") && diagnostic_terminal &&
+			 *diagnostic_terminal)
+			? diagnostic_terminal : (const gchar *) o_menu_xterm.value;
+		g_print("DIAG_TERMINAL_COMMAND=%s\n",
+			effective_terminal ? effective_terminal : "");
+	}
+
+	if (mode == TERMINAL_RUN_NONE ||
+	    mode == TERMINAL_RUN_APPIMAGE_NEEDS_EXEC)
+	{
+		g_print("DIAG_TERMINAL_RESULT=unsupported\n");
+		return FALSE;
+	}
+
+	directory = g_path_get_dirname(path);
+	launched = spawn_terminal_runner(directory, path, mode);
+	g_free(directory);
+	g_print("DIAG_TERMINAL_RESULT=%s\n", launched ? "ok" : "failed");
+	return launched;
 }
 
 static void new_xterm_here()
@@ -2495,17 +2804,16 @@ static void new_xterm_here()
 
 static void open_terminal_directory(const gchar *directory, gboolean close_filer)
 {
-	const gchar *terminal_command = (const gchar *) o_menu_xterm.value;
-	const char *argv[] = {"sh", "-c", NULL, NULL};
+	GPtrArray *argv = NULL;
+	gboolean success;
 
-	if (!terminal_command || !*terminal_command)
-	{
-		delayed_error(_("Terminal command is empty."));
+	if (!terminal_build_argv(FALSE, NULL, &argv))
 		return;
-	}
 
-	argv[2] = terminal_command;
-	if (rox_spawn(directory, argv) && close_filer && window_with_focus)
+	success = rox_spawn(directory, (const gchar **) argv->pdata) != 0;
+	g_ptr_array_free(argv, TRUE);
+
+	if (success && close_filer && window_with_focus)
 		gtk_widget_destroy(window_with_focus->window);
 }
 
@@ -2595,17 +2903,6 @@ static void run_in_terminal(gpointer data, guint action, GtkWidget *widget)
 		delayed_error(_("The selected AppImage is not executable. Enable its execute permission first."));
 		g_free(path);
 		return;
-	}
-	if (mode == TERMINAL_RUN_PYTHON)
-	{
-		gchar *python = g_find_program_in_path("python3");
-		if (!python)
-		{
-			delayed_error(_("Python 3 was not found. Install python3 or make the script executable with a valid shebang."));
-			g_free(path);
-			return;
-		}
-		g_free(python);
 	}
 	if (mode == TERMINAL_RUN_NONE)
 	{
@@ -2714,10 +3011,10 @@ static void mini_buffer(gpointer data, guint action, GtkWidget *widget)
 static void show_rox_about_dialog(void)
 {
 	const gchar *authors[] = {
-		_("Original author: Thomas Leonard"),
-		_("Original contributors: ROX Desktop contributors"),
-		_("GTK3 port and new features: josejp2424"),
-		_("Maintainer of this GTK3 version: josejp2424"),
+		_("Original ROX-Filer author: Thomas Leonard"),
+		_("Original ROX-Filer contributors: ROX Desktop contributors"),
+		_("Rox-Filer2 continuation and development: josejp2424"),
+		_("Rox-Filer2 project maintainer: josejp2424"),
 		NULL
 	};
 	GtkWindow *parent = NULL;
@@ -2729,24 +3026,24 @@ static void show_rox_about_dialog(void)
 		parent = GTK_WINDOW(window_with_focus->window);
 
 	dialog = gtk_about_dialog_new();
-	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), "ROX-Filer");
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), "Rox-Filer2");
 	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), VERSION);
 	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog),
-		_("Fast and lightweight file manager, ported to GTK3."));
+		_("Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."));
 	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog),
-		"Copyright (C) 2005 Thomas Leonard and contributors\n"
-		"GTK3 port and additions (C) 2026 josejp2424");
+		"Original ROX-Filer (C) 2005 Thomas Leonard and contributors\n"
+		"Rox-Filer2 continuation (C) 2026 josejp2424");
 	gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(dialog), authors);
 	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog),
-		_("This modified GTK3 version is free software; you can redistribute it "
+		_("Rox-Filer2 is free software; you can redistribute it "
 		  "and/or modify it under the terms of the GNU General Public License "
-		  "as published by the Free Software Foundation; either version 3 "
+		  "as published by the Free Software Foundation; either version 2 "
 		  "of the License, or (at your option) any later version."));
 	gtk_about_dialog_set_wrap_license(GTK_ABOUT_DIALOG(dialog), TRUE);
 	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog),
 		"https://github.com/josejp2424/ROX-Filer-gtk3");
 	gtk_about_dialog_set_website_label(GTK_ABOUT_DIALOG(dialog),
-		_("ROX-Filer GTK3 project"));
+		_("Rox-Filer2 project"));
 
 	/* Usar primero el icono incluido con ROX-Filer. De este modo el About no
 	 * depende de un nombre genérico del tema y siempre muestra el icono real. */
@@ -3185,9 +3482,6 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 			case FILE_SET_ICON:
 				prompt = _("Set icon for ... ?");
 				break;
-			case FILE_SEND_TO:
-				prompt = _("Send ... to ... ?");
-				break;
 			case FILE_TRASH:
 				prompt = _("Move ... to Trash ?");
 				break;
@@ -3220,9 +3514,6 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 
 	switch (action)
 	{
-		case FILE_SEND_TO:
-			send_to(window_with_focus);
-			return;
 		case FILE_TRASH:
 			move_to_trash(window_with_focus);
 			return;
@@ -3320,6 +3611,8 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 					GDK_ACTION_COPY);
 			break;
 		case FILE_RENAME_ITEM:
+			rox_debug_log("RENAME", "show-dialog path=%s",
+				(const gchar *) path);
 			src_dest_action_item((const gchar *) path, di_image(item),
 					_("Rename"), rename_cb,
 					GDK_ACTION_MOVE);

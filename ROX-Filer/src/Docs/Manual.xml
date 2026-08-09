@@ -38,8 +38,8 @@
     <application>ROX-Filer</application> is a graphical file manger for the X
     Window System. Its user interface is based on the RISC OS filer and it
     supports similar features such as application directories and drag-and-drop
-    loading and saving of files. The filer can also act as a pinboard, allowing
-    you to pin frequently used files onto the desktop background.
+    loading and saving of files. It can also run one integrated desktop with
+    wallpaper, files, launchers and drives.
    </para>
   </abstract>
  </bookinfo>
@@ -155,35 +155,19 @@
    For a complete list of command-line options, see <xref linkend="manpage"/>
   </para>
 
-  <sect1>
-   <title><anchor id="run_pin" xreflabel="Pinboard support"/>Pinboard support</title>
+    <sect1>
+   <title><anchor id="run_pin" xreflabel="ROX Desktop"/>ROX Desktop</title>
    <para>
-
-    If you want the filer to manage your desktop background then you use
-    the <option>--pinboard</option> option and supply a name for the pinboard,
-    eg:
-
-    <screen>$ rox --pinboard=MyPinboard</screen>
-
-    The pinboard configuration is saved in
-    <filename>~/.config/rox.sourceforge.net/ROX-Filer/pb_MyPinboard</filename>
-    as soon as you change it in some way (for example, by dropping a file
-    onto the background). You can have as many pinboards as you like and
-    switch between them by running rox again, eg:
-
-    <screen>$ rox --pinboard=MyOtherPinboard</screen>
-
-    To turn off the pinboard again, set the name to an empty string:
-
-    <screen>$ rox --pinboard=</screen>
-
-    See the <xref linkend="winman"/> if you have trouble getting the icons to
-    display correctly. The pinboard may also be turned on and off by locating
-    <filename>ROX-Filer</filename> in a filer window and choosing <guimenuitem>Enable
-    pinboard</guimenuitem> or <guimenuitem>Disable pinboard</guimenuitem> from the menu.</para>
+    ROX-Filer provides one integrated desktop. Start it with:
+    <screen>$ rox --desktop</screen>
+    A second invocation refreshes the running desktop instead of creating a
+    named or additional desktop. The old <option>-p</option>,
+    <option>--pinboard</option> and <option>--rox-session</option> interfaces
+    are no longer supported.
+   </para>
   </sect1>
 
-  <sect1>
+<sect1>
    <title><anchor id="run_pan" xreflabel="Panel support"/>Panels</title>
    <para>
 
@@ -270,7 +254,7 @@
 
    <sect2><title>Window Maker</title>
     <procedure>
-     <step><para>Run the filer using <userinput>rox -p=Default</userinput>.</para></step>
+     <step><para>Run the filer using <userinput>rox --desktop</userinput>.</para></step>
       <step><para>
        Press <keycap>Control</keycap>+<keycap>Escape</keycap>, or
        [RightButtonDown] on any window's titlebar.
@@ -2438,7 +2422,14 @@ generated.
     User-specific choices are normally written to
     <filename>~/.config/mimeapps.list</filename>, while system defaults and
     installed <filename>.desktop</filename> files are found through the usual
-    XDG data directories. ROX-Filer accesses these associations through GIO.
+    XDG data directories. ROX-Filer accesses these associations through GIO and
+    also scans the real desktop files when a distribution has no current MIME
+    application cache.
+   </para><para>
+    Applications for the selected MIME type and matching user file actions are
+    displayed directly at the start of the contextual File menu. The Open With
+    submenu can choose another application, create a user application or create
+    and manage additional file actions.
    </para><para>
     Custom MIME icons remain separate from application associations. They may
     be stored in
@@ -2553,13 +2544,8 @@ generated.
     &lt;Authors&gt;Thomas Leonard y otros&lt;/Authors&gt;
   &lt;/About&gt;
   &lt;AppMenu&gt;
-    &lt;Item option="-p=Default"&gt;
-      &lt;Label&gt;Enable pinboard&lt;/Label&gt;
-      &lt;Label xml:lang="es"&gt;Habilitar el pinboard&lt;/Label&gt;
-    &lt;/Item&gt;
-    &lt;Item option="-p="&gt;
-      &lt;Label&gt;Disable pinboard&lt;/Label&gt;
-      &lt;Label xml:lang="es"&gt;Deshabilitar el pinboard&lt;/Label&gt;
+    &lt;Item option="--desktop"&gt;
+      &lt;Label&gt;Start ROX Desktop&lt;/Label&gt;
     &lt;/Item&gt;
   &lt;/AppMenu&gt;
 &lt;/AppInfo&gt;
@@ -3003,9 +2989,7 @@ generated.
       background). This option is mainly useful for debugging.
       </para></listitem></varlistentry>
 
-      <varlistentry><term><option>-p</option></term><term><option>--pinboard=PIN</option></term>
-       <listitem><para>use pinboard PIN as the pinboard.
-      </para></listitem></varlistentry>
+      
 
       <varlistentry><term><option>-r</option></term><term><option>--right=PANEL</option></term>
        <listitem><para>open PANEL as a right-edge panel.
@@ -3019,11 +3003,7 @@ generated.
        <listitem><para>open a directory showing FILE.
       </para></listitem></varlistentry>
 
-      <varlistentry><term><option>-S</option></term><term><option>--rox-session</option></term>
-       <listitem><para>run by session manager, open the default panel and pinboard (implies --new).
-If an XSM session manager is running and this option is used then ROX-Filer will ask to be automatically
-restarted if it crashes.
-      </para></listitem></varlistentry>
+      
 
       <varlistentry><term><option>-t</option></term><term><option>--top=PANEL</option></term>
        <listitem><para>open PANEL as a top-edge panel.
@@ -3252,58 +3232,15 @@ append to the item when run if it is a program.
      If more than one item matches, only one is removed.
    </para></listitem>
 
-   <listitem><para><function>Pinboard</function>([<parameter>Name</parameter>])
-     Display pinboard <parameter>Name</parameter> on the desktop background.
-     <parameter>Name</parameter> can be a name in  <filename>~/.config/rox.sourceforge.net/ROX-Filer</filename>
-     (eg, <userinput>MyPinboard</userinput>) or a full pathname.
-     If not given, the pinboard is turned off.
-   </para></listitem>
+   
 
-   <listitem><para><function>PinboardAdd</function>(<parameter>Path</parameter>,
-     [<parameter>X</parameter>, <parameter>Y</parameter>,
-<parameter>Label</parameter>, <parameter>Shortcut</parameter>, <parameter>Args</parameter>, <parameter>Update</parameter>])
-     Add <parameter>Path</parameter> to the pinboard with the (optional) 
-     label <parameter>Label</parameter>. If X or Y are negative or not given, 
-     the icon is placed automatically. The X and Y parameters then indicate 
-     where the icon should go (X=-1: left, X=-2: right, Y=-1: top, Y=-2: 
-     bottom). If X and Y are given, its position is (<parameter>X</parameter>, 
-     <parameter>Y</parameter>). If <parameter>Shortcut</parameter> is given it 
-     is the keyboard shortcut to trigger this item.  If 
-     <parameter>Args</parameter> is given it is the argument string to append 
-     to the item when run if it is a program. If <parameter>Update</parameter> 
-     is true and there is already an icon for the given path on the pinboard, 
-     the new values will be filled in instead of adding a new icon.
-   </para></listitem>
+   
 
-   <listitem><para><function>PinboardRemove</function>(<parameter>Path</parameter>, [<parameter>Label</parameter>])
-     Remove <parameter>Path</parameter> from the pinboard. If <parameter>Label</parameter> is given
-then this must match the label of the item.  If more than one item matches, only one is removed.
-   </para></listitem>
+   
 
-   <listitem><para><function>SetBackdropApp</function>(<parameter>App</parameter>)
-     Make <parameter>App</parameter> (an application directory) the new handler
-     for the current pinboard's backdrop.
-     The <filename>AppInfo.xml</filename> file inside <parameter>App</parameter>
-     must contain the CanSetBackdrop element, eg:
-     <programlisting>
-&lt;?xml version="1.0"?&gt;
-&lt;AppInfo&gt;
-      &lt;ROX:CanSetBackdrop xmlns:ROX="http://rox.sourceforge.net/SOAP/ROX-Filer"/>
-&lt;/AppInfo&gt;</programlisting>
-     The application will be run with the <option>--backdrop</option> option
-     as it's only argument after invoking this method, and whenever the pinboard is
-     reloaded. DO NOT use this method if invoked with <option>--backdrop</option> or
-     you will get stuck in an infinite loop!
-     See <xref linkend="backdropapp"/> for a guide to writing backdrop applications.
-   </para></listitem>
+   
 
-   <listitem><para><function>SetBackdrop</function>(<parameter>Filename</parameter>,
-   <parameter>Style</parameter>)
-   Set the backdrop image to a given file. If you want to regenerate the image next
-   time the user logs in, or you want to change it automatically from time to time,
-   use <function>SetBackdropApp</function> above instead. Valid styles are
-   <userinput>Tile</userinput>|<userinput>Scale</userinput>|<userinput>Stretch</userinput>|<userinput>Centre</userinput>|<userinput>Fit</userinput>.
-   </para></listitem>
+   
 
    <listitem><para><function>Run</function>(<parameter>Filename</parameter>)
      Run <parameter>Filename</parameter> as if it was clicked on in the filer.

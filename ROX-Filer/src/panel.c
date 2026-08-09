@@ -58,7 +58,7 @@
 #include "appinfo.h"
 #include "pixmaps.h"
 #include "xml.h"
-#include "pinboard.h"		/* For pinboard_get_window() */
+#include "desktop.h"
 
 /* The width of the separator at the inner edge of the panel */
 #define EDGE_WIDTH 1
@@ -577,11 +577,11 @@ Panel *panel_new(const gchar *name, PanelSide side)
 	/* This has no effect until after window is showing; GTK+ bug? */
 	if (panel_keep_below(panel, TRUE))
 	{
-		GdkWindow *pinboard;
+		GdkWindow *desktop;
 
-		pinboard = pinboard_get_window();
-		/* (if pinboard is NULL, will go right to the back) */
-		window_put_just_above(rox_widget_get_window(panel->window), pinboard);
+		desktop = desktop_get_gdk_window();
+		/* If no desktop is active, the panel goes to the back. */
+		window_put_just_above(rox_widget_get_window(panel->window), desktop);
 	}
 
 	save_panels();
@@ -1636,7 +1636,7 @@ static gint panel_leave_event(GtkWidget *widget,
 			      GdkEventCrossing *event,
 			      Panel *panel)
 {
-	GdkWindow *pinboard;
+	GdkWindow *desktop;
 
 	if (event->mode != GDK_CROSSING_NORMAL)
 		return FALSE;	/* Grab for menu, DnD, etc */
@@ -1655,8 +1655,8 @@ static gint panel_leave_event(GtkWidget *widget,
 	{
 		/* Shouldn't need this as well as keep_below but some WMs don't
 		 * automatically lower as soon as the hint is set */
-		pinboard = pinboard_get_window();
-		window_put_just_above(rox_widget_get_window(panel->window), pinboard);
+		desktop = desktop_get_gdk_window();
+		window_put_just_above(rox_widget_get_window(panel->window), desktop);
 	}
 
 	return FALSE;
@@ -2715,7 +2715,7 @@ static void panel_drag_leave(GtkWidget	*widget,
 		       guint32		time,
 		       Panel		*panel)
 {
-	GdkWindow *pinboard, *window;
+	GdkWindow *desktop, *window;
 	GtkAllocation allocation;
 	int x, y;
 
@@ -2727,8 +2727,8 @@ static void panel_drag_leave(GtkWidget	*widget,
 	{
 		/* Shouldn't need this as well as keep_below but some WMs don't
 		 * automatically lower as soon as the hint is set */
-		pinboard = pinboard_get_window();
-		window_put_just_above(rox_widget_get_window(panel->window), pinboard);
+		desktop = desktop_get_gdk_window();
+		window_put_just_above(rox_widget_get_window(panel->window), desktop);
 	}
 }
 

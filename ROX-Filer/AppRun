@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Modificado por josejp2424: compilación GTK3, limpieza del binario anterior
+# Rox-Filer2: compilación GTK3, limpieza del binario anterior
 # y actualización de los catálogos de idiomas incluidos.
 
 PROG=ROX-Filer
@@ -15,7 +15,7 @@ if [ "x$MAKE" = x ]; then
 fi
 
 case $1 in
-	--debug) shift ;
+	--gdb) shift ;
 		if [ "$#" != 0 ] ; then
 		  DEBUGGER="gdb --args" ; DEBUG_OPTIONS="-n --g-fatal-warnings"
 		else
@@ -34,7 +34,7 @@ case $1 in
 			echo "Cannot compile - source code is missing!" >&2
 			exit 1
 		fi
-		echo "Compiling $APP_DIR... please wait..." >&2
+		echo "Compiling Rox-Filer2 in $APP_DIR... please wait..." >&2
 		if [ ! -x "$APP_DIR/src/configure" ]; then
 		  echo "No 'configure' script! Trying to run autoconf..."
 		  (cd "$APP_DIR/src"; autoconf)

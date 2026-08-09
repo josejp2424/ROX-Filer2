@@ -47,7 +47,6 @@
 #include "run.h"
 #include "remote.h"
 #include "filer.h"
-#include "pinboard.h"
 #include "panel.h"
 #include "action.h"
 #include "type.h"
@@ -57,6 +56,7 @@
 #include "usericons.h"
 #include "options.h"
 #include "filer_pair.h"
+#include "debug_log.h"
 
 static GdkAtom filer_atom;	/* _ROX_FILER_EUID_VERSION_HOST */
 static GdkAtom filer_atom_any;	/* _ROX_FILER_EUID_HOST */
@@ -84,6 +84,7 @@ static void soap_done(GtkWidget *widget,
 		      GdkEventProperty *event,
 		      gpointer data);
 static void soap_register(char *name, SOAP_func func, char *req, char *opt);
+static void soap_register_calls_once(void);
 static xmlNodePtr soap_invoke(xmlNode *method);
 
 static xmlNodePtr rpc_Version(GList *args);
@@ -93,7 +94,6 @@ static xmlNodePtr rpc_OpenDir(GList *args);
 static xmlNodePtr rpc_CloseDir(GList *args);
 static xmlNodePtr rpc_Examine(GList *args);
 static xmlNodePtr rpc_Show(GList *args);
-static xmlNodePtr rpc_Pinboard(GList *args);
 static xmlNodePtr rpc_Panel(GList *args);
 static xmlNodePtr rpc_Run(GList *args);
 static xmlNodePtr rpc_RunURI(GList *args);
@@ -108,10 +108,6 @@ static xmlNodePtr rpc_PairRealign(GList *args);
 
 static xmlNodePtr rpc_PanelAdd(GList *args);
 static xmlNodePtr rpc_PanelRemove(GList *args);
-static xmlNodePtr rpc_PinboardAdd(GList *args);
-static xmlNodePtr rpc_PinboardRemove(GList *args);
-static xmlNodePtr rpc_SetBackdrop(GList *args);
-static xmlNodePtr rpc_SetBackdropApp(GList *args);
 
 static xmlNodePtr rpc_SetIcon(GList *args);
 static xmlNodePtr rpc_UnsetIcon(GList *args);
@@ -121,18 +117,13 @@ static xmlNodePtr rpc_UnsetIcon(GList *args);
  ****************************************************************/
 
 
-/* Try to get an already-running filer to handle things (only if
- * new_copy is FALSE); TRUE if we succeed.
- * Create an IPC widget so that future filers can contact us.
- */
-gboolean remote_init(xmlDocPtr rpc, gboolean new_copy)
+/* Register the SOAP methods independently from the transport.  Wayland uses
+ * local execution today, while X11 can additionally forward the same methods
+ * to an existing process through the historical root-window transport. */
+static void soap_register_calls_once(void)
 {
-	guchar		*unique_id;
-	GdkWindow	*existing_ipc_window;
-	GtkWidget	*ipc_window;
-	Window		xwindow;
-
-	/* xmlDocDump(stdout, rpc); */
+	if (rpc_calls)
+		return;
 
 	rpc_calls = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -151,7 +142,6 @@ gboolean remote_init(xmlDocPtr rpc, gboolean new_copy)
 	soap_register("PairWindows", rpc_PairWindows, NULL, "Left,Right");
 	soap_register("PairRealign", rpc_PairRealign, NULL, NULL);
 
-	soap_register("Pinboard", rpc_Pinboard, NULL, "Name");
 	soap_register("Panel", rpc_Panel, NULL, "Side,Name");
 
 	soap_register("FileType", rpc_FileType, "Filename", NULL);
@@ -162,14 +152,45 @@ gboolean remote_init(xmlDocPtr rpc, gboolean new_copy)
 	soap_register("Mount", rpc_Mount, "MountPoints", "OpenDir,Quiet");
 	soap_register("Unmount", rpc_Unmount, "MountPoints", "Quiet");
 
-	soap_register("SetBackdrop", rpc_SetBackdrop, "Filename,Style", NULL);
-	soap_register("SetBackdropApp", rpc_SetBackdropApp, "App", NULL);
-	soap_register("PinboardAdd", rpc_PinboardAdd, "Path", "X,Y,Label,Shortcut,Args,Locked,Update");
-	soap_register("PinboardRemove", rpc_PinboardRemove, "Path", "Label");
 	soap_register("PanelAdd", rpc_PanelAdd, "Side,Path", "Label,After,Shortcut,Args,Locked");
 	soap_register("PanelRemove", rpc_PanelRemove, "Side", "Path,Label");
- 	soap_register("SetIcon", rpc_SetIcon, "Path,Icon", NULL);
- 	soap_register("UnsetIcon", rpc_UnsetIcon, "Path", NULL);
+	soap_register("SetIcon", rpc_SetIcon, "Path,Icon", NULL);
+	soap_register("UnsetIcon", rpc_UnsetIcon, "Path", NULL);
+
+	ROX_LOG_DEBUG("remote", "SOAP/RPC method registry initialized for local and X11 execution");
+}
+
+/* Try to get an already-running filer to handle things (only if
+ * new_copy is FALSE); TRUE if we succeed.
+ * Create an IPC widget so that future X11 filers can contact us. */
+gboolean remote_init(xmlDocPtr rpc, gboolean new_copy)
+{
+	guchar		*unique_id;
+	GdkDisplay	*display = gdk_display_get_default();
+
+	/* The RPC registry is required even when the request is executed locally.
+	 * In r78 the Wayland early return happened before this registry was
+	 * created, so run_soap() later called g_hash_table_lookup(NULL, ...).
+	 */
+	soap_register_calls_once();
+
+	/* The historical ROX SOAP transport stores its IPC window on the X11
+	 * root window.  Calling any gdk_x11_* accessor on a Wayland display is
+	 * invalid. On non-X11 displays execute the already-registered RPC request
+	 * locally in this process.
+	 */
+	if (!display || !GDK_IS_X11_DISPLAY(display))
+	{
+		ROX_LOG_INFO("remote",
+		             "X11 remote IPC unavailable on display=%s; RPC registry ready; running request locally",
+		             display ? G_OBJECT_TYPE_NAME(display) : "none");
+		return FALSE;
+	}
+	GdkWindow	*existing_ipc_window;
+	GtkWidget	*ipc_window;
+	Window		xwindow;
+
+	/* xmlDocDump(stdout, rpc); */
 
 	/* Look for a property on the root window giving the IPC window
 	 * of an already-running copy of this version of the filer, running
@@ -277,6 +298,11 @@ xmlDocPtr run_soap(xmlDocPtr soap)
 	xmlDocPtr rep_doc = NULL;
 
 	g_return_val_if_fail(soap != NULL, NULL);
+
+	/* run_soap() is also used by paths which intentionally skip remote_init()
+	 * (for example --desktop). Keep local RPC execution independent from the
+	 * X11 transport and never allow a NULL rpc_calls table. */
+	soap_register_calls_once();
 
 	/* Make sure we don't quit before doing the whole list
 	 * (there's a command that closes windows)
@@ -954,105 +980,6 @@ static xmlNodePtr rpc_Show(GList *args)
 	return NULL;
 }
 
-static xmlNodePtr rpc_Pinboard(GList *args)
-{
-	char *name = NULL;
-
-	name = string_value(ARG(0));
-	pinboard_activate(name);
-	g_free(name);
-
-	return NULL;
-}
-
-/* args = Filename, Style */
-static xmlNodePtr rpc_SetBackdrop(GList *args)
-{
-	char *file;
-	char *style;
-	BackdropStyle s;
-
-	file = string_value(ARG(0));
-	style = string_value(ARG(1));
-
-	s = !g_ascii_strcasecmp(style, "Tile") ? BACKDROP_TILE :
-	    !g_ascii_strcasecmp(style, "Scale") ? BACKDROP_SCALE :
-	    !g_ascii_strcasecmp(style, "Stretch") ? BACKDROP_STRETCH :
-	    !g_ascii_strcasecmp(style, "Centre") ? BACKDROP_CENTRE :
-	    !g_ascii_strcasecmp(style, "Fit") ? BACKDROP_FIT :
-					     BACKDROP_NONE;
-
-	if (s == BACKDROP_NONE)
-		g_warning("Invalid style '%s' for backdrop", style);
-	else
-		pinboard_set_backdrop(file, s);
-
-	g_free(file);
-	g_free(style);
-
-	return NULL;
-}
-
-/* args = App */
-static xmlNodePtr rpc_SetBackdropApp(GList *args)
-{
-	char *app;
-
-	app = string_value(ARG(0));
-
-	pinboard_set_backdrop_app(app);
-
-	g_free(app);
-
-	return NULL;
-}
-
-/* args = Path, [X, Y, Label, Shortcut, Args, Locked, Update] */
-static xmlNodePtr rpc_PinboardAdd(GList *args)
-{
-	char *path = NULL;
-	gchar *name, *shortcut, *xargs;
-	int x, y, locked, update;
-
-	path = string_value(ARG(0));
-	x = int_value(ARG(1), -1);
-	y = int_value(ARG(2), -1);
-	name = string_value(ARG(3));
-	shortcut = string_value(ARG(4));
-	xargs = string_value(ARG(5));
-	locked = bool_value(ARG(6));
-	update = bool_value(ARG(7));
-
-	pinboard_pin_with_args(path, name, x, y, shortcut, xargs,
-						(locked==-1) ? FALSE : locked,
-						(update==-1) ? FALSE : update);
-
-	g_free(path);
-	g_free(name);
-	g_free(shortcut);
-	g_free(xargs);
-
-	return NULL;
-}
-
-/* args = Path, [Label] */
-static xmlNodePtr rpc_PinboardRemove(GList *args)
-{
-	char *path = NULL;
-	gchar *name;
-
-	path = string_value(ARG(0));
-	name = string_value(ARG(1));
-
-	pinboard_remove(path, name);
-
-	g_free(path);
-	if(name)
-	        g_free(name);
-
-	return NULL;
-}
-
 /* args = Side, [Name] */
 static xmlNodePtr rpc_Panel(GList *args)
 {
@@ -1296,7 +1223,7 @@ static void soap_done(GtkWidget *widget, GdkEventProperty *event, gpointer data)
 
 static gboolean too_slow(gpointer data)
 {
-	g_warning("Existing ROX-Filer process is not responding! Try with -n");
+	g_warning("Existing Rox-Filer2 process is not responding! Try with -n");
 	gtk_main_quit();
 
 	return 0;
@@ -1341,6 +1268,8 @@ static xmlNodePtr soap_invoke(xmlNode *method)
 	xmlNode	*node;
 
 	call = g_hash_table_lookup(rpc_calls, method->name);
+	ROX_LOG_DEBUG("remote", "invoking RPC method=%s",
+	              method->name ? (const char *)method->name : "(null)");
 	if (!call)
 	{
 		xmlNodePtr reply;

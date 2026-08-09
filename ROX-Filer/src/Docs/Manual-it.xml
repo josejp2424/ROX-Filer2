@@ -160,35 +160,19 @@
    Per un elenco completo delle opzioni a riga di comando, vedere l'<xref linkend="manpage"/>
   </para>
 
-  <sect1>
-   <title><anchor id="run_pin" xreflabel="La bacheca"/>La bacheca</title>
+    <sect1>
+   <title><anchor id="run_pin" xreflabel="Desktop ROX"/>Desktop ROX</title>
    <para>
-
-    Se si desidera che il filer gestisca lo sfondo del desktop, si deve usare l'opzione
-    <option>--pinboard</option> seguito da un nome per la bacheca, come ad esempio:
-
-    <screen>$ rox --pinboard=MiaBacheca</screen>
-
-    Se si cambia qualcosa, per esempio se si rilascia un file sullo sfondo, la configurazione
-    della bacheca viene salvata in
-    <filename>~/.config/rox.sourceforge.net/ROX-Filer/pb_MiaBacheca</filename>.
-	Si possono avere tutte le bacheche che si desiderano e per passare dall'una all'altra basta
-	eseguire di nuovo 	«rox», come ad esempio:
-
-    <screen>$ rox --pinboard=AltraBacheca</screen>
-
-    Per disattivare la bacheca, lasciare vuoto il campo del nome:
-
-    <screen>$ rox --pinboard=</screen>
-
-    Vedere le <xref linkend="winman"/> se ci sono problemi nel visualizzare correttamente
-    le icone. Si può anche attivare o disattivare la bacheca selezionando in una finestra del filer
-    la directory applicativa <filename>ROX-Filer</filename> e scegliendo dal menù
-    <guimenuitem>Attiva la bacheca</guimenuitem> o <guimenuitem>Disattiva la bacheca
-    </guimenuitem>.  </para>
+    ROX-Filer fornisce un solo desktop integrato. Avviarlo con:
+    <screen>$ rox --desktop</screen>
+    Una seconda esecuzione aggiorna il desktop esistente e non crea desktop
+    aggiuntivi con nome. Le vecchie opzioni <option>-p</option>,
+    <option>--pinboard</option> e <option>--rox-session</option> non sono più
+    supportate.
+   </para>
   </sect1>
 
-  <sect1>
+<sect1>
    <title><anchor id="run_pan" xreflabel="I pannelli"/>I pannelli</title>
    <para>
 
@@ -275,7 +259,7 @@
 
    <sect2><title>Window Maker</title>
     <procedure>
-     <step><para>Avviare il filer con <userinput>rox -p=Default</userinput>.</para></step>
+     <step><para>Avviare il filer con <userinput>rox --desktop</userinput>.</para></step>
       <step><para>
        Premere <keycap>Control</keycap>+<keycap>Esc</keycap>, o
        [RightButtonDown] sulla barra del titolo di qualunque finestra.
@@ -2577,13 +2561,8 @@
     &lt;Homepage label="Sito web"/&gt;
   &lt;/About&gt;
   &lt;AppMenu&gt;
-    &lt;Item option="-p=Default"&gt;
-      &lt;Label&gt;Enable pinboard&lt;/Label&gt;
-      &lt;Label xml:lang="it"&gt;Attiva la bacheca&lt;/Label&gt;
-    &lt;/Item&gt;
-    &lt;Item option="-p="&gt;
-      &lt;Label&gt;Disable pinboard&lt;/Label&gt;
-      &lt;Label xml:lang="it"&gt;Disattiva la bacheca&lt;/Label&gt;
+    &lt;Item option="--desktop"&gt;
+      &lt;Label&gt;Start ROX Desktop&lt;/Label&gt;
     &lt;/Item&gt;
   &lt;/AppMenu&gt;
 &lt;/AppInfo&gt;
@@ -3020,9 +2999,7 @@
       Questa opzione è principalmente usata per il debug.
       </para></listitem></varlistentry>
 
-      <varlistentry><term><option>-p</option></term><term><option>--pinboard=PIN</option></term>
-       <listitem><para>attiva la bacheca PIN.
-      </para></listitem></varlistentry>
+      
 
       <varlistentry><term><option>-r</option></term><term><option>--right=PAN</option></term>
        <listitem><para>apre PAN come pannello destro.
@@ -3036,11 +3013,7 @@
        <listitem><para>apre la directory mostrando FILE.
       </para></listitem></varlistentry>
 
-      <varlistentry><term><option>-S</option></term><term><option>--rox-session</option></term>
-       <listitem><para>eseguito da un manager di sessione, apre il pannello e la bacheca predefinita (implica --new).
-       Se un manager di sessione XSM è in esecuzione e questa opzione viene usata, allora ROX-Filer chiederà di essere
-       automaticamente riavviato in caso di crash.
-      </para></listitem></varlistentry>
+      
 
       <varlistentry><term><option>-t</option></term><term><option>--top=PAN</option></term>
        <listitem><para>apre PAN come pannello in alto.
@@ -3264,56 +3237,15 @@ EOF</screen>
      Se più di un elemento corrisponde, solo uno viene rimosso.
    </para></listitem>
 
-   <listitem><para><function>Pinboard</function>([<parameter>Name</parameter>])
-     Attiva la bacheca <parameter>Name</parameter>.
-     <parameter>Name</parameter> può essere un nome in
-     <filename>~/.config/rox.sourceforge.net/ROX-Filer</filename> (es.
-     <userinput>MiaBacheca</userinput>) o avere un percorso completo.
-     Se non c'è alcun nome, la bacheca viene disattivata.
-   </para></listitem>
+   
 
-   <listitem><para><function>PinboardAdd</function>(<parameter>Path</parameter>,
-     <parameter>X</parameter>, <parameter>Y</parameter>,
-     [<parameter>Label</parameter>, <parameter>Shortcut</parameter>, <parameter>Args</parameter>, <parameter>Update</parameter>])
-     Aggiunge <parameter>Path</parameter> alla bacheca con l'etichetta (opzionale) <parameter>Label</parameter>.
-     Se X o Y sono negativi o non assegnati, l'icona è messa automaticamente. I parametri X e Y allora indicano
-     dove l'icona dovrebbe andare (X=-1: a sinistra, X=-2: a destra, Y=-1: in alto, Y=-2: in basso).
-     Se X e Y sono assegnati, la loro posizione è (<parameter>X</parameter>, <parameter>Y</parameter>).
-     Se <parameter>Shortcut</parameter> è assegnato, è la scorciatoia da tastiera che attiva questo elemento.
-     Se <parameter>Args</parameter> è assegnato, è l'argomento stringa da attaccare all'elemento quando eseguito
-     (se è un programma). Se <parameter>Update</parameter> è <userinput>true</userinput> e se c'è già un'icona sulla
-     bacheca per il percorso dato, allora verrà aggiornata con i nuovi valori invece che aggiungere una nuova icona.
-   </para></listitem>
+   
 
-   <listitem><para><function>PinboardRemove</function>(<parameter>Path</parameter>, [<parameter>Label</parameter>])
-     Rimuove <parameter>Path</parameter> dalla bacheca. Se viene specificato
-      <parameter>Label</parameter>, allora questo deve corrispondere all'etichetta
-       dell'elemento. Se corrisponde a più di un elemento, ne viene rimosso solo uno.
-   </para></listitem>
+   
 
-   <listitem><para><function>SetBackdropApp</function>(<parameter>App</parameter>)
-     Rende <parameter>App</parameter> (una directory applicativa) il nuovo gestore
-     dello sfondo della bacheca attualmente in uso.
-     Il file <filename>AppInfo.xml</filename> dentro <parameter>App</parameter>
-     deve contenere l'elemento «CanSetBackdrop», ad esempio:
-     <programlisting>
-&lt;?xml version="1.0"?&gt;
-&lt;AppInfo&gt;
-      &lt;ROX:CanSetBackdrop xmlns:ROX="http://rox.sourceforge.net/SOAP/ROX-Filer"/>
-&lt;/AppInfo&gt;</programlisting>
-     L'applicazione viene quindi eseguita con l'opzione <option>--backdrop</option> come unico
-     argomento dopo aver attivato questo metodo e ogni volta che la bacheca viene ricaricata.
-     NON usare questo metodo se si usa l'opzione <option>--backdrop</option> altrimenti
-     va in loop all'infinito.
-     Vedere <xref linkend="backdropapp"/> per ulteriori informazioni.
-   </para></listitem>
+   
 
-   <listitem><para><function>SetBackdrop</function>(<parameter>NomeFile</parameter>,
-   <parameter>Style</parameter>)
-   Imposta un dato file come immagine di sfondo. Per riattivare l'immagine al
-   successivo accesso al sistema o per cambiarla automaticamente di volta in volta,
-   usare invece <function>SetBackdropApp</function>.
-   </para></listitem>
+   
 
    <listitem><para><function>Run</function>(<parameter>NomeFile</parameter>)
      Esegue <parameter>NomeFile</parameter> come se si facesse clic nel filer.

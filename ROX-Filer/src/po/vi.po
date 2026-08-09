@@ -1,9 +1,9 @@
-# Vietnamese Translation for ROX-Filer.
+# Vietnamese Translation for Rox-Filer2.
 # Copyright (C) 2006 xomhau <xomhau@gmail.com> , anhtuan <anhtuanvt@gmail.com>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ROX-Filer 2.12-r57\n"
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-07-29 17:41-0300\n"
 "PO-Revision-Date: 2026-07-29 17:41-0300\n"
@@ -205,20 +205,20 @@ msgstr "Hướng dẫn thiết đặt loại tập tin"
 
 #: action.c:324
 msgid ""
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
 "directories, devices, pipes or sockets, and then only\n"
 "on certain file systems and where the OS implements them.\n"
 msgstr ""
-"ROX-Filer xác định loại tập tin bằng cách so sánh tên của nó\n"
+"Rox-Filer2 xác định loại tập tin bằng cách so sánh tên của nó\n"
 "với tên loại tập tin đã biết. Để thay đổi loại tập tin, bạn phải\n"
 "thay đổi tên của nó\n"
 "\n"
@@ -570,8 +570,8 @@ msgid "Mount / Unmount"
 msgstr "Gắn kết / Hủy gắn kết"
 
 #: action.c:2197
-msgid "ROX-Filer does not yet support mount points on your system. Sorry."
-msgstr "ROX-Filer chưa hỗ trợ điểm gắn kết trên hệ thống của bạn. Xin lỗi."
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
+msgstr "Rox-Filer2 chưa hỗ trợ điểm gắn kết trên hệ thống của bạn. Xin lỗi."
 
 #: action.c:2211 menu.c:246 tips:194
 msgid "Delete"
@@ -1528,14 +1528,14 @@ msgstr "Thử đọc tập tin XML như tập tin text. Tập tin '%s' có thể
 msgid ""
 "Error in '%s' file at line %d: \n"
 "\"%s\"\n"
-"This may be due to upgrading from a previous version of ROX-Filer. Open the "
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the "
 "Options window and try changing something and then changing it back (causing "
 "the file to be resaved).\n"
 "Further errors will be ignored."
 msgstr ""
 "Lỗi trong tập tin '%s' tại dòng '%d': \n"
 "\"%s\"\n"
-"Điều này có thể do nâng cấp từ phiên bản cũ của ROX-Filer. Mở cửa sổ Tùy "
+"Điều này có thể do nâng cấp từ phiên bản cũ của Rox-Filer2. Mở cửa sổ Tùy "
 "chọn và thử thay đổi và thứ, sau đó thay đổi trở lại (vì tập tin đã được lưu "
 "trở lại).\n"
 "Các lỗi xa hơn sẽ được bỏ qua."
@@ -1575,7 +1575,7 @@ msgid ""
 "Note that you must save your choices and restart the filer for the new "
 "language setting to take full effect."
 msgstr ""
-"Bạn phải lưu lại các chọn lựa và khởi động lại ROX-Filer để thiết đặt ngôn "
+"Bạn phải lưu lại các chọn lựa và khởi động lại Rox-Filer2 để thiết đặt ngôn "
 "ngữ mới có đầy đủ hiệu lực."
 
 #: icon.c:76
@@ -1583,12 +1583,12 @@ msgid "(click to set)"
 msgstr "(nhấp để thiết đặt)"
 
 #: icon.c:131
-msgid "ROX-Filer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2"
+msgstr "Rox-Filer2"
 
 #: icon.c:132 menu.c:294
-msgid "About ROX-Filer..."
-msgstr "Về ROX-Filer..."
+msgid "About Rox-Filer2..."
+msgstr "Về Rox-Filer2..."
 
 #: icon.c:133 menu.c:295
 msgid "Show Help Files"
@@ -1925,8 +1925,8 @@ msgid "Mount point (%s)"
 msgstr "Điểm gắn kết (%s)"
 
 #: log.c:54
-msgid "ROX-Filer started"
-msgstr "ROX-Filer đã chạy"
+msgid "Rox-Filer2 started"
+msgstr "Rox-Filer2 đã chạy"
 
 #: log.c:115
 #, c-format
@@ -1950,26 +1950,26 @@ msgstr "Tuỳ chọn"
 #: main.c:97
 msgid ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
 "to the extent permitted by law.\n"
-"You may redistribute copies of ROX-Filer\n"
+"You may redistribute copies of Rox-Filer2\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"
 msgstr ""
 "Bản quyền (C) 2005 Thomas Leonard.\n"
-"ROX-Filer đến với HÒAN TÒAN KHÔNG BẢO HÀNH,\n"
+"Rox-Filer2 đến với HÒAN TÒAN KHÔNG BẢO HÀNH,\n"
 "trong phạm vi được cho phép bởi luật.\n"
-"Bạn có thể tái phân phối ROX-Filer\n"
+"Bạn có thể tái phân phối Rox-Filer2\n"
 "dưới các điều khỏan của giấy phép GNU General Public License.\n"
 "Để biết thêm thông tin hãy xem tập tin có tên COPYING.\n"
 
 #: main.c:106
-msgid "Try `ROX-Filer/AppRun --help' for more information.\n"
-msgstr "Thử `ROX-Filer/AppRun --help' để biết thêm thông tin.\n"
+msgid "Try `Rox-Filer2/AppRun --help' for more information.\n"
+msgstr "Thử `Rox-Filer2/AppRun --help' để biết thêm thông tin.\n"
 
 #: main.c:109
-msgid "Try `ROX-Filer/AppRun -h' for more information.\n"
-msgstr "Thử `ROX-Filer/AppRun -h' để biết thêm thông tin.\n"
+msgid "Try `Rox-Filer2/AppRun -h' for more information.\n"
+msgstr "Thử `Rox-Filer2/AppRun -h' để biết thêm thông tin.\n"
 
 #: main.c:111
 msgid ""
@@ -1979,63 +1979,6 @@ msgid ""
 msgstr ""
 "GHI CHÚ: Hệ thống của bạn không hỗ trợ các tùy chọn dài - \n"
 "bạn phải dùng các phiên bản ngắn thay thế.\n"
-
-#: main.c:117
-#, c-format
-msgid ""
-"Usage: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Open each directory or file listed, or the current working\n"
-"directory if no arguments are given.\n"
-"\n"
-"  -b, --border=PANEL\topen PANEL as a border panel\n"
-"  -B, --bottom=PANEL\topen PAN as a bottom-edge panel\n"
-"  -c, --client-id=ID\tused for session management\n"
-"  -d, --dir=DIR\t\topen DIR as directory (not application)\n"
-"  -D, --close=DIR\tclose DIR and its subdirectories\n"
-"  -h, --help\t\tdisplay this help and exit\n"
-"  -l, --left=PANEL\topen PAN as a left-edge panel\n"
-"  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"
-"  -n, --new\t\tstart new copy; for debugging the filer\n"
-"  -p, --pinboard=PIN\tuse pinboard PIN as the pinboard\n"
-"  -r, --right=PANEL\topen PAN as a right-edge panel\n"
-"  -R, --RPC\t\tinvoke method call read from stdin\n"
-"  -s, --show=FILE\topen a directory showing FILE\n"
-"  -S, --rox-session\tuse default panel and pinboard options, and -n\n"
-"  -t, --top=PANEL\topen PANEL as a top-edge panel\n"
-"  -u, --user\t\tshow user name in each window \n"
-"  -U, --url=URL\t\topen file or directory in URI form\n"
-"  -v, --version\t\tdisplay the version information and exit\n"
-"  -x, --examine=FILE\tFILE has changed - re-examine it\n"
-"\n"
-"Report bugs to %s.\n"
-"Home page (including updated versions): http://rox.sourceforge.net/\n"
-msgstr ""
-"Cách dùng: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Mở các thư mục hay tập tin đã kê khai, hoặc thư mục đang\n"
-"làm việc hiện tại nếu không có tham số được thêm vào.\n"
-"\n"
-"  -b, --border=PANEL\tmở PANEL như một panel viền\n"
-"  -B, --bottom=PANEL\tmở PANEL như như một panel cạnh dưới\n"
-"  -c, --client-id=ID\tdùng cho quản lý phiên\n"
-"  -d, --dir=DIR\t\tmở DIR như thư mục (không phải ứng dụng)\n"
-"  -D, --close=DIR\tđóng DIR và các thư mục con của nó\n"
-"  -h, --help\t\tHiển thị trợ giúp này và thoát\n"
-"  -l, --left=PANEL\tmở PANEL như một panel cạnh trái\n"
-"  -m, --mime-type=FILE\tin loại MIME của FILE và thoát\n"
-"  -n, --new\t\tbắt đầu bản sao mới; dùng để dò lỗi trình quản lý tập tin\n"
-"  -p, --pinboard=PIN\tdùng pinboard PIN như pinboard\n"
-"  -r, --right=PANEL\tmở PANEL như một panel cạnh phải\n"
-"  -R, --RPC\t\tviện dẫn phương thức gọi đọc từ stdin\n"
-"  -s, --show=FILE\tmở thư mục đang hiển thị FILE\n"
-"  -S, --rox-session\tdùng các tùy chọn panel và pinboard mặc định, và -n\n"
-"  -t, --top=PANEL\tmở PANEL như một panel cạnh trên\n"
-"  -u, --user\t\thiện tên người dùng trong mỗi cửa sổ \n"
-"  -U, --url=URL\t\tmở tập tin hoặc thư mục theo dạng URI\n"
-"  -v, --version\t\thiện thông tin phiên bản và thoát\n"
-"  -x, --examine=FILE\tFILE đã thay đổi - kiểm tra lại nó\n"
-"\n"
-"Thông báo lỗi đến %s.\n"
-"Trang chủ (bao gồm các phiên bản cập nhật): http://rox.sourceforge.net/\n"
 
 #: main.c:239
 msgid ""
@@ -2125,7 +2068,7 @@ msgstr ""
 
 #: main.c:1010
 msgid ""
-"Click to save a script to run ROX-Filer.\n"
+"Click to save a script to run Rox-Filer2.\n"
 "If you are using Zero Install you should use 0alias instead."
 msgstr ""
 
@@ -2751,9 +2694,9 @@ msgid "%s total, %s used, %s free (%.1f %%)"
 msgstr "%s tổng, %s dùng, %s trống (%.1f %%)"
 
 #: options.c:275
-msgid "ROX-Filer has converted your Options file to the new XML format"
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
 msgstr ""
-"ROX-Filer đã chuyển đổi tập tin Tùy chọn của bạn sang định dạng XML mới"
+"Rox-Filer2 đã chuyển đổi tập tin Tùy chọn của bạn sang định dạng XML mới"
 
 #: options.c:535 options.c:1256
 msgid "(use default)"
@@ -2900,16 +2843,16 @@ msgstr ""
 #: pinboard.c:749
 msgid ""
 "You can only set the backdrop to an image or to a program which knows how to "
-"manage ROX-Filer's backdrop.\n"
+"manage Rox-Filer2's backdrop.\n"
 "\n"
 "Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
-"element, as described in ROX-Filer's manual."
+"element, as described in Rox-Filer2's manual."
 msgstr ""
 "Bạn chỉ có thể thiết đặt nền với một hình ảnh họăc với một chương trinh biết "
-"cách quản lý nền của ROX-Filer.\n"
+"cách quản lý nền của Rox-Filer2.\n"
 "\n"
 "Lập trình viên: AppInfo.xml của ứng dụng phải chứa yếu tố CanSetBackdrop, "
-"như miêu tả trong manual của ROX-Filer."
+"như miêu tả trong manual của Rox-Filer2."
 
 #: pinboard.c:769
 msgid "Set backdrop"
@@ -3283,8 +3226,8 @@ msgid ""
 msgstr ""
 
 #: toolbar.c:176
-msgid "Show ROX-Filer help"
-msgstr "Hiện trợ giúp của ROX-Filer"
+msgid "Show Rox-Filer2 help"
+msgstr "Hiện trợ giúp của Rox-Filer2"
 
 #: toolbar.c:239
 #, c-format
@@ -3665,7 +3608,7 @@ msgid ""
 "The filer will resize windows whenever it seems useful (that is, when "
 "changing directory or display style)."
 msgstr ""
-"ROX-Filer sẽ đổi kích cỡ cửa sổ khi nó thấy cần (khi đổi thư mục hay kiểu "
+"Rox-Filer2 sẽ đổi kích cỡ cửa sổ khi nó thấy cần (khi đổi thư mục hay kiểu "
 "hiển thị)"
 
 #: tips:9
@@ -4258,11 +4201,11 @@ msgstr "Thu nhỏ cửa sổ"
 #: tips:150
 msgid ""
 "Most window managers provide a way to iconify (or 'minimise') windows, and "
-"various programs, including ROX-Filer, can be used to display the iconified "
+"various programs, including Rox-Filer2, can be used to display the iconified "
 "windows."
 msgstr ""
 "Hầu hết các trình quản lý cửa sổ hỗ trợ một cách để thu nhỏ cửa sổ và các "
-"ứng dụng khác, bao gồm cả ROX-Filer, có thể dùng để hiển thị các cửa sổ thu "
+"ứng dụng khác, bao gồm cả Rox-Filer2, có thể dùng để hiển thị các cửa sổ thu "
 "nhỏ."
 
 #: tips:152
@@ -4275,7 +4218,7 @@ msgid ""
 "button on the pinboard. Requires a compatible window manager, and the "
 "pinboard must be in use."
 msgstr ""
-"ROX-Filer sẽ hiện cửa sổ thu nhỏ như một nút nhỏ trên pinboard. Yêu cầu một "
+"Rox-Filer2 sẽ hiện cửa sổ thu nhỏ như một nút nhỏ trên pinboard. Yêu cầu một "
 "trình quản lý cửa sổ tương thích và pinboard phải được dùng."
 
 #: tips:154
@@ -4287,7 +4230,7 @@ msgid ""
 "If this option is on, the filer will only show iconified windows associated "
 "with the current workspace."
 msgstr ""
-"Nếu bật tùy chọn này, ROX-Filer sẽ chỉ hiển thị các cửa sổ đã thu nhỏ có "
+"Nếu bật tùy chọn này, Rox-Filer2 sẽ chỉ hiển thị các cửa sổ đã thu nhỏ có "
 "trong khung làm việc (ưorkspace) hiện tại."
 
 #: tips:156
@@ -4329,9 +4272,9 @@ msgid ""
 "or bottom margin to avoid placing the icons there. The filer already knows "
 "about its own panel."
 msgstr ""
-"Thỉnh thỏang ROX-Filer không biết desktop của bạn và đặt cửa sổ đã thu nhỏ "
+"Thỉnh thỏang Rox-Filer2 không biết desktop của bạn và đặt cửa sổ đã thu nhỏ "
 "xuống (ví dụ) thanh panel của Gnome. Bạn có thể xác định một lề trên hay "
-"dưới để đặt biểu tượng ở đó. ROX-Filer nhận biết được panel của nó :)."
+"dưới để đặt biểu tượng ở đó. Rox-Filer2 nhận biết được panel của nó :)."
 
 #: tips:165
 msgid "Top margin"
@@ -4408,7 +4351,7 @@ msgstr "Hãy nhập tên của pinboard để hiện."
 
 #: tips:183
 msgid "Changes here take effect the next time the filer is run."
-msgstr "Các thay đổi sẽ có tác dụng trong lần chạy kế tiếp của ROX-Filer."
+msgstr "Các thay đổi sẽ có tác dụng trong lần chạy kế tiếp của Rox-Filer2."
 
 #: tips:184
 #, fuzzy
@@ -4689,7 +4632,7 @@ msgid ""
 "The filer uses a set of rules to work out the correct MIME type for each "
 "regular file, and then chooses a suitable icon for that type."
 msgstr ""
-"ROX-Filer thiết đặt một qui luật để thi hành chính xác lọai MIME cho các tập "
+"Rox-Filer2 thiết đặt một qui luật để thi hành chính xác lọai MIME cho các tập "
 "tin thường, sau đó chọn biểu tượng cho lọai đó."
 
 #: tips:259
@@ -4754,7 +4697,7 @@ msgid ""
 "Error, such as a symlink which points to a non-existant file, or a file "
 "which the filer does not have permission to examine."
 msgstr ""
-"Lỗi, liên kết trỏ đến một tập tin không có hoặc là ROX-Filer không có quyền "
+"Lỗi, liên kết trỏ đến một tập tin không có hoặc là Rox-Filer2 không có quyền "
 "truy nhập đến tâp tin"
 
 #: tips:274
@@ -4844,12 +4787,12 @@ msgstr "Hack menu gốc của Blackbox"
 #: tips:290
 msgid ""
 "Blackbox, Fluxbox and similar window managers do not yet work well with the "
-"ROX-Filer pinboard. This option enables some workarounds. These window "
+"Rox-Filer2 pinboard. This option enables some workarounds. These window "
 "managers are expected to change their behaviour in new versions so that this "
 "isn't necessary."
 msgstr ""
 "Blackbox, Fluxbox và các trình quản lý cửa sổ tương tự chưa làm việc tốt với "
-"pinboard của ROX-Filer. Tùy chọn này khắc phục một vài điểm. Hy vọng các "
+"pinboard của Rox-Filer2. Tùy chọn này khắc phục một vài điểm. Hy vọng các "
 "trình quản lý cửa sổ này sẽ thay đổi các xử lý trong các phiên bản mới để "
 "điều này không cần thiết nữa."
 
@@ -4923,8 +4866,8 @@ msgstr ""
 "không thông báo các thuộc tính mở rộng."
 
 #: ../Templates.ui.h:1
-msgid "ROX-Filer log viewer"
-msgstr "Trình xem Bản ghi của ROX-Filer"
+msgid "Rox-Filer2 log viewer"
+msgstr "Trình xem Bản ghi của Rox-Filer2"
 
 #: ../Templates.ui.h:2
 msgid "Recently performed actions..."
@@ -5348,3 +5291,24 @@ msgstr[1] ""
 #: trash.c
 msgid "%u items were restored."
 msgstr ""
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "open two Rox-Filer2 windows side by side"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

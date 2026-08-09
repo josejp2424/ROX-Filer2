@@ -593,16 +593,26 @@ static void update_display(Directory *dir,
 
 			if (filer_window->win_icon)
 				g_object_unref(filer_window->win_icon);
-			MaskedPixmap
-				*fi = get_globicon(filer_window->sym_path);
-			if (!fi)
-				fi = get_globicon(filer_window->real_path);
-			if (fi)
-				g_object_ref(fi);
-			if (!fi)
-				fi = g_fscache_lookup_full(pixmap_cache,
-						make_path(filer_window->real_path, ".DirIcon"),
-						FSCACHE_LOOKUP_ONLY_NEW, NULL);
+			MaskedPixmap *fi = NULL;
+
+			/* Modificado por josejp2424 (2026): la ventana de la carpeta
+			 * personal también usa siempre user-home y nunca /root/.DirIcon. */
+			if (path_is_home_dir(filer_window->real_path) ||
+			    path_is_home_dir(filer_window->sym_path))
+				fi = pixmap_home_icon();
+			else
+			{
+				fi = get_globicon(filer_window->sym_path);
+				if (!fi)
+					fi = get_globicon(filer_window->real_path);
+				if (fi)
+					g_object_ref(fi);
+				if (!fi)
+					fi = g_fscache_lookup_full(pixmap_cache,
+							make_path(filer_window->real_path, ".DirIcon"),
+							FSCACHE_LOOKUP_ONLY_NEW, NULL);
+			}
+
 
 			gtk_window_set_icon(GTK_WINDOW(filer_window->window),
 					fi ? fi->src_pixbuf : NULL);
@@ -642,7 +652,11 @@ static void update_display(Directory *dir,
 
 			if (!filer_window->win_icon)
 			{
-				filer_window->win_icon = g_fscache_lookup_full(
+				if (path_is_home_dir(filer_window->real_path) ||
+				    path_is_home_dir(filer_window->sym_path))
+					filer_window->win_icon = pixmap_home_icon();
+				else
+					filer_window->win_icon = g_fscache_lookup_full(
 						pixmap_cache,
 						make_path(filer_window->real_path, ".DirIcon"),
 						FSCACHE_LOOKUP_ONLY_NEW, NULL);
@@ -2947,30 +2961,29 @@ void filer_perform_action(FilerWindow *filer_window, GdkEventButton *event)
 
 	if (!single_click_item)
 	{
-		/* Make sure both parts of a double-click fall on
-		 * the same file.
-		 */
-		static guchar *first_click = NULL;
-		static guchar *second_click = NULL;
+		/* GTK3 reports a double click as one normal BUTTON_PRESS followed by
+		 * GDK_2BUTTON_PRESS; it does not send a second normal press. Keep the
+		 * item from that first press and compare it with the item carried by
+		 * the double-click event. The previous two-slot implementation waited
+		 * for a later normal press, so the first complete double click was
+		 * always discarded and users had to double-click twice. */
+		static guchar *first_click_item = NULL;
 
 		if (event->type == GDK_BUTTON_PRESS)
 		{
-			g_free(first_click);
-			first_click = second_click;
-
-			if (item)
-				second_click = g_strdup(item->leafname);
-			else
-				second_click = NULL;
+			g_free(first_click_item);
+			first_click_item = item ? g_strdup(item->leafname) : NULL;
 		}
-
-		if (event->type == GDK_2BUTTON_PRESS)
+		else if (event->type == GDK_2BUTTON_PRESS)
 		{
-			if (first_click && second_click &&
-			    strcmp(first_click, second_click) != 0)
-				return;
-			if ((first_click || second_click) &&
-			    !(first_click && second_click))
+			const guchar *second_click_item = item ? item->leafname : NULL;
+			gboolean same_item =
+				(first_click_item == NULL && second_click_item == NULL) ||
+				(first_click_item != NULL && second_click_item != NULL &&
+				 strcmp(first_click_item, second_click_item) == 0);
+
+			g_clear_pointer(&first_click_item, g_free);
+			if (!same_item)
 				return;
 		}
 	}
@@ -3251,9 +3264,15 @@ static gboolean drag_motion(GtkWidget		*widget,
 	gboolean	retval = FALSE;
 	gboolean	same_window;
 
-	if ((gdk_drag_context_get_actions(context) & GDK_ACTION_ASK) && o_dnd_left_menu.int_value)
+	/* On Wayland the compositor may never select GDK_ACTION_ASK even though
+	 * the source offered it.  For internal cross-window ROX drags, advertise a
+	 * protocol-safe COPY during motion and let dnd.c present the classic
+	 * Copy/Move/Link chooser after the URI list is received. */
+	if (dnd_wayland_action_menu(context, widget))
+		action = GDK_ACTION_COPY;
+	else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_ASK) && o_dnd_left_menu.int_value)
 	{
-		guint state;
+		guint state = 0;
 		rox_gdk_window_get_pointer(NULL, NULL, NULL, &state);
 		if (state & GDK_BUTTON1_MASK)
 			action = GDK_ACTION_ASK;

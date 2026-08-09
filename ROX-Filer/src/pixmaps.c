@@ -255,6 +255,42 @@ static MaskedPixmap *mp_from_icon(const char *icon_name, int size)
 	return mp_from_icon_file(icon_name, NULL, size);
 }
 
+/* Agregado por josejp2424 (2026): devolver el icono estándar de la carpeta
+ * personal desde el tema GTK3 activo. user-home tiene prioridad absoluta;
+ * folder-home y folder sólo se usan si el tema no ofrece el nombre estándar. */
+MaskedPixmap *pixmap_home_icon(void)
+{
+	GtkIconTheme *theme = gtk_icon_theme_get_default();
+	static const gchar *names[] = {
+		ROX_ICON_HOME,
+		"folder-home",
+		ROX_ICON_DIRECTORY,
+		NULL
+	};
+	guint i;
+
+	if (theme)
+	{
+		for (i = 0; names[i] != NULL; i++)
+		{
+			GdkPixbuf *pixbuf;
+			MaskedPixmap *image;
+
+			if (!gtk_icon_theme_has_icon(theme, names[i]))
+				continue;
+			pixbuf = gtk_icon_theme_load_icon(theme, names[i], HUGE_HEIGHT,
+				GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+			if (!pixbuf)
+				continue;
+			image = masked_pixmap_new(pixbuf);
+			g_object_unref(pixbuf);
+			return image;
+		}
+	}
+
+	return mp_from_icon(ROX_ICON_DIRECTORY, HUGE_HEIGHT);
+}
+
 
 void pixmap_make_huge(MaskedPixmap *mp)
 {

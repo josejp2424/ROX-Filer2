@@ -1,2 +1,38 @@
 #!/bin/sh
-exec /usr/local/apps/ROX-Filer/AppRun "${@#*file://}"
+# Rox-Filer2 automatic backend selector.
+# Keep the historical AppDir fixed at /usr/local/apps/Rox-Filer.
+set -eu
+
+APP=/usr/local/apps/Rox-Filer/ROX-Filer
+
+use_wayland() {
+    export GDK_BACKEND=wayland
+    export ROX_DESKTOP_BACKEND=wayland
+    exec "$APP" "$@"
+}
+
+use_x11() {
+    export GDK_BACKEND=x11
+    export ROX_DESKTOP_BACKEND=x11
+    exec "$APP" "$@"
+}
+
+case "${GDK_BACKEND:-}" in
+    wayland) use_wayland "$@" ;;
+    x11)     use_x11 "$@" ;;
+esac
+
+case "${XDG_SESSION_TYPE:-}" in
+    wayland)
+        [ -n "${WAYLAND_DISPLAY:-}" ] && use_wayland "$@"
+        ;;
+    x11)
+        [ -n "${DISPLAY:-}" ] && use_x11 "$@"
+        ;;
+esac
+
+[ -n "${WAYLAND_DISPLAY:-}" ] && use_wayland "$@"
+[ -n "${DISPLAY:-}" ] && use_x11 "$@"
+
+# Headless commands such as --help/--version do not need a display backend.
+exec "$APP" "$@"

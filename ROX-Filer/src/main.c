@@ -1,5 +1,5 @@
 /*
- * ROX-Filer, filer for the ROX desktop project
+ * Rox-Filer2, continued from the original ROX-Filer project
  * Copyright (C) 2006, Thomas Leonard and others (see changelog for details).
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@
 
 #include "main.h"
 #include "log.h"
+#include "debug_log.h"
 #include "support.h"
 #include "gui_support.h"
 #include "filer.h"
@@ -70,7 +71,6 @@
 #include "action.h"
 #include "i18n.h"
 #include "remote.h"
-#include "pinboard.h"
 #include "run.h"
 #include "toolbar.h"
 #include "bind.h"
@@ -85,13 +85,13 @@
 #include "rox_config.h"
 #include "filer_pair.h"
 #include "search_integration.h"
-
-extern gboolean session_auto_respawn;
+#include "xdg_apps.h"
+#include "custom_actions.h"
 
 int number_of_windows = 0;	/* Quit when this reaches 0 again... */
 int to_wakeup_pipe = -1;	/* Write here to get noticed */
 
-/* Information about the ROX-Filer process */
+/* Information about the Rox-Filer2 process */
 uid_t euid;
 gid_t egid;
 int ngroups;			/* Number of supplemental groups */
@@ -104,20 +104,19 @@ int home_dir_len;
 const char *home_dir, *app_dir;
 
 
-#define COPYING								\
-	     N_("Copyright (C) 2005 Thomas Leonard.\n"			\
-		"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"	\
-		"to the extent permitted by law.\n"			\
-		"You may redistribute copies of ROX-Filer\n"		\
-		"under the terms of the GNU General Public License.\n"	\
-		"For more information about these matters, "		\
-		"see the file named COPYING.\n")
+#define COPYING                                                        \
+        N_("Original ROX-Filer copyright (C) 2005 Thomas Leonard and contributors.\n" \
+           "Rox-Filer2 continuation and development (C) 2026 josejp2424.\n" \
+           "Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n" \
+           "to the extent permitted by law.\n" \
+           "You may redistribute copies under the terms of the GNU General Public License.\n" \
+           "For more information, see the file named COPYING.\n")
 
 #ifdef HAVE_GETOPT_LONG
-#  define USAGE   N_("Try `ROX-Filer --help' for more information.\n")
+#  define USAGE   N_("Try `rox --help' for more information.\n")
 #  define SHORT_ONLY_WARNING ""
 #else
-#  define USAGE   N_("Try `ROX-Filer -h' for more information.\n")
+#  define USAGE   N_("Try `rox -h' for more information.\n")
 #  define SHORT_ONLY_WARNING	\
 		_("NOTE: Your system does not support long options - \n" \
 		"you must use the short versions instead.\n\n")
@@ -125,9 +124,35 @@ const char *home_dir, *app_dir;
 
 #define BUGS_TO "<puppylinuxjosejp2424@gmail.com>"
 
-#define HELP N_("Usage: ROX-Filer [OPTION]... [FILE]...\n"       "Open each directory or file listed, or the current working\n"       "directory if no arguments are given.\n\n"       "ROX Desktop:\n"       "      --desktop\tstart ROX Desktop with wallpaper, Desktop files and drives\n\n"       "File manager:\n"       "  -c, --client-id=ID\tused for session management\n"       "  -d, --dir=DIR\t\topen DIR as directory (not application)\n"       "  -D, --close=DIR\tclose DIR and its subdirectories\n"       "  -h, --help\t\tdisplay this help and exit\n"       "  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"       "  -n, --new\t\tstart a separate filer instance\n"       "  -R, --RPC\t\tinvoke method call read from stdin\n"       "  -s, --show=FILE\topen a directory showing FILE\n"       "  -u, --user\t\tshow user name in each window\n"       "  -U, --url=URL\t\topen file or directory in URI form\n"       "  -v, --version\t\tdisplay version information and exit\n"       "  -x, --examine=FILE\tFILE has changed - re-examine it\n\n"       "Legacy ROX desktop compatibility:\n"       "  -b, --border=PANEL\topen PANEL as a border panel\n"       "  -B, --bottom=PANEL\topen PANEL as a bottom-edge panel\n"       "  -l, --left=PANEL\topen PANEL as a left-edge panel\n"       "  -p, --pinboard=PIN\tuse the classic ROX pinboard\n"       "  -r, --right=PANEL\topen PANEL as a right-edge panel\n"       "  -S, --rox-session\tuse the classic panel and pinboard session\n"       "  -t, --top=PANEL\topen PANEL as a top-edge panel\n"       "\nReport bugs to %s.\n"       "Project: https://github.com/josejp2424/ROX-Filer-gtk3\n")
-
-#define SHORT_OPS "c:d:t:b:l:r:B:op:s:hvnux:m:D:RSU:"
+#define HELP N_("Usage: rox [OPTION]... [FILE]...\n" \
+       "Rox-Filer2 opens each directory or file listed, or the current working\n" \
+       "directory if no arguments are given.\n\n" \
+       "Desktop:\n" \
+       "      --desktop\tstart the single Rox-Filer2 Desktop instance\n\n" \
+       "File manager:\n" \
+       "  -c, --client-id=ID\tused for session management\n" \
+       "  -d, --dir=DIR\t\topen DIR as directory (not application)\n" \
+       "  -D, --close=DIR\tclose DIR and its subdirectories\n" \
+       "  -h, --help\t\tdisplay this help and exit\n" \
+       "  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n" \
+       "  -n, --new\t\tstart a separate filer instance\n" \
+       "  -R, --RPC\t\tinvoke method call read from stdin\n" \
+       "  -s, --show=FILE\topen a directory showing FILE\n" \
+       "  -u, --user\t\tshow user name in each window\n" \
+       "  -U, --url=URL\t\topen file or directory in URI form\n" \
+       "  -v, --version\t\tdisplay version information and exit\n" \
+       "  -x, --examine=FILE\tFILE has changed - re-examine it\n\n" \
+       "Legacy ROX panel compatibility:\n" \
+       "  -b, --border=PANEL\topen PANEL as a border panel\n" \
+       "  -B, --bottom=PANEL\topen PANEL as a bottom-edge panel\n" \
+       "  -l, --left=PANEL\topen PANEL as a left-edge panel\n" \
+       "  -r, --right=PANEL\topen PANEL as a right-edge panel\n" \
+       "  -t, --top=PANEL\topen PANEL as a top-edge panel\n" \
+       "\nReport bugs to %s.\n" \
+       "Rox-Filer2 continuation: josejp2424\n" \
+       "Original ROX-Filer author: Thomas Leonard\n" \
+       "Project: https://github.com/josejp2424/ROX-Filer-gtk3\n")
+#define SHORT_OPS "c:d:t:b:l:r:B:os:hvnux:m:D:RU:"
 
 #ifdef HAVE_GETOPT_LONG
 static struct option long_opts[] =
@@ -138,7 +163,6 @@ static struct option long_opts[] =
 	{"border", 1, NULL, 'b'},
 	{"left", 1, NULL, 'l'},
 	{"override", 0, NULL, 'o'},
-	{"pinboard", 1, NULL, 'p'},
 	{"right", 1, NULL, 'r'},
 	{"help", 0, NULL, 'h'},
 	{"version", 0, NULL, 'v'},
@@ -146,7 +170,6 @@ static struct option long_opts[] =
 	{"new", 0, NULL, 'n'},
 	{"RPC", 0, NULL, 'R'},
 	{"show", 1, NULL, 's'},
-	{"rox-session", 0, NULL, 'S'},
 	{"examine", 1, NULL, 'x'},
 	{"close", 1, NULL, 'D'},
 	{"mime-type", 1, NULL, 'm'},
@@ -158,21 +181,20 @@ static struct option long_opts[] =
 	{"desktop-refresh", 0, NULL, 1003},
 	{"pair", 0, NULL, 1004},
 	{"pair-realign", 0, NULL, 1005},
+	{"debug", 0, NULL, 1200},
+	{"log-file", 1, NULL, 1201},
+	{"log-level", 1, NULL, 1202},
+	{"clear-logs", 0, NULL, 1203},
+	/* Hidden options used only by tools/rox-filer-diagnostico.sh. */
+	{"diagnose-open-with", 1, NULL, 1100},
+	{"diagnose-terminal", 1, NULL, 1101},
+	{"diagnose-rename", 1, NULL, 1102},
 	{NULL, 0, NULL, 0},
 };
 #endif
 
 /* Take control of panels away from WM? */
 Option o_override_redirect;
-
-/* Options used when we are called by ROX-Session */
-enum {
-	SESSION_PANEL_ONLY,
-	SESSION_PINBOARD_ONLY,
-	SESSION_BOTH,
-};
-Option o_session_panel_or_pin;
-Option o_session_pinboard_name;
 
 /* Always start a new filer, even if one seems to be already running */
 gboolean new_copy = FALSE;
@@ -190,9 +212,17 @@ static gboolean pair_mode = FALSE;
 static gboolean pair_realign_mode = FALSE;
 static gchar *pair_left_arg = NULL;
 static gchar *pair_right_arg = NULL;
+static gchar *diagnose_open_with_desktop = NULL;
+static gchar *diagnose_open_with_path = NULL;
+static gchar *diagnose_terminal_path = NULL;
+static gchar *diagnose_rename_path = NULL;
 
 /* Maps child PIDs to Callback pointers */
 static GHashTable *death_callbacks = NULL;
+/* Rox-Filer2: serialize synchronous child waits against the legacy SIGCHLD
+ * reaper. Without this, a worker-thread g_spawn_sync() can lose its child to
+ * child_died_callback(), producing GLib ECHILD warnings. */
+static GMutex child_reap_mutex;
 static gboolean child_died_flag = FALSE;
 
 Option o_dnd_no_hostnames;
@@ -209,7 +239,6 @@ static void child_died(int signum);
 static void child_died_callback(void);
 static void wake_up_cb(gpointer data, gint source, RoxInputCondition condition);
 static void xrandr_size_change(GdkScreen *screen, gpointer user_data);
-static void add_default_panel_and_pinboard(xmlNodePtr body);
 static GList *build_launch(Option *option, xmlNode *node, guchar *label);
 static GList *build_make_script(Option *option, xmlNode *node, guchar *label);
 
@@ -293,6 +322,27 @@ static gchar *find_application_directory(const gchar *argv0)
 	return directory;
 }
 
+
+/* r73: un único binario puede forzar el backend según el enlace usado.
+ * Debe hacerse antes de gtk_init(), porque GTK selecciona el backend al
+ * abrir el display. */
+static void configure_backend_from_program_name(const gchar *argv0)
+{
+    gchar *base;
+
+    if (!argv0 || !*argv0)
+        return;
+    base = g_path_get_basename(argv0);
+    if (g_strcmp0(base, "rox-x11") == 0) {
+        g_setenv("GDK_BACKEND", "x11", TRUE);
+        g_setenv("ROX_DESKTOP_BACKEND", "x11", TRUE);
+    } else if (g_strcmp0(base, "rox-wayland") == 0) {
+        g_setenv("GDK_BACKEND", "wayland", TRUE);
+        g_setenv("ROX_DESKTOP_BACKEND", "wayland", TRUE);
+    }
+    g_free(base);
+}
+
 /* Parses the command-line to work out what the user wants to do.
  * Tries to send the request to an already-running copy of the filer.
  * If that fails, it initialises all the other modules and executes the
@@ -310,6 +360,10 @@ int main(int argc, char **argv)
 	xmlDocPtr	rpc, soap_rpc = NULL, reply;
 	xmlNodePtr	body;
 	int		fd, ofd0=-1;
+	gboolean clear_logs_requested = FALSE;
+	GError *debug_log_error = NULL;
+
+	g_mutex_init(&child_reap_mutex);
 
 	/* Relocate stdin. We do need it (-R), but it can cause problems if
 	 * a child process wants a password, etc...
@@ -325,9 +379,36 @@ int main(int argc, char **argv)
 		close(fd);
 	}
 
+	configure_backend_from_program_name(argv[0]);
+	g_set_application_name("Rox-Filer2");
+	if (!rox_debug_log_preconfigure(argc, argv, &clear_logs_requested,
+	                                &debug_log_error))
+	{
+		g_printerr("Rox-Filer2: %s\n", debug_log_error
+		           ? debug_log_error->message : "unable to configure log");
+		g_clear_error(&debug_log_error);
+		return EXIT_FAILURE;
+	}
+	if (clear_logs_requested && argc == 2 &&
+	    g_strcmp0(argv[1], "--clear-logs") == 0)
+	{
+		g_print("Rox-Filer2: diagnostic logs removed.\n");
+		return EXIT_SUCCESS;
+	}
+	ROX_LOG_INFO("startup", "program=%s version=%s GDK_BACKEND=%s forced_backend=%s",
+	             argv[0] ? argv[0] : "", VERSION,
+	             g_getenv("GDK_BACKEND") ? g_getenv("GDK_BACKEND") : "auto",
+	             g_getenv("ROX_DESKTOP_BACKEND")
+	                 ? g_getenv("ROX_DESKTOP_BACKEND") : "auto");
 	home_dir = g_get_home_dir();
 	home_dir_len = strlen(home_dir);
 	app_dir = find_application_directory(argv[0]);
+	ROX_LOG_INFO("startup", "app_dir=%s home_dir=%s",
+	             app_dir ? app_dir : "", home_dir ? home_dir : "");
+
+	/* Rox-Filer2 conserva APP_DIR en el entorno. No se llama unsetenv() aquí:
+	 * GLib/GTK puede haber inicializado soporte interno con hilos incluso antes
+	 * de gtk_init(), y modificar el entorno global en ese punto no es seguro. */
 
 	/* Get internationalisation up and running. This requires the
 	 * choices system, to discover the user's preferred language.
@@ -336,11 +417,6 @@ int main(int argc, char **argv)
 	options_init();
 	i18n_init();
 	xattr_init();
-
-#ifdef HAVE_UNSETENV
-	/* No pasar APP_DIR a los procesos hijos. El binario ya conoce su ruta. */
-	unsetenv("APP_DIR");
-#endif
 
 	/* Sometimes we want to take special action when a child
 	 * process exits. This hash table is used to convert the
@@ -360,24 +436,26 @@ int main(int argc, char **argv)
 		getgroups(ngroups, supplemental_groups);
 	}
 
-	if (argc == 2 && strcmp(argv[1], "-v") == 0)
+	if (argc == 2 &&
+	    (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0))
 	{
-		/* This is used by install.sh to test if the filer
-		 * compiled OK. Do this test before gtk_init so that
-		 * we don't need an X server to install.
-		 */
-		g_print("ROX-Filer %s\n", VERSION);
-		g_print(_(COPYING));
+		/* Version output must also work without X11/Wayland. */
+		g_print("Rox-Filer2 %s\n", VERSION);
+		g_print("%s", _(COPYING));
 		show_features();
+		return EXIT_SUCCESS;
+	}
+
+	if (argc == 2 &&
+	    (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))
+	{
+		/* `rox --help` is a console operation and must not require a display. */
+		print_help_text();
 		return EXIT_SUCCESS;
 	}
 
 	option_add_int(&o_override_redirect, "override_redirect", FALSE);
 
-	option_add_int(&o_session_panel_or_pin, "session_panel_or_pin",
-		       SESSION_BOTH);
-	option_add_string(&o_session_pinboard_name, "session_pinboard_name",
-			  "Default");
 	option_register_widget("launch", build_launch);
 	option_register_widget("make-script", build_make_script);
 
@@ -395,7 +473,15 @@ int main(int argc, char **argv)
 	/* Note: must do this before checking our options,
 	 * otherwise we report an error for Gtk's options.
 	 */
+	ROX_LOG_DEBUG("gtk", "calling gtk_init");
 	gtk_init(&argc, &argv);
+	if (gdk_display_get_default())
+		ROX_LOG_INFO("gtk", "display type=%s name=%s monitors=%d",
+		             G_OBJECT_TYPE_NAME(gdk_display_get_default()),
+		             gdk_display_get_name(gdk_display_get_default()),
+		             gdk_display_get_n_monitors(gdk_display_get_default()));
+	else
+		ROX_LOG_ERROR("gtk", "gtk_init completed without a default display");
 	/* GTK3 loads the active GtkSettings, including
 	 * ~/.config/gtk-3.0/settings.ini.  Do not install application-wide
 	 * hard-coded colours here: they override the system theme. */
@@ -445,6 +531,23 @@ int main(int argc, char **argv)
 			case 1005:
 				pair_realign_mode = TRUE;
 				break;
+			case 1200: /* --debug: configured before gtk_init */
+			case 1201: /* --log-file */
+			case 1202: /* --log-level */
+			case 1203: /* --clear-logs */
+				break;
+			case 1100:
+				diagnose_open_with_desktop = g_strdup(VALUE);
+				new_copy = TRUE;
+				break;
+			case 1101:
+				diagnose_terminal_path = pathdup(VALUE);
+				new_copy = TRUE;
+				break;
+			case 1102:
+				diagnose_rename_path = pathdup(VALUE);
+				new_copy = TRUE;
+				break;
 			case 'o':
 				info_message(_("The -o argument is no longer "
 					"used. You can turn on override "
@@ -452,7 +555,7 @@ int main(int argc, char **argv)
 					"instead."));
 				break;
 			case 'v':
-				g_print("ROX-Filer %s\n", VERSION);
+				g_print("Rox-Filer2 %s\n", VERSION);
 				g_print("%s", _(COPYING));
 				show_features();
 				return EXIT_SUCCESS;
@@ -516,10 +619,6 @@ int main(int argc, char **argv)
 							"Side", "Bottom",
 							NULL, NULL);
 				break;
-			case 'p':
-				soap_add(body, "Pinboard",
-						"Name", VALUE, NULL, NULL);
-				break;
 			case 'u':
 				show_user = TRUE;
 				break;
@@ -559,12 +658,6 @@ int main(int argc, char **argv)
 
 				break;
 
-			case 'S':
-				new_copy = TRUE;
-				add_default_panel_and_pinboard(body);
-				session_auto_respawn = TRUE;
-				break;
-
 		        case 'U':
 				soap_add(body, "RunURI",
 						"URI", VALUE, NULL, NULL);
@@ -577,6 +670,8 @@ int main(int argc, char **argv)
 	}
 
 
+	ROX_LOG_DEBUG("command", "parsed desktop=%d tool=%d pair=%d new_copy=%d rpc=%d",
+	              desktop_mode, desktop_tool, pair_mode, new_copy, rpc_mode);
 	if (show_user)
 		show_user_message = g_strdup_printf(_("Running as user '%s'"),
 						    user_name(euid));
@@ -585,7 +680,22 @@ int main(int argc, char **argv)
 	 * to run.
 	 */
 	i = optind;
-	while (i < argc)
+	if (diagnose_open_with_desktop)
+	{
+		if (i >= argc)
+		{
+			g_printerr("--diagnose-open-with requires one FILE argument\n");
+			return EXIT_FAILURE;
+		}
+		diagnose_open_with_path = pathdup(argv[i++]);
+		if (i < argc)
+		{
+			g_printerr("--diagnose-open-with accepts only one FILE argument\n");
+			return EXIT_FAILURE;
+		}
+	}
+	while (!diagnose_open_with_desktop && !diagnose_terminal_path &&
+	       !diagnose_rename_path && i < argc)
 	{
 		tmp = pathdup(argv[i++]);
 		if (pair_mode)
@@ -621,7 +731,9 @@ int main(int argc, char **argv)
 		rpc = soap_rpc;
 	}
 	else if (!body->xmlChildrenNode && !desktop_mode &&
-	         desktop_tool == DESKTOP_TOOL_NONE)
+	         desktop_tool == DESKTOP_TOOL_NONE &&
+	         !diagnose_open_with_desktop && !diagnose_terminal_path &&
+	         !diagnose_rename_path)
 	{
 		/* The user didn't request any action. Open the current
 		 * directory.
@@ -635,10 +747,21 @@ int main(int argc, char **argv)
 
 	option_add_int(&o_dnd_no_hostnames, "dnd_no_hostnames", 1);
 
-	/* Try to send the request to an already-running copy of the filer */
+	/* ROX Desktop is a single desktop service. A second --desktop command
+	 * refreshes the existing X11/XLibre instance and exits instead of
+	 * creating another full-screen desktop window. */
 	gui_support_init();
+	if (desktop_mode && desktop_send_refresh_request()) {
+		ROX_LOG_INFO("desktop", "refresh request delivered to existing desktop; exiting");
+		xmlFreeDoc(rpc);
+		return EXIT_SUCCESS;
+	}
+
+	/* Try to send the request to an already-running copy of the filer */
 	if (!desktop_mode && desktop_tool == DESKTOP_TOOL_NONE &&
-	    remote_init(rpc, new_copy)) {
+	    !diagnose_open_with_desktop && !diagnose_terminal_path &&
+	    !diagnose_rename_path && remote_init(rpc, new_copy)) {
+		ROX_LOG_INFO("remote", "request delivered to an existing Rox-Filer2 process");
 		xmlFreeDoc(rpc);	/* avoid memleak */
 		return EXIT_SUCCESS;	/* It worked - exit */
 	}
@@ -649,18 +772,37 @@ int main(int argc, char **argv)
 	 */
 	if (!new_copy)
 	{
-		pid_t child;
+		GdkDisplay *current_display = gdk_display_get_default();
 
-		child = fork();
-		if (child > 0)
-			_exit(0);	/* Parent exits */
-		/* Otherwise we're the child (or an error occurred - ignore
-		 * it!).
-		 */
+		/* X11 historically backgrounds the filer after connecting to the
+		 * display.  Doing that on Wayland is unsafe: the child inherits a
+		 * libwayland connection created before fork(), which can leave a normal
+		 * filer launch from the menu with no visible window.  Keep the Wayland
+		 * process intact; graphical launchers do not require daemonisation. */
+		if (current_display && GDK_IS_X11_DISPLAY(current_display))
+		{
+			pid_t child = fork();
+
+			if (child > 0)
+			{
+				ROX_LOG_DEBUG("process", "X11 background child pid=%ld; parent exiting",
+				              (long)child);
+				_exit(0);
+			}
+			ROX_LOG_DEBUG("process", "X11 background process pid=%ld",
+			              (long)getpid());
+		}
+		else
+		{
+			ROX_LOG_INFO("process",
+			             "non-X11 display=%s: skipping post-GTK fork for safe native launch",
+			             current_display ? G_OBJECT_TYPE_NAME(current_display) : "none");
+		}
 	}
 
 	/* Initialize the rest of the filer... */
 
+	ROX_LOG_DEBUG("startup", "initializing Rox-Filer2 modules");
 	pixmaps_init();
 
 	log_init();
@@ -670,6 +812,8 @@ int main(int argc, char **argv)
 	dir_init();
 	diritem_init();
 	menu_init();
+	xdg_apps_init();
+	custom_actions_init();
 	minibuffer_init();
 	filer_init();
 	filer_pair_init();
@@ -679,13 +823,45 @@ int main(int argc, char **argv)
 	mount_init();
 	type_init();
 	action_init();
+	ROX_LOG_DEBUG("startup", "core modules initialized");
 
-	pinboard_init();
 	panel_init();
 	run_init();
 
 	/* Let everyone update */
 	options_notify();
+
+	/* The diagnostic script invokes the exact launch paths without opening a
+	 * filer window. These options are intentionally omitted from --help. */
+	if (diagnose_open_with_desktop || diagnose_terminal_path ||
+	    diagnose_rename_path)
+	{
+		gboolean diagnostic_ok;
+
+		if (!g_getenv("ROX_DIAGNOSTIC"))
+		{
+			g_printerr("Diagnostic options require ROX_DIAGNOSTIC=1\n");
+			xmlFreeDoc(rpc);
+			return EXIT_FAILURE;
+		}
+
+		if (diagnose_open_with_desktop)
+			diagnostic_ok = xdg_apps_diagnose_launch(
+				diagnose_open_with_desktop, diagnose_open_with_path);
+		else if (diagnose_terminal_path)
+			diagnostic_ok = menu_diagnose_run_in_terminal(
+				diagnose_terminal_path);
+		else
+			diagnostic_ok = menu_diagnose_rename_dialog(
+				diagnose_rename_path);
+
+		xmlFreeDoc(rpc);
+		g_clear_pointer(&diagnose_open_with_desktop, g_free);
+		g_clear_pointer(&diagnose_open_with_path, g_free);
+		g_clear_pointer(&diagnose_terminal_path, g_free);
+		g_clear_pointer(&diagnose_rename_path, g_free);
+		return diagnostic_ok ? EXIT_SUCCESS : EXIT_FAILURE;
+	}
 
 	/* When we get a signal, we can't do much right then. Instead,
 	 * we send a char down this pipe, which causes the main loop to
@@ -724,7 +900,10 @@ int main(int argc, char **argv)
 	rox_config_init();
 	desktop_init();
 	if (desktop_mode)
+	{
+		ROX_LOG_INFO("desktop", "starting ROX Desktop");
 		desktop_start();
+	}
 	else if (desktop_tool != DESKTOP_TOOL_NONE)
 	{
 		if (desktop_tool == DESKTOP_TOOL_WALLPAPER)
@@ -753,16 +932,33 @@ int main(int argc, char **argv)
 	g_clear_pointer(&pair_left_arg, g_free);
 	g_clear_pointer(&pair_right_arg, g_free);
 
-	/* Convert X11 protocol failures into ROX diagnostics instead of aborting. */
-	XSetErrorHandler(rox_x_error);
+	/* Convert X11 protocol failures into ROX diagnostics instead of aborting.
+	 * Do not install X11-specific handling for a native Wayland display. */
+	if (GDK_IS_X11_DISPLAY(gdk_display_get_default()))
+		XSetErrorHandler(rox_x_error);
 
 	/* Enter the main loop, processing events until all our windows
 	 * are closed.
 	 */
 	if (number_of_windows > 0)
+	{
+		ROX_LOG_INFO("main-loop", "entering GTK main loop; windows=%d",
+		             number_of_windows);
 		gtk_main();
+		ROX_LOG_INFO("main-loop", "GTK main loop finished");
+	}
 
 	return EXIT_SUCCESS;
+}
+
+void rox_child_reap_lock(void)
+{
+	g_mutex_lock(&child_reap_mutex);
+}
+
+void rox_child_reap_unlock(void)
+{
+	g_mutex_unlock(&child_reap_mutex);
 }
 
 /* Register a function to be called when process number 'child' dies. */
@@ -810,16 +1006,30 @@ static void print_help_text(void)
 
 	prefix = g_strndup(formatted, (line_end + 1) - formatted);
 	g_print("%s", prefix);
+	g_print("\nLaunchers:\n");
+	g_print("      rox\t\t%s\n", _("automatically select X11 or Wayland"));
+	g_print("      rox-x11\t\t%s\n", _("force the X11 backend"));
+	g_print("      rox-wayland\t%s\n\n", _("force the native Wayland backend"));
+	g_print("Desktop commands:\n");
 	g_print("      --desktop-wallpaper\t%s\n",
 		_("open the desktop wallpaper manager"));
 	g_print("      --desktop-apps\t%s\n",
 		_("open the desktop application manager"));
 	g_print("      --desktop-refresh\t%s\n",
-		_("refresh the running ROX Desktop"));
+		_("refresh the running Rox-Filer2 Desktop"));
+	g_print("      rox-x11 --desktop\t%s\n",
+		_("force the X11 desktop backend"));
+	g_print("      rox-wayland --desktop\t%s\n",
+		_("force Wayland Layer Shell"));
 	g_print("      --pair [LEFT RIGHT]\t%s\n",
-		_("open two ROX-Filer windows side by side"));
+		_("open two Rox-Filer2 windows side by side"));
 	g_print("      --pair-realign\t%s\n",
 		_("realign the current paired windows"));
+	g_print("\nDiagnostics (disabled by default):\n");
+	g_print("      --debug\t\twrite a technical diagnostic log\n");
+	g_print("      --log-file=FILE\twrite the diagnostic log to FILE\n");
+	g_print("      --log-level=LEVEL\terror, warning, info, debug or trace\n");
+	g_print("      --clear-logs\tremove automatically managed Rox-Filer2 logs\n");
 	g_print("%s", line_end + 1);
 
 	g_free(prefix);
@@ -913,31 +1123,39 @@ static void child_died(int signum)
 
 static void child_died_callback(void)
 {
-	int	    	status;
-	gint	    	child;
+	int status;
+	gint child;
 
 	child_died_flag = FALSE;
 
-	/* Find out which children exited and allow them to die */
-	do
+	/* Find out which children exited and allow them to die. Serialize the
+	 * waitpid(-1) reaper with synchronous waits running in worker threads. */
+	for (;;)
 	{
-		Callback	*cb;
+		Callback *cb = NULL;
+		CallbackFn callback = NULL;
+		gpointer callback_data = NULL;
 
+		rox_child_reap_lock();
 		child = waitpid(-1, &status, WNOHANG);
+		if (child > 0)
+		{
+			cb = g_hash_table_lookup(death_callbacks, GINT_TO_POINTER(child));
+			if (cb)
+			{
+				callback = cb->callback;
+				callback_data = cb->data;
+				g_hash_table_remove(death_callbacks, GINT_TO_POINTER(child));
+				g_free(cb);
+			}
+		}
+		rox_child_reap_unlock();
 
 		if (child == 0 || child == -1)
 			return;
-
-		cb = g_hash_table_lookup(death_callbacks,
-				GINT_TO_POINTER(child));
-		if (cb)
-		{
-			cb->callback(cb->data);
-			g_hash_table_remove(death_callbacks,
-					GINT_TO_POINTER(child));
-		}
-
-	} while (1);
+		if (callback)
+			callback(callback_data);
+	}
 }
 
 #define BUFLEN 40
@@ -959,56 +1177,7 @@ static void xrandr_size_change(GdkScreen *screen, gpointer user_data)
 	gui_store_screen_geometry(screen);
 
 	panel_update_size();
-	pinboard_update_size();
-}
-
-static void add_default_panel_and_pinboard(xmlNodePtr body)
-{
-	const char *name;
-
-	if (o_session_panel_or_pin.int_value != SESSION_PANEL_ONLY)
-	{
-		name=o_session_pinboard_name.value;
-		if (!name[0])
-			name="Default";
-		soap_add(body, "Pinboard","Name", name, NULL, NULL);
-	}
-
-	if (o_session_panel_or_pin.int_value != SESSION_PINBOARD_ONLY)
-	{
-		gboolean use_old_option = TRUE;
-		GIOChannel *fp = NULL;
-		GError *err = NULL;
-		char *line = NULL;
-		gsize term;
-		char *filename = choices_find_xdg_path_load("panels",
-				"ROX-Filer", "rox.sourceforge.net");
-
-		if (filename)
-			fp = g_io_channel_new_file(filename, "r", &err);
-		while (fp && g_io_channel_read_line(fp, &line, NULL, &term, &err) ==
-				G_IO_STATUS_NORMAL)
-		{
-			if (line && (line[term] = 0, line[0]))
-			{
-				soap_add(body, "Panel", "Name", line, NULL, NULL);
-				use_old_option = FALSE;
-			}
-		}
-		if (err)
-		{
-			g_critical(_("Unable to read '%s': %s"),
-					filename, err->message);
-			g_error_free(err);
-		}
-		if (fp)
-			g_io_channel_shutdown(fp, FALSE, NULL);
-		if (use_old_option)
-		{
-			soap_add(body, "Panel", "Name", "Default", NULL, NULL);
-		}
-		g_free(filename);
-	}
+	desktop_refresh_after_environment_change();
 }
 
 static GtkWidget *launch_button_new(const char *label, const char *uri,
@@ -1141,7 +1310,7 @@ static GList *build_make_script(Option *option, xmlNode *node, guchar *label)
 	g_signal_connect(button, "clicked", G_CALLBACK(make_script_clicked),
 			 NULL);
 
-	tip = _("Click to save a script to run ROX-Filer.\n"
+	tip = _("Click to save a script to run Rox-Filer2.\n"
 		"If you are using Zero Install you should use 0alias "
 		"instead.");
 	gtk_widget_set_tooltip_text(button, tip);

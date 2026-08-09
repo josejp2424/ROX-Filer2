@@ -1,3 +1,295 @@
+Rox-Filer2 2.12-r82 (2026-08-08)
+
+- Fixed the invalid GtkTextTag `weight` vararg in the action dialog. Passing
+  the string "bold" to an integer GObject property produced random negative
+  values and GLib-GObject errors; it now uses PANGO_WEIGHT_BOLD.
+- Fixed the intermittent `g_spawn_sync(): ECHILD` warning during asynchronous
+  desktop drive scans by serializing synchronous child waits against ROX's
+  legacy SIGCHLD/waitpid(-1) reaper.
+- Removed Rox-Filer2's explicit unsetenv("APP_DIR") call. APP_DIR is retained
+  rather than modifying the process environment after GLib initialization.
+- Kept the r81 Wayland Copy/Move/Link chooser and Refresh Desktop grid
+  organization unchanged.
+
+Rox-Filer2 2.12-r81 (2026-08-08)
+
+- Wayland DND: preserve the Copy/Move/Link chooser for cross-process drags
+  when GTK reports no source widget but the source offered GDK_ACTION_ASK.
+- Refresh Desktop now reorders desktop file/trash icons onto the normal grid
+  and persists the cleaned positions, while keeping the drive area reserved.
+- Built directly from the user-provided r80 tree; custom icon artwork kept.
+
+Rox-Filer2 2.12-r80 (2026-08-08)
+
+* Restore Cut, Copy and Paste in the quick right-click File menu.
+* Wayland: emulate ROX's classic drag action chooser for internal cross-window
+  drags instead of depending on compositor negotiation of GDK_ACTION_ASK.
+* Add technical DND logging for drop actions and chooser decisions.
+* Keep /usr/local/apps/Rox-Filer and existing configuration paths unchanged.
+
+2026-08-08 Rox-Filer2 2.12-r79
+
+- Corregida la apertura de ventanas normales en Wayland desde `rox`,
+  `rox-wayland`, el menú y lanzadores .desktop.
+- La tabla SOAP/RPC ahora se inicializa independientemente del transporte X11.
+  En r78 el retorno temprano de `remote_init()` en Wayland dejaba `rpc_calls`
+  en NULL y `run_soap()` fallaba con `g_hash_table_lookup: hash_table != NULL`.
+- `run_soap()` inicializa defensivamente el registro RPC para rutas que omiten
+  `remote_init()` (incluido el modo desktop).
+- Se mantiene sin cambios la AppDir `/usr/local/apps/Rox-Filer`.
+
+2026-08-08 Rox-Filer2 2.12-r78
+- Project branding changed from ROX-Filer GTK3 to Rox-Filer2 while preserving
+  the original ROX-Filer credits and compatibility configuration paths.
+- Fixed native Wayland menu/AppDir launches: normal filer processes no longer
+  fork after gtk_init() on Wayland, avoiding inherited libwayland connections.
+- `rox` is the canonical automatic launcher; `rox-x11` and `rox-wayland` force
+  their respective backends. Generic ROX-Filer/Rox-Filer2 aliases use the
+  automatic selector.
+- Updated About, --help, package desktop entries and translation catalogues.
+- Runtime AppDir is /usr/local/apps/Rox-Filer with a compatibility symlink
+  /usr/local/apps/ROX-Filer; existing user configuration remains unchanged.
+
+2026-08-07 ROX-Filer 2.12-r76
+
+* Fix normal filer windows launched from menus or the ROX AppDir in native
+  Wayland sessions. The historical remote SOAP transport is X11-only and is
+  now skipped safely on non-X11 displays.
+* Install /usr/local/bin/roxfiler as the automatic session-aware launcher:
+  rox-wayland on Wayland and rox-x11 on X11.
+* Add /usr/bin/rox as a compatibility link to the automatic launcher.
+* Install the X11 error handler only when GTK is actually using X11.
+
+2026-08-07 ROX-Filer 2.12-r75
+
+* MIME icons now resolve through the active GTK/Freedesktop icon theme before
+  the small legacy ROX theme, fixing question-mark icons for normal files.
+* Diagnostic logs record the GTK icon theme, search paths, MIME icon source,
+  resolved icon name and fallback failures.
+* Suppress repetitive non-error GdkPixbuf debug chatter from technical logs.
+* APP_DIR is removed before GLib creates worker threads, avoiding the
+  unsetenv() thread-safety warning.
+
+2.12-r75
+----------
+* Añade registro técnico interno desactivado por defecto para X11 y Wayland.
+* Opciones nuevas: --debug, --log-file, --log-level y --clear-logs.
+* Guarda por defecto en $XDG_STATE_HOME/rox-filer o ~/.local/state/rox-filer.
+* Conserva como máximo cinco registros de 2 MiB cada uno.
+* Registra backend, Layer Shell, escritorio, MIME, terminal, scripts y renombrado.
+* Actualiza la prueba de Labwc para recoger el log interno automáticamente.
+
+2.12-r73
+----------
+* Añade desktop-wayland.c experimental para Labwc mediante GTK Layer Shell.
+* Añade los enlaces rox-x11 y rox-wayland al mismo binario ROX-Filer.
+* Mantiene iconos, unidades, wallpaper y menús en desktop.c compartido.
+* Añade control de instancia Wayland mediante socket Unix.
+* Carga libgtk-layer-shell.so.0 dinámicamente para no afectar X11.
+
+ROX-Filer 2.12-r72 (2026-08-05)
+
+- Run in Terminal now changes explicitly to the script directory before execution, so scripts using relative files work with every terminal emulator.
+- Shell scripts without a shebang use the session shell, then Bash, then /bin/sh; executable text files no longer fail with ENOEXEC merely because they have no extension.
+- Added opt-in ROX_DEBUG_LOG tracing for XDG application launches and terminal commands.
+- Diagnostic 1.5 fixes false Open With failures caused by equivalent /tmp and /initrd paths, tests the real configured terminal, and detects stale ROX processes after upgrades.
+
+ROX-Filer 2.12-r71 (2026-08-05)
+
+- Fixed Run in Terminal so .bash files without a shebang use Bash instead of /bin/sh.
+- Added fallback interpreters for .ash, .dash, .zsh, .ksh, .fish, Perl, Ruby, Lua, Tcl, PHP, JavaScript, AWK and sed scripts.
+- A valid #! line remains authoritative and its interpreter is checked before launch.
+- Restored standards-first XDG launching: GIO now receives a graphical launch context, with direct Exec= expansion only as a fallback.
+- Rename dialogs are transient for the active filer window and explicitly presented, preventing them from opening behind the filer.
+- Added hidden rename-dialog diagnostics and expanded the bundled diagnostic script to version 1.4.
+
+ROX-Filer 2.12-r70 (2026-08-05)
+
+* Open With: local .desktop files now launch their Exec= command directly before falling back to GIO, avoiding false-success D-Bus activations that open nothing.
+* Open With: added hidden diagnostic hooks that exercise the exact ROX launcher with paths containing spaces and Unicode.
+* Terminal: executable scripts with a shebang are parsed through their declared interpreter instead of being launched blindly by the kernel.
+* Terminal: supports CRLF shebang lines, UTF-8 BOMs and /usr/bin/env -S interpreter arguments.
+* Terminal: added exact diagnostic tests for executable shell scripts, non-executable shell scripts, Python scripts and CRLF shebangs.
+* Diagnostics: version 1.3 records the selected MIME application, desktop Exec= line, terminal command, execution mode, arguments and child result.
+* Diagnostics: optional --test-script and --geany-file arguments reproduce user-supplied failing cases in the log.
+
+ROX-Filer 2.12-r69 (2026-08-05)
+
+* Toolbar: replaced the two ambiguous Size buttons with explicit Smaller Icons, Automatic and Bigger Icons controls.
+* Toolbar: added a dedicated Zoom Out button; reducing icon size no longer depends on a hidden secondary click.
+* Terminal: chooses defaultterminal or x-terminal-emulator before falling back to xterm on new configurations.
+* Terminal: parses the configured emulator directly and uses the correct command separator for common terminals.
+* Terminal: Run in Terminal now launches a temporary executable runner, improving compatibility with emulators whose -e option accepts only one command.
+* Terminal: extensionless and uncommon non-executable scripts with a shebang are now recognised.
+
+ROX-Filer 2.12-r68 (2026-08-05)
+
+* Menú contextual: Cortar, Copiar y Pegar aparecen juntos en el nivel principal.
+* Cortar conserva Ctrl+X y el formato estándar x-special/gnome-copied-files.
+* Pegar ya no depende de una posición numérica fija dentro del menú.
+* MIME: se evita consultar fstab_mounts antes de su inicialización al usar -m.
+* Diagnóstico: actualizado para separar stdout y stderr de la prueba MIME.
+
+ROX-Filer 2.12-r67 (2026-08-05)
+
+- Added the private `desktop-backend.h` interface and backend selector.
+- Moved the X11 desktop instance property, refresh ClientMessage handling,
+  EWMH desktop-window hints and X11 stacking code into `desktop-x11.c`.
+- Kept wallpaper, icons, positions, menus, drives and monitor coordination in
+  the common `desktop.c` module.
+- Preserved the existing GTK fallback when the current display has no native
+  desktop backend yet, preparing a later `desktop-wayland.c` implementation.
+- Kept the public startup command unchanged: `rox --desktop`.
+
+ROX-Filer 2.12-r66 (2026-08-05)
+
+- Made `desktop.c`/`desktop.h` the only compiled desktop implementation.
+- Removed the dormant classic `pinboard.c` backend and its pinboard task-list
+  implementation from the source and build.
+- Removed legacy pinboard gesture contexts and pinboard-only drag-and-drop code.
+- Routed legacy ROX panels through `desktop_get_gdk_window()` so they stack
+  above the single `rox --desktop` window without depending on pinboard code.
+- Screen geometry changes now refresh the unified desktop module directly.
+
+2.12-r65 (2026-08-05)
+
+- Purged the obsolete `-p`, `--pinboard`, `-S` and `--rox-session` help
+  records from every source translation catalogue.
+- Regenerated all bundled GNU gettext `.mo` files so no locale can expose
+  removed pinboard switches through `ROX-Filer --help`.
+- Confirmed that command-line parsing accepts only `--desktop` for starting
+  the ROX desktop; `-p` and `--pinboard` are not present in the short or long
+  option tables.
+
+2.12-r64 (2026-08-05)
+
+- Made `ROX-Filer --desktop` the only public command that starts a ROX
+  desktop. The named classic pinboard options `-p` and `--pinboard` were
+  removed from command-line parsing and help.
+- Removed `-S` and `--rox-session`, which could still activate the classic
+  named pinboard indirectly.
+- Removed the classic Pinboard, PinboardAdd, PinboardRemove, SetBackdrop and
+  SetBackdropApp SOAP endpoints so external RPC cannot reactivate the old
+  desktop implementation.
+- Replaced the AppDir menu's Enable/Disable pinboard entries with one
+  Start ROX Desktop action.
+- Made repeated `--desktop` launches refresh the already-running X11/XLibre
+  desktop and exit instead of creating a second desktop window.
+- Removed classic pinboard controls from the Options window. Classic panel
+  compatibility remains available during the transition.
+- Kept the old pinboard source internally for now so it can be removed in
+  smaller, reviewable steps without destabilising unrelated filer code.
+
+2.12-r63 (2026-08-04)
+
+- Fixed folder MIME detection so real directories and links to directories are
+  always handled as the exact Freedesktop type inode/directory.
+- Filtered the folder application list against the applications' current
+  desktop files. Programs such as Geany no longer appear for a directory unless
+  they explicitly declare MimeType=inode/directory.
+- Fixed GTK3 double-click tracking. The first complete double click now opens
+  the selected item instead of being discarded and requiring a second double
+  click.
+- Reserved the active GTK3 theme's user-home icon for the user's home
+  directory. In Puppy this means /root is shown as user-home even when
+  /root/.DirIcon or a GlobIcons association exists.
+- Applied the same rule to the filer window icon while browsing the home
+  directory. Other directories continue to support .DirIcon normally.
+- Added a direct Desktop Entry Exec= fallback when GIO cannot launch a MIME
+  application, especially on Puppy installations without working D-Bus
+  activation.
+- Expanded standard Desktop Entry field codes including %f, %F, %u, %U, %i,
+  %c, %k and %% so applications with more complex Exec= lines can open files.
+- Fixed undefined varargs reads in the .desktop parser, which could make some
+  application entries behave unpredictably.
+- When both launch methods fail, ROX-Filer now returns to the application
+  chooser instead of consuming the click without opening the selected file.
+
+2.12-r61 (2026-08-04)
+
+- Synchronized the maintained ROX-Filer catalogues against one master set of
+  1,461 active interface messages.
+- Added translations for all 279 GTK3 strings introduced by the new
+  desktop, paired-window, search, MIME association and file-action features in
+  Arabic, Catalan, German, Spanish, French, Hungarian, Italian, Japanese,
+  Portuguese, Russian, Simplified Chinese and Traditional Chinese.
+- Completed the remaining untranslated Spanish entries.
+- Removed fuzzy markers from the maintained catalogues and regenerated every
+  bundled GNU gettext .mo file.
+- Added pt and zh locale aliases and a translation coverage report.
+- Added a current messages.pot template so future translations begin from the
+  same source catalogue.
+- Historical upstream strings without a native translation remain visible in
+  English instead of becoming blank or disappearing from the interface.
+
+2.12-r60 (2026-08-04)
+
+- Replaced the empty Open With branch with a reliable Open With command that
+  always opens the complete XDG application chooser.
+- Added a custom GTK3 chooser which lists MIME-compatible applications first
+  and then all installed applications, including direct scans of the real XDG
+  application directories when mimeinfo.cache is incomplete.
+- Kept Add Custom Application available from the chooser so a user can enter a
+  command when no installed application is suitable.
+- Recognised directories as inode/directory for MIME applications and custom
+  actions instead of excluding folders from the modern association system.
+- Moved Search in This Folder to the top of the selected-folder menu and changed
+  its menu icon to the normal small edit-find icon.
+- Kept MIME applications and matching custom actions visible directly at the
+  beginning of the contextual menu.
+- Added a direct Add File Action entry for the current file or directory; its
+  manager remains beside MIME associations in Options.
+- Updated the Spanish catalogue for the corrected chooser and menu labels.
+
+2.12-r59 (2026-08-03)
+
+- Restored the classic ROX MIME-tools workflow: applications associated with a
+  selected file are shown directly at the top of the contextual File menu.
+- Kept the modern XDG/GIO backend while adding a fallback scanner for actual
+  .desktop files in the user and system application directories. This makes
+  Open With useful on Puppy and other small distributions even when
+  mimeinfo.cache is missing or outdated.
+- Open With now lists the default, recommended, registered and desktop-declared
+  applications without depending only on the GIO recommendation cache.
+- Matching user file actions are displayed beside the MIME applications rather
+  than being hidden inside a separate empty Custom Actions submenu.
+- Added Add File Action, Manage Applications and Manage File Actions entries to
+  the Open With menu. New actions opened from a selection are pre-filled with
+  the current MIME type and target kind.
+- Merged File Associations and Custom Actions into one Options page named
+  MIME Types and File Actions, with direct Add Application and Add File Action
+  buttons plus both managers in the same place.
+- Removed the separate Custom Actions branch from the contextual menu.
+- Continued to ignore legacy OpenWith and SendTo directories without deleting
+  any existing user data.
+- Updated the Spanish catalogue for the new foreground MIME and file-action UI.
+
+2.12-r58 (2026-08-03)
+
+- Removed the active use of the historical ROX OpenWith and SendTo directories.
+  Existing directories are left untouched but are no longer read by the filer.
+- Replaced the file Open With menu with applications provided by GIO and the
+  standard XDG desktop application database.
+- Added Choose Another Application with an optional remember-as-default control.
+- Files without a default association now open the GTK application chooser directly;
+  the same dialog also offers Add Custom Application.
+- Added Add Custom Application for creating user .desktop launchers below the
+  active user's XDG data directory.
+- Added a GTK3 icon chooser with SVG, PNG, JPEG, WebP and XPM previews. Selected
+  icons are copied into the active user's hicolor icon tree so removable source
+  paths are not retained.
+- Added management of ROX-created custom applications from the Options window.
+- Added modern Custom Actions as a replacement for legacy SendTo entries. Actions
+  can target files, directories or symbolic links and can be limited by MIME
+  type and single or multiple selection.
+- Added a Custom Actions manager with Add, Edit, Remove and Enable controls.
+- Custom action commands are validated before their desktop-entry files are saved.
+- Changed the default right-click behaviour so selected files and directories
+  show their contextual actions directly; the general ROX menu remains available
+  on empty space or with the Control modifier.
+- Kept all user paths distribution-independent through GLib XDG functions; no
+  /root or fixed /home path is used by the new modules.
+- Added new XDG application and Custom Actions pages to the rebuilt Options GUI.
 
 Build fix
 ---------

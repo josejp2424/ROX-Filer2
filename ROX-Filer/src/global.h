@@ -37,7 +37,7 @@ typedef struct _Directory Directory;
 /* Each item in a directory has a DirItem. This contains information from
  * stat()ing the file, plus a few other bits. There may be several of these
  * for a single file, if it appears (hard-linked) in several directories.
- * Each pinboard and panel icon also has one of these (not shared).
+ * Each panel icon also has one of these (not shared).
  */
 typedef struct _DirItem DirItem;
 
@@ -65,18 +65,13 @@ typedef struct _MaskedPixmap MaskedPixmap;
  */
 typedef struct _MIME_type MIME_type;
 
-/* Icon is an abstract base class for pinboard and panel icons.
+/* Icon is an abstract base class for panel icons.
  * It contains the name and path of the icon, as well as its DirItem.
  */
 typedef struct _Icon Icon;
 
-/* There will be one of these if the pinboard is in use. It contains
- * the name of the pinboard and links to the pinned Icons inside.
- */
-typedef struct _Pinboard Pinboard;
-
 /* There is one of these for each panel window open. Panels work rather
- * like little pinboards, but with a more rigid layout.
+ * as fixed edge launchers with a rigid layout.
  */
 typedef struct _Panel Panel;
 
@@ -104,7 +99,7 @@ typedef struct _XMLwrapper XMLwrapper;
 typedef struct _CollateKey CollateKey;
 
 /* Like a regular GtkLabel, except that the text can be wrapped to any
- * width. Used for pinboard icons.
+ * width. Used for freely positioned icons.
  */
 typedef struct _WrappedLabel WrappedLabel;
 

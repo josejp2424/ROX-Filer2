@@ -57,9 +57,12 @@ void drag_data_get(GtkWidget      	*widget,
 		   guint32             	time,
 		   gpointer	       	data);
 void make_drop_target(GtkWidget *widget, GtkDestDefaults defaults);
-void drag_set_pinboard_dest(GtkWidget *widget);
 void dnd_init(void);
 gboolean provides(GdkDragContext *context, GdkAtom target);
+/* Wayland does not reliably negotiate GDK_ACTION_ASK for ROX's classic
+ * left-drag action menu.  This helper marks an internal cross-window drag so
+ * the destination can present Copy/Move/Link itself after the drop. */
+gboolean dnd_wayland_action_menu(GdkDragContext *context, GtkWidget *dest_widget);
 
 void dnd_spring_load(GdkDragContext *context, FilerWindow *src_win);
 void dnd_spring_abort(void);

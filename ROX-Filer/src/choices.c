@@ -44,7 +44,6 @@ static struct migration {
 	int symlink;
 } to_migrate[]={
 	{"ROX-Filer", SITE, TRUE},
-	{"SendTo", SITE, TRUE},
 	{"Templates", SITE, TRUE},
 	{"MIME-icons", SITE, TRUE},
 	{"MIME-thumb", SITE, TRUE},

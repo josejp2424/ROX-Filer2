@@ -388,13 +388,13 @@ static void show_settype_help(gpointer data)
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(help))), text, TRUE, TRUE, 0);
 	gtk_label_set_selectable(GTK_LABEL(text), TRUE);
 	gtk_label_set_markup(GTK_LABEL(text), _(
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
@@ -1541,7 +1541,7 @@ static ConflictPolicy choose_conflict_policy(const gchar *operation)
 
 	content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	label = gtk_label_new(_("Some items already exist in the destination. "
-		"Choose how ROX-Filer should handle all conflicts in this operation:"));
+		"Choose how Rox-Filer2 should handle all conflicts in this operation:"));
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 	gtk_label_set_max_width_chars(GTK_LABEL(label), 72);
 	gtk_label_set_xalign(GTK_LABEL(label), 0.0);
@@ -1693,7 +1693,7 @@ static RsyncResult run_rsync_operation(const char *source, const char *dest_path
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = g_spawn_sync(NULL, (gchar **) argv, NULL,
+	ok = rox_spawn_sync(NULL, (gchar **) argv, NULL,
 		G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
 		NULL, NULL, NULL, &errors, &status, &spawn_error);
 
@@ -1782,7 +1782,7 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = g_spawn_sync(NULL, argv, NULL,
+	ok = rox_spawn_sync(NULL, argv, NULL,
 		G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
 		NULL, NULL, NULL, &errors, &status, &spawn_error);
 	if (!ok)
@@ -2826,7 +2826,7 @@ void action_mount(GList	*paths, gboolean open_dir, gboolean mount, int quiet)
 	gtk_widget_show(abox);
 #else
 	report_error(
-		_("ROX-Filer does not yet support mount points on your "
+		_("Rox-Filer2 does not yet support mount points on your "
 			"system. Sorry."));
 #endif /* DO_MOUNT_POINTS */
 }
@@ -3180,7 +3180,7 @@ void action_copy(GList *paths, const char *dest, const char *leaf, int quiet)
 
 	if (!rsync_available)
 		abox_log(ABOX(abox),
-			_("rsync is not installed; using the classic ROX-Filer engine.\n"),
+			_("rsync is not installed; using the classic Rox-Filer2 engine.\n"),
 			NULL);
 
 	abox_add_flag(ABOX(abox),
@@ -3235,7 +3235,7 @@ void action_move(GList *paths, const char *dest, const char *leaf, int quiet)
 
 	if (!rsync_available)
 		abox_log(ABOX(abox),
-			_("rsync is not installed; using the classic ROX-Filer engine.\n"),
+			_("rsync is not installed; using the classic Rox-Filer2 engine.\n"),
 			NULL);
 
 	abox_add_flag(ABOX(abox),
@@ -3332,7 +3332,7 @@ void action_init(void)
 #define MAX_ASK 4
 
 /* Check to see if any of the selected items (or their children) are
- * on the pinboard or panel. If so, ask for confirmation.
+ * referenced by a legacy panel. If so, ask for confirmation.
  *
  * TRUE if it's OK to lose them.
  */

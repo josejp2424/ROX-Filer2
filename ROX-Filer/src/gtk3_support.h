@@ -25,7 +25,7 @@
 #define ROX_USING_GTK3 1
 #endif
 
-/* ROX panel, pinboard and task tracking remain X11-specific.  GTK3 no
+/* ROX panel compatibility remains X11-specific.  GTK3 no
  * longer exposes the old global gdk_display variable, so obtain Xlib's
  * Display through the public GDK-X11 backend API. */
 static inline Display *rox_x11_display(void)

@@ -23,5 +23,9 @@ void open_to_show(const gchar *path);
 void examine(const gchar *path);
 void show_help_files(const char *dir);
 void run_with_args(const char *path, DirItem *item, const char *args);
+/* Launch a .desktop file with local path arguments using ROX's own
+ * Desktop Entry parser, including Terminal=true handling. */
+gboolean run_desktop_entry(const char *desktop_file,
+                           const char **args, const char *working_dir);
 
 #endif /* _RUN_H */

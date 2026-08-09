@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=ROX Desktop Apps
+Name=Rox-Filer2 Desktop Apps
 Name[ar]=تطبيقات سطح مكتب ROX
 Name[es]=Aplicaciones del escritorio ROX
 Name[ca]=Aplicacions de l’escriptori ROX
@@ -11,7 +11,7 @@ Name[hu]=ROX asztali alkalmazások
 Name[ja]=ROX デスクトップアプリ
 Name[ru]=Приложения рабочего стола ROX
 Name[zh_CN]=ROX 桌面应用程序
-Comment=Manage applications shown on the ROX Desktop
+Comment=Manage applications shown on the Rox-Filer2 Desktop
 Comment[ar]=إدارة التطبيقات المعروضة على سطح مكتب ROX
 Comment[es]=Administrar las aplicaciones mostradas en el escritorio ROX
 Comment[ca]=Gestiona les aplicacions mostrades a l’escriptori ROX
@@ -22,7 +22,7 @@ Comment[hu]=A ROX asztalon megjelenő alkalmazások kezelése
 Comment[ja]=ROX デスクトップに表示するアプリを管理
 Comment[ru]=Управление приложениями на рабочем столе ROX
 Comment[zh_CN]=管理显示在 ROX 桌面上的应用程序
-Exec=ROX-Filer --desktop-apps
+Exec=/usr/local/bin/roxfiler --desktop-apps
 Icon=applications-other
 Terminal=false
 Categories=Settings;DesktopSettings;

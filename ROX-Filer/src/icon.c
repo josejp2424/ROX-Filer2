@@ -17,7 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* icon.c - abstract base class for pinboard and panel icons.
+/* icon.c - abstract base class for panel icons.
  *
  * An Icon contains the full pathname of its file and the DirItem for that
  * file. Icons emit the following signals:
@@ -53,7 +53,6 @@
 #include "mount.h"
 #include "type.h"
 #include "usericons.h"
-#include "pinboard.h"	/* For pinboard_set_backdrop_box */
 
 static gboolean have_primary = FALSE;	/* We own the PRIMARY selection? */
 
@@ -128,8 +127,8 @@ enum {
 #undef N_
 #define N_(x) x
 static RoxItemFactoryEntry menu_def[] = {
-{N_("ROX-Filer"),		NULL, NULL, 0, "<Branch>"},
-{">" N_("About ROX-Filer..."),	NULL, menu_rox_help, HELP_ABOUT, "<IconItem>", ROX_ICON_DIALOG_INFO},
+{N_("Rox-Filer2"),		NULL, NULL, 0, "<Branch>"},
+{">" N_("About Rox-Filer2..."),	NULL, menu_rox_help, HELP_ABOUT, "<IconItem>", ROX_ICON_DIALOG_INFO},
 {">",				NULL, NULL, 0, "<Separator>"},
 {">" N_("Options..."),		NULL, menu_show_options, 0, "<IconItem>", ROX_ICON_PREFERENCES},
 {">" N_("Home Directory"),	NULL, open_home, 0, "<IconItem>", ROX_ICON_HOME},
@@ -241,7 +240,7 @@ static gboolean any_selected_item_is_locked()
 /* Menu was clicked over this icon. Set things up correctly (shade items,
  * add app menu stuff, etc).
  * You should show icon_menu after calling this...
- * panel_name is NULL for the pinboard.
+ * panel_name identifies the panel.
  */
 void icon_prepare_menu(Icon *icon, GtkWidget *options_item, ...)
 {

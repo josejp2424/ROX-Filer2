@@ -50,12 +50,12 @@
 #include "support.h"
 #include "options.h"
 #include "run.h"
-#include "pinboard.h"
 #include "dir.h"
 #include "diritem.h"
 #include "usericons.h"
 #include "main.h"
 #include "menu.h"
+#include "debug_log.h"
 #include "bookmarks.h"
 
 #define MAXURILEN 4096		/* Longest URI to allow */
@@ -111,14 +111,6 @@ static gboolean input_trace_enabled(void)
 
 /* Static prototypes */
 static void set_xds_prop(GdkDragContext *context, const char *text);
-static void desktop_drag_data_received(GtkWidget      		*widget,
-				GdkDragContext  	*context,
-				gint            	x,
-				gint            	y,
-				GtkSelectionData 	*selection_data,
-				guint               	info,
-				guint32             	time,
-				FilerWindow		*filer_window);
 static void got_data_xds_reply(GtkWidget 		*widget,
 		  		GdkDragContext 		*context,
 				GtkSelectionData 	*selection_data,
@@ -191,6 +183,54 @@ static Option o_dnd_spring_delay;
 static Option o_dnd_middle_menu;
 Option o_dnd_left_menu;
 static Option o_dnd_uri_handler;
+
+
+static gboolean dnd_is_wayland_display(void)
+{
+	GdkDisplay *display = gdk_display_get_default();
+	const gchar *type_name;
+
+	if (!display)
+		return FALSE;
+	type_name = G_OBJECT_TYPE_NAME(display);
+	return type_name && g_str_has_prefix(type_name, "GdkWayland");
+}
+
+gboolean dnd_wayland_action_menu(GdkDragContext *context, GtkWidget *dest_widget)
+{
+	GtkWidget *source_widget;
+	GdkDragAction actions;
+
+	if (!context || !dest_widget || !o_dnd_left_menu.int_value ||
+	    !dnd_is_wayland_display())
+		return FALSE;
+
+	actions = DND_CONTEXT_ACTIONS(context);
+	if (!(actions & GDK_ACTION_ASK))
+		return FALSE;
+
+	/* Modificado por josejp2424 (2026): en Wayland, cuando el arrastre
+	 * proviene de otra instancia de Rox-Filer2, GTK no puede devolver el
+	 * widget origen y gtk_drag_get_source_widget() resulta NULL.  Eso no
+	 * significa que sea un arrastre externo sin menú: si el origen ofreció
+	 * GDK_ACTION_ASK debemos conservar el selector clásico Copy/Move/Link.
+	 * Sólo rechazamos el caso que podemos identificar con certeza como el
+	 * mismo widget destino. */
+	source_widget = gtk_drag_get_source_widget(context);
+	if (source_widget == dest_widget)
+		return FALSE;
+
+	if (!g_dataset_get_data(context, "rox-wayland-action-menu"))
+	{
+		g_dataset_set_data(context, "rox-wayland-action-menu", GINT_TO_POINTER(1));
+		ROX_LOG_DEBUG("dnd",
+			"Wayland ASK offered; source_widget=%s; using Rox-Filer2 Copy/Move/Link chooser; actions=0x%x suggested=0x%x",
+			source_widget ? "local-widget" : "NULL-cross-process",
+			(unsigned) actions,
+			(unsigned) DND_CONTEXT_SUGGESTED_ACTION(context));
+	}
+	return TRUE;
+}
 
 void dnd_init(void)
 {
@@ -503,22 +543,6 @@ void make_drop_target(GtkWidget *widget, GtkDestDefaults defaults)
 			G_CALLBACK(drag_data_received), NULL);
 }
 
-/* Like drag_set_dest, but for a pinboard-type widget */
-void drag_set_pinboard_dest(GtkWidget *widget)
-{
-	GtkTargetEntry 	target_table[] = {
-		{"text/uri-list", 0, TARGET_URI_LIST},
-	};
-
-	gtk_drag_dest_set(widget,
-			  GTK_DEST_DEFAULT_DROP,
-			  target_table,
-			  sizeof(target_table) / sizeof(*target_table),
-			  GDK_ACTION_LINK);
-	g_signal_connect(widget, "drag_data_received",
-			    G_CALLBACK(desktop_drag_data_received), NULL);
-}
-
 /* item is the item the file is held over, NULL for directory background.
  * 'item' may be NULL on exit if the drop should be treated as onto the
  * background. Disallow drags to a selected icon before calling this.
@@ -590,6 +614,13 @@ static gboolean drag_drop(GtkWidget 	  *widget,
 
 	dest_path = g_dataset_get_data(context, "drop_dest_path");
 	dest_type = g_dataset_get_data(context, "drop_dest_type");
+	ROX_LOG_DEBUG("dnd",
+		"drop received dest=%s type=%s actions=0x%x suggested=0x%x selected=0x%x chooser=%d",
+		dest_path ? dest_path : "<none>", dest_type ? dest_type : "<none>",
+		(unsigned) DND_CONTEXT_ACTIONS(context),
+		(unsigned) DND_CONTEXT_SUGGESTED_ACTION(context),
+		(unsigned) DND_CONTEXT_ACTION(context),
+		g_dataset_get_data(context, "rox-wayland-action-menu") != NULL);
 
 	if (dest_type == drop_dest_pass_through)
 		return FALSE;	/* Let the parent widget handle it */
@@ -671,67 +702,6 @@ static gboolean drag_drop(GtkWidget 	  *widget,
 		gtk_drag_get_data(widget, context, target, time);
 
 	return TRUE;
-}
-
-/* Called when a text/uri-list arrives */
-static void desktop_drag_data_received(GtkWidget      	*widget,
-				       GdkDragContext  	*context,
-				       gint            	x,
-				       gint            	y,
-				       GtkSelectionData *selection_data,
-				       guint            info,
-				       guint32          time,
-				       FilerWindow	*filer_window)
-{
-	GList	*uris, *next;
-	char *error_example = NULL;
-	gint dx, dy;
-
-	if (!DND_SELECTION_GET_DATA(selection_data))
-	{
-		/* Timeout? */
-		return;
-	}
-
-	if (pinboard_drag_in_progress)
-	{
-		pinboard_move_icons();
-		return;
-	}
-
-	gdk_window_get_position(DND_WIDGET_WINDOW(widget), &dx, &dy);
-	x += dx;
-	y += dy;
-
-	uris = uri_list_to_glist(DND_SELECTION_GET_DATA(selection_data));
-
-	for (next = uris; next; next = next->next)
-	{
-		guchar	*path;
-
-		path = get_local_path((EscapedPath *) next->data);
-		if (path)
-		{
-			pinboard_pin(path, NULL, x, y, NULL);
-			x += 64;
-			g_free(path);
-		}
-		else if (!error_example)
-			error_example = g_strdup(next->data);
-
-		g_free(next->data);
-	}
-
-	if (uris)
-		g_list_free(uris);
-
-	if (error_example)
-	{
-		delayed_error(_("Failed to add some items to the pinboard, "
-			"because they are on a remote machine. For example:\n"
-			"\n%s"), error_example);
-		g_free(error_example);
-	}
 }
 
 /* Convert Mozilla's text/x-moz-uri into a text/uri-list */
@@ -1066,8 +1036,12 @@ static void got_uri_list(GtkWidget 		*widget,
 				"machine - I can't operate on multiple "
 				"remote files - sorry.");
 		}
-		else if (DND_CONTEXT_ACTION(context) == GDK_ACTION_ASK)
+		else if (DND_CONTEXT_ACTION(context) == GDK_ACTION_ASK ||
+		 g_dataset_get_data(context, "rox-wayland-action-menu"))
+		{
+			ROX_LOG_INFO("dnd", "showing Copy/Move/Link chooser for destination=%s", dest_path);
 			prompt_action(local_paths, dest_path);
+		}
 		else if (DND_CONTEXT_ACTION(context) == GDK_ACTION_MOVE)
 			action_move(local_paths, dest_path, NULL, -1);
 		else if (DND_CONTEXT_ACTION(context) == GDK_ACTION_COPY)
@@ -1094,6 +1068,8 @@ static void got_uri_list(GtkWidget 		*widget,
 /* Called when an item from the ACTION_ASK menu is chosen */
 static void menuitem_response(gpointer data, guint action, GtkWidget *widget)
 {
+	ROX_LOG_INFO("dnd", "action chooser response=%u destination=%s", action,
+		prompt_dest_path ? prompt_dest_path : "<none>");
 	if (action == MENU_MOVE)
 		action_move(prompt_local_paths, prompt_dest_path, NULL, -1);
 	else if (action == MENU_COPY)

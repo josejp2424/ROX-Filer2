@@ -26,6 +26,8 @@
 #include <gdk/gdkx.h>
 #endif
 
+#include "global.h"
+#include "support.h"
 #include "desktop_wbar.h"
 #include "desktop.h"
 
@@ -161,7 +163,7 @@ static gboolean spawn_and_wait(gchar **argv)
     GError *error = NULL;
     gboolean ok;
 
-    ok = g_spawn_sync(NULL, argv, NULL,
+    ok = rox_spawn_sync(NULL, argv, NULL,
                       G_SPAWN_SEARCH_PATH |
                       G_SPAWN_STDOUT_TO_DEV_NULL |
                       G_SPAWN_STDERR_TO_DEV_NULL,

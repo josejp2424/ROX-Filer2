@@ -15,6 +15,7 @@ XMLwrapper *xml_cache_load(const gchar *pathname);
 int save_xml_file(xmlDocPtr doc, const gchar *filename);
 xmlDocPtr soap_new(xmlNodePtr *ret_body);
 char *pathdup(const char *path);
+gboolean path_is_home_dir(const gchar *path);
 const guchar *make_path(const char *dir, const char *leaf);
 const char *our_host_name(void);
 const char *our_host_name_for_dnd(void);
@@ -24,6 +25,11 @@ const char *group_name(gid_t gid);
 const char *format_size(off_t size);
 const char *format_size_aligned(off_t size);
 const gchar *format_double_size(double size);
+gboolean rox_spawn_sync(const gchar *working_directory, gchar **argv,
+                        gchar **envp, GSpawnFlags flags,
+                        GSpawnChildSetupFunc child_setup, gpointer user_data,
+                        gchar **standard_output, gchar **standard_error,
+                        gint *wait_status, GError **error);
 char *fork_exec_wait(const char **argv);
 const char *pretty_permissions(mode_t m);
 gint applicable(uid_t uid, gid_t gid);

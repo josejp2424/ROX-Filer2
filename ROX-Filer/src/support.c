@@ -126,6 +126,27 @@ char *pathdup(const char *path)
 	return g_strdup(path);
 }
 
+/* Agregado por josejp2424 (2026): reconocer la carpeta personal por su
+ * ruta real. Se usa para reservarle siempre el icono user-home, incluso si
+ * existe un antiguo .DirIcon o una asociación GlobIcons. */
+gboolean path_is_home_dir(const gchar *path)
+{
+	static gchar *real_home = NULL;
+	gchar *real_path;
+	gboolean is_home;
+
+	if (!path || !*path || !home_dir || !*home_dir)
+		return FALSE;
+
+	if (!real_home)
+		real_home = pathdup(home_dir);
+	real_path = pathdup(path);
+	is_home = g_strcmp0(real_path, real_home) == 0;
+	g_free(real_path);
+
+	return is_home;
+}
+
 /* Join the path to the leaf (adding a / between them) and
  * return a pointer to a static buffer with the result. Buffer is valid
  * until the next call to make_path.
@@ -356,6 +377,25 @@ const gchar *format_double_size(double size)
 	return buf;
 }
 
+/* Rox-Filer2: g_spawn_sync() may be called from the desktop drive worker.
+ * The historical SIGCHLD handler uses waitpid(-1), so serialize both waiters
+ * to ensure the GTK main thread cannot reap the worker's child first. */
+gboolean rox_spawn_sync(const gchar *working_directory, gchar **argv,
+                        gchar **envp, GSpawnFlags flags,
+                        GSpawnChildSetupFunc child_setup, gpointer user_data,
+                        gchar **standard_output, gchar **standard_error,
+                        gint *wait_status, GError **error)
+{
+	gboolean ok;
+
+	rox_child_reap_lock();
+	ok = g_spawn_sync(working_directory, argv, envp, flags, child_setup,
+	                  user_data, standard_output, standard_error,
+	                  wait_status, error);
+	rox_child_reap_unlock();
+	return ok;
+}
+
 /* Fork and exec argv. Wait and return the child's exit status.
  * -1 if spawn fails.
  * Returns the error string from the command if any, or NULL on success.
@@ -369,7 +409,7 @@ char *fork_exec_wait(const char **argv)
 	gchar	*errors = NULL;
 	GError	*error = NULL;
 
-	if (!g_spawn_sync(NULL, (char **) argv, NULL,
+	if (!rox_spawn_sync(NULL, (char **) argv, NULL,
 		     G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
 		     NULL, NULL,
 		     NULL, &errors, &status, &error))
@@ -1430,9 +1470,11 @@ int stat_with_timeout(const char *path, struct stat *info)
 	pid_t child;
 	gboolean retval;
 
+	rox_child_reap_lock();
 	child = fork();
 	if (child < 0)
 	{
+		rox_child_reap_unlock();
 		g_warning("stat_with_timeout: fork(): %s", g_strerror(errno));
 		return -1;
 	}
@@ -1445,6 +1487,7 @@ int stat_with_timeout(const char *path, struct stat *info)
 	}
 
 	waitpid(child, &status, 0);
+	rox_child_reap_unlock();
 
 	if (status == 0)
 		retval = mc_stat(path, info);
@@ -1678,16 +1721,27 @@ gboolean get_values_from_desktop_file(const char *path,
 	va_start(list, value);
 	while(section && key && value) {
 		*value = get_value_from_desktop_data((const char *) start,
-						     info.st_size,
-						     section, key,
-						     error);
+					     info.st_size,
+					     section, key,
+					     error);
 		if(*error)
 			break;
 
-		section=va_arg(list, const char *);
-		key=va_arg(list, const char *);
-		value=va_arg(list, char **);
+		/* Modificado por josejp2424 (2026): detener la lectura de varargs
+		 * apenas aparece el NULL final. Antes se consumían dos argumentos
+		 * inexistentes después del terminador, causando comportamiento
+		 * indefinido al analizar algunos archivos .desktop. */
+		section = va_arg(list, const char *);
+		if (!section)
+			break;
+		key = va_arg(list, const char *);
+		if (!key)
+			break;
+		value = va_arg(list, char **);
+		if (!value)
+			break;
 	}
+	va_end(list);
 
 err:
 	if (fd != -1)

@@ -210,34 +210,15 @@ Pour obtenir la liste complète des options, voir <xref linkend="manpage"/>.
 </para>
 
 <sect1>
-	<title><anchor id="run_pin" xreflabel="Pinboard support"/>Punaiseur</title>
-  <para>
-
-Si vous voulez que le <foreignphrase lang="en">filer</foreignphrase> gère votre bureau vous utiliserez l'option
-<option>--pinboard</option> et fournirez un nom pour le punaiseur, <abbrev>e.g.</abbrev> :
-
-<screen>$ rox --pinboard=MonPunaiseur</screen>
-
-La configuration du punaiseur est sauvée dans 
-<filename>~/.config/rox.sourceforge.net/ROX-Filer/pb_MonPunaiseur</filename>
-dès que vous le modifiez (par exemple, en glissant/déposant un fichier
-sur votre bureau).
-Vous pouvez avoir autant de punaiseurs que vous le souhaitez et basculer
-de l'un à l'autre en lançant rox de nouveau, <abbrev>e.g.</abbrev> :
-
-<screen>$ rox --pinboard=MonAutrePunaiseur</screen>
-
-Pour arrêter la fonction punaiseur, donnez au nom une chaîne vide :
-
-<screen>$ rox --pinboard=</screen>
-
-Allez voir la section <xref linkend="winman"/> si vous avez des problèmes d'affichage avec les icônes.
-Le punaiseur peut aussi être activé/désactivé en se plaçant dans le répertoire d'installation de
-<filename>ROX-Filer</filename> dans une fenêtre du <foreignphrase lang="en">filer</foreignphrase> et 
-en choisissant <guimenuitem>Enable pinboard</guimenuitem> ou <guimenuitem>Disable pinboard</guimenuitem> 
-dans le menu (clic droit).
-
-  </para>
+ <title><anchor id="run_pin" xreflabel="Bureau ROX"/>Bureau ROX</title>
+ <para>
+  ROX-Filer fournit un seul bureau intégré. Lancez-le avec :
+  <screen>$ rox --desktop</screen>
+  Une seconde exécution actualise le bureau existant au lieu de créer un
+  bureau nommé supplémentaire. Les anciennes options <option>-p</option>,
+  <option>--pinboard</option> et <option>--rox-session</option> ne sont plus
+  prises en charge.
+ </para>
 </sect1>
 
 <sect1>
@@ -338,7 +319,7 @@ Redémarrez IceWM et le <foreignphrase lang="en">filer</foreignphrase> pour que 
  <procedure>
   <step>
    <para>
-	Démarrez le <foreignphrase lang="en">filer</foreignphrase> comme ceci : <userinput>rox -p=Default</userinput>
+	Démarrez le <foreignphrase lang="en">filer</foreignphrase> comme ceci : <userinput>rox --desktop</userinput>
    </para>
   </step>
 
@@ -2987,15 +2968,10 @@ ainsi que le fichier lui-même) :
 	&lt;Purpose&gt;Manejador de Archivos&lt;/Purpose&gt;
 	&lt;Authors&gt;Thomas Leonard y otros&lt;/Authors&gt;
  &lt;/About&gt;
- &lt;AppMenu&gt;
-	&lt;Item option="-p=Default"&gt;
-	  &lt;Label&gt;Enable pinboard&lt;/Label&gt;
-	  &lt;Label xml:lang="es"&gt;Habilitar el pinboard&lt;/Label&gt;
+  &lt;AppMenu&gt;
+    &lt;Item option="--desktop"&gt;
+      &lt;Label&gt;Start ROX Desktop&lt;/Label&gt;
     &lt;/Item&gt;
-	&lt;Item option="-p="&gt;
-	  &lt;Label&gt;Disable pinboard&lt;/Label&gt;
-	  &lt;Label xml:lang="es"&gt;Deshabilitar el pinboard&lt;/Label&gt;
-	&lt;/Item&gt;
   &lt;/AppMenu&gt;
 &lt;/AppInfo&gt;
 </screen>
@@ -3470,9 +3446,7 @@ Exécutez <command>make</command>, qui créera les fichiers <filename>.o</filena
 	 de forker (s'exécuter en arrière plan), et n'est quasiment utile que pour débugger.
   </para></listitem></varlistentry>
 
-  <varlistentry><term><option>-p</option></term><term><option>--pinboard=PIN</option></term>
-   <listitem><para>utilise le punaiseur PIN.
-  </para></listitem></varlistentry>
+  
 
   <varlistentry><term><option>-r</option></term><term><option>--right=PANEL</option></term>
    <listitem><para>crée un panneau à droite de votre écran.
@@ -3486,12 +3460,7 @@ Exécutez <command>make</command>, qui créera les fichiers <filename>.o</filena
    <listitem><para>Ouvre une fenêtre et affiche le dossier où se trouve FILE.
   </para></listitem></varlistentry>
 
-  <varlistentry><term><option>-S</option></term><term><option>--rox-session</option></term>
-   <listitem><para>Démarre avec un gestionnaire de sessions, et ouvre les panneau et punaiseur 
-   par défaut (implique l'utilisation de --new).
-   Si un gestionnaire de sessions XSM est chargé, et que cette option est utilisée, ROX-Filer
-   demandera à redémarrer automatiquement s'il se ferme inopinément.
-  </para></listitem></varlistentry>
+  
 
   <varlistentry><term><option>-t</option></term><term><option>--top=PANEL</option></term>
    <listitem><para>crée un panneau en haut de votre écran.

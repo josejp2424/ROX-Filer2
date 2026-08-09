@@ -248,104 +248,31 @@ static GtkWidget *create_menu_item(xmlNode *node)
 	return item;
 }
 
-/* Send to current_app_path (though not actually an app) */
-static void send_to(const gchar *app)
-{
-	GList *file_list;
-
-	g_return_if_fail(current_app_path != NULL);
-
-	file_list = g_list_prepend(NULL, current_app_path);
-	run_with_files(app, file_list);
-	g_list_free(file_list);
-}
-
 /* Function called to execute an AppMenu item */
 static void apprun_menu(GtkWidget *item, gpointer data)
 {
-	guchar	*option;
+	guchar *option;
 	gchar *argv[3];
 
+	(void) data;
 	g_return_if_fail(current_app_path != NULL);
-
 	option = g_object_get_data(G_OBJECT(item), "option");
-
 	argv[0] = g_strconcat(current_app_path, "/AppRun", NULL);
-	argv[1] = option;	/* (may be NULL) */
+	argv[1] = option;
 	argv[2] = NULL;
-
 	rox_spawn(NULL, (const gchar **) argv);
-
 	g_free(argv[0]);
 }
 
 static void mnt_eject(GtkWidget *item, gpointer data)
 {
 	GList *dirs;
-
+	(void) item;
+	(void) data;
 	g_return_if_fail(current_app_path != NULL);
 	dirs = g_list_prepend(NULL, current_app_path);
 	action_eject(dirs);
 	g_list_free(dirs);
-}
-
-static void customise_type(GtkWidget *item, MIME_type *type)
-{
-	char *leaf;
-	char *path;
-
-	leaf = g_strconcat(".", type->media_type, "_", type->subtype, NULL);
-	path = choices_find_xdg_path_save(leaf, "SendTo", SITE, TRUE);
-	g_free(leaf);
-
-	mkdir(path, 0755);
-	filer_opendir(path, NULL, NULL);
-	g_free(path);
-
-	info_message(_("Symlink any programs you want into this directory. "
-			"They will appear in the menu for all items of this "
-			"type (%s/%s)."), type->media_type, type->subtype);
-}
-
-static void build_menu_for_type(MIME_type *type)
-{
-	GtkWidget *item;
-	GList *widgets = NULL;
-	GHashTable *menu_entries;
-	GHashTableIter hash_table_iter;
-	gpointer key, value;
-
-	menu_entries = g_hash_table_new(g_str_hash, g_str_equal);
-
-	widgets = add_sendto_shared(NULL, menu_entries,
-				type->media_type, type->subtype, (CallbackFn) send_to);
-    widgets = g_list_concat(widgets,
-        add_sendto_desktop_items(NULL, menu_entries,
-                type->media_type, type->subtype, (CallbackFn) send_to));
-	widgets = g_list_concat(widgets,
-			add_sendto_shared(NULL, menu_entries,
-				type->media_type, NULL, (CallbackFn) send_to)
-		);
-	widgets = g_list_concat(widgets,
-			add_sendto_shared(NULL, menu_entries,
-				"all", NULL, (CallbackFn) send_to)
-		);
-
-	widgets = g_list_reverse(widgets);
-	current_items = g_list_concat(widgets, current_items);
-
-	item = gtk_menu_item_new_with_label(_("Customise Menu..."));
-	current_items = g_list_prepend(current_items, item);
-	g_signal_connect(item, "activate", G_CALLBACK(customise_type), type);
-
-	gtk_widget_show(item);
-
-	g_hash_table_iter_init (&hash_table_iter, menu_entries);
-	while (g_hash_table_iter_next (&hash_table_iter, &key, &value)) {
-		g_free(key);
-	}
-
-	g_hash_table_destroy(menu_entries);
 }
 
 /* Adds to current_items */
@@ -364,14 +291,12 @@ static void build_app_menu(const char *app_dir, DirItem *app_item)
 	}
 	else
 	{
+		/* Normal files now use the XDG/GIO Open With submenu.
+		 * AppMenu remains only for real ROX AppDirs. */
 		if (app_item->flags & ITEM_FLAG_APPDIR)
 			node = NULL;
 		else
-		{
-			/* Not an application AND no AppInfo */
-			build_menu_for_type(app_item->mime_type);
 			return;
-		}
 	}
 
 	/* Add the menu entries */

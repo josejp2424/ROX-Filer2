@@ -30,6 +30,7 @@
 #include <gtk/gtk.h>
 
 #include "global.h"
+#include "support.h"
 #include "drives.h"
 #include "filer.h"
 #include "gui_support.h"
@@ -458,7 +459,7 @@ static gchar *command_first_line(gchar **argv)
 	GError *error = NULL;
 	gchar *line;
 
-	if (!g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+	if (!rox_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
 		&output, &error_output, &status, &error))
 	{
 		g_clear_error(&error);
@@ -659,7 +660,7 @@ static GPtrArray *read_drive_list(GError **error)
 	/* Modificado por josejp2424: algunos Puppy incluyen una versión antigua
 	 * de lsblk sin PATH, HOTPLUG, PARTLABEL o PARTTYPE. Intentar primero la
 	 * consulta completa de EssoraWM y repetir con columnas compatibles. */
-	if (!g_spawn_sync(NULL, argv_full, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+	if (!rox_spawn_sync(NULL, argv_full, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
 		&stdout_text, &stderr_text, &status, &spawn_error) ||
 	    !WIFEXITED(status) || WEXITSTATUS(status) != 0)
 	{
@@ -667,7 +668,7 @@ static GPtrArray *read_drive_list(GError **error)
 		g_clear_pointer(&stdout_text, g_free);
 		g_clear_pointer(&stderr_text, g_free);
 		status = 0;
-		if (!g_spawn_sync(NULL, argv_compat, NULL, G_SPAWN_SEARCH_PATH,
+		if (!rox_spawn_sync(NULL, argv_compat, NULL, G_SPAWN_SEARCH_PATH,
 			NULL, NULL, &stdout_text, &stderr_text, &status, &spawn_error))
 		{
 			/* Modificado por josejp2424 (2026): no abandonar la detección
@@ -921,7 +922,7 @@ static gboolean spawn_wait(gchar **argv, gchar **error_text)
 	if (error_text)
 		*error_text = NULL;
 
-	ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
+	ok = rox_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL,
 		NULL, &stderr_text, &status, &error);
 	if (!ok)
 	{

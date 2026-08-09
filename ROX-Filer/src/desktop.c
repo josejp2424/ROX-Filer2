@@ -3,15 +3,13 @@
  *
  * Gestiona el wallpaper, los archivos del directorio ~/Desktop y las
  * unidades detectadas por el mismo modelo usado en la GUI de Particiones.
- * La implementación queda separada del pinboard clásico para permitir una
- * migración progresiva y futuros backends X11/Wayland.
+ * Este es el único módulo de escritorio de ROX-Filer. La implementación
+ * heredada de pinboard fue retirada en r66; los backends X11/Wayland deben
+ * quedar detrás de esta interfaz.
  */
 #include "config.h"
 
 #include <gtk/gtk.h>
-#include <gdk/gdkx.h>
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
 #include <gio/gio.h>
 #include <glib/gstdio.h>
 #include <stdlib.h>
@@ -19,6 +17,7 @@
 
 #include "global.h"
 #include "desktop.h"
+#include "desktop-backend.h"
 #include "desktop_apps.h"
 #include "trash.h"
 #include "desktop_wbar.h"
@@ -28,6 +27,7 @@
 #include "i18n.h"
 #include "gui_support.h"
 #include "options.h"
+#include "debug_log.h"
 
 #define DESKTOP_CONFIG "desktop.conf"
 #define DESKTOP_POSITIONS_CONFIG "desktop-positions.conf"
@@ -40,8 +40,6 @@
 #define DESKTOP_ICON_MARGIN 12
 #define DESKTOP_ICON_LABEL_WIDTH 18
 #define DESKTOP_DRAG_THRESHOLD 5
-#define ROX_DESKTOP_WINDOW_ATOM "_ROX_DESKTOP_WINDOW"
-#define ROX_DESKTOP_REFRESH_ATOM "_ROX_DESKTOP_REFRESH"
 
 /* Modificado por josejp2424 (2026): los archivos reales de
  * XDG_DESKTOP_DIR se representan ahora con widgets libres dentro de GtkFixed.
@@ -141,9 +139,7 @@ static gdouble drive_y_pos = 1.0;
 static GdkRectangle desktop_geometry = {0, 0, 1, 1};
 static GdkRectangle desktop_workarea = {0, 0, 1, 1};
 static GdkRectangle desktop_drive_reserved = {0, 0, 0, 0};
-static Atom desktop_window_atom;
-static Atom desktop_refresh_atom;
-static gboolean desktop_x11_filter_installed;
+static const DesktopBackend *desktop_backend;
 
 static void desktop_reload(void);
 static gboolean desktop_reload_idle(gpointer data);
@@ -155,6 +151,7 @@ static void desktop_calculate_drive_rect(gint width, gint height,
                                          GdkRectangle *rect);
 static void desktop_update_drive_reservation(void);
 static void desktop_reflow_items(gboolean save_positions);
+static void desktop_arrange_items(gboolean save_positions);
 static void desktop_request_drive_scan(void);
 static void desktop_force_drive_refresh(void);
 static void desktop_rebuild_drive_box_from_list(GPtrArray *drives);
@@ -171,88 +168,10 @@ static void show_desktop_menu(GdkEventButton *event);
 
 extern int number_of_windows;
 
-static GdkFilterReturn desktop_x11_filter(GdkXEvent *xevent, GdkEvent *event, gpointer data)
+static void desktop_backend_refresh(gpointer data)
 {
-    XEvent *xe = (XEvent *)xevent;
-    (void)event; (void)data;
-
-    if (!xe || xe->type != ClientMessage)
-        return GDK_FILTER_CONTINUE;
-    if (desktop_refresh_atom != None &&
-        xe->xclient.message_type == desktop_refresh_atom) {
-        desktop_refresh_now();
-        return GDK_FILTER_REMOVE;
-    }
-    return GDK_FILTER_CONTINUE;
-}
-
-static void desktop_register_x11_control(void)
-{
-    GdkDisplay *gdisplay;
-    Display *display;
-    GdkWindow *gwindow;
-    Window xid;
-
-    if (!desktop_window || !gtk_widget_get_realized(desktop_window))
-        return;
-    gdisplay = gtk_widget_get_display(desktop_window);
-    if (!GDK_IS_X11_DISPLAY(gdisplay))
-        return;
-    display = gdk_x11_display_get_xdisplay(gdisplay);
-    gwindow = gtk_widget_get_window(desktop_window);
-    xid = gdk_x11_window_get_xid(gwindow);
-    desktop_window_atom = XInternAtom(display, ROX_DESKTOP_WINDOW_ATOM, False);
-    desktop_refresh_atom = XInternAtom(display, ROX_DESKTOP_REFRESH_ATOM, False);
-    XChangeProperty(display, DefaultRootWindow(display), desktop_window_atom,
-                    XA_WINDOW, 32, PropModeReplace,
-                    (const unsigned char *)&xid, 1);
-    if (!desktop_x11_filter_installed) {
-        gdk_window_add_filter(gwindow, desktop_x11_filter, NULL);
-        desktop_x11_filter_installed = TRUE;
-    }
-    XFlush(display);
-}
-
-static void desktop_unregister_x11_control(void)
-{
-    GdkDisplay *gdisplay;
-    Display *display;
-    GdkWindow *gwindow;
-
-    if (!desktop_window || !gtk_widget_get_realized(desktop_window))
-        return;
-    gdisplay = gtk_widget_get_display(desktop_window);
-    if (!GDK_IS_X11_DISPLAY(gdisplay))
-        return;
-    display = gdk_x11_display_get_xdisplay(gdisplay);
-    gwindow = gtk_widget_get_window(desktop_window);
-    if (desktop_x11_filter_installed) {
-        gdk_window_remove_filter(gwindow, desktop_x11_filter, NULL);
-        desktop_x11_filter_installed = FALSE;
-    }
-    if (desktop_window_atom != None) {
-        Atom actual_type;
-        gint actual_format;
-        gulong nitems, bytes_after;
-        unsigned char *property = NULL;
-        Window registered = None;
-        Window own_xid = gdk_x11_window_get_xid(gwindow);
-
-        if (XGetWindowProperty(display, DefaultRootWindow(display),
-                desktop_window_atom, 0, 1, False, XA_WINDOW,
-                &actual_type, &actual_format, &nitems, &bytes_after,
-                &property) == Success && property &&
-            actual_type == XA_WINDOW && actual_format == 32 && nitems >= 1)
-            registered = *(Window *)property;
-        if (property)
-            XFree(property);
-        /* Do not remove a property already replaced by a newer desktop
-         * instance after this one was started. */
-        if (registered == own_xid)
-            XDeleteProperty(display, DefaultRootWindow(display),
-                            desktop_window_atom);
-    }
-    XFlush(display);
+    (void)data;
+    desktop_refresh_now();
 }
 
 static void show_desktop_error(const gchar *primary, const gchar *secondary)
@@ -1041,6 +960,52 @@ static void desktop_reflow_items(gboolean save_positions)
         placed = g_list_append(placed, item);
     }
     g_list_free(placed);
+}
+
+/* Agregado por josejp2424 (2026): "Refresh Desktop" también funciona como
+ * organizador. Ignora las coordenadas manuales actuales y vuelve a colocar
+ * todos los iconos del escritorio, en orden, sobre la grilla normal. De este
+ * modo un icono suelto en medio de la pantalla o ligeramente desalineado
+ * regresa a la secuencia del escritorio. Las unidades continúan reservando
+ * su zona y no son movidas por este organizador. */
+static void desktop_arrange_items(gboolean save_positions)
+{
+    GList *node;
+    GList *placed = NULL;
+    guint total = 0;
+    guint moved = 0;
+
+    for (node = desktop_items; node; node = node->next) {
+        DesktopItem *item = node->data;
+        gint old_x;
+        gint old_y;
+
+        if (!item)
+            continue;
+
+        old_x = item->x;
+        old_y = item->y;
+        desktop_find_free_position_in_list(item, placed);
+        desktop_item_clamp(item);
+
+        if (desktop_icon_layer && item->widget)
+            gtk_fixed_move(GTK_FIXED(desktop_icon_layer), item->widget,
+                           item->x, item->y);
+
+        if (old_x != item->x || old_y != item->y) {
+            moved++;
+            if (save_positions)
+                desktop_item_save_position(item);
+        }
+
+        placed = g_list_append(placed, item);
+        total++;
+    }
+
+    g_list_free(placed);
+    ROX_LOG_INFO("desktop",
+                 "desktop icons arranged on grid items=%u moved=%u",
+                 total, moved);
 }
 
 
@@ -2572,6 +2537,7 @@ static void desktop_menu_refresh(GtkMenuItem *item, gpointer data)
 {
     (void)item; (void)data;
     desktop_reload();
+    desktop_arrange_items(TRUE);
     desktop_schedule_geometry_update();
 }
 
@@ -3301,13 +3267,10 @@ static void load_settings(void)
 
 static void desktop_lower_window(void)
 {
-    GdkWindow *window;
-
     if (!desktop_window || !gtk_widget_get_realized(desktop_window))
         return;
-    window = gtk_widget_get_window(desktop_window);
-    if (window)
-        gdk_window_lower(window);
+    if (desktop_backend && desktop_backend->lower_window)
+        desktop_backend->lower_window(desktop_window);
 }
 
 static gboolean desktop_apply_geometry(gpointer data)
@@ -3385,6 +3348,7 @@ void desktop_refresh_after_environment_change(void)
 {
     if (!desktop_window)
         return;
+    ROX_LOG_DEBUG("desktop", "environment refresh scheduled");
 
     if (environment_refresh_source) {
         g_source_remove(environment_refresh_source);
@@ -3405,6 +3369,7 @@ static gboolean desktop_map_event(GtkWidget *widget, GdkEvent *event,
                                   gpointer data)
 {
     (void)widget; (void)event; (void)data;
+    ROX_LOG_INFO("desktop", "desktop window mapped");
     desktop_schedule_geometry_update();
     return FALSE;
 }
@@ -3413,7 +3378,9 @@ static void desktop_destroyed(GtkWidget *widget, gpointer data)
 {
     (void)widget; (void)data;
 
-    desktop_unregister_x11_control();
+    ROX_LOG_INFO("desktop", "desktop window destroyed; cleaning resources");
+    if (desktop_backend && desktop_backend->unregister_control)
+        desktop_backend->unregister_control(desktop_window);
     if (drive_poll_source) {
         g_source_remove(drive_poll_source);
         drive_poll_source = 0;
@@ -3460,12 +3427,14 @@ static void desktop_destroyed(GtkWidget *widget, gpointer data)
     desktop_overlay = NULL;
     desktop_icon_layer = NULL;
     desktop_window = NULL;
+    desktop_backend = NULL;
     if (number_of_windows > 0)
         number_of_windows--;
 }
 
 void desktop_init(void)
 {
+    ROX_LOG_DEBUG("desktop", "initializing desktop module");
     rox_config_init();
     option_register_widget("desktop-tools", build_desktop_tools);
 }
@@ -3474,28 +3443,50 @@ void desktop_start(void)
 {
     GFile *dir;
     GtkCssProvider *css;
+    GError *backend_error = NULL;
 
     if (desktop_window) {
+        ROX_LOG_INFO("desktop", "desktop already exists; presenting current window");
         gtk_window_present(GTK_WINDOW(desktop_window));
         desktop_lower_window();
         return;
     }
 
     load_settings();
+    ROX_LOG_INFO("desktop", "settings directory=%s wallpaper=%s show_volumes=%d icon_size=%d",
+                 desktop_dir ? desktop_dir : "",
+                 wallpaper_path ? wallpaper_path : "", show_volumes,
+                 desktop_icon_size);
     desktop_query_geometry();
+    ROX_LOG_INFO("desktop", "geometry x=%d y=%d width=%d height=%d workarea=%d,%d %dx%d",
+                 desktop_geometry.x, desktop_geometry.y,
+                 desktop_geometry.width, desktop_geometry.height,
+                 desktop_workarea.x, desktop_workarea.y,
+                 desktop_workarea.width, desktop_workarea.height);
+    desktop_backend = desktop_backend_select(gdk_display_get_default());
+    if (desktop_backend && desktop_backend->prepare_display &&
+        !desktop_backend->prepare_display(gdk_display_get_default(),
+                                          &backend_error)) {
+        ROX_LOG_ERROR("desktop", "backend preparation failed backend=%s error=%s",
+                      desktop_backend ? desktop_backend->name : "none",
+                      backend_error ? backend_error->message : "unknown");
+        show_desktop_error(_("Unable to start ROX Desktop"),
+                           backend_error ? backend_error->message : NULL);
+        g_clear_error(&backend_error);
+        desktop_backend = NULL;
+        return;
+    }
 
+    ROX_LOG_INFO("desktop", "creating desktop window backend=%s",
+                 desktop_backend ? desktop_backend->name : "none");
     desktop_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(desktop_window), _("ROX Desktop"));
     gtk_window_set_decorated(GTK_WINDOW(desktop_window), FALSE);
     gtk_window_set_resizable(GTK_WINDOW(desktop_window), FALSE);
     gtk_window_set_accept_focus(GTK_WINDOW(desktop_window), TRUE);
     gtk_window_set_focus_on_map(GTK_WINDOW(desktop_window), FALSE);
-    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(desktop_window), TRUE);
-    gtk_window_set_skip_pager_hint(GTK_WINDOW(desktop_window), TRUE);
-    gtk_window_set_type_hint(GTK_WINDOW(desktop_window),
-                             GDK_WINDOW_TYPE_HINT_DESKTOP);
-    gtk_window_set_keep_below(GTK_WINDOW(desktop_window), TRUE);
-    gtk_window_stick(GTK_WINDOW(desktop_window));
+    if (desktop_backend && desktop_backend->configure_window)
+        desktop_backend->configure_window(GTK_WINDOW(desktop_window));
     gtk_window_set_default_size(GTK_WINDOW(desktop_window),
                                 desktop_geometry.width,
                                 desktop_geometry.height);
@@ -3600,11 +3591,17 @@ void desktop_start(void)
                                                desktop_drive_poll, NULL);
 
     desktop_reload();
+    ROX_LOG_INFO("desktop", "desktop contents loaded items=%u",
+                 g_list_length(desktop_items));
     number_of_windows++;
     gtk_widget_show_all(desktop_window);
-    desktop_register_x11_control();
+    if (desktop_backend && desktop_backend->register_control)
+        desktop_backend->register_control(desktop_window,
+                                          desktop_backend_refresh, NULL);
     desktop_schedule_geometry_update();
     desktop_refresh_after_environment_change();
+    ROX_LOG_INFO("desktop", "desktop startup completed backend=%s",
+                 desktop_backend ? desktop_backend->name : "none");
 }
 
 static void desktop_prepare_standalone_tool(void)
@@ -3686,54 +3683,30 @@ void desktop_refresh_now(void)
     if (!desktop_window)
         return;
     desktop_reload();
+    desktop_arrange_items(TRUE);
     desktop_schedule_geometry_update();
     desktop_refresh_after_environment_change();
 }
 
 gboolean desktop_send_refresh_request(void)
 {
-    GdkDisplay *gdisplay = gdk_display_get_default();
-    Display *display;
-    Atom window_atom, refresh_atom, actual_type;
-    gint actual_format;
-    gulong nitems, bytes_after;
-    unsigned char *data = NULL;
-    Window destination = None;
-    XEvent event;
-    gint status;
+    const DesktopBackend *backend;
+    GdkDisplay *display = gdk_display_get_default();
 
-    if (!gdisplay || !GDK_IS_X11_DISPLAY(gdisplay))
+    backend = desktop_backend_select(display);
+    if (!backend || !backend->send_refresh_request)
         return FALSE;
-    display = gdk_x11_display_get_xdisplay(gdisplay);
-    window_atom = XInternAtom(display, ROX_DESKTOP_WINDOW_ATOM, False);
-    refresh_atom = XInternAtom(display, ROX_DESKTOP_REFRESH_ATOM, False);
-    status = XGetWindowProperty(display, DefaultRootWindow(display),
-        window_atom, 0, 1, False, XA_WINDOW, &actual_type, &actual_format,
-        &nitems, &bytes_after, &data);
-    if (status != Success || !data || actual_type != XA_WINDOW || nitems < 1) {
-        if (data) XFree(data);
-        return FALSE;
-    }
-    destination = *(Window *)data;
-    XFree(data);
-    memset(&event, 0, sizeof(event));
-    event.xclient.type = ClientMessage;
-    event.xclient.display = display;
-    event.xclient.window = destination;
-    event.xclient.message_type = refresh_atom;
-    event.xclient.format = 32;
-    event.xclient.data.l[0] = CurrentTime;
-    /* The root property may outlive a crashed desktop process. Trap X11
-     * errors so a stale window ID cannot terminate the refresh client. */
-    rox_x11_error_trap_push();
-    status = XSendEvent(display, destination, False, NoEventMask, &event);
-    XSync(display, False);
-    if (rox_x11_error_trap_pop() != 0)
-        status = 0;
-    return status != 0;
+    return backend->send_refresh_request(display);
 }
 
 gboolean desktop_is_running(void)
 {
     return desktop_window != NULL;
+}
+
+GdkWindow *desktop_get_gdk_window(void)
+{
+    if (!desktop_window || !gtk_widget_get_realized(desktop_window))
+        return NULL;
+    return gtk_widget_get_window(desktop_window);
 }

@@ -34,21 +34,19 @@
 #include "global.h"
 #include "filer.h"
 #include "main.h"
-#include "pinboard.h"
 #include "panel.h"
 #include "sc.h"
 #include "session.h"
+#include "desktop.h"
 
 #define ROX_FILER_URI "http://rox.sourceforge.net/2005/interfaces/ROX-Filer"
 
 static gboolean use_0launch;
-gboolean session_auto_respawn = FALSE;	/* If we were started as 'rox -S' */
 
 static void save_state(SmClient *client)
 {
 	FilerWindow *filer_window;
 	Panel *panel;
-	Pinboard *pinboard = current_pinboard;
 	GList *list;
 	GPtrArray *restart_cmd = g_ptr_array_new();
 	SmPropValue *program;
@@ -79,26 +77,18 @@ static void save_state(SmClient *client)
 		g_ptr_array_add(restart_cmd, filer_window->sym_path);
 	}
 
-	if (session_auto_respawn)
-	{
-		for(i = 0; i < PANEL_NUMBER_OF_SIDES; i++)
-		{
-			panel = current_panel[i];
-			if(!panel)
-				continue;
-			g_ptr_array_add(restart_cmd, types[panel->side]);
-			g_ptr_array_add(restart_cmd, panel->name);
-		}
+	/* Restore the current real desktop directly. The removed -S and -p
+	 * compatibility paths must never be written into a session command. */
+	if (desktop_is_running())
+		g_ptr_array_add(restart_cmd, "--desktop");
 
-		if (pinboard)
-		{
-			g_ptr_array_add(restart_cmd, "-p");
-			g_ptr_array_add(restart_cmd, (gchar *) pinboard_get_name());
-		}
-	}
-	else
+	for(i = 0; i < PANEL_NUMBER_OF_SIDES; i++)
 	{
-		g_ptr_array_add(restart_cmd, "-S");
+		panel = current_panel[i];
+		if(!panel)
+			continue;
+		g_ptr_array_add(restart_cmd, types[panel->side]);
+		g_ptr_array_add(restart_cmd, panel->name);
 	}
 
 	sc_set_list_of_array_prop(client, SmRestartCommand,
@@ -166,7 +156,7 @@ void session_init(const gchar *client_id)
 			(const gchar **) clone_cmd,
 			clone_cmd[2] == NULL ? 2 : 3);
 	sc_set_card_prop(client, SmRestartStyleHint,
-			session_auto_respawn ? SmRestartImmediately : SmRestartIfRunning);
+			desktop_is_running() ? SmRestartImmediately : SmRestartIfRunning);
 
 	client->save_yourself_fn = &save_yourself;
 	client->shutdown_cancelled_fn = NULL;

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- ROX-Filer GTK3 options. Kept generic so future releases only need
+<!-- Rox-Filer2 GTK3 options. Kept generic so future releases only need
      feature-specific documentation updates. -->
 <options>
   <section title='General'>
@@ -13,7 +13,7 @@
       <radio-group name='filer_auto_resize'>
         <radio label='Never resize automatically' value='2'>Window size is controlled only by the user and window manager.</radio>
         <radio label='Resize after changing the view' value='0'>Resize after changing icon size, details or view type.</radio>
-        <radio label='Resize whenever useful' value='1'>Allow ROX-Filer to resize after directory and view changes.</radio>
+        <radio label='Resize whenever useful' value='1'>Allow Rox-Filer2 to resize after directory and view changes.</radio>
       </radio-group>
       <numentry name='filer_size_limit' label='Maximum automatic size:' unit='%' min='25' max='100' width='3'>Largest automatic window size as a percentage of the usable monitor area.</numentry>
     </frame>
@@ -96,7 +96,7 @@
   <section title='Thumbnails'>
     <frame label='Image previews'>
       <toggle name='display_show_thumbs' label='Show image thumbnails by default'>Individual filer windows can still enable or disable thumbnails from the Display menu or toolbar.</toggle>
-      <label help='1'>Thumbnails are generated in the background. Until a preview is ready, ROX-Filer displays the normal MIME icon.</label>
+      <label help='1'>Thumbnails are generated in the background. Until a preview is ready, Rox-Filer2 displays the normal MIME icon.</label>
       <label help='1'>The cache follows the Freedesktop location under ~/.cache/thumbnails/normal.</label>
     </frame>
     <frame label='Thumbnail cache'>
@@ -107,7 +107,7 @@
   <section title='Paired Windows'>
     <frame label='Two filer windows'>
       <toggle name='pair_enabled' label='Enable paired-window features'>Enable the Window menu actions, toolbar action and --pair command.</toggle>
-      <toggle name='pair_startup' label='Start automatically with paired windows'>Open two filer windows when a normal ROX-Filer process starts.</toggle>
+      <toggle name='pair_startup' label='Start automatically with paired windows'>Open two filer windows when a normal Rox-Filer2 process starts.</toggle>
       <toggle name='pair_remember_dirs' label='Remember the last two directories'/>
       <toggle name='pair_same_monitor' label='Keep both windows on the same monitor'/>
     </frame>
@@ -142,7 +142,22 @@
       <numentry name='search_content_limit_mb' label='Maximum file size for content search:' unit='MB' min='1' max='1024' width='4'>Larger files are skipped when searching inside file contents.</numentry>
       <search-tools/>
     </frame>
-    <label help='1'>ROX File Search is a separate GTK3 process. It follows the system GTK theme and can search one or several selected directories without increasing the normal memory use of ROX-Filer.</label>
+    <label help='1'>ROX File Search is a separate GTK3 process. It follows the system GTK theme and can search one or several selected directories without increasing the normal memory use of Rox-Filer2.</label>
+  </section>
+
+
+  <section title='MIME Types and File Actions'>
+    <frame label='Applications for MIME types'>
+      <label>Applications associated with the selected MIME type are shown directly at the top of the file menu, preserving the classic ROX tools workflow.</label>
+      <label help='1'>Open With reads installed .desktop files, GIO and ~/.config/mimeapps.list. It also scans the real XDG application directories when a distribution has no updated MIME cache. Folders are handled as inode/directory.</label>
+      <file-association-tools/>
+      <label help='1'>User applications are stored below ~/.local/share/applications and their icons below ~/.local/share/icons. Rox-Filer2 obtains the real paths from GLib for the active user.</label>
+    </frame>
+    <frame label='Actions for files and directories'>
+      <label>Create commands for files, directories or symbolic links. Matching actions appear beside the MIME applications in the foreground of the contextual menu.</label>
+      <custom-action-tools/>
+      <label help='1'>Actions are stored below ~/.local/share/rox-filer/actions and can be limited by MIME type and by single or multiple selection. Historical OpenWith and SendTo directories are not read.</label>
+    </frame>
   </section>
 
   <section title='File Operations'>
@@ -201,14 +216,13 @@
   <section title='Desktop'>
     <frame label='ROX Desktop tools'>
       <desktop-tools/>
-      <label help='1'>These buttons manage the desktop started with ROX-Filer --desktop. The classic pinboard remains separate.</label>
+      <label help='1'>These buttons manage the single desktop started with Rox-Filer2 --desktop.</label>
     </frame>
   </section>
 
-  <section title='Classic Compatibility'>
-    <frame label='Menus'>
-      <toggle name='menu_legacy_sendto' label='Enable the legacy SendTo directory menu'>Read classic SendTo entries from ROX configuration directories. This is disabled by default.</toggle>
-      <toggle name='menu_xdg_apps' label='Show installed .desktop applications in application menus'/>
+  <section title='Compatibility'>
+    <frame label='Menus and terminal'>
+      <label help='1'>MIME applications and matching file actions are shown directly in the selected-item menu. Historical OpenWith and SendTo directories are ignored.</label>
       <toggle name='menu_hide_unavailable' label='Hide native menu actions that do not apply'>For example, hide Run in Terminal for a normal directory instead of showing it disabled.</toggle>
       <toggle name='menu_quick' label='Show the File submenu directly on right-click'/>
       <menu name='menu_iconsize' label='Menu icon size:'>
@@ -222,9 +236,8 @@
       <toggle name='menu_xterm_grave' label='Open a terminal with the grave (`) key'/>
       <menu-set-keys/>
     </frame>
-    <frame label='Classic pinboard and panels'>
-      <toggle name='override_redirect' label='Override window-manager control of classic pinboards and panels'/>
-      <toggle name='pinboard_forward_buttons_13' label='Forward classic backdrop clicks to the window manager'/>
+    <frame label='Classic panels'>
+      <toggle name='override_redirect' label='Override window-manager control of classic panels'/>
       <toggle name='panel_is_dock' label='Treat classic panels as docks'/>
       <toggle name='panel_on_top' label='Keep classic panels above other windows'/>
       <toggle name='panel_obey_workarea' label='Keep classic panels inside the work area'/>

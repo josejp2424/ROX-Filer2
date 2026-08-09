@@ -87,7 +87,8 @@ static void toolbar_bookmarks_clicked(GtkWidget *widget,
 				      FilerWindow *filer_window);
 static void toolbar_refresh_clicked(GtkWidget *widget,
 				    FilerWindow *filer_window);
-static void toolbar_size_clicked(GtkWidget *widget, FilerWindow *filer_window);
+static void toolbar_zoom_out_clicked(GtkWidget *widget, FilerWindow *filer_window);
+static void toolbar_zoom_in_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_autosize_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_details_clicked(GtkWidget *widget,
 				    FilerWindow *filer_window);
@@ -151,12 +152,18 @@ static Tool all_tools[] = {
 	 toolbar_refresh_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
-	{N_("Size"), ROX_ICON_ZOOM_IN, N_("Change icon size"),
-	 toolbar_size_clicked, DROP_NONE, TRUE,
+	/* r69: controles de tamaño explícitos. Antes los dos botones se
+	 * llamaban "Size" y reducir dependía de un clic secundario oculto. */
+	{N_("Smaller Icons"), ROX_ICON_ZOOM_OUT, N_("Smaller Icons"),
+	 toolbar_zoom_out_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
-	{N_("Size"), ROX_ICON_ZOOM_FIT, N_("Automatic size mode"),
+	{N_("Automatic"), ROX_ICON_ZOOM_FIT, N_("Automatic size mode"),
 	 toolbar_autosize_clicked, DROP_NONE, TRUE,
+	 FALSE},
+
+	{N_("Bigger Icons"), ROX_ICON_ZOOM_IN, N_("Bigger Icons"),
+	 toolbar_zoom_in_clicked, DROP_NONE, TRUE,
 	 FALSE},
 
 	{N_("Details"), ROX_ICON_SHOW_DETAILS, N_("Left: toggle List View\n"
@@ -188,7 +195,7 @@ static Tool all_tools[] = {
 	 toolbar_search_clicked, DROP_NONE, FALSE,
 	 FALSE},
 
-	{N_("Paired Windows"), "window-new", N_("Open two ROX-Filer windows side by side"),
+	{N_("Paired Windows"), "window-new", N_("Open two Rox-Filer2 windows side by side"),
 	 toolbar_pair_clicked, DROP_NONE, FALSE,
 	 FALSE},
 };
@@ -451,14 +458,16 @@ static void toolbar_autosize_clicked(GtkWidget *widget, FilerWindow *filer_windo
 	gdk_event_free((GdkEvent *) bev);
 }
 
-static void toolbar_size_clicked(GtkWidget *widget, FilerWindow *filer_window)
+static void toolbar_zoom_out_clicked(GtkWidget *widget, FilerWindow *filer_window)
 {
-	GdkEventButton	*bev;
+	(void) widget;
+	display_change_size(filer_window, FALSE);
+}
 
-	bev = (GdkEventButton *) get_current_event(GDK_BUTTON_RELEASE);
-	if (bev->type == GDK_BUTTON_RELEASE)
-		display_change_size(filer_window, bev->button == 1);
-	gdk_event_free((GdkEvent *) bev);
+static void toolbar_zoom_in_clicked(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	display_change_size(filer_window, TRUE);
 }
 
 /* Modificado por josejp2424 (2026): se eliminó el callback de

@@ -274,7 +274,7 @@ void options_notify(void)
 	{
 		updating_file_format = FALSE;
 		save_options();
-		info_message(_("ROX-Filer has converted your Options file "
+		info_message(_("Rox-Filer2 has converted your Options file "
 				"to the new XML format"));
 	}
 

@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -45,6 +46,7 @@
 
 #include "main.h"
 #include "gui_support.h"
+#include "debug_log.h"
 #include "support.h"
 
 /* EWMH _NET_WM_STATE client message actions.
@@ -92,7 +94,7 @@ static gint tip_timeout = 0;	/* When primed */
  * del área útil real del monitor. gtk_window_set_position() no siempre respeta
  * _NET_WORKAREA cuando la ventana padre es el escritorio a pantalla completa;
  * por eso el movimiento final se realiza una vez que la ventana ya fue mapeada.
- * Paneles, pinboard, menús, tooltips y superficies DND quedan excluidos. */
+ * Paneles, escritorio, menús, tooltips y superficies DND quedan excluidos. */
 static gboolean rox_window_is_position_exempt(GtkWindow *window)
 {
 	GdkWindowTypeHint type_hint;
@@ -705,7 +707,7 @@ void make_panel_window(GtkWidget *widget)
 	gdk_window_set_functions(window, 0);
 	gtk_window_set_resizable(GTK_WINDOW(widget), FALSE);
 
-	/* Don't hide panel/pinboard windows initially (WIN_STATE_HIDDEN).
+	/* Don't hide panel/desktop windows initially (WIN_STATE_HIDDEN).
 	 * Needed for IceWM - Christopher Arndt <chris.arndt@web.de>
 	 */
 	set_cardinal_property(window, xa_state,
@@ -867,7 +869,7 @@ void parse_file(const char *path, ParseFunc *parse_line)
 		_("Error in '%s' file at line %d: "
 		"\n\"%s\"\n"
 		"This may be due to upgrading from a previous version of "
-		"ROX-Filer. Open the Options window and try changing something "
+		"Rox-Filer2. Open the Options window and try changing something "
 		"and then changing it back (causing the file to be resaved).\n"
 		"Further errors will be ignored."),
 					path,
@@ -1013,6 +1015,63 @@ void destroy_on_idle(GtkWidget *widget)
 {
 	g_object_ref(widget);
 	g_idle_add((GSourceFunc) idle_destroy_cb, widget);
+}
+
+/* Append a launch diagnostic line when ROX_DEBUG_LOG points to a file.
+ * This is intentionally disabled by default and is useful for reproducing
+ * MIME/terminal failures in the real desktop session. */
+void rox_debug_log(const gchar *category, const gchar *format, ...)
+{
+	const gchar *path = g_getenv("ROX_DEBUG_LOG");
+	GDateTime *now;
+	gchar *stamp;
+	gchar *message;
+	va_list args;
+	FILE *stream;
+
+	if (!format)
+		return;
+
+	va_start(args, format);
+	message = g_strdup_vprintf(format, args);
+	va_end(args);
+	if (!message)
+		return;
+
+	/* New r74 logger: disabled by default, rotated and shared by X11,
+	 * Wayland, MIME and terminal diagnostics. */
+	if (rox_debug_log_is_enabled())
+	{
+		rox_debug_log_message(ROX_DEBUG_LEVEL_DEBUG,
+			category && *category ? category : "ROX", "%s", message);
+		g_free(message);
+		return;
+	}
+
+	/* Compatibility with the r72 trace helper. This path is used only when
+	 * ROX_DEBUG_LOG is explicitly exported by the user. */
+	if (!path || !*path)
+	{
+		g_free(message);
+		return;
+	}
+	stream = fopen(path, "a");
+	if (!stream)
+	{
+		g_free(message);
+		return;
+	}
+
+	now = g_date_time_new_now_local();
+	stamp = now ? g_date_time_format(now, "%Y-%m-%d %H:%M:%S.%f") : NULL;
+	fprintf(stream, "[%s] pid=%ld %s: %s\n",
+		stamp ? stamp : "unknown-time", (long)getpid(),
+		category && *category ? category : "ROX", message);
+	fclose(stream);
+	g_free(stamp);
+	if (now)
+		g_date_time_unref(now);
+	g_free(message);
 }
 
 /* Spawn a child process (as spawn_full), and report errors.

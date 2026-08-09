@@ -1,4 +1,4 @@
-# Dutch messages for ROX-Filer
+# Dutch messages for Rox-Filer2
 # Copyright (C) 2001 Jan Wagemakers <janw@linuxfreak.com>
 # Jan Wagemakers <janw@linuxfreak.com>, 2001.
 #
@@ -22,7 +22,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ROX-Filer 2.12-r57\n"
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-07-29 17:41-0300\n"
 "PO-Revision-Date: 2026-07-29 17:41-0300\n"
@@ -229,26 +229,26 @@ msgstr "Zet type referentie"
 
 #: action.c:324
 msgid ""
-"Normally ROX-Filer determines the type of a regular file\n"
+"Normally Rox-Filer2 determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
 "type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
-"each file as named parameters. ROX-Filer uses the\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
 "'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
 "directories, devices, pipes or sockets, and then only\n"
 "on certain file systems and where the OS implements them.\n"
 msgstr ""
-"ROX-Filer bepaalt het type van een normaal bestand\n"
+"Rox-Filer2 bepaalt het type van een normaal bestand\n"
 "aan de hand van overeenkomst met een bepaald patroon. Hernoem het \n"
 "bestand om het type te veranderen.\n"
 "\n"
 "Nieuwere bestands-systemen kunnen zaken als 'Extended\n"
 "Attributes' ondersteunen, welke gebruikt kan worden om extra \n"
-"gegevens met elk bestand te bewaren. ROX-Filer gebruikt het\n"
+"gegevens met elk bestand te bewaren. Rox-Filer2 gebruikt het\n"
 "'user.mime_type' attribute om het bestands type te bewaren.\n"
 "\n"
 "Bestands types worden enkel voor normale bestanden ondersteund, \n"
@@ -599,8 +599,8 @@ msgid "Mount / Unmount"
 msgstr "Aankoppelen / Afkoppelen"
 
 #: action.c:2197
-msgid "ROX-Filer does not yet support mount points on your system. Sorry."
-msgstr "ROX-Filer ondersteunt nog geen aankoppelpunten op uw systeem. Sorry."
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
+msgstr "Rox-Filer2 ondersteunt nog geen aankoppelpunten op uw systeem. Sorry."
 
 #: action.c:2211 menu.c:246 tips:194
 msgid "Delete"
@@ -1567,7 +1567,7 @@ msgstr ""
 msgid ""
 "Error in '%s' file at line %d: \n"
 "\"%s\"\n"
-"This may be due to upgrading from a previous version of ROX-Filer. Open the "
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the "
 "Options window and try changing something and then changing it back (causing "
 "the file to be resaved).\n"
 "Further errors will be ignored."
@@ -1613,7 +1613,7 @@ msgid ""
 "Note that you must save your choices and restart the filer for the new "
 "language setting to take full effect."
 msgstr ""
-"Sla uw instellingen op en herstart ROX-Filer om de nieuwe taalinstelling "
+"Sla uw instellingen op en herstart Rox-Filer2 om de nieuwe taalinstelling "
 "effect te laten hebben."
 
 #: icon.c:76
@@ -1621,12 +1621,12 @@ msgid "(click to set)"
 msgstr "(klik om te in te stellen)"
 
 #: icon.c:131
-msgid "ROX-Filer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2"
+msgstr "Rox-Filer2"
 
 #: icon.c:132 menu.c:294
-msgid "About ROX-Filer..."
-msgstr "Over ROX-Filer..."
+msgid "About Rox-Filer2..."
+msgstr "Over Rox-Filer2..."
 
 #: icon.c:133 menu.c:295
 msgid "Show Help Files"
@@ -1967,8 +1967,8 @@ msgstr "Aankoppelpunt (%s)"
 
 #: log.c:54
 #, fuzzy
-msgid "ROX-Filer started"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2 started"
+msgstr "Rox-Filer2"
 
 #: log.c:115
 #, fuzzy, c-format
@@ -1993,26 +1993,26 @@ msgstr "Opties"
 #: main.c:97
 msgid ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer comes with ABSOLUTELY NO WARRANTY,\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
 "to the extent permitted by law.\n"
-"You may redistribute copies of ROX-Filer\n"
+"You may redistribute copies of Rox-Filer2\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the file named COPYING.\n"
 msgstr ""
 "Copyright (C) 2005 Thomas Leonard.\n"
-"ROX-Filer komt ABSOLUUT ZONDER GARANTIE,\n"
+"Rox-Filer2 komt ABSOLUUT ZONDER GARANTIE,\n"
 "voor zover wettelijk toegestaan.\n"
-"Kopiëen van ROX-Filer mogen verspreid worden onder de \n"
+"Kopiëen van Rox-Filer2 mogen verspreid worden onder de \n"
 "voorwaarden van de GNU General Public Licence.\n"
 "Voor meer informatie zie het bestand COPYING.\n"
 
 #: main.c:106
-msgid "Try `ROX-Filer/AppRun --help' for more information.\n"
-msgstr "Probeer `ROX-Filer/AppRun --help' voor meer informatie.\n"
+msgid "Try `Rox-Filer2/AppRun --help' for more information.\n"
+msgstr "Probeer `Rox-Filer2/AppRun --help' voor meer informatie.\n"
 
 #: main.c:109
-msgid "Try `ROX-Filer/AppRun -h' for more information.\n"
-msgstr "Probeer `ROX-Filer/AppRun -h' voor meer informatie.\n"
+msgid "Try `Rox-Filer2/AppRun -h' for more information.\n"
+msgstr "Probeer `Rox-Filer2/AppRun -h' voor meer informatie.\n"
 
 #: main.c:111
 msgid ""
@@ -2022,62 +2022,6 @@ msgid ""
 msgstr ""
 "Let op: uw systeem ondersteunt geen lange opties - \n"
 "gebruik in plaats daarvan de korte versies.\n"
-
-#: main.c:117
-#, fuzzy, c-format
-msgid ""
-"Usage: ROX-Filer/AppRun [OPTION]... [FILE]...\n"
-"Open each directory or file listed, or the current working\n"
-"directory if no arguments are given.\n"
-"\n"
-"  -b, --border=PANEL\topen PANEL as a border panel\n"
-"  -B, --bottom=PANEL\topen PAN as a bottom-edge panel\n"
-"  -c, --client-id=ID\tused for session management\n"
-"  -d, --dir=DIR\t\topen DIR as directory (not application)\n"
-"  -D, --close=DIR\tclose DIR and its subdirectories\n"
-"  -h, --help\t\tdisplay this help and exit\n"
-"  -l, --left=PANEL\topen PAN as a left-edge panel\n"
-"  -m, --mime-type=FILE\tprint MIME type of FILE and exit\n"
-"  -n, --new\t\tstart new copy; for debugging the filer\n"
-"  -p, --pinboard=PIN\tuse pinboard PIN as the pinboard\n"
-"  -r, --right=PANEL\topen PAN as a right-edge panel\n"
-"  -R, --RPC\t\tinvoke method call read from stdin\n"
-"  -s, --show=FILE\topen a directory showing FILE\n"
-"  -S, --rox-session\tuse default panel and pinboard options, and -n\n"
-"  -t, --top=PANEL\topen PANEL as a top-edge panel\n"
-"  -u, --user\t\tshow user name in each window \n"
-"  -U, --url=URL\t\topen file or directory in URI form\n"
-"  -v, --version\t\tdisplay the version information and exit\n"
-"  -x, --examine=FILE\tFILE has changed - re-examine it\n"
-"\n"
-"Report bugs to %s.\n"
-"Home page (including updated versions): http://rox.sourceforge.net/\n"
-msgstr ""
-"Gebruik: ROX-Filer/AppRun [OPTIES]... [BESTAND]...\n"
-"Open de opgegeven mappen en bestanden of de huidige map als er geen \n"
-"argumenten zijn gegeven.\n"
-"\n"
-"  -b, --bottom=PANEL    open PANEL als een paneel onderaan het scherm\n"
-"  -B, --bottom=PANEL    open PANEL als een paneel onderaan het scherm\n"
-"  -c, --client-id=ID    gebruik ID voor sessiebeheer\n"
-"  -d, --dir=DIR         open DIR als map (niet als applicatie)\n"
-"  -D, --close=DIR       sluit DIR en de subdirectories ervan\n"
-"  -h, --help            toon deze helptekst en sluit af\n"
-"  -l, --left=PANEL      open PANEL als paneel links op het scherm\n"
-"  -m, --mime-type=FILE  print MIME type van FILE en sluit af\n"
-"  -n, --new             start een nieuw proces, voor debuggen filer\n"
-"  -p, --pinboard=PIN    gebruik PIN als het prikbord\n"
-"  -r, --right=PANEL     open PANEL als paneel rechts op het scherm\n"
-"  -R, --RPC             lees Remote Procedure Call van standaard invoer\n"
-"  -s, --show=FILE       open een map en toon FILE\n"
-"  -S, --rox-session     gebruik de standaard panel en pinboard opties, en -"
-"n\n"
-"  -t, --top=PANEL       open PANEL als paneel bovenaan het scherm\n"
-"  -u, --user            toon gebruikersnaam in ieder venster\n"
-"  -v, --version         toon informatie over versie en sluit af\n"
-"  -x, --examine=FILE    FILE is veranderd - opnieuw bekijken\n"
-"\n"
-"Rapporteer bugs aan "
 
 #: main.c:239
 msgid ""
@@ -2167,7 +2111,7 @@ msgstr ""
 
 #: main.c:1010
 msgid ""
-"Click to save a script to run ROX-Filer.\n"
+"Click to save a script to run Rox-Filer2.\n"
 "If you are using Zero Install you should use 0alias instead."
 msgstr ""
 
@@ -2800,9 +2744,9 @@ msgid "%s total, %s used, %s free (%.1f %%)"
 msgstr "%s totaal, %s gebruikt, %s vrij (%.1f %%)"
 
 #: options.c:275
-msgid "ROX-Filer has converted your Options file to the new XML format"
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
 msgstr ""
-"ROX-Filer heeft uw oude Options-bestand omgezet naar het nieuwe XML formaat"
+"Rox-Filer2 heeft uw oude Options-bestand omgezet naar het nieuwe XML formaat"
 
 #: options.c:535 options.c:1256
 msgid "(use default)"
@@ -2958,15 +2902,15 @@ msgstr ""
 #: pinboard.c:749
 msgid ""
 "You can only set the backdrop to an image or to a program which knows how to "
-"manage ROX-Filer's backdrop.\n"
+"manage Rox-Filer2's backdrop.\n"
 "\n"
 "Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
-"element, as described in ROX-Filer's manual."
+"element, as described in Rox-Filer2's manual."
 msgstr ""
 "U kunt de achtergrond alleen instellen met een afbeelding of met een "
-"programma dat weet hoe de ROX-Filer achtergrond in te stellen.\n"
+"programma dat weet hoe de Rox-Filer2 achtergrond in te stellen.\n"
 "Programmeurs: de AppInfo.xml van de applicatie dient een CanSetBackdrop "
-"element te bevatten, zoals beschreven in het ROX-Filer handboek."
+"element te bevatten, zoals beschreven in het Rox-Filer2 handboek."
 
 #: pinboard.c:769
 msgid "Set backdrop"
@@ -3215,7 +3159,7 @@ msgid ""
 msgstr ""
 "Uitvoerbaar bestand '%s' is wereld-schrijfbaar! Weigering om te starten. "
 "Gelieve de toegangsrechten nu aan te passen (dit probleem kan het gevolg "
-"zijn van een fout in eerdere versies van ROX-Filer).\n"
+"zijn van een fout in eerdere versies van Rox-Filer2).\n"
 "\n"
 "Het hebben van (niet-symlink) wereld schrijfbare start acties betekent dat "
 "andere mensen die uw computer gebruiken de mogelijkheid hebben om ze te "
@@ -3342,8 +3286,8 @@ msgid ""
 msgstr ""
 
 #: toolbar.c:176
-msgid "Show ROX-Filer help"
-msgstr "Toon ROX-Filer help"
+msgid "Show Rox-Filer2 help"
+msgstr "Toon Rox-Filer2 help"
 
 #: toolbar.c:239
 #, c-format
@@ -4146,7 +4090,7 @@ msgid ""
 "Each filer window is constrained to be wide enough to show the whole of the "
 "toolbar"
 msgstr ""
-"Elk ROX-Filer venster blijft breed genoeg om de gehele werkbalk te tonen"
+"Elk Rox-Filer2 venster blijft breed genoeg om de gehele werkbalk te tonen"
 
 #: tips:110
 msgid "Minibuffer"
@@ -4336,11 +4280,11 @@ msgstr "Geminimaliseerde vensters"
 #: tips:150
 msgid ""
 "Most window managers provide a way to iconify (or 'minimise') windows, and "
-"various programs, including ROX-Filer, can be used to display the iconified "
+"various programs, including Rox-Filer2, can be used to display the iconified "
 "windows."
 msgstr ""
 "De meeste window managers hebben een manier om vensters te minimaliseren, en "
-"verschillende programma's, inclusief ROX-Filer, kunnen worden gebruikt om de "
+"verschillende programma's, inclusief Rox-Filer2, kunnen worden gebruikt om de "
 "geminimaliseerde vensters te tonen."
 
 #: tips:152
@@ -4408,10 +4352,10 @@ msgid ""
 "or bottom margin to avoid placing the icons there. The filer already knows "
 "about its own panel."
 msgstr ""
-"Soms kent ROX-Filer de inrichting van uw desktop niet "
+"Soms kent Rox-Filer2 de inrichting van uw desktop niet "
 "waardoorgeminimaliseerde vensters (bij voorbeeld) onder het Gnome paneel "
 "geplaatst worden. Dit kan vermeden worden door een boven en onder grens in "
-"te stellen. ROX-Filer is reeds bewust van zijn eigen paneel."
+"te stellen. Rox-Filer2 is reeds bewust van zijn eigen paneel."
 
 #: tips:165
 msgid "Top margin"
@@ -4459,7 +4403,7 @@ msgid ""
 "open up a panel and/or the pinboard.  Here you configure which."
 msgstr ""
 "Wanneer een sessie-beheer programma (zoals ROX-Session) gebruikt wordt, kan "
-"ROX-Filer een paneel en/of prikbord tonen. Dit kan je hier instellen."
+"Rox-Filer2 een paneel en/of prikbord tonen. Dit kan je hier instellen."
 
 #: tips:175
 msgid "Panel only"
@@ -4696,7 +4640,7 @@ msgid ""
 msgstr ""
 "Wanneer een bestand gesleept wordt vanaf een webbrowser of andere afstands-"
 "bron zal dit programma gestart worden om het binnen te halen. $1 is de URI\n"
-"gesleept naar ROX-Filer, en de huidige map is het doel. Bv.:\n"
+"gesleept naar Rox-Filer2, en de huidige map is het doel. Bv.:\n"
 "xterm -e wget $1"
 
 #: tips:237
@@ -4940,12 +4884,12 @@ msgstr ""
 #: tips:290
 msgid ""
 "Blackbox, Fluxbox and similar window managers do not yet work well with the "
-"ROX-Filer pinboard. This option enables some workarounds. These window "
+"Rox-Filer2 pinboard. This option enables some workarounds. These window "
 "managers are expected to change their behaviour in new versions so that this "
 "isn't necessary."
 msgstr ""
 "Blackbox, Fluxbox en gelijkaardige window managers werken nog niet goed "
-"samen met het ROX-Filer prikbord. Met deze optie wordt er rond dit probleem "
+"samen met het Rox-Filer2 prikbord. Met deze optie wordt er rond dit probleem "
 "gewerkt.Er van uit gaande dat deze window managers hun gedrag in een "
 "nieuwere versie zullen aanpassen kan het zijn dat dit niet meer nodig is."
 
@@ -5023,8 +4967,8 @@ msgstr ""
 
 #: ../Templates.ui.h:1
 #, fuzzy
-msgid "ROX-Filer log viewer"
-msgstr "ROX-Filer"
+msgid "Rox-Filer2 log viewer"
+msgstr "Rox-Filer2"
 
 #: ../Templates.ui.h:2
 msgid "Recently performed actions..."
@@ -5096,7 +5040,7 @@ msgid ""
 msgstr ""
 "Vraag aan de window-manager om panelen bij het maximaliseren van vensters "
 "niet te bedekken. Merk op dat dit bij sommige window-managers niet zal "
-"werken. Zonder deze optie zal ROX-Filer enkel vragen dat een paar pixels "
+"werken. Zonder deze optie zal Rox-Filer2 enkel vragen dat een paar pixels "
 "niet bedekt worden zodat panelen automatisch naar voren kunnen komen."
 
 #: ../Templates.ui.h:16
@@ -5434,3 +5378,24 @@ msgstr[1] ""
 #: trash.c
 msgid "%u items were restored."
 msgstr ""
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "open two Rox-Filer2 windows side by side"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

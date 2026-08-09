@@ -35,6 +35,7 @@
 #include <fnmatch.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <gio/gio.h>
 
 #ifdef WITH_GNOMEVFS
 # include <libgnomevfs/gnome-vfs.h>
@@ -64,6 +65,7 @@
 #include "xdgmime.h"
 #include "xtypes.h"
 #include "run.h"
+#include "debug_log.h"
 
 #define TYPE_NS "http://www.freedesktop.org/standards/shared-mime-info"
 
@@ -78,6 +80,9 @@ static GList *build_icon_theme(Option *option, xmlNode *node, guchar *label);
 /* Agregado por josejp2424 (2026): mantener los iconos de carpetas normales
  * sincronizados con el tema de iconos GTK3 activo. */
 static GdkPixbuf *load_system_folder_icon(void);
+static GtkIconInfo *mime_type_lookup_system_icon_info(MIME_type *type,
+		gchar **resolved_name);
+static void log_system_icon_theme(void);
 static void system_icon_theme_changed(GtkIconTheme *theme, gpointer data);
 
 /* Hash of all allocated MIME types, indexed by "media/subtype".
@@ -120,6 +125,7 @@ void type_init(void)
 	if (gtk_icon_theme_get_default())
 		g_signal_connect(gtk_icon_theme_get_default(), "changed",
 			G_CALLBACK(system_icon_theme_changed), NULL);
+	log_system_icon_theme();
 
 	text_plain = get_mime_type("text/plain", TRUE);
 	inode_directory = get_mime_type("inode/directory", TRUE);
@@ -368,6 +374,86 @@ inline static void init_gnome_theme(void)
 	init_aux_theme(&gnome_theme, "gnome");
 }
 
+/* r75: registrar el tema real que GTK está usando. El antiguo selector de
+ * temas MIME de ROX puede seguir existiendo como compatibilidad, pero los
+ * iconos Freedesktop se deben resolver contra el tema activo del sistema. */
+static void log_system_icon_theme(void)
+{
+	GtkSettings *settings = gtk_settings_get_default();
+	GtkIconTheme *theme = gtk_icon_theme_get_default();
+	gchar *name = NULL;
+	gchar **paths = NULL;
+	gint n_paths = 0;
+	gint i;
+
+	if (settings)
+		g_object_get(settings, "gtk-icon-theme-name", &name, NULL);
+	ROX_LOG_INFO("icon-theme", "gtk-icon-theme-name=%s",
+			name ? name : "(unset)");
+	g_free(name);
+
+	if (!theme)
+	{
+		ROX_LOG_WARNING("icon-theme", "GTK did not provide a default icon theme");
+		return;
+	}
+
+	gtk_icon_theme_get_search_path(theme, &paths, &n_paths);
+	for (i = 0; i < n_paths; i++)
+		ROX_LOG_DEBUG("icon-theme", "search-path[%d]=%s", i, paths[i]);
+	g_strfreev(paths);
+}
+
+/* Resolve a MIME icon using the active GTK/Freedesktop icon theme. GIO
+ * supplies an ordered GThemedIcon list (for example text-plain followed by
+ * text-x-generic), which is much more complete than the historical ROX MIME
+ * theme. */
+static GtkIconInfo *mime_type_lookup_system_icon_info(MIME_type *type,
+		gchar **resolved_name)
+{
+	GtkIconTheme *theme = gtk_icon_theme_get_default();
+	GtkIconInfo *info = NULL;
+	GIcon *gicon = NULL;
+	gchar *content_type;
+	gchar *generic = NULL;
+
+	if (resolved_name)
+		*resolved_name = NULL;
+	if (!theme || !type)
+		return NULL;
+
+	content_type = g_strconcat(type->media_type, "/", type->subtype, NULL);
+	gicon = g_content_type_get_icon(content_type);
+	if (gicon)
+	{
+		if (resolved_name && G_IS_THEMED_ICON(gicon))
+		{
+			const gchar * const *names = g_themed_icon_get_names(G_THEMED_ICON(gicon));
+			if (names && names[0])
+				*resolved_name = g_strdup(names[0]);
+		}
+		info = gtk_icon_theme_lookup_by_gicon(theme, gicon, HUGE_HEIGHT,
+				GTK_ICON_LOOKUP_FORCE_SIZE);
+		g_object_unref(gicon);
+	}
+
+	if (!info)
+	{
+		generic = g_content_type_get_generic_icon_name(content_type);
+		if (generic)
+		{
+			info = gtk_icon_theme_lookup_icon(theme, generic, HUGE_HEIGHT,
+					GTK_ICON_LOOKUP_FORCE_SIZE);
+			if (info && resolved_name && !*resolved_name)
+				*resolved_name = g_strdup(generic);
+		}
+	}
+
+	g_free(generic);
+	g_free(content_type);
+	return info;
+}
+
 /* Agregado por josejp2424 (2026): cargar las carpetas normales desde el
  * tema GTK3 activo, usando los nombres estándar de Freedesktop. Esto evita
  * que un antiguo MIME-icons/inode_directory.png imponga otro color. */
@@ -400,8 +486,8 @@ static GdkPixbuf *load_system_folder_icon(void)
 	return NULL;
 }
 
-/* We don't want ROX to override configured theme so try all possibilities
- * in icon_theme first */
+/* Legacy ROX/GNOME MIME icon-name lookup, used only after the active GTK
+ * theme has been tried. */
 static GtkIconInfo *mime_type_lookup_icon_info(GtkIconTheme *theme,
 		MIME_type *type)
 {
@@ -443,8 +529,8 @@ static GtkIconInfo *mime_type_lookup_icon_info(GtkIconTheme *theme,
 /* Return the image for this type, loading it if needed.
  * Places to check are: (eg type="text_plain", base="text")
  * 1. <Choices>/MIME-icons/base_subtype
- * 2. Icon theme 'mime-base:subtype'
- * 3. Icon theme 'mime-base'
+ * 2. Active GTK/Freedesktop icon theme via GIO
+ * 3. Selected legacy ROX/GNOME MIME theme
  * 4. Unknown type icon.
  *
  * Special case: If an icon cannot be found for inode/mount-point, the icon for
@@ -456,6 +542,8 @@ MaskedPixmap *type_to_icon(MIME_type *type)
 {
 	GtkIconInfo *full;
 	GdkPixbuf *folder_pixbuf;
+	GdkPixbuf *loaded_pixbuf = NULL;
+	gchar *resolved_icon_name = NULL;
 	char	*type_name, *path;
 	time_t	now;
 
@@ -490,6 +578,7 @@ again:
 		{
 			type->image = masked_pixmap_new(folder_pixbuf);
 			g_object_unref(folder_pixbuf);
+			ROX_LOG_DEBUG("mime-icon", "mime=inode/directory source=gtk-system name=folder");
 			goto out;
 		}
 	}
@@ -503,11 +592,48 @@ again:
 	if (path)
 	{
 		type->image = g_fscache_lookup(pixmap_cache, path);
+		if (type->image)
+			ROX_LOG_DEBUG("mime-icon", "mime=%s/%s source=choices path=%s",
+				type->media_type, type->subtype, path);
 		g_free(path);
 	}
 
 	if (type->image)
 		goto out;
+
+	/* r75: use the active GTK icon theme before legacy ROX/GNOME themes. */
+	full = mime_type_lookup_system_icon_info(type, &resolved_icon_name);
+	if (full)
+	{
+		GError *load_error = NULL;
+		const gchar *icon_path = gtk_icon_info_get_filename(full);
+
+		loaded_pixbuf = gtk_icon_info_load_icon(full, &load_error);
+		if (loaded_pixbuf)
+		{
+			type->image = masked_pixmap_new(loaded_pixbuf);
+			g_object_unref(loaded_pixbuf);
+			ROX_LOG_DEBUG("mime-icon",
+				"mime=%s/%s source=gtk-system name=%s path=%s",
+				type->media_type, type->subtype,
+				resolved_icon_name ? resolved_icon_name : "(gicon)",
+				icon_path ? icon_path : "(builtin)");
+		}
+		else
+		{
+			ROX_LOG_WARNING("mime-icon",
+				"mime=%s/%s system icon load failed name=%s error=%s",
+				type->media_type, type->subtype,
+				resolved_icon_name ? resolved_icon_name : "(gicon)",
+				load_error ? load_error->message : "unknown");
+		}
+		g_clear_error(&load_error);
+		gtk_icon_info_free(full);
+		g_clear_pointer(&resolved_icon_name, g_free);
+		if (type->image)
+			goto out;
+	}
+	g_clear_pointer(&resolved_icon_name, g_free);
 
 	full = mime_type_lookup_icon_info(icon_theme, type);
 	if (!full && icon_theme != rox_theme)
@@ -529,15 +655,32 @@ again:
 	if (full)
 	{
 		const char *icon_path;
-		/* Get the actual icon through our cache, not through GTK, because
-		 * GTK doesn't cache icons.
-		 */
+		GError *load_error = NULL;
+		/* Keep the historical cache when the theme exposes a file. For
+		 * builtin icons, ask GTK to render the icon directly. */
 		icon_path = gtk_icon_info_get_filename(full);
 		if (icon_path != NULL)
 			type->image = g_fscache_lookup(pixmap_cache, icon_path);
-		/* else shouldn't happen, because we didn't use
-		 * GTK_ICON_LOOKUP_USE_BUILTIN.
-		 */
+		if (!type->image)
+		{
+			loaded_pixbuf = gtk_icon_info_load_icon(full, &load_error);
+			if (loaded_pixbuf)
+			{
+				type->image = masked_pixmap_new(loaded_pixbuf);
+				g_object_unref(loaded_pixbuf);
+			}
+		}
+		if (type->image)
+			ROX_LOG_DEBUG("mime-icon",
+				"mime=%s/%s source=legacy-theme path=%s",
+				type->media_type, type->subtype,
+				icon_path ? icon_path : "(builtin)");
+		else
+			ROX_LOG_WARNING("mime-icon",
+				"mime=%s/%s legacy icon load failed error=%s",
+				type->media_type, type->subtype,
+				load_error ? load_error->message : "unknown");
+		g_clear_error(&load_error);
 		gtk_icon_info_free(full);
 	}
 
@@ -547,6 +690,8 @@ out:
 		/* One ref from the type structure, one returned */
 		type->image = im_unknown;
 		g_object_ref(im_unknown);
+		ROX_LOG_WARNING("mime-icon", "mime=%s/%s source=unknown-fallback",
+			type->media_type, type->subtype);
 	}
 
 	type->image_time = now;
@@ -727,6 +872,8 @@ static void system_icon_theme_changed(GtkIconTheme *theme, gpointer data)
 	if (!type_hash)
 		return;
 
+	ROX_LOG_INFO("icon-theme", "GTK icon theme changed; invalidating MIME icon cache");
+	log_system_icon_theme();
 	g_hash_table_foreach(type_hash, expire_timer, NULL);
 	full_refresh();
 }
