@@ -268,4 +268,21 @@ GtkWidget *rox_item_factory_get_widget(RoxItemFactory *ifactory, const gchar *pa
 	return g_hash_table_lookup(ifactory->widgets, path);
 }
 
+void rox_item_factory_free(RoxItemFactory *ifactory)
+{
+	if (!ifactory)
+		return;
+
+	/* The widget maps store borrowed pointers owned by the root menu tree.
+	 * Destroy the root first, then release only the lookup containers. */
+	if (ifactory->menu)
+		gtk_widget_destroy(ifactory->menu);
+	if (ifactory->widgets)
+		g_hash_table_destroy(ifactory->widgets);
+	if (ifactory->submenus)
+		g_hash_table_destroy(ifactory->submenus);
+	g_free(ifactory->root);
+	g_free(ifactory);
+}
+
 #endif /* ROX_USING_GTK3 */

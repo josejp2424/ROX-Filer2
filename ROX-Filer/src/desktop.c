@@ -28,6 +28,7 @@
 #include "gui_support.h"
 #include "options.h"
 #include "debug_log.h"
+#include "menu.h"
 
 #define DESKTOP_CONFIG "desktop.conf"
 #define DESKTOP_POSITIONS_CONFIG "desktop-positions.conf"
@@ -623,16 +624,37 @@ static void desktop_load_wallpaper_from_config(void)
     GKeyFile *kf;
     gchar *path;
     gchar *mode;
+    DesktopWallpaperMode new_mode;
     GError *error = NULL;
 
     kf = rox_config_load(DESKTOP_CONFIG);
     path = g_key_file_get_string(kf, "Desktop", "Wallpaper", NULL);
     mode = g_key_file_get_string(kf, "Desktop", "WallpaperMode", NULL);
-    wallpaper_mode = wallpaper_mode_from_name(mode);
+    new_mode = wallpaper_mode_from_name(mode);
     g_free(mode);
     g_key_file_unref(kf);
 
+    /* desktop.conf stores much more than wallpaper settings. Saving icons,
+     * drives or desktop tools therefore triggers the same file monitor.
+     * If wallpaper path and mode are unchanged, do not reload the image and,
+     * on X11/XLibre, do not restart wbar for an unrelated config write. */
+    if (path && *path &&
+        g_strcmp0(path, wallpaper_path) == 0 &&
+        new_mode == wallpaper_mode) {
+        ROX_LOG_DEBUG("desktop",
+                      "desktop.conf changed; wallpaper unchanged, skipping reload");
+        g_free(path);
+        return;
+    }
+
+    wallpaper_mode = new_mode;
+
     if (!path || !*path) {
+        if (!wallpaper_path && !wallpaper_pixbuf) {
+            g_free(path);
+            return;
+        }
+
         g_clear_object(&wallpaper_pixbuf);
         g_clear_pointer(&wallpaper_path, g_free);
         if (desktop_window)
@@ -640,6 +662,10 @@ static void desktop_load_wallpaper_from_config(void)
         g_free(path);
         return;
     }
+
+    ROX_LOG_DEBUG("desktop",
+                  "wallpaper configuration changed; reloading path=%s mode=%s",
+                  path, wallpaper_mode_name(wallpaper_mode));
 
     if (!desktop_set_wallpaper(path, FALSE, &error)) {
         g_warning("Unable to reload wallpaper '%s': %s", path,
@@ -1077,6 +1103,39 @@ static gboolean desktop_extend_selection(GdkModifierType state)
     return (state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) != 0;
 }
 
+/* Rox-Filer2 2.12.2-2:
+ * Desktop GtkEventBox widgets keep focus/hover/selection state after opening
+ * a filer window in the same process. On X11/XLibre some GTK3 themes can then
+ * render stale states in later popup menus. Release all desktop interaction
+ * state once activation is complete. */
+static void desktop_release_interaction_state(void)
+{
+    GList *node;
+
+    desktop_clear_selection();
+
+    for (node = desktop_items; node; node = node->next) {
+        DesktopItem *item = node->data;
+        GtkStyleContext *context;
+
+        if (!item || !item->widget)
+            continue;
+
+        context = gtk_widget_get_style_context(item->widget);
+        gtk_style_context_remove_class(context, "rox-desktop-item-hover");
+        gtk_widget_unset_state_flags(item->widget,
+                                     GTK_STATE_FLAG_PRELIGHT |
+                                     GTK_STATE_FLAG_ACTIVE);
+        gtk_widget_queue_draw(item->widget);
+    }
+
+    if (desktop_window && GTK_IS_WINDOW(desktop_window))
+        gtk_window_set_focus(GTK_WINDOW(desktop_window), NULL);
+
+    ROX_LOG_DEBUG("desktop",
+                  "released desktop selection/hover/focus after activation");
+}
+
 static void desktop_item_set_selected(DesktopItem *item,
                                       gboolean extend,
                                       gboolean toggle)
@@ -1141,16 +1200,9 @@ static void desktop_launch_browser(void)
 
 static void desktop_launch_console(void)
 {
-    static const gchar * const commands[] = {
-        "x-terminal-emulator", "xterm", "urxvt", NULL
-    };
-    GError *error = NULL;
-
-    if (!desktop_spawn_first_available(g_get_home_dir(), commands, &error)) {
-        show_desktop_error(_("Unable to start the terminal"),
-                           error ? error->message : NULL);
-        g_clear_error(&error);
-    }
+    /* Use the same Rox terminal preference as Open Terminal Here and
+     * Run in Terminal. This keeps Console and filer actions consistent. */
+    menu_open_terminal_at(g_get_home_dir());
 }
 
 static void desktop_item_activate(DesktopItem *item)
@@ -1212,8 +1264,13 @@ static void desktop_activate_selected_items(DesktopItem *fallback)
         desktop_item_activate(item);
         activated = TRUE;
     }
-    if (!activated && fallback)
+    if (!activated && fallback) {
         desktop_item_activate(fallback);
+        activated = TRUE;
+    }
+
+    if (activated)
+        desktop_release_interaction_state();
 }
 
 /* Mover los elementos seleccionados a la papelera permite quitar accesos
@@ -1445,6 +1502,7 @@ static gboolean desktop_item_button_press(GtkWidget *widget,
     if (!desktop_single_click && !extend &&
         event->type == GDK_2BUTTON_PRESS) {
         desktop_item_activate(item);
+        desktop_release_interaction_state();
         return TRUE;
     }
     return TRUE;
@@ -1523,6 +1581,7 @@ static gboolean desktop_item_button_release(GtkWidget *widget,
     } else if (desktop_single_click &&
                !desktop_extend_selection(event->state)) {
         desktop_item_activate(anchor);
+        desktop_release_interaction_state();
     }
     return TRUE;
 }
@@ -3505,10 +3564,11 @@ static void desktop_schedule_geometry_update(void)
         geometry_reload_source = g_idle_add(desktop_apply_geometry, NULL);
 }
 
-/* Modificado por josejp2424 (2026): JWM, el panel y wbar pueden tardar
- * algunos ciclos en publicar el área útil definitiva. Repetir el cálculo
- * después del inicio o de un cambio de wallpaper mantiene las unidades y los
- * programas dentro de la misma cuadrícula útil. */
+/* JWM, panels and wbar can take a few cycles to publish the final work area.
+ * This refresh is deliberately geometry-only. Existing desktop GtkWidgets
+ * must survive it: rebuilding the icon layer here used to destroy/recreate
+ * Home, Browser, Console, Trash and normal desktop items, disturbing GTK3
+ * focus/prelight state on X11/XLibre. */
 static gboolean desktop_environment_refresh_cb(gpointer data)
 {
     guint delay;
@@ -3523,10 +3583,10 @@ static gboolean desktop_environment_refresh_cb(gpointer data)
     desktop_query_geometry();
     desktop_schedule_geometry_update();
     desktop_apply_drive_layout();
-    if (environment_refresh_round == 0) {
-        desktop_rebuild_icon_layer();
-        desktop_force_drive_refresh();
-    }
+
+    if (environment_refresh_round == 0)
+        ROX_LOG_DEBUG("desktop",
+                      "environment refresh applying geometry only; desktop widgets preserved");
 
     environment_refresh_round++;
     if (environment_refresh_round < 4) {

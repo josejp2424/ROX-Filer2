@@ -232,7 +232,7 @@
         <item label='Same as the current window' value='4'/>
         <item label='Same as the default view' value='5'/>
       </menu>
-      <entry name='menu_xterm' label='Terminal emulator:'>Program used by Open Terminal Here and Run in Terminal.</entry>
+      <entry name='menu_xterm' label='Terminal emulator:'>Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. The default for new configurations is xterm.</entry>
       <toggle name='menu_xterm_grave' label='Open a terminal with the grave (`) key'/>
       <menu-set-keys/>
     </frame>

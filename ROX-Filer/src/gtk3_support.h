@@ -258,4 +258,6 @@ void rox_item_factory_create_items(RoxItemFactory *ifactory,
 GtkWidget *rox_item_factory_get_widget(RoxItemFactory *ifactory,
                                        const gchar *path);
 
+void rox_item_factory_free(RoxItemFactory *ifactory);
+
 #endif /* ROX_ITEM_FACTORY_DEFINED */

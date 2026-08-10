@@ -32,6 +32,8 @@ void show_filer_menu(FilerWindow *filer_window,
 		     GdkEvent *event,
 		     ViewIter *item);
 void menu_popdown(void);
+/* Shared terminal launcher used by filer actions and desktop Console. */
+gboolean menu_open_terminal_at(const gchar *directory);
 /* Hidden diagnostic entry point used by the bundled test script. */
 gboolean menu_diagnose_run_in_terminal(const gchar *path);
 gboolean menu_diagnose_rename_dialog(const gchar *path);

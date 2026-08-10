@@ -8,7 +8,8 @@ OUTPUT_DIR="$PROJECT_ROOT/output"
 PACKAGE_NAME="rox-filer2"
 
 # Keep package/version naming in sync with Rox-Filer2 itself.
-# AppInfo.xml is the canonical source, e.g. 2.12-r82 -> 2.12+gtk3.v-82.
+# AppInfo.xml is the canonical source. Current releases use Debian-style
+# versions such as 2.12.2-1; legacy 2.12-rNN trees remain supported.
 DISPLAY_VERSION=$(
     sed -n 's/^[[:space:]]*<Version>\([^<][^<]*\)<\/Version>[[:space:]]*$/\1/p' \
         "$APP_DIR/AppInfo.xml" | head -n 1
@@ -19,19 +20,28 @@ if [ -z "$DISPLAY_VERSION" ]; then
     exit 1
 fi
 
-BASE_VERSION=${DISPLAY_VERSION%-r*}
-REVISION=${DISPLAY_VERSION##*-r}
-if [ "$BASE_VERSION" = "$DISPLAY_VERSION" ] || [ -z "$REVISION" ]; then
-    echo "ERROR: unsupported Rox-Filer2 version format: $DISPLAY_VERSION" >&2
-    exit 1
-fi
-case "$REVISION" in
-    *[!0-9]*)
-        echo "ERROR: unsupported Rox-Filer2 revision in version: $DISPLAY_VERSION" >&2
-        exit 1
+case "$DISPLAY_VERSION" in
+    *-r*)
+        BASE_VERSION=${DISPLAY_VERSION%-r*}
+        REVISION=${DISPLAY_VERSION##*-r}
+        case "$REVISION" in
+            ''|*[!0-9]*)
+                echo "ERROR: unsupported Rox-Filer2 revision in version: $DISPLAY_VERSION" >&2
+                exit 1
+                ;;
+        esac
+        DEB_VERSION="${BASE_VERSION}+gtk3.v-${REVISION}"
+        ;;
+    *)
+        if printf '%s\n' "$DISPLAY_VERSION" |
+            grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$'; then
+            DEB_VERSION="$DISPLAY_VERSION"
+        else
+            echo "ERROR: unsupported Rox-Filer2 version format: $DISPLAY_VERSION" >&2
+            exit 1
+        fi
         ;;
 esac
-DEB_VERSION="${BASE_VERSION}+gtk3.v-${REVISION}"
 SKIP_COMPILE=0
 
 usage() {
@@ -129,8 +139,8 @@ install -Dm0755 "$PROJECT_ROOT/rox-find/rox-find" \
     "$PACKAGE_DIR/usr/bin/rox-find"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.desktop" \
     "$PACKAGE_DIR/usr/share/applications/rox-find.desktop"
-install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.png" \
-    "$PACKAGE_DIR/usr/share/pixmaps/rox-find.png"
+install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.svg" \
+    "$PACKAGE_DIR/usr/share/pixmaps/rox-find.svg"
 for size in 48 64 128; do
     install -Dm0644 \
         "$PROJECT_ROOT/rox-find/data/icons/${size}x${size}/apps/rox-find.png" \

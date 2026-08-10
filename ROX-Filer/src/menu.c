@@ -293,6 +293,34 @@ static GtkWidget    *filer_pair_realign_item;
 static GtkWidget	*filer_xattrs;	/* Extended attributes item */
 #endif
 
+typedef struct {
+	GtkWidget *menu;
+	GtkWidget *cut;
+	GtkWidget *copy;
+	GtkWidget *paste;
+	GtkWidget *add_bookmark;
+	GtkWidget *restore;
+	GtkWidget *move_to_trash;
+	GtkWidget *duplicate;
+	GtkWidget *link;
+	GtkWidget *shift_open;
+	GtkWidget *shift_label;
+	GtkWidget *set_run_action;
+	GtkWidget *open_with;
+	GtkWidget *set_icon;
+	GtkWidget *set_type;
+	GtkWidget *open_terminal_here;
+	GtkWidget *run_in_terminal;
+	GtkWidget *copy_to_backgrounds;
+	GtkWidget *search;
+#if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
+	GtkWidget *xattrs;
+#endif
+} FileContextWidgets;
+
+static FileContextWidgets base_file_context;
+static GtkWidget *transient_file_context_menu = NULL;
+
 #undef N_
 #define N_(x) x
 
@@ -428,6 +456,193 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 	} while (0)
 
 /* Returns TRUE if the keys were installed (first call only) */
+/* Rox-Filer2 r102:
+ * The historical File/Dir menu was created as a submenu by the ROX item
+ * factory. Reusing that submenu directly as a root popup can leave stale
+ * prelight/selected states on some X11/XLibre GTK3 themes. Build a genuine
+ * standalone GtkMenu while keeping the original menu items and callbacks. */
+static GtkWidget *menu_promote_submenu_to_root(GtkWidget *submenu)
+{
+	GtkWidget *root;
+	GList *children, *iter;
+
+	g_return_val_if_fail(GTK_IS_MENU(submenu), submenu);
+
+	root = gtk_menu_new();
+	children = gtk_container_get_children(GTK_CONTAINER(submenu));
+
+	for (iter = children; iter; iter = iter->next)
+	{
+		GtkWidget *child = GTK_WIDGET(iter->data);
+
+		g_object_ref(child);
+		gtk_container_remove(GTK_CONTAINER(submenu), child);
+		gtk_menu_shell_append(GTK_MENU_SHELL(root), child);
+		g_object_unref(child);
+	}
+	g_list_free(children);
+
+	return root;
+}
+
+static void file_context_capture_current(FileContextWidgets *ctx)
+{
+	g_return_if_fail(ctx != NULL);
+
+	ctx->menu = filer_file_menu;
+	ctx->cut = filer_file_cut_item;
+	ctx->copy = filer_file_copy_item;
+	ctx->paste = filer_file_paste_item;
+	ctx->add_bookmark = filer_add_bookmark_item;
+	ctx->restore = filer_restore_item;
+	ctx->move_to_trash = filer_move_to_trash_item;
+	ctx->duplicate = filer_duplicate_item;
+	ctx->link = filer_link_item;
+	ctx->shift_open = filer_shift_open_item;
+	ctx->shift_label = file_shift_item;
+	ctx->set_run_action = filer_set_run_action_item;
+	ctx->open_with = filer_open_with_item;
+	ctx->set_icon = filer_set_icon_item;
+	ctx->set_type = filer_set_type;
+	ctx->open_terminal_here = filer_open_terminal_here;
+	ctx->run_in_terminal = filer_run_in_terminal;
+	ctx->copy_to_backgrounds = filer_copy_to_backgrounds;
+	ctx->search = filer_search_item;
+#if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
+	ctx->xattrs = filer_xattrs;
+#endif
+}
+
+static void file_context_apply(const FileContextWidgets *ctx)
+{
+	g_return_if_fail(ctx != NULL);
+
+	filer_file_menu = ctx->menu;
+	filer_file_cut_item = ctx->cut;
+	filer_file_copy_item = ctx->copy;
+	filer_file_paste_item = ctx->paste;
+	filer_add_bookmark_item = ctx->add_bookmark;
+	filer_restore_item = ctx->restore;
+	filer_move_to_trash_item = ctx->move_to_trash;
+	filer_duplicate_item = ctx->duplicate;
+	filer_link_item = ctx->link;
+	filer_shift_open_item = ctx->shift_open;
+	file_shift_item = ctx->shift_label;
+	filer_set_run_action_item = ctx->set_run_action;
+	filer_open_with_item = ctx->open_with;
+	filer_set_icon_item = ctx->set_icon;
+	filer_set_type = ctx->set_type;
+	filer_open_terminal_here = ctx->open_terminal_here;
+	filer_run_in_terminal = ctx->run_in_terminal;
+	filer_copy_to_backgrounds = ctx->copy_to_backgrounds;
+	filer_search_item = ctx->search;
+#if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
+	filer_xattrs = ctx->xattrs;
+#endif
+}
+
+static GtkWidget *file_context_lookup(RoxItemFactory *factory,
+				      const gchar *label)
+{
+	gchar *path;
+	GtkWidget *widget;
+
+	path = g_strdup_printf("<filer-context>/%s/%s", _("File"), _(label));
+	widget = rox_item_factory_get_widget(factory, path);
+	g_free(path);
+	return widget;
+}
+
+static gboolean file_context_build_fresh(FileContextWidgets *ctx)
+{
+	RoxItemFactory *factory;
+	RoxItemFactoryEntry *translated;
+	GtkWidget *attach;
+	gchar *file_path;
+	guint n_entries;
+
+	g_return_val_if_fail(ctx != NULL, FALSE);
+	memset(ctx, 0, sizeof(*ctx));
+
+	/* Build a genuinely new set of GtkMenuItems for every right-click.
+	 * No accelerator group is attached to this private menu; the normal
+	 * filer accelerator group remains owned by the persistent main menu. */
+	factory = rox_item_factory_new(GTK_TYPE_MENU, "<filer-context>", NULL);
+	n_entries = G_N_ELEMENTS(filer_menu_def);
+	translated = translate_entries(filer_menu_def, n_entries);
+	rox_item_factory_create_items(factory, n_entries, translated, NULL);
+	free_translated_entries(translated, n_entries);
+
+	file_path = g_strdup_printf("<filer-context>/%s", _("File"));
+	ctx->menu = rox_item_factory_get_widget(factory, file_path);
+	g_free(file_path);
+	if (!GTK_IS_MENU(ctx->menu)) {
+		rox_item_factory_free(factory);
+		memset(ctx, 0, sizeof(*ctx));
+		return FALSE;
+	}
+
+	/* Keep the File submenu alive while the disposable factory destroys the
+	 * unused Display/Select/Window/main-menu widgets around it. */
+	g_object_ref(ctx->menu);
+	attach = gtk_menu_get_attach_widget(GTK_MENU(ctx->menu));
+	if (GTK_IS_MENU_ITEM(attach))
+		gtk_menu_item_set_submenu(GTK_MENU_ITEM(attach), NULL);
+
+	ctx->cut = file_context_lookup(factory, "Cut");
+	ctx->copy = file_context_lookup(factory, "Copy");
+	ctx->paste = file_context_lookup(factory, "Paste");
+	ctx->add_bookmark = file_context_lookup(factory, "Add to Bookmarks");
+	ctx->restore = file_context_lookup(factory, "Restore");
+	ctx->move_to_trash = file_context_lookup(factory, "Move to Trash");
+	ctx->duplicate = file_context_lookup(factory, "Duplicate...");
+	ctx->link = file_context_lookup(factory, "Link...");
+	ctx->shift_open = file_context_lookup(factory, "Shift Open");
+	ctx->set_run_action = file_context_lookup(factory, "Set Default Application...");
+	ctx->open_with = file_context_lookup(factory, "Open With...");
+	ctx->set_icon = file_context_lookup(factory, "Set Icon...");
+	ctx->set_type = file_context_lookup(factory, "Set Type...");
+	ctx->open_terminal_here = file_context_lookup(factory, "Open Terminal Here");
+	ctx->run_in_terminal = file_context_lookup(factory, "Run in Terminal");
+	ctx->copy_to_backgrounds = file_context_lookup(factory, "Copy to Backgrounds...");
+	ctx->search = file_context_lookup(factory, "Search in This Folder...");
+#if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
+	ctx->xattrs = file_context_lookup(factory, "Extended attributes...");
+#endif
+	ctx->shift_label = menu_item_get_label_widget(ctx->shift_open);
+
+	/* Hidden-by-default entries must survive show_all(), exactly like the
+	 * persistent menu created in ensure_filer_menu(). */
+	gtk_widget_set_no_show_all(ctx->copy_to_backgrounds, TRUE);
+	gtk_widget_set_no_show_all(ctx->open_with, TRUE);
+	gtk_widget_set_no_show_all(ctx->open_terminal_here, TRUE);
+	gtk_widget_set_no_show_all(ctx->run_in_terminal, TRUE);
+	gtk_widget_set_no_show_all(ctx->search, TRUE);
+	gtk_widget_set_no_show_all(ctx->add_bookmark, TRUE);
+	gtk_widget_set_no_show_all(ctx->restore, TRUE);
+	gtk_widget_set_no_show_all(ctx->move_to_trash, TRUE);
+
+	gtk_widget_hide(ctx->copy_to_backgrounds);
+	gtk_widget_hide(ctx->open_with);
+	gtk_widget_hide(ctx->add_bookmark);
+	gtk_widget_hide(ctx->restore);
+
+	rox_item_factory_free(factory);
+	return TRUE;
+}
+
+static void file_context_destroy_transient(GtkWidget *menu)
+{
+	if (!menu)
+		return;
+
+	file_context_apply(&base_file_context);
+	transient_file_context_menu = NULL;
+
+	gtk_widget_destroy(menu);
+	g_object_unref(menu);
+}
+
 gboolean ensure_filer_menu(void)
 {
 	GList			*items;
@@ -509,22 +724,33 @@ gboolean ensure_filer_menu(void)
 	filer_file_item = menu_item_get_label_widget(GTK_WIDGET(g_list_nth(items, 1)->data));
 	g_list_free(items);
 
-	/* Rox-Filer2 r95: the old File/Dir submenu is now the single item context
-	 * menu.  Detach it from the general menu instead of showing a menu inside
-	 * another menu.  Keep an explicit reference because GtkMenuItem used to
-	 * own the submenu. */
+	/* Promote the old File/Dir submenu to a real root popup.
+	 * The GtkMenuItems themselves are moved, so callbacks, accelerators and
+	 * references such as filer_restore_item remain unchanged. */
 	{
 		GtkWidget *file_parent = gtk_widget_get_parent(filer_file_item);
-		if (GTK_IS_MENU_ITEM(file_parent)) {
-			g_object_ref(filer_file_menu);
+
+		if (GTK_IS_MENU_ITEM(file_parent))
+		{
+			GtkWidget *old_file_menu = filer_file_menu;
+			GtkWidget *standalone;
+
+			g_object_ref(old_file_menu);
+			standalone = menu_promote_submenu_to_root(old_file_menu);
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_parent), NULL);
 			gtk_widget_set_no_show_all(file_parent, TRUE);
 			gtk_widget_hide(file_parent);
+			filer_file_menu = standalone;
+			g_object_unref(old_file_menu);
 		}
 	}
 
 	/* Shift Open... label: obtenerlo por ruta, sin depender del orden del menú. */
 	file_shift_item = menu_item_get_label_widget(filer_shift_open_item);
+
+	/* Keep the persistent File menu only as the canonical/base widget set.
+	 * Item context popups use disposable, freshly-created widgets. */
+	file_context_capture_current(&base_file_context);
 
 	GET_SSMENU_ITEM(item, "filer", "Window", "New Window");
 	filer_new_window = item; /* Modificado por josejp2424: conservar el GtkMenuItem GTK3 */
@@ -559,28 +785,11 @@ void menu_init(void)
 		g_free(menurc);
 	}
 
-	{
-		static const gchar *candidates[] = {
-			"defaultterminal", "x-terminal-emulator", "xterm",
-			"urxvt", "lxterminal", "xfce4-terminal",
-			"mate-terminal", "gnome-terminal", "konsole",
-			"foot", "kitty", "alacritty", NULL
-		};
-		const gchar *terminal_default = "xterm";
-		gint i;
-
-		for (i = 0; candidates[i] != NULL; i++)
-		{
-			gchar *found = g_find_program_in_path(candidates[i]);
-			if (found)
-			{
-				terminal_default = candidates[i];
-				g_free(found);
-				break;
-			}
-		}
-		option_add_string(&o_menu_xterm, "menu_xterm", terminal_default);
-	}
+	/* Rox-Filer2 2.12.2-1: use one explicit terminal preference for
+	 * Open Terminal Here, Run in Terminal and the desktop Console icon.
+	 * Existing saved configurations are respected; new configurations
+	 * intentionally default to xterm. */
+	option_add_string(&o_menu_xterm, "menu_xterm", "xterm");
 	option_add_int(&o_menu_xterm_grave, "menu_xterm_grave", TRUE);
 	option_add_int(&o_menu_iconsize, "menu_iconsize", MIS_SMALL);
 	option_add_int(&o_menu_quick, "menu_quick", TRUE);
@@ -960,6 +1169,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 	int             n_added = 0;
 	gboolean        item_context;
 	gboolean        in_trash;
+	FileContextWidgets transient_context;
 
 	g_return_if_fail(event != NULL);
 
@@ -989,6 +1199,27 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		view_select_only(filer_window->view, iter);
 	if (event->type == GDK_KEY_PRESS && n_selected > 0)
 		item_context = TRUE;
+
+	if (item_context)
+	{
+		if (file_context_build_fresh(&transient_context))
+		{
+			transient_file_context_menu = transient_context.menu;
+			file_context_apply(&transient_context);
+			g_signal_connect(transient_file_context_menu, "selection-done",
+				G_CALLBACK(menu_closed), NULL);
+			INPUT_TRACE("fresh file context menu=%p",
+				(void *) transient_file_context_menu);
+		}
+		else
+		{
+			/* Extremely defensive fallback: keep the persistent menu usable
+			 * if fresh construction ever fails. */
+			memset(&transient_context, 0, sizeof(transient_context));
+			file_context_apply(&base_file_context);
+		}
+	}
+
 	filer_window->temp_item_selected = FALSE;
 	n_selected = view_count_selected(filer_window->view);
 	in_trash = rox_trash_filer_is_trash(filer_window);
@@ -1168,7 +1399,9 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 						file_item->leafname), R_OK) : 0) == 0);
 #endif
 
-	/* One visible context menu only. */
+	/* One visible context menu only. Item popups use a freshly-created
+	 * GtkMenu/GtkMenuItem tree; background clicks keep the persistent main
+	 * filer menu. */
 	popup_menu = item_context ? filer_file_menu : filer_menu;
 
 	updating_menu--;
@@ -1180,9 +1413,12 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 
 static void menu_closed(GtkWidget *widget)
 {
+	gboolean transient_context;
+
 	if (window_with_focus == NULL || widget != popup_menu)
 		return;			/* Close panel item chosen? */
 
+	transient_context = (widget == transient_file_context_menu);
 	popup_menu = NULL;
 
 	if (window_with_focus->temp_item_selected)
@@ -1191,8 +1427,13 @@ static void menu_closed(GtkWidget *widget)
 		window_with_focus->temp_item_selected = FALSE;
 	}
 
+	/* Dynamic items belong to the current popup; destroy them before the
+	 * transient GtkMenu itself. */
 	xdg_apps_remove_mime_tools();
 	appmenu_remove();
+
+	if (transient_context)
+		file_context_destroy_transient(widget);
 }
 
 static void target_callback(FilerWindow *filer_window,
@@ -2880,16 +3121,24 @@ static void new_xterm_here()
 	xterm_here(NULL, FALSE, NULL);
 }
 
-static void open_terminal_directory(const gchar *directory, gboolean close_filer)
+gboolean menu_open_terminal_at(const gchar *directory)
 {
 	GPtrArray *argv = NULL;
 	gboolean success;
 
+	g_return_val_if_fail(directory != NULL, FALSE);
+
 	if (!terminal_build_argv(FALSE, NULL, &argv))
-		return;
+		return FALSE;
 
 	success = rox_spawn(directory, (const gchar **) argv->pdata) != 0;
 	g_ptr_array_free(argv, TRUE);
+	return success;
+}
+
+static void open_terminal_directory(const gchar *directory, gboolean close_filer)
+{
+	gboolean success = menu_open_terminal_at(directory);
 
 	if (success && close_filer && window_with_focus)
 		gtk_widget_destroy(window_with_focus->window);

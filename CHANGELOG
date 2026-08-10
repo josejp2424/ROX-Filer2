@@ -1,3 +1,58 @@
+Rox-Filer2 2.12.2-4 (2026-08-09)
+
+- X11/XLibre file context menus are now built from a fresh GtkMenu/GtkMenuItem
+  tree for every right-click instead of reusing a mutable menu for the whole
+  Rox-Filer2 session.
+- MIME/XDG and AppMenu entries belong only to that popup and are removed before
+  the complete transient context menu is destroyed.
+- Removes the manual PRELIGHT/SELECTED/ACTIVE/FOCUSED state-flag clearing
+  introduced during earlier diagnosis and lets GtkMenuShell manage normal menu
+  state again.
+- Desktop, wbar, toolbar, MIME cache and file-operation code are unchanged from
+  2.12.2-3.
+
+Rox-Filer2 2.12.2-3 (2026-08-09)
+
+- Environment refreshes are now geometry-only and preserve the existing
+  desktop widgets instead of rebuilding the complete icon layer.
+- Unrelated desktop.conf writes no longer reload an unchanged wallpaper or
+  restart wbar on X11/XLibre.
+- A real wallpaper path/style change still updates the wallpaper and wbar;
+  the follow-up environment refresh only recalculates desktop geometry.
+- Keeps the 2.12.2-2 desktop selection/hover/focus cleanup unchanged.
+
+Rox-Filer2 2.12.2-2 (2026-08-09)
+
+- X11/XLibre desktop activation now releases desktop selection, hover and
+  keyboard focus after opening an item, preventing stale GTK3 desktop state
+  from leaking into later filer popup-menu rendering.
+- No contextual-menu implementation changes in this build; this release is a
+  focused test/fix for the desktop-to-filer state transition.
+
+Rox-Filer2 2.12.2-1 (2026-08-09)
+
+- Consolidates the tested development work after the public 2.12-r82 release
+  into a new clean release version.
+- Keeps the GTK3 MIME icon RAM cache so system-theme MIME icons are not
+  repeatedly reloaded every few seconds.
+- Adds built-in Home, Browser, Console and Trash desktop icons, configurable
+  from Options -> Desktop and resolved from the active system icon theme.
+- Keeps Home first among built-in desktop icons when it is enabled.
+- Adds the compact text-under-icons toolbar, persistent filer icon size and
+  unified desktop hover feedback.
+- Uses a single item context menu, direct Bookmarks access and Add to
+  Bookmarks for directories.
+- Adds Restore / Restore Selected inside the Freedesktop Trash view and hides
+  Move to Trash while already browsing Trash.
+- Fast Copy, Move, Link, Trash and permanent-delete operations no longer flash
+  a progress window when they finish in under 500 ms.
+- X11/XLibre context menus use a real root GtkMenu and clear stale visual
+  selection state before popup.
+- The terminal emulator is configurable through Rox-Filer2 Options and is now
+  shared by Open Terminal Here, Run in Terminal and the desktop Console icon.
+  New configurations default to xterm.
+- X11/XLibre and native Wayland/Labwc desktop backends remain supported.
+
 Rox-Filer2 2.12-r82 (2026-08-08)
 
 - Fixed the invalid GtkTextTag `weight` vararg in the action dialog. Passing
