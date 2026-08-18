@@ -2437,15 +2437,30 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	gtk_box_pack_start(GTK_BOX(filer_window->thumb_bar),
 			filer_window->thumb_progress, TRUE, TRUE, 0);
 
-	/* Small, unobtrusive About link at the bottom-right of the filer GUI.
-	 * GtkLinkButton automatically follows the theme's link/accent colour. */
+	/* Compact bottom status row: directory/selection information on the left
+	 * and About on the right. Both use the same small text scale so the row is
+	 * informative without competing with the filer contents. */
 	{
-		GtkWidget *about_row;
+		GtkWidget *status_row;
 		GtkWidget *about_link;
 		GtkWidget *about_label;
 		PangoAttrList *attrs;
 
-		about_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		status_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
+		filer_window->toolbar_text = gtk_label_new("");
+		gtk_widget_set_halign(filer_window->toolbar_text, GTK_ALIGN_START);
+		gtk_widget_set_valign(filer_window->toolbar_text, GTK_ALIGN_CENTER);
+		gtk_label_set_xalign(GTK_LABEL(filer_window->toolbar_text), 0.0);
+		gtk_label_set_ellipsize(GTK_LABEL(filer_window->toolbar_text),
+				PANGO_ELLIPSIZE_END);
+		attrs = pango_attr_list_new();
+		pango_attr_list_insert(attrs, pango_attr_scale_new(0.85));
+		gtk_label_set_attributes(GTK_LABEL(filer_window->toolbar_text), attrs);
+		pango_attr_list_unref(attrs);
+		gtk_box_pack_start(GTK_BOX(status_row), filer_window->toolbar_text,
+				TRUE, TRUE, 6);
+
 		about_link = gtk_link_button_new_with_label("about:rox-filer2",
 				_("About"));
 		gtk_button_set_relief(GTK_BUTTON(about_link), GTK_RELIEF_NONE);
@@ -2460,11 +2475,15 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 			pango_attr_list_unref(attrs);
 		}
 
-		gtk_box_pack_end(GTK_BOX(about_row), about_link, FALSE, FALSE, 4);
-		gtk_box_pack_end(GTK_BOX(vbox), about_row, FALSE, FALSE, 0);
+		gtk_box_pack_end(GTK_BOX(status_row), about_link, FALSE, FALSE, 4);
+		gtk_box_pack_end(GTK_BOX(vbox), status_row, FALSE, FALSE, 0);
 		g_signal_connect(about_link, "activate-link",
 				G_CALLBACK(filer_about_link), filer_window);
-		gtk_widget_show_all(about_row);
+		gtk_widget_show_all(status_row);
+
+		/* The label did not exist when the toolbar was constructed, so populate
+		 * it now with the current translated item/hidden/selection information. */
+		toolbar_update_info(filer_window);
 	}
 
 	gtk_widget_show(vbox);

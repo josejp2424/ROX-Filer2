@@ -1,4 +1,4 @@
-# Rox-Filer2 2.12.2-18 translation coverage
+# Rox-Filer2 2.12.2-19 translation coverage
 
 Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
 these 13 locales for the current GTK3/Desktop additions:
@@ -17,7 +17,7 @@ these 13 locales for the current GTK3/Desktop additions:
 - `zh_CN`
 - `zh_TW`
 
-For 2.12.2-16 the current strings added around video thumbnails, audio
+For 2.12.2-19 the current strings added around video thumbnails, audio
 hover preview, browser/console selection and numeric toolbar ordering remain
 translated in all 13 maintained locales. The new native operation indicator
 uses GtkSpinner/GtkProgressBar and existing translated ROX labels, so it adds
@@ -31,6 +31,16 @@ runs no longer miss labels and help text that live only in the Options file.
 The other historical ROX-Filer catalogues remain included unchanged. If a
 newer Rox-Filer2-specific string is not translated in one of those legacy
 catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-19
+
+2.12.2-19 moves the existing item/hidden/selection information from the toolbar
+to the compact bottom status row opposite About. It reuses the already translated
+ROX strings for item/items, hidden and selected counts, so no new user-visible
+strings are required. The previously untranslated Arabic and Catalan variants of
+the status-count strings were completed, and all 13 maintained locales now carry
+localized item/hidden/selection status text.
 
 
 ## 2.12.2-18

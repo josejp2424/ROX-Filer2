@@ -7,7 +7,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-19\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
 "PO-Revision-Date: 2026-08-13 08:22-0300\n"
@@ -3131,7 +3131,7 @@ msgstr "Mostra l'ajuda del Rox-Filer2"
 #: toolbar.c:239
 #, c-format
 msgid " (%u hidden)"
-msgstr " (%u hidden)"
+msgstr " (%u ocults)"
 
 #: toolbar.c:247 tips:61
 msgid "items"
@@ -3144,12 +3144,12 @@ msgstr "element"
 #: toolbar.c:250
 #, c-format
 msgid "No items%s"
-msgstr "No items%s"
+msgstr "Cap element%s"
 
 #: toolbar.c:269
 #, c-format
 msgid "%u selected (%s)"
-msgstr "%u selected (%s)"
+msgstr "%u seleccionats (%s)"
 
 #: toolbar.c:464
 msgid "Sort by name"
@@ -6676,6 +6676,6 @@ msgstr "No s'ha pogut crear l'enllaç de l'escriptori."
 msgid "Unable to add one or more items to the desktop"
 msgstr "No s'han pogut afegir un o més elements a l'escriptori."
 
-#: Rox-Filer2 2.12.2-18
+#: Rox-Filer2 2.12.2-19
 msgid "Launcher"
 msgstr "Llançador"

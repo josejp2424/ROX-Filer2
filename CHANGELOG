@@ -1,3 +1,17 @@
+Rox-Filer2 2.12.2-19 (2026-08-18)
+------------------------------------
+
+- Moved the existing item/hidden/selection counter out of the toolbar and into
+  a compact bottom status row, on the opposite side from the About link.
+- The status text uses the same small 0.85 text scale as About and updates
+  dynamically when directories, hidden items or selections change.
+- The existing toolbar_show_info option still controls whether the status text
+  is shown, but the information can now remain available even when the toolbar
+  itself is hidden.
+- Reused the existing ROX strings for item/items, hidden and selected counts,
+  so no new user-visible translation strings were introduced. Completed the
+  remaining Arabic and Catalan status translations and rebuilt those catalogues.
+
 Rox-Filer2 2.12.2-18 (2026-08-15)
 ------------------------------------
 

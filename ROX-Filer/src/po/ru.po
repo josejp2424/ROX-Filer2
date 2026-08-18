@@ -14,7 +14,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-19\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
 "PO-Revision-Date: 2026-08-13 08:22-0300\n"
@@ -6680,6 +6680,6 @@ msgstr "Не удалось создать ссылку на рабочем ст
 msgid "Unable to add one or more items to the desktop"
 msgstr "Не удалось добавить один или несколько элементов на рабочий стол."
 
-#: Rox-Filer2 2.12.2-18
+#: Rox-Filer2 2.12.2-19
 msgid "Launcher"
 msgstr "Средство запуска"

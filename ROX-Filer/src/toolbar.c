@@ -246,8 +246,18 @@ void toolbar_update_info(FilerWindow *filer_window)
 
 	g_return_if_fail(filer_window != NULL);
 
-	if (o_toolbar.int_value == TOOLBAR_NONE || !o_toolbar_info.int_value)
-		return;		/* Not showing info */
+	/* The information label now lives in the bottom status row rather than
+	 * inside the toolbar, so it remains available even when the toolbar is
+	 * hidden. The existing toolbar_show_info option still controls whether
+	 * this status text is displayed. */
+	if (!filer_window->toolbar_text)
+		return;
+
+	if (!o_toolbar_info.int_value)
+	{
+		gtk_label_set_text(GTK_LABEL(filer_window->toolbar_text), "");
+		return;
+	}
 
 	if (filer_window->target_cb)
 		return;
@@ -329,7 +339,6 @@ void toolbar_update_toolbar(FilerWindow *filer_window)
 	{
 		gtk_widget_destroy(filer_window->toolbar);
 		filer_window->toolbar = NULL;
-		filer_window->toolbar_text = NULL;
 	}
 	filer_window->toolbar_back = NULL;
 	filer_window->toolbar_forward = NULL;
@@ -744,7 +753,6 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 {
 	GtkWidget *bar;
 	GtkWidget *b;
-	GtkToolItem *text_item;
 	GPtrArray *ordered_tools;
 	guint i;
 	int width;
@@ -833,21 +841,11 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 	{
 		if(o_toolbar_min_width.int_value)
 		{
-			/* Make the toolbar wide enough for all icons to be
-			   seen, plus a little for the (start of the) text
-			   label */
+			/* Make the toolbar wide enough for all configured icons. */
 			gtk_widget_set_size_request(bar, width+32, -1);
 		} else {
 			gtk_widget_set_size_request(bar, 100, -1);
 		}
-
-		filer_window->toolbar_text = gtk_label_new("");
-		gtk_widget_set_halign(filer_window->toolbar_text, GTK_ALIGN_START);
-		gtk_widget_set_valign(filer_window->toolbar_text, GTK_ALIGN_CENTER);
-		text_item = gtk_tool_item_new();
-		gtk_tool_item_set_expand(text_item, TRUE);
-		gtk_container_add(GTK_CONTAINER(text_item), filer_window->toolbar_text);
-		gtk_toolbar_insert(GTK_TOOLBAR(bar), text_item, -1);
 	}
 
 	return bar;
