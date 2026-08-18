@@ -282,7 +282,7 @@ static void examine_dir(const guchar *path, DirItem *item,
 	/* Modificado por josejp2424 (2026): la carpeta personal siempre usa
 	 * user-home. No permitir que /root/.DirIcon ni GlobIcons reemplacen el
 	 * icono estándar del tema. Las demás carpetas conservan su comportamiento. */
-	if (path_is_home_dir(path))
+	if (path_is_home_dir((const gchar *) path))
 		item->_image = pixmap_home_icon();
 	else
 		check_globicon(path, item);

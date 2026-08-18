@@ -34,6 +34,8 @@
 #include <netdb.h>
 #include <sys/param.h>
 #include <fnmatch.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
@@ -47,6 +49,7 @@
 #include "fscache.h"
 #include "support.h"
 #include "gui_support.h"
+#include "debug_log.h"
 #include "choices.h"
 #include "pixmaps.h"
 #include "menu.h"
@@ -96,6 +99,20 @@ static DirItem *tip_item = NULL;
  * to get the correct widget for finding the item under the pointer.
  */
 static GdkWindow *motion_window = NULL;
+
+/* Rox-Filer2 2.12.2-8: Caja-style audio preview using an optional external
+ * mpv process. On Puppy, root sessions use run-as-spot mpv automatically.
+ * Only the PID started by Rox-Filer2 is ever terminated. */
+static Option o_audio_hover_preview;
+static guint audio_preview_timeout_id = 0;
+static gint audio_preview_pid = 0;
+static gchar *audio_preview_pending_path = NULL;
+static gchar *audio_preview_playing_path = NULL;
+static FilerWindow *audio_preview_pending_window = NULL;
+
+typedef struct {
+	gint pid;
+} AudioPreviewChild;
 
 /* This is rather badly named. It's actually the filer window which received
  * the last key press or Menu click event.
@@ -163,6 +180,9 @@ static void set_selection_state(FilerWindow *filer_window, gboolean normal);
 static void filer_next_thumb(GObject *window, const gchar *path);
 static void start_thumb_scanning(FilerWindow *filer_window);
 static void filer_options_changed(void);
+static void audio_preview_cancel_pending(void);
+static void audio_preview_stop(void);
+static void audio_preview_consider(FilerWindow *filer_window, DirItem *item);
 static void drag_end(GtkWidget *widget, GdkDragContext *context,
 		     FilerWindow *filer_window);
 static void drag_leave(GtkWidget	*widget,
@@ -212,6 +232,8 @@ void filer_init(void)
 	option_add_int(&o_unique_filer_windows, "filer_unique_windows", 0);
 	option_add_int(&o_short_flag_names, "filer_short_flag_names", FALSE);
 	option_add_int(&o_filer_view_type, "filer_view_type", VIEW_TYPE_COLLECTION);
+	/* Enabled by default as requested. mpv is detected at runtime. */
+	option_add_int(&o_audio_hover_preview, "audio_hover_preview", TRUE);
 
 	option_add_notify(filer_options_changed);
 
@@ -598,8 +620,8 @@ static void update_display(Directory *dir,
 
 			/* Modificado por josejp2424 (2026): la ventana de la carpeta
 			 * personal también usa siempre user-home y nunca /root/.DirIcon. */
-			if (path_is_home_dir(filer_window->real_path) ||
-			    path_is_home_dir(filer_window->sym_path))
+			if (path_is_home_dir((const gchar *) filer_window->real_path) ||
+			    path_is_home_dir((const gchar *) filer_window->sym_path))
 				fi = pixmap_home_icon();
 			else
 			{
@@ -653,8 +675,8 @@ static void update_display(Directory *dir,
 
 			if (!filer_window->win_icon)
 			{
-				if (path_is_home_dir(filer_window->real_path) ||
-				    path_is_home_dir(filer_window->sym_path))
+				if (path_is_home_dir((const gchar *) filer_window->real_path) ||
+				    path_is_home_dir((const gchar *) filer_window->sym_path))
 					filer_window->win_icon = pixmap_home_icon();
 				else
 					filer_window->win_icon = g_fscache_lookup_full(
@@ -909,6 +931,12 @@ gboolean filer_window_delete(GtkWidget *window,
 
 static void filer_window_destroyed(GtkWidget *widget, FilerWindow *filer_window)
 {
+	if (audio_preview_pending_window == filer_window)
+		audio_preview_cancel_pending();
+	/* A preview is global to the pointer, so closing its filer must also stop it. */
+	if (audio_preview_pid > 0)
+		audio_preview_stop();
+
 	all_filer_windows = g_list_remove(all_filer_windows, filer_window);
 
 	g_object_set_data(G_OBJECT(widget), "filer_window", NULL);
@@ -1155,6 +1183,209 @@ void filer_openitem(FilerWindow *filer_window, ViewIter *iter, OpenFlags flags)
 	}
 }
 
+static void audio_preview_child_done(gpointer data, gint status)
+{
+	AudioPreviewChild *child = data;
+	(void) status;
+
+	if (child && audio_preview_pid == child->pid)
+	{
+		audio_preview_pid = 0;
+		g_clear_pointer(&audio_preview_playing_path, g_free);
+	}
+	g_free(child);
+}
+
+static void audio_preview_cancel_pending(void)
+{
+	if (audio_preview_timeout_id)
+	{
+		g_source_remove(audio_preview_timeout_id);
+		audio_preview_timeout_id = 0;
+	}
+	g_clear_pointer(&audio_preview_pending_path, g_free);
+	audio_preview_pending_window = NULL;
+}
+
+static void audio_preview_child_setup(gpointer data)
+{
+	(void) data;
+
+	/* Keep the preview (including run-as-spot -> su -> mpv on Puppy) in its
+	 * own process group so moving the pointer away can stop the whole chain
+	 * without touching any other mpv process owned by the user. */
+	(void) setpgid(0, 0);
+}
+
+static gint audio_preview_spawn(const gchar *dir, const gchar **argv)
+{
+	GError *error = NULL;
+	gint pid = 0;
+
+	if (!g_spawn_async_with_pipes(dir, (gchar **) argv, NULL,
+			G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_STDOUT_TO_DEV_NULL |
+			G_SPAWN_SEARCH_PATH,
+			audio_preview_child_setup, NULL,
+			&pid, NULL, NULL, NULL, &error))
+	{
+		delayed_error("%s", error ? error->message : "(null)");
+		if (error)
+			g_error_free(error);
+		return 0;
+	}
+
+	return pid;
+}
+
+static void audio_preview_stop(void)
+{
+	if (audio_preview_pid > 0)
+	{
+		/* The preview has its own process group. Negative PID stops the whole
+		 * run-as-spot/su/mpv chain on Puppy, but never another mpv instance. */
+		if (kill(-audio_preview_pid, SIGTERM) == -1 && errno != ESRCH)
+			ROX_LOG_DEBUG("audio-preview", "kill process-group %d: %s",
+			              audio_preview_pid, g_strerror(errno));
+	}
+	g_clear_pointer(&audio_preview_playing_path, g_free);
+}
+
+static gboolean audio_preview_start_cb(gpointer data)
+{
+	FilerWindow *filer_window = data;
+	gchar *mpv;
+	gchar *run_as_spot = NULL;
+	const gchar *argv[9];
+	gboolean puppy_spot = FALSE;
+	gint pid;
+	AudioPreviewChild *child;
+
+	audio_preview_timeout_id = 0;
+	if (!o_audio_hover_preview.int_value ||
+	    !audio_preview_pending_path ||
+	    audio_preview_pending_window != filer_window ||
+	    !filer_exists(filer_window) ||
+	    !g_file_test(audio_preview_pending_path, G_FILE_TEST_IS_REGULAR))
+	{
+		audio_preview_cancel_pending();
+		return FALSE;
+	}
+
+	mpv = g_find_program_in_path("mpv");
+	if (!mpv)
+	{
+		ROX_LOG_DEBUG("audio-preview", "mpv is not installed; preview skipped");
+		audio_preview_cancel_pending();
+		return FALSE;
+	}
+
+	/* Use Puppy's wrapper whenever it is available.  The real run-as-spot
+	 * script already decides whether it needs to switch from root to spot;
+	 * when called by a normal user it simply executes the command.  Therefore
+	 * ROX does not need distro files or its own UID policy here. */
+	run_as_spot = g_find_program_in_path("run-as-spot");
+	puppy_spot = run_as_spot != NULL;
+
+	if (puppy_spot)
+	{
+		argv[0] = run_as_spot;
+		argv[1] = mpv;
+		argv[2] = "--no-video";
+		argv[3] = "--audio-display=no";
+		argv[4] = "--really-quiet";
+		argv[5] = "--no-terminal";
+		argv[6] = "--";
+		argv[7] = audio_preview_pending_path;
+		argv[8] = NULL;
+		ROX_LOG_DEBUG("audio-preview", "run-as-spot found; using run-as-spot mpv");
+	}
+	else
+	{
+		argv[0] = mpv;
+		argv[1] = "--no-video";
+		argv[2] = "--audio-display=no";
+		argv[3] = "--really-quiet";
+		argv[4] = "--no-terminal";
+		argv[5] = "--";
+		argv[6] = audio_preview_pending_path;
+		argv[7] = NULL;
+		argv[8] = NULL;
+	}
+
+	pid = audio_preview_spawn(filer_window->real_path, argv);
+	if (pid)
+	{
+		child = g_new0(AudioPreviewChild, 1);
+		child->pid = pid;
+		audio_preview_pid = pid;
+		g_free(audio_preview_playing_path);
+		audio_preview_playing_path = g_strdup(audio_preview_pending_path);
+		on_child_death_status(pid, audio_preview_child_done, child);
+		ROX_LOG_DEBUG("audio-preview", "playing %s with %smpv pid=%d",
+		              audio_preview_pending_path,
+		              puppy_spot ? "run-as-spot " : "", pid);
+	}
+
+	g_free(run_as_spot);
+	g_free(mpv);
+	audio_preview_cancel_pending();
+	return FALSE;
+}
+
+static gboolean audio_preview_item_is_audio(FilerWindow *filer_window,
+					    DirItem *item, gchar **full_path_out)
+{
+	MIME_type *type;
+	gchar *full_path;
+
+	if (!item || item->base_type == TYPE_DIRECTORY)
+		return FALSE;
+
+	full_path = g_strdup((const gchar *) make_path(filer_window->real_path,
+						 item->leafname));
+	type = item->mime_type ? item->mime_type : type_from_path(full_path);
+	if (!type || g_strcmp0(type->media_type, "audio") != 0)
+	{
+		g_free(full_path);
+		return FALSE;
+	}
+
+	if (full_path_out)
+		*full_path_out = full_path;
+	else
+		g_free(full_path);
+	return TRUE;
+}
+
+static void audio_preview_consider(FilerWindow *filer_window, DirItem *item)
+{
+	gchar *path = NULL;
+
+	if (!o_audio_hover_preview.int_value ||
+	    !audio_preview_item_is_audio(filer_window, item, &path))
+	{
+		audio_preview_cancel_pending();
+		audio_preview_stop();
+		return;
+	}
+
+	if ((audio_preview_playing_path &&
+	     g_strcmp0(audio_preview_playing_path, path) == 0) ||
+	    (audio_preview_pending_path &&
+	     g_strcmp0(audio_preview_pending_path, path) == 0))
+	{
+		g_free(path);
+		return;
+	}
+
+	audio_preview_cancel_pending();
+	audio_preview_stop();
+	audio_preview_pending_path = path;
+	audio_preview_pending_window = filer_window;
+	audio_preview_timeout_id = g_timeout_add(1000,
+					       audio_preview_start_cb, filer_window);
+}
+
 static gint pointer_in(GtkWidget *widget,
 			GdkEventCrossing *event,
 			FilerWindow *filer_window)
@@ -1168,6 +1399,11 @@ static gint pointer_out(GtkWidget *widget,
 			FilerWindow *filer_window)
 {
 	tooltip_show(NULL);
+	if (audio_preview_pending_window == filer_window || audio_preview_pid > 0)
+	{
+		audio_preview_cancel_pending();
+		audio_preview_stop();
+	}
 	return FALSE;
 }
 
@@ -2802,6 +3038,12 @@ void filer_create_thumbs(FilerWindow *filer_window)
 
 static void filer_options_changed(void)
 {
+	if (o_audio_hover_preview.has_changed && !o_audio_hover_preview.int_value)
+	{
+		audio_preview_cancel_pending();
+		audio_preview_stop();
+	}
+
 	if (o_short_flag_names.has_changed)
 	{
 		GList *next;
@@ -3160,6 +3402,8 @@ gint filer_motion_notify(FilerWindow *filer_window, GdkEventMotion *event)
 
 	view_get_iter_at_point(view, &iter, event->window, event->x, event->y);
 	item = iter.peek(&iter);
+
+	audio_preview_consider(filer_window, item);
 
 	if (item)
 	{

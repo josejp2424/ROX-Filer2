@@ -66,10 +66,285 @@ struct _PipedData
 };
 
 static Option o_run_action_helper;
+static Option o_browser_command;
+
+typedef struct {
+	gchar *url;
+	gchar *custom_command;
+	gboolean custom_pending;
+	guint fallback_index;
+} BrowserLaunch;
+
+typedef struct {
+	BrowserLaunch *launch;
+	guint timeout_id;
+	gchar *description;
+} BrowserAttempt;
+
+typedef struct {
+	const gchar *program;
+	gboolean new_tab;
+} BrowserFallback;
+
+static const BrowserFallback browser_fallbacks[] = {
+	{ "defaultbrowser", TRUE },
+	{ "defaultbrowser", FALSE },
+	{ "x-www-browser", TRUE },
+	{ "x-www-browser", FALSE },
+	{ "gnome-www-browser", TRUE },
+	{ "gnome-www-browser", FALSE },
+	{ "xdg-open", FALSE },
+	{ NULL, FALSE }
+};
+
+static void browser_launch_free(BrowserLaunch *launch)
+{
+	if (!launch)
+		return;
+	g_free(launch->url);
+	g_free(launch->custom_command);
+	g_free(launch);
+}
+
+static gchar *browser_replace_uri_token(const gchar *arg, const gchar *url,
+					gboolean *replaced)
+{
+	const gchar *cursor = arg;
+	const gchar *match;
+	GString *out;
+
+	if (!arg)
+		return g_strdup("");
+
+	out = g_string_new(NULL);
+	while ((match = strstr(cursor, "%u")) != NULL)
+	{
+		g_string_append_len(out, cursor, match - cursor);
+		g_string_append(out, url ? url : "");
+		cursor = match + 2;
+		if (replaced)
+			*replaced = TRUE;
+	}
+	g_string_append(out, cursor);
+	return g_string_free(out, FALSE);
+}
+
+static GPtrArray *browser_build_custom_argv(const gchar *command,
+						 const gchar *url)
+{
+	gchar **parsed = NULL;
+	gint argc = 0;
+	GError *error = NULL;
+	GPtrArray *argv;
+	gboolean replaced = FALSE;
+	gint i;
+
+	if (!command || !*command)
+		return NULL;
+
+	if (!g_shell_parse_argv(command, &argc, &parsed, &error))
+	{
+		rox_debug_log("BROWSER", "invalid custom command=%s error=%s",
+			command, error ? error->message : "");
+		g_clear_error(&error);
+		return NULL;
+	}
+
+	if (argc < 1 || !parsed || !parsed[0] || !*parsed[0])
+	{
+		g_strfreev(parsed);
+		return NULL;
+	}
+
+	argv = g_ptr_array_new_with_free_func(g_free);
+	for (i = 0; i < argc; i++)
+		g_ptr_array_add(argv, browser_replace_uri_token(parsed[i], url, &replaced));
+	g_strfreev(parsed);
+
+	if (!replaced && url && *url)
+		g_ptr_array_add(argv, g_strdup(url));
+	g_ptr_array_add(argv, NULL);
+	return argv;
+}
+
+static GPtrArray *browser_build_fallback_argv(const BrowserFallback *fallback,
+						   const gchar *url)
+{
+	GPtrArray *argv;
+
+	if (!fallback || !fallback->program)
+		return NULL;
+
+	argv = g_ptr_array_new_with_free_func(g_free);
+	g_ptr_array_add(argv, g_strdup(fallback->program));
+	if (fallback->new_tab)
+		g_ptr_array_add(argv, g_strdup("--new-tab"));
+	if (url && *url)
+		g_ptr_array_add(argv, g_strdup(url));
+	g_ptr_array_add(argv, NULL);
+	return argv;
+}
+
+static gboolean browser_launch_try_next(BrowserLaunch *launch);
+
+static gboolean browser_attempt_timeout(gpointer data)
+{
+	BrowserAttempt *attempt = data;
+
+	attempt->timeout_id = 0;
+	if (attempt->launch)
+	{
+		rox_debug_log("BROWSER", "accepted=%s (process remained alive)",
+			attempt->description ? attempt->description : "");
+		browser_launch_free(attempt->launch);
+		attempt->launch = NULL;
+	}
+	return G_SOURCE_REMOVE;
+}
+
+static void browser_attempt_child_status(gpointer data, gint status)
+{
+	BrowserAttempt *attempt = data;
+	BrowserLaunch *launch = attempt->launch;
+	GError *status_error = NULL;
+	gboolean ok;
+
+	if (attempt->timeout_id)
+	{
+		g_source_remove(attempt->timeout_id);
+		attempt->timeout_id = 0;
+	}
+
+	/* If launch is NULL, the 2-second grace period already expired and this
+	 * was accepted as a real browser process. ROX's SIGCHLD reaper has already
+	 * collected it; there is nothing else to do. */
+	if (!launch)
+	{
+		g_free(attempt->description);
+		g_free(attempt);
+		return;
+	}
+
+	attempt->launch = NULL;
+	ok = g_spawn_check_wait_status(status, &status_error);
+	if (ok)
+	{
+		rox_debug_log("BROWSER", "success=%s",
+			attempt->description ? attempt->description : "");
+		browser_launch_free(launch);
+	}
+	else
+	{
+		rox_debug_log("BROWSER", "failed=%s error=%s; trying next fallback",
+			attempt->description ? attempt->description : "",
+			status_error ? status_error->message : "");
+		g_clear_error(&status_error);
+		browser_launch_try_next(launch);
+	}
+
+	g_free(attempt->description);
+	g_free(attempt);
+}
+
+static gboolean browser_spawn_attempt(BrowserLaunch *launch, GPtrArray *argv,
+						 const gchar *description)
+{
+	BrowserAttempt *attempt;
+	GError *error = NULL;
+	GPid pid = 0;
+	gboolean spawned;
+
+	if (!argv || argv->len < 2 || !g_ptr_array_index(argv, 0))
+		return FALSE;
+
+	rox_debug_log("BROWSER", "trying=%s url=%s",
+		description ? description : (const gchar *) g_ptr_array_index(argv, 0),
+		launch->url ? launch->url : "");
+
+	spawned = g_spawn_async(g_get_home_dir(), (gchar **) argv->pdata, NULL,
+		G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
+		NULL, NULL, &pid, &error);
+	if (!spawned)
+	{
+		rox_debug_log("BROWSER", "spawn failed=%s error=%s",
+			description ? description : "", error ? error->message : "");
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	attempt = g_new0(BrowserAttempt, 1);
+	attempt->launch = launch;
+	attempt->description = g_strdup(description ? description : "browser");
+	on_child_death_status(pid, browser_attempt_child_status, attempt);
+	/* Unsupported --new-tab options normally fail immediately. Keep a small
+	 * grace period so we can retry without the option, but never reopen a URL
+	 * later merely because a long-running browser eventually exits non-zero. */
+	attempt->timeout_id = g_timeout_add(2000, browser_attempt_timeout, attempt);
+	return TRUE;
+}
+
+static gboolean browser_launch_try_next(BrowserLaunch *launch)
+{
+	GPtrArray *argv = NULL;
+	gboolean spawned;
+
+	if (launch->custom_pending)
+	{
+		launch->custom_pending = FALSE;
+		argv = browser_build_custom_argv(launch->custom_command, launch->url);
+		if (argv)
+		{
+			spawned = browser_spawn_attempt(launch, argv, "configured browser");
+			g_ptr_array_free(argv, TRUE);
+			if (spawned)
+				return TRUE;
+		}
+	}
+
+	while (browser_fallbacks[launch->fallback_index].program)
+	{
+		const BrowserFallback *fallback = &browser_fallbacks[launch->fallback_index++];
+		gchar *description;
+
+		argv = browser_build_fallback_argv(fallback, launch->url);
+		description = g_strdup_printf("%s%s", fallback->program,
+			fallback->new_tab ? " --new-tab" : "");
+		spawned = browser_spawn_attempt(launch, argv, description);
+		g_free(description);
+		g_ptr_array_free(argv, TRUE);
+		if (spawned)
+			return TRUE;
+	}
+
+	delayed_error(_("No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."));
+	browser_launch_free(launch);
+	return FALSE;
+}
 
 void run_init(void)
 {
 	option_add_string(&o_run_action_helper, "run_action_helper", "");
+	option_add_string(&o_browser_command, "browser_command", "");
+}
+
+gboolean rox_open_browser(const gchar *url)
+{
+	BrowserLaunch *launch;
+	gchar *saved_command;
+
+	/* Rox-Filer2 may have a long-running --desktop process while Options is
+	 * edited in another filer process. Read the last saved browser command
+	 * at launch time so pressing OK takes effect immediately everywhere,
+	 * without restarting the desktop or the system. */
+	saved_command = option_get_saved("browser_command");
+
+	launch = g_new0(BrowserLaunch, 1);
+	launch->url = g_strdup((url && *url) ? url : "about:blank");
+	launch->custom_command = saved_command ? saved_command :
+		g_strdup((const gchar *) o_browser_command.value);
+	launch->custom_pending = launch->custom_command && *launch->custom_command;
+	launch->fallback_index = 0;
+	return browser_launch_try_next(launch);
 }
 
 /****************************************************************

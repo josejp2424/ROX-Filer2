@@ -72,11 +72,14 @@ struct _SOAP_call {
 };
 
 static GHashTable *rpc_calls = NULL; /* MethodName -> Function */
+static guint soap_timeout_source = 0;
+static guint soap_property_events = 0;
+static gboolean soap_wait_success = FALSE;
 
 /* Static prototypes */
 static GdkWindow *get_existing_ipc_window(void);
 static gboolean get_ipc_property(GdkWindow *window, Window *r_xid);
-static void soap_send(GtkWidget *from, GdkAtom prop, GdkWindow *dest);
+static gboolean soap_send(GtkWidget *from, GdkAtom prop, GdkWindow *dest);
 static GdkFilterReturn client_event_filter(GdkXEvent *xevent,
 					 GdkEvent *event,
 					 gpointer data);
@@ -237,9 +240,23 @@ gboolean remote_init(xmlDocPtr rpc, gboolean new_copy)
 				GDK_PROP_MODE_REPLACE, mem, size);
 		g_free(mem);
 
-		soap_send(ipc_window, xsoap, existing_ipc_window);
+		if (soap_send(ipc_window, xsoap, existing_ipc_window))
+		{
+			if (existing_ipc_window)
+				g_object_unref(existing_ipc_window);
+			return TRUE;
+		}
 
-		return TRUE;
+		/* Rox-Filer2 2.12.2-16: if a valid IPC window exists but its owner
+		 * is temporarily busy or hung, do not delete the root property and do
+		 * not steal ownership.  Doing that after an arbitrary timeout can leave
+		 * two processes believing they are the primary ROX instance.  Instead,
+		 * run this request in the current process as a safe standalone copy. */
+		ROX_LOG_WARNING("remote",
+		                "existing IPC owner did not answer; leaving ownership unchanged and continuing request locally");
+		g_object_unref(existing_ipc_window);
+		gtk_widget_destroy(ipc_window);
+		return FALSE;
 	}
 
 	xwindow = gdk_x11_window_get_xid(gtk_widget_get_window(ipc_window));
@@ -459,7 +476,10 @@ static GdkWindow *get_existing_ipc_window(void)
 		return NULL;
 
 	if (!get_ipc_property(window, &xid_confirm) || xid_confirm != xid)
+	{
+		g_object_unref(window);
 		return NULL;
+	}
 
 	return window;
 }
@@ -1195,27 +1215,35 @@ static xmlNodePtr rpc_Unmount(GList *args)
  */
 static void soap_done(GtkWidget *widget, GdkEventProperty *event, gpointer data)
 {
-	static int times_called = 0;
-	GdkAtom	prop = (GdkAtom) data;
+	GdkAtom prop = (GdkAtom) data;
 
+	(void)widget;
 	if (prop != event->atom)
 		return;
 
-	times_called++;
-	g_return_if_fail(times_called < 3);
-
-	if (times_called == 1)
+	/* The first notification is our own request property. The second is
+	 * either the reply value or deletion of the property for a void RPC. */
+	soap_property_events++;
+	if (soap_property_events == 1)
 		return;
 
-	/* If we got a reply, display it here */
+	soap_wait_success = TRUE;
+	if (soap_timeout_source)
+	{
+		g_source_remove(soap_timeout_source);
+		soap_timeout_source = 0;
+	}
+
 	if (event->state == GDK_PROPERTY_NEW_VALUE)
 	{
 		gint length;
+		gpointer reply_data = read_property(event->window, event->atom, &length);
 
-		data = read_property(event->window, event->atom, &length);
-
-		if (data)
-			puts(data);
+		if (reply_data)
+		{
+			puts((const char *)reply_data);
+			g_free(reply_data);
+		}
 	}
 
 	gtk_main_quit();
@@ -1223,19 +1251,24 @@ static void soap_done(GtkWidget *widget, GdkEventProperty *event, gpointer data)
 
 static gboolean too_slow(gpointer data)
 {
-	g_warning("Existing Rox-Filer2 process is not responding! Try with -n");
+	(void)data;
+	soap_timeout_source = 0;
+	soap_wait_success = FALSE;
 	gtk_main_quit();
-
-	return 0;
+	return G_SOURCE_REMOVE;
 }
 
-/* Send the SOAP message in property 'prop' on 'from' to 'dest' */
-static void soap_send(GtkWidget *from, GdkAtom prop, GdkWindow *dest)
+/* Send the SOAP message in property 'prop' on 'from' to 'dest'. Return TRUE
+ * only when the existing process actually acknowledges the request. */
+static gboolean soap_send(GtkWidget *from, GdkAtom prop, GdkWindow *dest)
 {
 	GdkDisplay *display = gdk_window_get_display(dest);
 	Display *xdisplay = gdk_x11_display_get_xdisplay(display);
 	Window destination = gdk_x11_window_get_xid(dest);
 	XEvent xevent;
+
+	soap_property_events = 0;
+	soap_wait_success = FALSE;
 
 	memset(&xevent, 0, sizeof(xevent));
 	xevent.xclient.type = ClientMessage;
@@ -1250,8 +1283,16 @@ static void soap_send(GtkWidget *from, GdkAtom prop, GdkWindow *dest)
 	XSendEvent(xdisplay, destination, False, NoEventMask, &xevent);
 	XFlush(xdisplay);
 
-	g_timeout_add(10000, too_slow, NULL);
+	/* Local X11 IPC normally replies immediately.  Give a busy filer a little
+	 * time, but never use this timeout as permission to steal IPC ownership. */
+	soap_timeout_source = g_timeout_add(5000, too_slow, NULL);
 	gtk_main();
+	if (soap_timeout_source)
+	{
+		g_source_remove(soap_timeout_source);
+		soap_timeout_source = 0;
+	}
+	return soap_wait_success;
 }
 
 /* Lookup this method in rpc_calls and invoke it.

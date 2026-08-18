@@ -7,10 +7,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-13 08:22-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
@@ -6573,3 +6573,107 @@ msgstr "Fast and lightweight file manager for X11 and Wayland, continued from RO
 
 msgid "Rox-Filer2 project"
 msgstr "Rox-Filer2 project"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr "A pré-visualização de áudio funciona com os tipos MIME de áudio suportados pelo mpv, incluindo MP3, WAV, OGG, FLAC, M4A, AAC e Opus."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr "Navegador e console"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr "Comando do navegador:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr "Escolha o comando do navegador usado pelo Rox-Filer2. Você pode usar %u para a URL, por exemplo: firefox --new-tab %u. Deixe vazio para tentar primeiro defaultbrowser, x-www-browser e gnome-www-browser com --new-tab, tentar novamente sem --new-tab se necessário e usar xdg-open apenas como último recurso."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr "Comando do console:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr "Ativado por padrão. Depois que o ponteiro permanece por um segundo sobre um arquivo de áudio, o Rox-Filer2 o reproduz com mpv. Ao sair do arquivo, somente o processo mpv iniciado pelo Rox-Filer2 é encerrado."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr "Pré-visualizações de imagens e vídeos"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr "Pré-visualizar áudio quando o ponteiro ficar sobre um arquivo"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr "Programa usado por Abrir terminal aqui, Executar no terminal e pelo ícone Console da área de trabalho. Deixe vazio para tentar, nesta ordem, defaultterminal, x-terminal-emulator, xterm e urxvt."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr "Selecione os botões a exibir e atribua o número da posição. Alterar um número move esse botão diretamente para a posição escolhida e renumera os demais automaticamente. Partições fica fixo na posição 1 e não pode ser movido nem ocultado."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr "Mostrar miniaturas de vídeo"
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "O cache de miniaturas usa o local Freedesktop ~/.cache/thumbnails/normal."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr "As miniaturas de vídeo são geradas em segundo plano a partir de um quadro por volta dos 10 segundos do vídeo, com alternativa no segundo 1 para arquivos curtos."
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr "Quando as miniaturas estão ativadas, o ffmpeg cria pré-visualizações dos arquivos de vídeo. Se o ffmpeg não estiver instalado, o Rox-Filer2 mantém o ícone MIME normal do vídeo."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr "Não foi possível excluir as miniaturas:\n%s"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr "Escolha a posição deste botão na barra de ferramentas"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr "Limpar cache de miniaturas"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr "Criar um novo diretório, arquivo em branco ou arquivo a partir de um modelo"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr "Nenhum emulador de terminal adequado foi encontrado. Configure um em Opções > Área de trabalho ou instale defaultterminal, x-terminal-emulator, xterm ou urxvt."
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr "Nenhum navegador web adequado foi encontrado. Configure um em Opções > Área de trabalho ou instale defaultbrowser, x-www-browser, gnome-www-browser ou xdg-open."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr "Partições (fixo)"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr "Posição:"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr "Apenas arquivos locais podem ser adicionados à área de trabalho."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr "Não foi possível criar o link na área de trabalho."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr "Não foi possível adicionar um ou mais itens à área de trabalho."
+
+#: Rox-Filer2 2.12.2-18
+msgid "Launcher"
+msgstr "Lançador"

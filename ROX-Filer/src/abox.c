@@ -55,6 +55,8 @@ static void response(GtkDialog *dialog, gint response_id);
 static void abox_finalise(GObject *object);
 static void shade(ABox *abox);
 static void abox_set_log_visible(ABox *abox, gboolean visible);
+static GtkWidget *abox_ensure_progress(ABox *abox);
+static gboolean abox_pulse_progress(gpointer data);
 
 GType abox_get_type(void)
 {
@@ -148,14 +150,19 @@ static void abox_init(GTypeInstance *object, gpointer gclass)
 	gtk_box_pack_start(GTK_BOX(content),
 				abox->dir_label, FALSE, TRUE, 0);
 
-	/* Agregado por josejp2424 (2026): contenedor oculto para las animaciones
-	 * nativas de copia y borrado. Se muestra sólo en esas operaciones. */
-	abox->operation_animation_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_halign(abox->operation_animation_box, GTK_ALIGN_CENTER);
-	gtk_widget_set_no_show_all(abox->operation_animation_box, TRUE);
-	gtk_box_pack_start(GTK_BOX(content), abox->operation_animation_box,
+	/* Rox-Filer2 2.12.2-13: indicador de actividad GTK3 puro.
+	 * No requiere GIF ni ningún recurso gráfico externo. */
+	abox->operation_status_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	gtk_widget_set_halign(abox->operation_status_box, GTK_ALIGN_CENTER);
+	gtk_widget_set_no_show_all(abox->operation_status_box, TRUE);
+	gtk_box_pack_start(GTK_BOX(content), abox->operation_status_box,
 			FALSE, FALSE, 4);
-	abox->operation_animation = NULL;
+	abox->operation_spinner = gtk_spinner_new();
+	gtk_widget_set_halign(abox->operation_spinner, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(abox->operation_spinner, GTK_ALIGN_CENTER);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
+			abox->operation_spinner, FALSE, FALSE, 0);
+	abox->progress_pulse_id = 0;
 
 	abox->details = NULL;
 	abox->compact_log = FALSE;
@@ -252,7 +259,7 @@ static void abox_init(GTypeInstance *object, gpointer gclass)
 	gtk_widget_set_margin_end(abox->apply_all, 8);
 	gtk_box_pack_start(GTK_BOX(content), abox->apply_all, FALSE, FALSE, 2);
 
-	abox->progress=NULL;
+	abox->progress = NULL;
 
 	abox->flag_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
 	gtk_box_pack_end(GTK_BOX(content),
@@ -436,6 +443,12 @@ static void abox_finalise(GObject *object)
 	{
 		null_g_free(&abox->next_dir);
 		g_source_remove(abox->next_timer);
+	}
+
+	if (abox->progress_pulse_id)
+	{
+		g_source_remove(abox->progress_pulse_id);
+		abox->progress_pulse_id = 0;
 	}
 
 	/* Chain-up */
@@ -771,57 +784,88 @@ void abox_set_file(ABox *abox, int i, const gchar *path)
 	diritem_free(item);
 }
 
-void    abox_set_percentage(ABox *abox, int per)
+static GtkWidget *abox_ensure_progress(ABox *abox)
 {
-	if(!abox->progress) {
-		GtkDialog *dialog = GTK_DIALOG(abox);
-		GtkWidget *content = gtk_dialog_get_content_area(dialog);
+	GtkDialog *dialog;
+	GtkWidget *content;
 
-		abox->progress=gtk_progress_bar_new ();
-		gtk_box_pack_start(GTK_BOX(content),
-				abox->progress, FALSE, FALSE, 2);
-		gtk_widget_show(abox->progress);
-	}
-	if(per<0 || per>100) {
-		gtk_widget_hide(abox->progress);
-		return;
-	}
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(abox->progress),
-				      per/100.);
+	g_return_val_if_fail(abox != NULL, NULL);
+	g_return_val_if_fail(IS_ABOX(abox), NULL);
+
+	if (abox->progress)
+		return abox->progress;
+
+	dialog = GTK_DIALOG(abox);
+	content = gtk_dialog_get_content_area(dialog);
+	abox->progress = gtk_progress_bar_new();
+	gtk_widget_set_hexpand(abox->progress, TRUE);
+	gtk_widget_set_margin_start(abox->progress, 10);
+	gtk_widget_set_margin_end(abox->progress, 10);
+	gtk_box_pack_start(GTK_BOX(content), abox->progress, FALSE, FALSE, 4);
+	return abox->progress;
 }
 
-/* Agregado por josejp2424 (2026): carga una animación GIF desde
- * ROX-Filer/images y la muestra centrada en la ventana de operación.
- * GtkImage mantiene viva la GdkPixbufAnimation hasta que el diálogo se
- * destruye, por lo que no se necesita ningún temporizador externo. */
-void abox_set_operation_animation(ABox *abox, const gchar *filename)
+static gboolean abox_pulse_progress(gpointer data)
 {
-	GList *children;
-	GList *iter;
-	GdkPixbufAnimation *animation;
-	GError *error = NULL;
-	gchar *path;
+	ABox *abox = ABOX(data);
+
+	if (!IS_ABOX(abox) || !abox->progress ||
+	    !gtk_widget_get_visible(abox->progress))
+	{
+		abox->progress_pulse_id = 0;
+		return G_SOURCE_REMOVE;
+	}
+
+	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(abox->progress));
+	return G_SOURCE_CONTINUE;
+}
+
+void abox_set_percentage(ABox *abox, int per)
+{
+	GtkWidget *progress;
 
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
 
-	children = gtk_container_get_children(
-		GTK_CONTAINER(abox->operation_animation_box));
-	for (iter = children; iter; iter = iter->next)
-		gtk_widget_destroy(GTK_WIDGET(iter->data));
-	g_list_free(children);
-	abox->operation_animation = NULL;
+	progress = abox_ensure_progress(abox);
+	if (!progress)
+		return;
 
-	if (!filename || !*filename)
+	if (per < 0 || per > 100)
 	{
-		gtk_widget_hide(abox->operation_animation_box);
+		if (abox->progress_pulse_id)
+		{
+			g_source_remove(abox->progress_pulse_id);
+			abox->progress_pulse_id = 0;
+		}
+		gtk_widget_hide(progress);
 		return;
 	}
 
-	/* Modificado por josejp2424 (2026): las operaciones con animación usan
-	 * un diseño compacto. El registro se pliega por defecto y se puede abrir
-	 * con Detalles. No se reutiliza la opción Brief, porque esa opción sólo
-	 * controla cuánto se registra y no la visibilidad del panel. */
+	/* En cuanto ROX conoce un porcentaje real dejamos el modo indeterminado. */
+	if (abox->progress_pulse_id)
+	{
+		g_source_remove(abox->progress_pulse_id);
+		abox->progress_pulse_id = 0;
+	}
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), TRUE);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress), NULL);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), per / 100.0);
+	gtk_widget_show(progress);
+}
+
+/* Rox-Filer2 2.12.2-13: sustituye las antiguas animaciones GIF por widgets
+ * GTK3 nativos. El spinner indica actividad y la barra pulsa mientras no hay
+ * un porcentaje conocido. Si action.c envía un porcentaje, abox_set_percentage
+ * cambia automáticamente la barra a progreso real. */
+void abox_start_operation_progress(ABox *abox)
+{
+	GtkWidget *progress;
+
+	g_return_if_fail(abox != NULL);
+	g_return_if_fail(IS_ABOX(abox));
+
+	/* Mantener el diseño compacto que usaban las operaciones animadas. */
 	abox->compact_log = TRUE;
 	gtk_widget_set_no_show_all(abox->log_hbox, TRUE);
 	if (!abox->details)
@@ -829,45 +873,42 @@ void abox_set_operation_animation(ABox *abox, const gchar *filename)
 			_("Details"), _("Show Log"), 'D', FALSE);
 	abox_set_log_visible(abox, FALSE);
 
-	path = g_build_filename(app_dir, "images", filename, NULL);
-	animation = gdk_pixbuf_animation_new_from_file(path, &error);
-	g_free(path);
+	gtk_spinner_start(GTK_SPINNER(abox->operation_spinner));
+	gtk_widget_show(abox->operation_spinner);
+	gtk_widget_show(abox->operation_status_box);
 
-	if (!animation)
-	{
-		if (error)
-		{
-			g_warning("Unable to load ROX operation animation '%s': %s",
-				filename, error->message);
-			g_error_free(error);
-		}
-		gtk_widget_hide(abox->operation_animation_box);
+	progress = abox_ensure_progress(abox);
+	if (!progress)
 		return;
-	}
 
-	abox->operation_animation = gtk_image_new_from_animation(animation);
-	g_object_unref(animation);
-	gtk_widget_set_halign(abox->operation_animation, GTK_ALIGN_CENTER);
-	gtk_widget_set_valign(abox->operation_animation, GTK_ALIGN_CENTER);
-	gtk_box_pack_start(GTK_BOX(abox->operation_animation_box),
-		abox->operation_animation, FALSE, FALSE, 0);
-	gtk_widget_show(abox->operation_animation);
-	gtk_widget_show(abox->operation_animation_box);
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), FALSE);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), 0.0);
+	gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(progress), 0.08);
+	gtk_widget_show(progress);
+
+	if (!abox->progress_pulse_id)
+		abox->progress_pulse_id = g_timeout_add(90, abox_pulse_progress, abox);
 }
 
-/* Agregado por josejp2424 (2026): detener y liberar la animación apenas
- * termina la operación. Dejar un GIF activo en un diálogo de resultados
- * mantiene repintados periódicos y puede producir lag en equipos modestos. */
-void abox_stop_operation_animation(ABox *abox)
+void abox_stop_operation_progress(ABox *abox)
 {
-	GList *children;
-
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
 
-	children = gtk_container_get_children(
-		GTK_CONTAINER(abox->operation_animation_box));
-	g_list_free_full(children, (GDestroyNotify) gtk_widget_destroy);
-	abox->operation_animation = NULL;
-	gtk_widget_hide(abox->operation_animation_box);
+	if (abox->progress_pulse_id)
+	{
+		g_source_remove(abox->progress_pulse_id);
+		abox->progress_pulse_id = 0;
+	}
+
+	if (abox->operation_spinner)
+	{
+		gtk_spinner_stop(GTK_SPINNER(abox->operation_spinner));
+		gtk_widget_hide(abox->operation_spinner);
+	}
+	if (abox->operation_status_box)
+		gtk_widget_hide(abox->operation_status_box);
+	if (abox->progress)
+		gtk_widget_hide(abox->progress);
 }
+

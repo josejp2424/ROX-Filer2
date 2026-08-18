@@ -1,3 +1,201 @@
+Rox-Filer2 2.12.2-18 (2026-08-15)
+------------------------------------
+
+- Made the native desktop New menu independent from the filer New/Templates
+  menu. The desktop now offers only Directory, File and Launcher.
+- Added a native GTK3 launcher editor that creates a .desktop file in ~/Desktop
+  with configurable Name, Command and Icon fields.
+- Added a command chooser that starts in /usr/bin and an icon chooser that
+  starts in /usr/share/pixmaps; both can browse anywhere in the filesystem.
+- Newly created launchers are made executable and are immediately picked up by
+  the existing Rox-Filer2 desktop launcher code.
+- Added the new Launcher label to all 13 actively maintained translations and
+  regenerated their GNU gettext .mo catalogues.
+
+Rox-Filer2 2.12.2-17 (2026-08-15)
+------------------------------------
+
+- Fixed the GTK3 Wayland activation popover callback: GtkMenuButton returns a
+  GtkPopover pointer, which is now handled with the correct type.
+- Removed two unused native-desktop helper functions left by the 2.12.2-15
+  selection/placement work, eliminating the corresponding compiler warnings.
+- No new user-visible strings were added; existing translations remain valid.
+
+Rox-Filer2 2.12.2-16 (2026-08-15)
+====================================
+- Fixed the Wayland single/double-click selector so the GtkPopover contents are
+  visible when the anchored menu button opens.
+- Fixed the desktop New/Templates submenu so its synthetic desktop target no
+  longer overwrites the global active filer window. New directory, blank-file
+  and template saveboxes now remember only a real filer window for autoselect.
+- Made X11 IPC recovery safe: if an existing valid ROX IPC owner does not reply,
+  the current request continues locally without deleting the owner's root
+  property or stealing primary-instance ownership.
+- Fixed a GdkWindow reference leak when an advertised IPC window fails its
+  self-property validation.
+- Desktop drag-and-drop now accepts sources that offer COPY as well as LINK,
+  while still creating a symbolic link in ~/Desktop and never moving the
+  original object.
+- Fixed a small template-menu path leak for duplicate template entries.
+- Updated current translation/template metadata to 2.12.2-16; no new
+  user-visible strings were added.
+
+Rox-Filer2 2.12.2-15 (2026-08-13)
+====================================
+- Added rubber-band selection to the native desktop. Dragging on empty desktop
+  space now selects multiple icons with the mouse; Ctrl/Shift extends the
+  existing selection. Selected icons can already be dragged together and are
+  now also handled together by the desktop file actions.
+- Expanded the desktop item context menu with Cut, Copy and Rename while
+  keeping Move to Trash multi-selection aware.
+- Added the same New/Templates submenu used by filer windows to the desktop
+  background context menu.
+- Added drag-and-drop from filer windows to the native desktop. Local files and
+  folders are pinned by creating symbolic links in ~/Desktop, preserving the
+  original object instead of moving or duplicating it.
+- Fixed a stale X11 IPC handle that could make `roxfiler` with no parameters
+  report that an existing Rox-Filer2 process was not responding. A stale owner
+  is now discarded and the request continues locally.
+- Replaced the Desktop Preferences single/double-click GtkComboBox popup with
+  an anchored GtkMenuButton + GtkPopover, fixing the detached/far-away popup
+  reported on Wayland.
+- Added translations for the new desktop drag-and-drop error messages to all
+  13 actively maintained Rox-Filer2 locales.
+
+Rox-Filer2 2.12.2-14 (2026-08-13)
+
+- Fixed the toolbar overflow menu for New. When the toolbar becomes too narrow,
+  the overflow entry now remains a real submenu ("New >") instead of becoming
+  a flat menu item.
+- The overflow New entry reuses create_menu_new(), so Directory, Blank file,
+  Customise Menu and templates are identical to the normal New menu.
+- The New icon keeps the fixed GTK menu-size slot introduced in 2.12.2-12, so
+  the plus icon stays aligned with Search, Trash and the other overflow items.
+- No GIF files were added; native GTK3 progress indicators from 2.12.2-13 are
+  preserved.
+
+Rox-Filer2 2.12.2-13 (2026-08-13)
+====================================
+- Removed the bundled operation GIF files. Copy, Move and Delete now use a
+  native GTK3 GtkSpinner plus GtkProgressBar. The bar pulses when progress is
+  unknown and switches to the real percentage when ROX reports one.
+- Operation dialogs keep the compact Details/Show Log behaviour and use only
+  existing gettext strings, so all 13 maintained Rox-Filer2 locales remain
+  covered without adding untranslated UI text.
+- Restored New as a real GTK3 menu/submenu button on the toolbar. The same +
+  opens the New menu, and its drop-down uses the same Directory, Blank file,
+  Customise Menu and Templates content as the context-menu New submenu.
+- The context-menu New entry remains an actual <Branch> submenu and keeps the
+  GTK_ICON_SIZE_MENU alignment fix from 2.12.2-12.
+- The source archive contains no .gif files; README now uses the existing PNG
+  desktop screenshot.
+
+Rox-Filer2 2.12.2-12 (2026-08-13)
+====================================
+- GTK3 menu alignment: the New submenu now uses the standard list-add icon.
+- Normalised themed menu icons to GTK_ICON_SIZE_MENU and vertically centred
+  menu content so New aligns with Search, Trash and the other menu rows.
+- No custom image assets were added.
+
+Rox-Filer2 2.12.2-11 (2026-08-13)
+-----------------------------------
+* Toolbar customisation: replaced the slow Up/Down controls with a numeric
+  Position field. Partitions remains fixed at position 1; assigning a new
+  number moves the selected button directly and renumbers the others.
+* Toolbar visibility remains unchanged: enabled buttons are shown and hidden
+  buttons keep their saved place in the order.
+* Browser and Console commands now read the last saved shared Options value at
+  launch time, so changes take effect immediately after pressing OK even when
+  Rox-Filer2 --desktop is a separate long-running process. No restart is
+  required.
+* Updated translations for the new toolbar, browser/console, video-thumbnail
+  and audio-preview interface strings.
+
+Rox-Filer2 2.12.2-10 (2026-08-13)
+
+- Toolbar options now keep the existing show/hide behaviour and add explicit
+  Up/Down controls so users can rearrange toolbar buttons live.
+- Partitions remains permanent and fixed in the first toolbar position; it is
+  shown as a fixed row in the customiser and cannot be hidden or moved.
+- Toolbar order is saved in the new `toolbar_order` option and restored across
+  sessions; unknown/new tools fall back safely to the built-in order.
+- The + button is now a normal single toolbar button. Clicking the + itself
+  opens the exact New menu anchored directly below it, with no split-arrow and
+  no separate popup GUI.
+- The + menu continues to share Directory, Blank file, Customise Menu and the
+  same user/bundled Templates entries as the context-menu New submenu.
+
+Rox-Filer2 2.12.2-9 (2026-08-13)
+
+- Toolbar: clicking the + (New) button now opens the complete New menu instead
+  of immediately creating a directory. It matches the context-menu New submenu.
+- Toolbar: the New drop-down uses the same ordering as the context menu:
+  Directory, Blank file, Customise Menu, then user/bundled templates.
+- Toolbar: Search now uses the standard GTK3 icon name `edit-find` through
+  `ROX_ICON_FIND`, so it follows the active GTK icon theme.
+
+Rox-Filer2 2.12.2-8 (2026-08-13)
+
+- Fixes video thumbnails not appearing: ffmpeg now writes a temporary frame,
+  then Rox-Filer2 saves it through its normal thumbnail writer so the cached
+  PNG contains the required Freedesktop Thumb::MTime/Size/URI metadata.
+- Automatically removes invalid metadata-less video thumbnails produced by
+  2.12.2-6/7 and regenerates them when needed.
+- Thumbnail cache purge no longer opens the old normal file-delete dialog.
+  It directly clears ~/.cache/thumbnails/normal (and legacy
+  ~/.thumbnails/normal when present), purges the in-memory cache and refreshes
+  filer windows.
+- Cache purge no longer creates an empty cache directory just to delete it.
+- Audio preview now follows Puppy's real run-as-spot wrapper directly: if
+  run-as-spot exists it is used; otherwise mpv is launched normally. The
+  wrapper itself handles root-versus-normal-user behaviour.
+
+Rox-Filer2 2.12.2-7 (2026-08-13)
+
+- Puppy-aware audio preview: when Rox-Filer2 is running as root on Puppy
+  (detected by /etc/DISTRO_SPECS or /etc/puppyversion), hover preview launches
+  `run-as-spot mpv ...`. If run-as-spot is missing, preview is skipped instead
+  of running mpv as root.
+- On non-Puppy systems, and when Puppy itself is already running ROX as a
+  non-root user, audio preview launches mpv normally.
+- Audio preview runs in its own process group, so leaving the file stops the
+  complete run-as-spot/su/mpv chain without touching unrelated mpv instances.
+- Keeps the same one-second hover delay and audio/* MIME support from 2.12.2-6.
+- Fixes the 2.12.2-6 build failure in filer.c by including debug_log.h for ROX_LOG_DEBUG.
+
+Rox-Filer2 2.12.2-6 (2026-08-13)
+
+- Added optional video thumbnails in Options > Thumbnails. When enabled,
+  Rox-Filer2 uses ffmpeg directly, first trying a frame at 10 seconds and
+  falling back to 1 second for short clips. No ffmpegthumbnailer dependency.
+- Added audio hover preview with mpv, enabled by default. Resting the pointer
+  on audio/* files for one second starts audio-only playback; moving away
+  stops only the mpv PID started by Rox-Filer2.
+- Kept Browser command visible in Options > Desktop > Browser and Console,
+  including support for %u and the defaultbrowser/x-www-browser/
+  gnome-www-browser/xdg-open fallback chain.
+
+Rox-Filer2 2.12.2-5 (2026-08-13)
+
+- Fixes the desktop browser build by exposing rox_open_browser() to desktop.c.
+- Moves Trash handling out of the forked action child; this avoids a GTK/GLib
+  GIO deadlock that could leave the Move to Trash operation hanging forever.
+- Fixes the signedness warning when checking whether a directory item is Home.
+- Adds one central browser launcher, rox_open_browser(), used by the built-in
+  desktop Browser icon.
+- Browser command is configurable from Options -> Desktop; %u is replaced by
+  the requested URL.
+- With no custom browser, tries defaultbrowser, x-www-browser and
+  gnome-www-browser with --new-tab, retries each wrapper without --new-tab if
+  it exits immediately with an error, and uses xdg-open only as the last
+  fallback.
+- Console/terminal selection is automatic when no command is configured:
+  defaultterminal, x-terminal-emulator, xterm, then urxvt.
+- The same terminal selection is shared by the desktop Console icon, Open
+  Terminal Here and Run in Terminal.
+- Browser and Console command fields now live together in Options -> Desktop,
+  beside the built-in desktop controls.
+
 Rox-Filer2 2.12.2-4 (2026-08-09)
 
 - X11/XLibre file context menus are now built from a fresh GtkMenu/GtkMenuItem

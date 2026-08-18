@@ -1,23 +1,70 @@
-# Rox-Filer2 2.12-r68 translation coverage
+# Rox-Filer2 2.12.2-18 translation coverage
 
-The maintained catalogues share the same 1,461 active message IDs.
-The 279 GTK3/desktop/search/MIME strings added in r57-r60 are translated in every maintained language.
-Older catalogue gaps are kept non-empty with the original English text when no native translation existed.
+Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
+these 13 locales for the current GTK3/Desktop additions:
 
-| Locale | Entries | New r57-r60 translated | Preserved translations | English fallback |
-|---|---:|---:|---:|---:|
-| `ar` | 1461 | 279 | 1187 | 0 |
-| `ca` | 1461 | 279 | 1183 | 0 |
-| `de` | 1461 | 279 | 1183 | 0 |
-| `es` | 1461 | 0 | 1462 | 0 |
-| `fr` | 1461 | 279 | 1183 | 0 |
-| `hu` | 1461 | 279 | 1183 | 0 |
-| `it` | 1461 | 279 | 1183 | 0 |
-| `ja` | 1461 | 279 | 1182 | 0 |
-| `pt_PT` | 1461 | 279 | 1183 | 0 |
-| `pt_BR` | 1461 | 279 | 1183 | 0 |
-| `ru` | 1461 | 279 | 1184 | 0 |
-| `zh_CN` | 1461 | 279 | 1182 | 0 |
-| `zh_TW` | 1461 | 279 | 1182 | 0 |
+- `ar`
+- `ca`
+- `de`
+- `es`
+- `fr`
+- `hu`
+- `it`
+- `ja`
+- `pt_BR`
+- `pt_PT`
+- `ru`
+- `zh_CN`
+- `zh_TW`
 
-Compiled GNU gettext catalogues are included below `Rox-Filer/Messages/<locale>/LC_MESSAGES/ROX-Filer.mo`.
+For 2.12.2-16 the current strings added around video thumbnails, audio
+hover preview, browser/console selection and numeric toolbar ordering remain
+translated in all 13 maintained locales. The new native operation indicator
+uses GtkSpinner/GtkProgressBar and existing translated ROX labels, so it adds
+no untranslated user-visible strings. Their compiled GNU gettext catalogues
+are included under `Rox-Filer/Messages/<locale>/LC_MESSAGES/ROX-Filer.mo`.
+
+`po/options_strings.py` is now part of the translation update workflow. It
+extracts the user-visible strings from `Options.xml`, so future `update-po`
+runs no longer miss labels and help text that live only in the Options file.
+
+The other historical ROX-Filer catalogues remain included unchanged. If a
+newer Rox-Filer2-specific string is not translated in one of those legacy
+catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-18
+
+2.12.2-18 gives the native desktop its own New submenu instead of reusing the
+filer template menu. It offers Directory, File and Launcher. Launcher creates
+a custom .desktop entry with Name, Command and Icon fields; the command chooser
+starts in /usr/bin and the icon chooser starts in /usr/share/pixmaps, while both
+can browse the whole filesystem. The new "Launcher" label is translated in all
+13 actively maintained locales and the compiled .mo catalogues are included.
+
+
+## 2.12.2-17
+
+2.12.2-17 adds no new user-visible strings. It fixes a GTK3 type mismatch in
+the Wayland activation popover callback and removes two unused desktop helpers.
+The 2.12.2-16 translations remain valid.
+
+## 2.12.2-16
+
+2.12.2-16 adds no new user-visible strings. It fixes the Wayland activation
+popover visibility, keeps the desktop New/Templates submenu isolated from the
+active filer window, makes X11 IPC fallback safe without stealing ownership,
+and accepts COPY as well as LINK offers when dropping local files onto the
+desktop. The existing 13 maintained translations therefore remain complete.
+
+## 2.12.2-15
+
+2.12.2-15 adds three user-visible drag-and-drop error messages for the native
+desktop. They are translated in all 13 actively maintained locales and their
+compiled `.mo` catalogues are included. The new desktop menu actions, New
+submenu, rubber-band selection and Wayland single/double-click popover reuse
+existing translated strings.
+
+## 2.12.2-14
+
+2.12.2-14 adds no new user-visible strings; the toolbar overflow submenu fix reuses the existing translated `New` string and the existing New-menu entries.

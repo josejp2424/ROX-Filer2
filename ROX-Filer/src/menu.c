@@ -411,7 +411,8 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {N_("Copy"),			"<Ctrl>C", file_op, FILE_COPY_TO_CLIPBOARD, "<IconItem>", ROX_ICON_COPY},
 {N_("Paste"),			"<Ctrl>V", paste_from_clipboard, 0, "<IconItem>", ROX_ICON_PASTE},
 {"",				NULL, NULL, 0, "<Separator>"},
-{N_("New"),			NULL, NULL, 0, "<Branch>", ROX_ICON_NEW},
+/* New debe seguir siendo un submenú; el icono se alinea en gui_support.c. */
+{N_("New"),			NULL, NULL, 0, "<Branch>", ROX_ICON_ADD},
 {">" N_("Directory"),		"Insert", new_directory, 0, "<IconItem>", "folder-new"},
 {">" N_("Blank file"),		NULL, new_file, 0, "<IconItem>", ROX_ICON_NEW},
 {">" N_("Customise Menu..."),	NULL, customise_new, 0, "<IconItem>", ROX_ICON_PREFERENCES},
@@ -785,11 +786,10 @@ void menu_init(void)
 		g_free(menurc);
 	}
 
-	/* Rox-Filer2 2.12.2-1: use one explicit terminal preference for
-	 * Open Terminal Here, Run in Terminal and the desktop Console icon.
-	 * Existing saved configurations are respected; new configurations
-	 * intentionally default to xterm. */
-	option_add_string(&o_menu_xterm, "menu_xterm", "xterm");
+	/* Rox-Filer2: one terminal preference is shared by Open Terminal Here,
+	 * Run in Terminal and the desktop Console icon. An empty preference means
+	 * automatic selection: defaultterminal, x-terminal-emulator, xterm, urxvt. */
+	option_add_string(&o_menu_xterm, "menu_xterm", "");
 	option_add_int(&o_menu_xterm_grave, "menu_xterm_grave", TRUE);
 	option_add_int(&o_menu_iconsize, "menu_iconsize", MIS_SMALL);
 	option_add_int(&o_menu_quick, "menu_quick", TRUE);
@@ -939,11 +939,41 @@ static GtkWidget *make_directory_menu_item(DirItem *ditem, const char *label,
 	return item;
 }
 
+typedef struct {
+	CallbackFn func;
+	gchar *path;
+	FilerWindow *target_filer;
+} MenuDirActivation;
+
+static void menu_dir_activation_free(gpointer data, GClosure *closure)
+{
+	MenuDirActivation *activation = data;
+	(void)closure;
+	if (!activation)
+		return;
+	g_free(activation->path);
+	g_free(activation);
+}
+
+static void menu_dir_activate_for_filer(GtkMenuItem *item, gpointer data)
+{
+	MenuDirActivation *activation = data;
+	FilerWindow *previous;
+	(void)item;
+
+	if (!activation || !activation->func)
+		return;
+	previous = window_with_focus;
+	window_with_focus = activation->target_filer;
+	activation->func(activation->path);
+	window_with_focus = previous;
+}
+
 static GList *menu_from_dir(GtkWidget *menu, GHashTable *menu_entries,
 			    const gchar *dir_name,
 			    MenuIconStyle style, CallbackFn func,
 			    gboolean separator, gboolean strip_ext,
-			    gboolean recurse)
+			    gboolean recurse, FilerWindow *target_filer)
 {
 	GList *widgets = NULL;
 	DirItem *ditem;
@@ -985,6 +1015,7 @@ static GList *menu_from_dir(GtkWidget *menu, GHashTable *menu_entries,
 
 		if (menu_entries && g_hash_table_contains(menu_entries, leaf))
 		{
+			g_free(fname);
 			g_free(leaf);
 			continue;
 		}
@@ -1010,9 +1041,20 @@ static GList *menu_from_dir(GtkWidget *menu, GHashTable *menu_entries,
 
 			sub = rox_menu_new();
 			new_widgets = menu_from_dir(sub, menu_entries, fname, style, func,
-						separator, strip_ext, TRUE);
+						separator, strip_ext, TRUE, target_filer);
 			g_list_free(new_widgets);
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), sub);
+		}
+		else if (target_filer)
+		{
+			MenuDirActivation *activation = g_new0(MenuDirActivation, 1);
+			activation->func = func;
+			activation->path = fname;
+			activation->target_filer = target_filer;
+			g_signal_connect_data(item, "activate",
+				G_CALLBACK(menu_dir_activate_for_filer), activation,
+				menu_dir_activation_free, 0);
+			fname = NULL;
 		}
 		else
 			g_signal_connect_swapped(item, "activate",
@@ -1022,8 +1064,9 @@ static GList *menu_from_dir(GtkWidget *menu, GHashTable *menu_entries,
 
 		if (menu)
 			gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-		g_signal_connect_swapped(item, "destroy",
-				G_CALLBACK(g_free), fname);
+		if (fname)
+			g_signal_connect_swapped(item, "destroy",
+					G_CALLBACK(g_free), fname);
 
 		widgets = g_list_append(widgets, item);
 	}
@@ -1062,7 +1105,7 @@ static void update_new_files_menu(MenuIconStyle style)
 	if (user_dir)
 	{
 		added = menu_from_dir(filer_new_menu, entries, user_dir, style,
-				(CallbackFn) new_file_type, need_separator, TRUE, FALSE);
+				(CallbackFn) new_file_type, need_separator, TRUE, FALSE, NULL);
 		if (added)
 			need_separator = FALSE;
 		widgets = g_list_concat(widgets, added);
@@ -1072,7 +1115,7 @@ static void update_new_files_menu(MenuIconStyle style)
 	if (g_file_test(bundled_dir, G_FILE_TEST_IS_DIR))
 	{
 		added = menu_from_dir(filer_new_menu, entries, bundled_dir, style,
-				(CallbackFn) new_file_type, need_separator, TRUE, FALSE);
+				(CallbackFn) new_file_type, need_separator, TRUE, FALSE, NULL);
 		widgets = g_list_concat(widgets, added);
 	}
 
@@ -1967,6 +2010,21 @@ void menu_show_options(gpointer data, guint action, GtkWidget *widget)
 	}
 }
 
+static void new_savebox_remember_filer(GtkWidget *savebox, FilerWindow *target)
+{
+	/* Only remember real filer windows.  The desktop New menu uses a tiny
+	 * synthetic target which is intentionally destroyed with the menu. */
+	if (savebox && target && filer_exists(target))
+		g_object_set_data(G_OBJECT(savebox), "rox-new-filer", target);
+}
+
+static FilerWindow *new_savebox_filer(GObject *savebox)
+{
+	FilerWindow *target;
+	target = savebox ? g_object_get_data(savebox, "rox-new-filer") : NULL;
+	return target && filer_exists(target) ? target : NULL;
+}
+
 static gboolean new_directory_cb(GObject *savebox,
 				 const gchar *initial, const gchar *path)
 {
@@ -1978,12 +2036,14 @@ static gboolean new_directory_cb(GObject *savebox,
 
 	dir_check_this(path);
 
-	if (filer_exists(window_with_focus))
 	{
-		guchar	*leaf;
-		leaf = strrchr(path, '/');
-		if (leaf)
-			display_set_autoselect(window_with_focus, leaf + 1);
+		FilerWindow *target = new_savebox_filer(savebox);
+		if (target)
+		{
+			gchar *leaf = strrchr(path, '/');
+			if (leaf)
+				display_set_autoselect(target, leaf + 1);
+		}
 	}
 
 	return TRUE;
@@ -1999,10 +2059,14 @@ static void new_directory(gpointer data, guint action, GtkWidget *widget)
 {
 	g_return_if_fail(window_with_focus != NULL);
 
-	savebox_show(_("Create"),
-		make_path(window_with_focus->sym_path, _("NewDir")),
-		type_to_icon(inode_directory), new_directory_cb,
-		GDK_ACTION_COPY);
+	{
+		FilerWindow *target = window_with_focus;
+		GtkWidget *savebox = savebox_show(_("Create"),
+			make_path(target->sym_path, _("NewDir")),
+			type_to_icon(inode_directory), new_directory_cb,
+			GDK_ACTION_COPY);
+		new_savebox_remember_filer(savebox, target);
+	}
 }
 
 static gboolean new_file_cb(GObject *savebox,
@@ -2025,12 +2089,14 @@ static gboolean new_file_cb(GObject *savebox,
 
 	dir_check_this(path);
 
-	if (filer_exists(window_with_focus))
 	{
-		guchar	*leaf;
-		leaf = strrchr(path, '/');
-		if (leaf)
-			display_set_autoselect(window_with_focus, leaf + 1);
+		FilerWindow *target = new_savebox_filer(savebox);
+		if (target)
+		{
+			gchar *leaf = strrchr(path, '/');
+			if (leaf)
+				display_set_autoselect(target, leaf + 1);
+		}
 	}
 
 	return TRUE;
@@ -2046,10 +2112,13 @@ static void new_file(gpointer data, guint action, GtkWidget *widget)
 {
 	g_return_if_fail(window_with_focus != NULL);
 
-	savebox_show(_("Create"),
-		make_path(window_with_focus->sym_path, _("NewFile")),
-		type_to_icon(text_plain),
-		new_file_cb, GDK_ACTION_COPY);
+	{
+		FilerWindow *target = window_with_focus;
+		GtkWidget *savebox = savebox_show(_("Create"),
+			make_path(target->sym_path, _("NewFile")),
+			type_to_icon(text_plain), new_file_cb, GDK_ACTION_COPY);
+		new_savebox_remember_filer(savebox, target);
+	}
 }
 
 static gboolean new_file_type_cb(GObject *savebox,
@@ -2085,8 +2154,11 @@ static gboolean new_file_type_cb(GObject *savebox,
 	g_free(dest);
 	g_free(rtempl);
 
-	if (filer_exists(window_with_focus))
-		display_set_autoselect(window_with_focus, leaf);
+	{
+		FilerWindow *target = new_savebox_filer(savebox);
+		if (target)
+			display_set_autoselect(target, leaf);
+	}
 	g_free(base);
 
 	return TRUE;
@@ -2105,33 +2177,41 @@ static void new_file_type(gchar *templ)
 	type = type_get_type(templ);
 
 	{
+		FilerWindow *target = window_with_focus;
 		GtkWidget *savebox = savebox_show(_("Create"),
-			make_path(window_with_focus->sym_path, leaf),
+			make_path(target->sym_path, leaf),
 			type_to_icon(type),
 			new_file_type_cb, GDK_ACTION_COPY);
 		if (savebox)
+		{
 			g_object_set_data_full(G_OBJECT(savebox), "template_path",
 				g_strdup(templ), g_free);
+			new_savebox_remember_filer(savebox, target);
+		}
 	}
 	g_free(base);
 }
 
 static void new_menu_directory_activate(GtkMenuItem *item, gpointer data)
 {
+	FilerWindow *previous = window_with_focus;
 	(void)item;
 	show_new_directory((FilerWindow *)data);
+	window_with_focus = previous;
 }
 
 static void new_menu_file_activate(GtkMenuItem *item, gpointer data)
 {
+	FilerWindow *previous = window_with_focus;
 	(void)item;
 	show_new_file((FilerWindow *)data);
+	window_with_focus = previous;
 }
 
 static void new_menu_customise_activate(GtkMenuItem *item, gpointer data)
 {
 	(void)item;
-	window_with_focus = (FilerWindow *)data;
+	(void)data;
 	customise_new(NULL, 0, NULL);
 }
 
@@ -2145,7 +2225,6 @@ GtkWidget *create_menu_new(FilerWindow *filer_window)
 	GList *added;
 	gboolean separator = TRUE;
 
-	window_with_focus = filer_window;
 	menu = rox_menu_new();
 
 	item = menu_item_new_with_icon(_("Directory"), "folder-new");
@@ -2158,13 +2237,22 @@ GtkWidget *create_menu_new(FilerWindow *filer_window)
 	g_signal_connect(item, "activate",
 		G_CALLBACK(new_menu_file_activate), filer_window);
 
+	/* Rox-Filer2 2.12.2-11: keep the toolbar New menu in exactly the same
+	 * order as the context-menu New submenu: built-in actions first, then
+	 * the separator and template entries. */
+	item = menu_item_new_with_icon(_("Customise Menu..."),
+		ROX_ICON_PREFERENCES);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	g_signal_connect(item, "activate",
+		G_CALLBACK(new_menu_customise_activate), filer_window);
+
 	entries = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	user_dir = choices_find_xdg_path_load("Templates", "", SITE);
 	if (user_dir)
 	{
 		added = menu_from_dir(menu, entries, user_dir,
 			get_menu_icon_style(), (CallbackFn)new_file_type,
-			separator, TRUE, FALSE);
+			separator, TRUE, FALSE, filer_window);
 		if (added)
 			separator = FALSE;
 		g_list_free(added);
@@ -2174,22 +2262,48 @@ GtkWidget *create_menu_new(FilerWindow *filer_window)
 	{
 		added = menu_from_dir(menu, entries, bundled_dir,
 			get_menu_icon_style(), (CallbackFn)new_file_type,
-			separator, TRUE, FALSE);
+			separator, TRUE, FALSE, filer_window);
 		g_list_free(added);
 	}
 	g_hash_table_destroy(entries);
 	g_free(bundled_dir);
 	g_free(user_dir);
 
-	item = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	item = menu_item_new_with_icon(_("Customise Menu..."),
-		ROX_ICON_PREFERENCES);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	g_signal_connect(item, "activate",
-		G_CALLBACK(new_menu_customise_activate), filer_window);
-
 	gtk_widget_show_all(menu);
+	return menu;
+}
+
+static void new_menu_fake_filer_free(gpointer data)
+{
+	FilerWindow *fake = data;
+
+	if (!fake)
+		return;
+	if (window_with_focus == fake)
+		window_with_focus = NULL;
+	g_free(fake->sym_path);
+	g_free(fake->real_path);
+	g_free(fake);
+}
+
+/* Rox-Filer2 2.12.2-15: the native desktop has no FilerWindow, but it should
+ * expose exactly the same New menu and Templates support as a filer window.
+ * A tiny target object supplies the destination path to the existing New
+ * callbacks without opening a hidden filer window. */
+GtkWidget *create_menu_new_for_path(const gchar *path, GtkWindow *parent)
+{
+	FilerWindow *fake;
+	GtkWidget *menu;
+
+	g_return_val_if_fail(path != NULL, NULL);
+	fake = g_new0(FilerWindow, 1);
+	fake->window = parent ? GTK_WIDGET(parent) : NULL;
+	fake->sym_path = g_strdup(path);
+	fake->real_path = pathdup(path);
+
+	menu = create_menu_new(fake);
+	g_object_set_data_full(G_OBJECT(menu), "rox-new-target-filer", fake,
+	                       new_menu_fake_filer_free);
 	return menu;
 }
 
@@ -2526,12 +2640,98 @@ static gboolean terminal_name_is(const gchar *name, const gchar *candidate)
  * terminal family. The executed payload is a temporary script path, which is
  * accepted both by terminals that expect argv and those that expect a single
  * command after -e. */
+static gboolean terminal_command_program_available(const gchar *command)
+{
+	gchar **parsed = NULL;
+	gint argc = 0;
+	GError *error = NULL;
+	gchar *found = NULL;
+	gboolean available = FALSE;
+
+	if (!command || !*command)
+		return FALSE;
+	if (!g_shell_parse_argv(command, &argc, &parsed, &error))
+	{
+		rox_debug_log("TERMINAL", "invalid configured command=%s error=%s",
+			command, error ? error->message : "");
+		g_clear_error(&error);
+		return FALSE;
+	}
+	if (argc > 0 && parsed && parsed[0] && *parsed[0])
+	{
+		if (strchr(parsed[0], '/'))
+			available = access(parsed[0], X_OK) == 0;
+		else
+		{
+			found = g_find_program_in_path(parsed[0]);
+			available = found != NULL;
+			g_free(found);
+		}
+	}
+	g_strfreev(parsed);
+	return available;
+}
+
+static gchar *terminal_resolve_command(void)
+{
+	static const gchar * const fallbacks[] = {
+		"defaultterminal",
+		"x-terminal-emulator",
+		"xterm",
+		"urxvt",
+		NULL
+	};
+	const gchar *diagnostic_terminal = g_getenv("ROX_DIAGNOSTIC_TERMINAL");
+	gchar *saved_command = NULL;
+	const gchar *configured;
+	gchar *result = NULL;
+	guint i;
+
+	if (g_getenv("ROX_DIAGNOSTIC") && diagnostic_terminal &&
+	    *diagnostic_terminal)
+		return g_strdup(diagnostic_terminal);
+
+	/* The desktop and filer can be different long-running processes.  Read
+	 * the last saved value each time a terminal is requested so a change in
+	 * Options applies immediately after OK, even in an already-running
+	 * desktop process. */
+	saved_command = option_get_saved("menu_xterm");
+	configured = saved_command ? saved_command :
+		(const gchar *) o_menu_xterm.value;
+
+	if (configured && *configured)
+	{
+		if (terminal_command_program_available(configured))
+		{
+			rox_debug_log("TERMINAL", "selected configured terminal=%s", configured);
+			result = g_strdup(configured);
+			g_free(saved_command);
+			return result;
+		}
+		rox_debug_log("TERMINAL",
+			"configured terminal unavailable=%s; using automatic fallbacks",
+			configured);
+	}
+	g_free(saved_command);
+
+	for (i = 0; fallbacks[i]; i++)
+	{
+		gchar *found = g_find_program_in_path(fallbacks[i]);
+		if (!found)
+			continue;
+		g_free(found);
+		rox_debug_log("TERMINAL", "selected fallback terminal=%s", fallbacks[i]);
+		return g_strdup(fallbacks[i]);
+	}
+
+	return NULL;
+}
+
 static gboolean terminal_build_argv(gboolean execute_command,
 				    const gchar *command_path,
 				    GPtrArray **argv_out)
 {
-	const gchar *terminal_command = (const gchar *) o_menu_xterm.value;
-	const gchar *diagnostic_terminal = g_getenv("ROX_DIAGNOSTIC_TERMINAL");
+	gchar *terminal_command = terminal_resolve_command();
 	gchar **parsed = NULL;
 	gint argc = 0;
 	GError *error = NULL;
@@ -2542,13 +2742,10 @@ static gboolean terminal_build_argv(gboolean execute_command,
 	g_return_val_if_fail(argv_out != NULL, FALSE);
 	*argv_out = NULL;
 
-	if (g_getenv("ROX_DIAGNOSTIC") && diagnostic_terminal &&
-	    *diagnostic_terminal)
-		terminal_command = diagnostic_terminal;
-
 	if (!terminal_command || !*terminal_command)
 	{
-		delayed_error(_("Terminal command is empty."));
+		delayed_error(_("No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."));
+		g_free(terminal_command);
 		return FALSE;
 	}
 
@@ -2558,6 +2755,7 @@ static gboolean terminal_build_argv(gboolean execute_command,
 			terminal_command, error ? error->message : "");
 		if (error)
 			g_error_free(error);
+		g_free(terminal_command);
 		return FALSE;
 	}
 
@@ -2565,6 +2763,7 @@ static gboolean terminal_build_argv(gboolean execute_command,
 	{
 		g_strfreev(parsed);
 		delayed_error(_("Terminal command is empty."));
+		g_free(terminal_command);
 		return FALSE;
 	}
 
@@ -2626,6 +2825,7 @@ static gboolean terminal_build_argv(gboolean execute_command,
 	}
 
 	g_free(program_name);
+	g_free(terminal_command);
 	g_ptr_array_add(argv, NULL);
 	*argv_out = argv;
 	return TRUE;
@@ -3018,6 +3218,45 @@ static gboolean spawn_terminal_runner(const gchar *working_dir,
 	return success;
 }
 
+gboolean menu_rename_path(const gchar *path, GtkWindow *parent)
+{
+	DirItem *item;
+	MaskedPixmap *image;
+	GtkWidget *dialog;
+	gchar *leaf;
+
+	if (!path || !g_file_test(path, G_FILE_TEST_EXISTS))
+		return FALSE;
+
+	leaf = g_path_get_basename(path);
+	item = diritem_new((const guchar *) leaf);
+	diritem_restat((const guchar *) path, item, NULL);
+	g_free(leaf);
+
+	image = di_image(item);
+	if (!image)
+	{
+		diritem_free(item);
+		return FALSE;
+	}
+
+	g_object_ref(image);
+	dialog = savebox_show(_("Rename"), path, image, rename_cb,
+	                      GDK_ACTION_MOVE);
+	diritem_free(item);
+	if (!dialog)
+		return FALSE;
+
+	if (parent)
+	{
+		gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), TRUE);
+		gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
+	}
+	gtk_window_present(GTK_WINDOW(dialog));
+	return TRUE;
+}
+
 gboolean menu_diagnose_rename_dialog(const gchar *path)
 {
 	DirItem *item;
@@ -3093,13 +3332,10 @@ gboolean menu_diagnose_run_in_terminal(const gchar *path)
 	g_print("DIAG_TERMINAL_PATH=%s\n", path);
 	g_print("DIAG_TERMINAL_MODE=%s\n", terminal_run_mode_name(mode));
 	{
-		const gchar *diagnostic_terminal = g_getenv("ROX_DIAGNOSTIC_TERMINAL");
-		const gchar *effective_terminal =
-			(g_getenv("ROX_DIAGNOSTIC") && diagnostic_terminal &&
-			 *diagnostic_terminal)
-			? diagnostic_terminal : (const gchar *) o_menu_xterm.value;
+		gchar *effective_terminal = terminal_resolve_command();
 		g_print("DIAG_TERMINAL_COMMAND=%s\n",
 			effective_terminal ? effective_terminal : "");
+		g_free(effective_terminal);
 	}
 
 	if (mode == TERMINAL_RUN_NONE ||
@@ -3522,6 +3758,28 @@ static void clipboard_clear(GtkClipboard *clipboard, gpointer user_data)
 		return;
 
 	destroy_glist(&selected_paths);
+}
+
+void menu_set_clipboard_paths(GList *paths, gboolean cut)
+{
+	GList *node;
+
+	if (!clipboard)
+		clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+	gtk_clipboard_clear(clipboard);
+
+	clipboard_action = cut ? "cut\n" : "copy\n";
+	selected_paths = NULL;
+	for (node = paths; node; node = node->next)
+	{
+		const gchar *path = node->data;
+		if (path && *path)
+			selected_paths = g_list_append(selected_paths, g_strdup(path));
+	}
+
+	if (selected_paths)
+		gtk_clipboard_set_with_data(clipboard, clipboard_targets, 2,
+			clipboard_get, clipboard_clear, NULL);
 }
 
 static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)

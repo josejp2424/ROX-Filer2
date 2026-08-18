@@ -1,9 +1,9 @@
 # Rox-Filer2 GTK3 translation template.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
-"POT-Creation-Date: 2026-08-04 19:00-0300\n"
+"POT-Creation-Date: 2026-08-15 09:55-0300\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -6335,4 +6335,108 @@ msgid "Original ROX-Filer contributors: ROX Desktop contributors"
 msgstr ""
 
 msgid "Rox-Filer2 project"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr ""
+
+#: desktop.c:2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr ""
+
+#: desktop.c:2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr ""
+
+#: desktop.c:2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr ""
+
+#: desktop.c:3290 desktop.c:3392
+msgid "Launcher"
 msgstr ""

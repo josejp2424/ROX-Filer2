@@ -1321,6 +1321,9 @@ static void menu_item_set_content(GtkWidget *item, const char *label, GtkWidget 
 	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
 	GtkWidget *text = gtk_label_new_with_mnemonic(label ? label : "");
 
+	gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(text, GTK_ALIGN_CENTER);
+
 	children = gtk_container_get_children(GTK_CONTAINER(item));
 	for (iter = children; iter; iter = iter->next)
 		gtk_container_remove(GTK_CONTAINER(item), GTK_WIDGET(iter->data));
@@ -1381,8 +1384,22 @@ static GtkWidget *menu_item_new_with_image(const char *label, GtkWidget *image)
 
 GtkWidget *menu_item_new_with_icon(const char *label, const char *icon_name)
 {
-	return menu_item_new_with_image(label,
-			image_new_icon(icon_name, GTK_ICON_SIZE_MENU));
+	GtkWidget *image = image_new_icon(icon_name, GTK_ICON_SIZE_MENU);
+	gint width = 16, height = 16;
+
+	/* Rox-Filer2 2.12.2-12: keep every menu icon in the same fixed
+	 * GTK menu slot.  Some icon themes return a larger natural size for
+	 * document-new/list-add; on submenu rows that pushed New to the right
+	 * compared with Search, Trash, etc.  Pixel-size only affects themed
+	 * GtkImage icons; AppDir pixbuf fallbacks are already scaled. */
+	gtk_icon_size_lookup(GTK_ICON_SIZE_MENU, &width, &height);
+	if (GTK_IS_IMAGE(image))
+	{
+		gtk_image_set_pixel_size(GTK_IMAGE(image), MAX(width, height));
+		gtk_widget_set_valign(image, GTK_ALIGN_CENTER);
+	}
+
+	return menu_item_new_with_image(label, image);
 }
 
 GtkWidget *menu_item_new_with_pixbuf(const char *label, GdkPixbuf *pixbuf)

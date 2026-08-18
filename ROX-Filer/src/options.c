@@ -423,6 +423,56 @@ gchar *option_get(const gchar *key)
 	return g_strdup(option->value);
 }
 
+gchar *option_get_saved(const gchar *key)
+{
+	gchar *path;
+	xmlDoc *doc;
+	xmlNode *root;
+	xmlNode *node;
+	gchar *retval = NULL;
+
+	g_return_val_if_fail(key != NULL, NULL);
+
+	path = choices_find_xdg_path_load("Options", PROJECT, SITE);
+	if (!path)
+		return NULL;
+
+	doc = xmlParseFile(path);
+	g_free(path);
+	if (!doc)
+		return NULL;
+
+	root = xmlDocGetRootElement(doc);
+	for (node = root ? root->children : NULL; node; node = node->next)
+	{
+		xmlChar *name;
+		xmlChar *content;
+
+		if (node->type != XML_ELEMENT_NODE ||
+		    xmlStrcmp(node->name, (const xmlChar *) "Option") != 0)
+			continue;
+
+		name = xmlGetProp(node, (const xmlChar *) "name");
+		if (!name)
+			continue;
+		if (strcmp((const gchar *) name, key) != 0)
+		{
+			xmlFree(name);
+			continue;
+		}
+		xmlFree(name);
+
+		content = xmlNodeGetContent(node);
+		retval = g_strdup(content ? (const gchar *) content : "");
+		if (content)
+			xmlFree(content);
+		break;
+	}
+
+	xmlFreeDoc(doc);
+	return retval;
+}
+
 void option_set(const gchar *key, const gchar *new_value)
 {
 	Option *option;

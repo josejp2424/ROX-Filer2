@@ -67,8 +67,21 @@ struct _Tool {
 
 Option o_toolbar, o_toolbar_info, o_toolbar_disable;
 Option o_toolbar_min_width;
+static Option o_toolbar_order;
+
+/* Rox-Filer2 2.12.2-11: Partitions stays fixed at the far left.  Every
+ * regular toolbar tool has a persistent user-configurable order.  These
+ * identifiers intentionally reuse the icon-name IDs already stored by
+ * toolbar_disable, so existing configurations remain compatible. */
+#define TOOLBAR_DEFAULT_ORDER \
+	ROX_ICON_GO_BACK "," ROX_ICON_GO_FORWARD "," ROX_ICON_GO_UP "," \
+	ROX_ICON_HOME "," ROX_ICON_BOOKMARKS "," ROX_ICON_REFRESH "," \
+	ROX_ICON_ZOOM_IN "," ROX_ICON_ZOOM_FIT "," ROX_ICON_ZOOM_OUT "," \
+	ROX_ICON_SHOW_DETAILS "," ROX_ICON_SHOW_HIDDEN "," ROX_ICON_SELECT "," \
+	ROX_ICON_ADD "," ROX_ICON_FIND ",window-new"
 
 static FilerWindow *filer_window_being_counted;
+static gboolean updating_tool_positions = FALSE;
 
 /* TRUE if the button presses (or released) should open a new window,
  * rather than reusing the existing one.
@@ -98,12 +111,14 @@ static void toolbar_select_clicked(GtkWidget *widget,
 				   FilerWindow *filer_window);
 static void toolbar_new_clicked(GtkWidget *widget,
 				   FilerWindow *filer_window);
+static void toolbar_new_show_menu(GtkMenuToolButton *button,
+				      FilerWindow *filer_window);
 static void toolbar_search_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window);
-static void toolbar_new_show_menu(GtkMenuToolButton *button,
-                                   FilerWindow *filer_window);
 static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 				FilerWindow *filer_window);
+static Tool *toolbar_find_tool(const gchar *name);
+static GPtrArray *toolbar_ordered_tools(void);
 static GtkWidget *create_toolbar(FilerWindow *filer_window);
 static gboolean drag_motion(GtkWidget		*widget,
                             GdkDragContext	*context,
@@ -118,9 +133,15 @@ static void drag_leave(GtkWidget	*widget,
 static void handle_drops(FilerWindow *filer_window,
 			 GtkWidget *button,
 			 DropDest dest);
-static void toggle_selected(GtkToggleToolButton *widget, gpointer data);
+static void tool_visibility_toggled(GtkToggleButton *widget, gpointer data);
+static void tool_position_changed(GtkSpinButton *spin, gpointer data);
+static void update_tool_position_spins(GtkWidget *box);
 static void option_notify(void);
 static GList *build_tool_options(Option *option, xmlNode *node, guchar *label);
+static void update_tools(Option *option);
+static guchar *read_tools(Option *option);
+static void update_tool_order(Option *option);
+static guchar *read_tool_order(Option *option);
 static void tally_items(gpointer key, gpointer value, gpointer data);
 
 /* Modificado por josejp2424: se eliminó Ayuda de la barra principal y
@@ -185,13 +206,11 @@ static Tool all_tools[] = {
 	 toolbar_select_clicked, DROP_NONE, FALSE,
 	 FALSE},
 
-	{N_("New"), ROX_ICON_ADD, N_("Left: New Directory\n"
-								  "Center: New Blank file\n"
-								  "Right: Menu"),
+	{N_("New"), ROX_ICON_ADD, N_("Create a new directory, blank file, or file from a template"),
 	 toolbar_new_clicked, DROP_NONE, FALSE,
 	 FALSE},
 
-	{N_("Search"), "rox-find", N_("Search in the current folder"),
+	{N_("Search"), ROX_ICON_FIND, N_("Search in the current folder"),
 	 toolbar_search_clicked, DROP_NONE, FALSE,
 	 FALSE},
 
@@ -211,6 +230,8 @@ void toolbar_init(void)
 	option_add_int(&o_toolbar_info, "toolbar_show_info", 1);
 	option_add_string(&o_toolbar_disable, "toolbar_disable",
 					ROX_ICON_CLOSE);
+	option_add_string(&o_toolbar_order, "toolbar_order",
+					TOOLBAR_DEFAULT_ORDER);
 	option_add_int(&o_toolbar_min_width, "toolbar_min_width", 0);
 	option_add_notify(option_notify);
 
@@ -564,34 +585,70 @@ static void toolbar_select_clicked(GtkWidget *widget, FilerWindow *filer_window)
 	gdk_event_free(event);
 }
 
-static void toolbar_new_clicked(GtkWidget *widget, FilerWindow *filer_window)
+static gboolean toolbar_new_create_menu_proxy(GtkToolItem *tool_item,
+                                                FilerWindow *filer_window)
 {
-	GdkEvent *event;
-	(void)widget;
+	GtkWidget *proxy;
+	GtkWidget *submenu;
 
-	event = get_current_event(GDK_BUTTON_RELEASE);
-	if (!event)
-	{
-		show_new_directory(filer_window);
-		return;
-	}
-	if (event->type == GDK_BUTTON_RELEASE)
-	{
-		if (((GdkEventButton *) event)->button == 2)
-			show_new_file(filer_window);
-		else if (((GdkEventButton *) event)->button == 3)
-			show_menu_new(filer_window);
-		else
-			show_new_directory(filer_window);
-	}
-	gdk_event_free(event);
+	g_return_val_if_fail(GTK_IS_TOOL_ITEM(tool_item), FALSE);
+	g_return_val_if_fail(filer_window != NULL, FALSE);
+
+	/* Rox-Filer2 2.12.2-14:
+	 * GtkToolbar creates a flat proxy item for GtkMenuToolButton when an item
+	 * moves into the overflow menu.  Override that proxy so New remains the
+	 * same submenu the user sees in the normal context menu:  + New >.
+	 * menu_item_new_with_icon() also keeps the icon in the fixed GTK menu slot,
+	 * so the plus is aligned with Search, Trash and the other overflow items. */
+	proxy = menu_item_new_with_icon(_("New"), ROX_ICON_ADD);
+	submenu = create_menu_new(filer_window);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(proxy), submenu);
+	gtk_widget_show(proxy);
+
+	gtk_tool_item_set_proxy_menu_item(tool_item,
+	                                  "rox-new-overflow", proxy);
+	return TRUE;
 }
 
 static void toolbar_new_show_menu(GtkMenuToolButton *button,
                                   FilerWindow *filer_window)
 {
-	GtkWidget *menu = create_menu_new(filer_window);
+	GtkWidget *menu;
+
+	g_return_if_fail(GTK_IS_MENU_TOOL_BUTTON(button));
+	g_return_if_fail(filer_window != NULL);
+
+	/* Regenerar para que las plantillas de New estén siempre actualizadas. */
+	menu = create_menu_new(filer_window);
 	gtk_menu_tool_button_set_menu(button, menu);
+}
+
+static void toolbar_new_clicked(GtkWidget *widget, FilerWindow *filer_window)
+{
+	GtkWidget *menu;
+
+	g_return_if_fail(widget != NULL);
+	g_return_if_fail(filer_window != NULL);
+
+	/* Rox-Filer2 2.12.2-13: New vuelve a ser un verdadero botón de menú
+	 * GTK3. El mismo signo + abre su menú anclado debajo del botón y la
+	 * flecha del GtkMenuToolButton ofrece exactamente el mismo submenú. */
+	if (GTK_IS_MENU_TOOL_BUTTON(widget))
+	{
+		toolbar_new_show_menu(GTK_MENU_TOOL_BUTTON(widget), filer_window);
+		menu = gtk_menu_tool_button_get_menu(GTK_MENU_TOOL_BUTTON(widget));
+		if (menu)
+			gtk_menu_popup_at_widget(GTK_MENU(menu), widget,
+				GDK_GRAVITY_SOUTH_WEST, GDK_GRAVITY_NORTH_WEST, NULL);
+		return;
+	}
+
+	/* Fallback defensivo para toolbars creadas por configuraciones antiguas. */
+	menu = create_menu_new(filer_window);
+	g_signal_connect_swapped(menu, "selection-done",
+		G_CALLBACK(gtk_widget_destroy), menu);
+	gtk_menu_popup_at_widget(GTK_MENU(menu), widget,
+		GDK_GRAVITY_SOUTH_WEST, GDK_GRAVITY_NORTH_WEST, NULL);
 }
 
 static void toolbar_search_clicked(GtkWidget *widget, FilerWindow *filer_window)
@@ -631,13 +688,65 @@ static void toolbar_compact_tool_item(GtkToolItem *item)
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
+static Tool *toolbar_find_tool(const gchar *name)
+{
+	guint i;
+
+	if (!name || !*name)
+		return NULL;
+
+	for (i = 0; i < G_N_ELEMENTS(all_tools); i++)
+		if (g_strcmp0(all_tools[i].name, name) == 0)
+			return &all_tools[i];
+
+	return NULL;
+}
+
+/* Return a complete, duplicate-free toolbar order.  Unknown IDs are ignored
+ * and tools added by newer versions are appended in their built-in order. */
+static GPtrArray *toolbar_ordered_tools(void)
+{
+	GPtrArray *ordered = g_ptr_array_new();
+	GHashTable *seen = g_hash_table_new(g_direct_hash, g_direct_equal);
+	gchar **parts = g_strsplit((const gchar *) o_toolbar_order.value, ",", -1);
+	guint i;
+
+	if (parts)
+	{
+		for (i = 0; parts[i]; i++)
+		{
+			Tool *tool;
+			gchar *name = g_strstrip(parts[i]);
+
+			tool = toolbar_find_tool(name);
+			if (tool && !g_hash_table_contains(seen, tool))
+			{
+				g_ptr_array_add(ordered, tool);
+				g_hash_table_add(seen, tool);
+			}
+		}
+		g_strfreev(parts);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS(all_tools); i++)
+	{
+		Tool *tool = &all_tools[i];
+		if (!g_hash_table_contains(seen, tool))
+			g_ptr_array_add(ordered, tool);
+	}
+
+	g_hash_table_destroy(seen);
+	return ordered;
+}
+
 /* If filer_window is NULL, the toolbar is for the options window */
 static GtkWidget *create_toolbar(FilerWindow *filer_window)
 {
 	GtkWidget *bar;
 	GtkWidget *b;
 	GtkToolItem *text_item;
-	int i;
+	GPtrArray *ordered_tools;
+	guint i;
 	int width;
 
 	bar = gtk_toolbar_new();
@@ -659,10 +768,9 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 
 	width=0;
 
-	/* Modificado por josejp2424 (2026): Particiones es una herramienta
-	 * permanente y ocupa siempre el primer lugar de la barra, antes de Subir.
-	 * No forma parte de all_tools, por lo que no aparece en la personalización
-	 * y no puede ocultarse ni cambiarse de posición desde las opciones. */
+	/* Partitions is permanent and always occupies the first toolbar position.
+	 * It is represented as a fixed row in Options, but it cannot be hidden or
+	 * reordered.  All regular tools follow in the user's chosen order. */
 	if (filer_window)
 	{
 		GtkToolItem *drive_item = drives_toolbar_button_new(filer_window);
@@ -679,9 +787,10 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 		width += drive_req.width;
 	}
 
-	for (i = 0; i < sizeof(all_tools) / sizeof(*all_tools); i++)
+	ordered_tools = toolbar_ordered_tools();
+	for (i = 0; i < ordered_tools->len; i++)
 	{
-		Tool	*tool = &all_tools[i];
+		Tool	*tool = g_ptr_array_index(ordered_tools, i);
 		GtkRequisition req;
 
 		if (filer_window && !tool->enabled)
@@ -708,6 +817,7 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 		if (filer_window && tool->drop_action != DROP_NONE)
 			handle_drops(filer_window, b, tool->drop_action);
 	}
+	g_ptr_array_free(ordered_tools, TRUE);
 
 	if (filer_window)
 	{
@@ -794,9 +904,9 @@ static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 	GtkWidget *button;
 	GtkWidget *icon_widget;
 
-	/* Build toolbar buttons from public GtkToolItem widgets. New is a real
-	 * drop-down button: the main area creates a folder and the arrow exposes
-	 * Blank File plus all user and bundled templates. */
+	/* Rox-Filer2 2.12.2-13: New es un GtkMenuToolButton real. El signo +
+	 * conserva su acción y el menú queda unido al propio botón, sin GUI
+	 * separada. Los demás botones siguen siendo GtkToolButton normales. */
 	icon_widget = image_new_icon(tool->name,
 					      GTK_ICON_SIZE_LARGE_TOOLBAR);
 	if (filer_window && tool->clicked == toolbar_new_clicked)
@@ -806,6 +916,8 @@ static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 			create_menu_new(filer_window));
 		g_signal_connect(item, "show-menu",
 			G_CALLBACK(toolbar_new_show_menu), filer_window);
+		g_signal_connect(item, "create-menu-proxy",
+			G_CALLBACK(toolbar_new_create_menu_proxy), filer_window);
 	}
 	else if (filer_window)
 	{
@@ -841,18 +953,11 @@ static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 	}
 	else
 	{
-		g_signal_connect(item, "toggled",
-			G_CALLBACK(toggle_selected), NULL);
-		g_object_set_data(G_OBJECT(item), "tool_name",
-				  (gpointer) tool->name);
+		/* The options page no longer uses these preview toggle items; its
+		 * custom row widget owns visibility and order controls. */
 	}
 
 	return filer_window ? button : GTK_WIDGET(item);
-}
-
-static void toggle_selected(GtkToggleToolButton *widget, gpointer data)
-{
-	option_check_widget(&o_toolbar_disable);
 }
 
 /* Called during the drag when the mouse is in a widget registered
@@ -931,11 +1036,11 @@ static void tally_items(gpointer key, gpointer value, gpointer data)
 
 static void option_notify(void)
 {
-	int		i;
+	guint		i;
 	gboolean	changed = FALSE;
 	guchar		*list = o_toolbar_disable.value;
 
-	for (i = 0; i < sizeof(all_tools) / sizeof(*all_tools); i++)
+	for (i = 0; i < G_N_ELEMENTS(all_tools); i++)
 	{
 		Tool	*tool = &all_tools[i];
 		gboolean old = tool->enabled;
@@ -946,7 +1051,8 @@ static void option_notify(void)
 			changed = TRUE;
 	}
 
-	if (changed || o_toolbar.has_changed || o_toolbar_info.has_changed)
+	if (changed || o_toolbar.has_changed || o_toolbar_info.has_changed ||
+	    o_toolbar_order.has_changed)
 	{
 		GList	*next;
 
@@ -959,72 +1065,284 @@ static void option_notify(void)
 	}
 }
 
-static void update_tools(Option *option)
+/* One configurable row in Options -> Toolbar. Visibility keeps the old
+ * checkbox semantics. Position is a number so a button can be moved from one
+ * end of the toolbar to the other with a single edit instead of many clicks. */
+static GtkWidget *tool_option_row_new(Tool *tool)
 {
-	GList	*next, *kids;
+	GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	GtkWidget *check = gtk_check_button_new();
+	GtkWidget *image = image_new_icon(tool->name, GTK_ICON_SIZE_BUTTON);
+	GtkWidget *label = gtk_label_new(_(tool->label));
+	GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	GtkWidget *position_label = gtk_label_new(_("Position:"));
+	GtkAdjustment *adjustment = gtk_adjustment_new(2, 2,
+		G_N_ELEMENTS(all_tools) + 1, 1, 1, 0);
+	GtkWidget *spin = gtk_spin_button_new(adjustment, 1, 0);
 
-	kids = gtk_container_get_children(GTK_CONTAINER(option->widget));
+	gtk_widget_set_halign(label, GTK_ALIGN_START);
+	gtk_widget_set_hexpand(spacer, TRUE);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin), TRUE);
+	gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin), FALSE);
+	gtk_entry_set_width_chars(GTK_ENTRY(spin), 2);
+	gtk_widget_set_tooltip_text(spin,
+		_("Choose this button's position in the toolbar"));
 
+	gtk_box_pack_start(GTK_BOX(row), check, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), image, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), spacer, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(row), position_label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), spin, FALSE, FALSE, 0);
+
+	g_object_set_data(G_OBJECT(row), "rox-toolbar-tool", tool);
+	g_object_set_data(G_OBJECT(row), "rox-toolbar-check", check);
+	g_object_set_data(G_OBJECT(row), "rox-toolbar-position", spin);
+
+	g_signal_connect(check, "toggled", G_CALLBACK(tool_visibility_toggled), row);
+	g_signal_connect(spin, "value-changed",
+		G_CALLBACK(tool_position_changed), row);
+	return row;
+}
+
+static GtkWidget *tool_option_fixed_partitions_row_new(void)
+{
+	GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+	GtkWidget *check = gtk_check_button_new();
+	GtkWidget *image = image_new_icon(ROX_ICON_MOUNT, GTK_ICON_SIZE_BUTTON);
+	GtkWidget *label = gtk_label_new(_("Partitions (fixed)"));
+	GtkWidget *spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	GtkWidget *position_label = gtk_label_new(_("Position:"));
+	GtkWidget *position = gtk_label_new("1");
+
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), TRUE);
+	gtk_widget_set_sensitive(check, FALSE);
+	gtk_widget_set_halign(label, GTK_ALIGN_START);
+	gtk_widget_set_hexpand(spacer, TRUE);
+	gtk_box_pack_start(GTK_BOX(row), check, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), image, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), spacer, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(row), position_label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(row), position, FALSE, FALSE, 7);
+	return row;
+}
+
+static void tool_visibility_toggled(GtkToggleButton *widget, gpointer data)
+{
+	(void) widget;
+	(void) data;
+	option_check_widget(&o_toolbar_disable);
+}
+
+static void update_tool_position_spins(GtkWidget *box)
+{
+	GList *kids, *next;
+	gint position = 2; /* Partitions is always position 1. */
+
+	if (!box || !GTK_IS_BOX(box))
+		return;
+
+	updating_tool_positions = TRUE;
+	kids = gtk_container_get_children(GTK_CONTAINER(box));
 	for (next = kids; next; next = next->next)
 	{
-		GtkToggleToolButton *kid = GTK_TOGGLE_TOOL_BUTTON(next->data);
-		guchar		*name;
+		GtkWidget *row = GTK_WIDGET(next->data);
+		GtkWidget *spin;
 
-		name = g_object_get_data(G_OBJECT(kid), "tool_name");
-
-		g_return_if_fail(name != NULL);
-
-		gtk_toggle_tool_button_set_active(kid,
-					 !in_list(name, option->value));
+		if (!g_object_get_data(G_OBJECT(row), "rox-toolbar-tool"))
+			continue;
+		spin = g_object_get_data(G_OBJECT(row), "rox-toolbar-position");
+		if (spin)
+			gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), position++);
 	}
+	g_list_free(kids);
+	updating_tool_positions = FALSE;
+}
 
+static void tool_position_changed(GtkSpinButton *spin, gpointer data)
+{
+	GtkWidget *row = GTK_WIDGET(data);
+	GtkWidget *box;
+	GList *kids;
+	gint current_index;
+	gint target_index;
+	gint count;
+
+	if (updating_tool_positions)
+		return;
+
+	box = gtk_widget_get_parent(row);
+	if (!box || !GTK_IS_BOX(box))
+		return;
+
+	kids = gtk_container_get_children(GTK_CONTAINER(box));
+	current_index = g_list_index(kids, row);
+	count = g_list_length(kids);
+	target_index = gtk_spin_button_get_value_as_int(spin) - 1;
+
+	/* Child 0 is Partitions. It can never be replaced or moved. GtkBox
+	 * automatically shifts the intervening rows, so every position remains
+	 * unique and all displayed numbers are renumbered immediately. */
+	if (current_index > 0)
+	{
+		if (target_index < 1)
+			target_index = 1;
+		if (target_index >= count)
+			target_index = count - 1;
+
+		if (target_index != current_index)
+			gtk_box_reorder_child(GTK_BOX(box), row, target_index);
+	}
+	g_list_free(kids);
+
+	update_tool_position_spins(box);
+	option_check_widget(&o_toolbar_order);
+}
+
+static void update_tools(Option *option)
+{
+	GList *kids, *next;
+
+	kids = gtk_container_get_children(GTK_CONTAINER(option->widget));
+	for (next = kids; next; next = next->next)
+	{
+		GtkWidget *row = GTK_WIDGET(next->data);
+		Tool *tool = g_object_get_data(G_OBJECT(row), "rox-toolbar-tool");
+		GtkWidget *check;
+
+		if (!tool)
+			continue;
+		check = g_object_get_data(G_OBJECT(row), "rox-toolbar-check");
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check),
+			!in_list(tool->name, option->value));
+	}
 	g_list_free(kids);
 }
 
 static guchar *read_tools(Option *option)
 {
-	GList	*next, *kids;
-	GString	*list;
-	guchar	*retval;
-
-	list = g_string_new(NULL);
+	GList *kids, *next;
+	GString *list = g_string_new(NULL);
+	guchar *retval;
 
 	kids = gtk_container_get_children(GTK_CONTAINER(option->widget));
-
 	for (next = kids; next; next = next->next)
 	{
-		GtkToggleToolButton *kid = GTK_TOGGLE_TOOL_BUTTON(next->data);
-		guchar		*name;
+		GtkWidget *row = GTK_WIDGET(next->data);
+		Tool *tool = g_object_get_data(G_OBJECT(row), "rox-toolbar-tool");
+		GtkWidget *check;
 
-		if (!gtk_toggle_tool_button_get_active(kid))
+		if (!tool)
+			continue;
+		check = g_object_get_data(G_OBJECT(row), "rox-toolbar-check");
+		if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check)))
 		{
-			name = g_object_get_data(G_OBJECT(kid), "tool_name");
-			g_return_val_if_fail(name != NULL, list->str);
-
 			if (list->len)
 				g_string_append(list, ", ");
-			g_string_append(list, name);
+			g_string_append(list, tool->name);
 		}
 	}
-
 	g_list_free(kids);
-	retval = list->str;
-	g_string_free(list, FALSE);
+	retval = (guchar *) g_string_free(list, FALSE);
+	return retval;
+}
 
+static GtkWidget *find_tool_option_row(GtkWidget *box, Tool *tool)
+{
+	GList *kids, *next;
+	GtkWidget *found = NULL;
+
+	kids = gtk_container_get_children(GTK_CONTAINER(box));
+	for (next = kids; next; next = next->next)
+	{
+		GtkWidget *row = GTK_WIDGET(next->data);
+		if (g_object_get_data(G_OBJECT(row), "rox-toolbar-tool") == tool)
+		{
+			found = row;
+			break;
+		}
+	}
+	g_list_free(kids);
+	return found;
+}
+
+static void update_tool_order(Option *option)
+{
+	GtkWidget *box = option->widget;
+	GPtrArray *ordered;
+	guint i;
+	gint position = 1; /* 0 is fixed Partitions. */
+
+	if (!box)
+		return;
+
+	ordered = toolbar_ordered_tools();
+	for (i = 0; i < ordered->len; i++)
+	{
+		Tool *tool = g_ptr_array_index(ordered, i);
+		GtkWidget *row = find_tool_option_row(box, tool);
+		if (row)
+			gtk_box_reorder_child(GTK_BOX(box), row, position++);
+	}
+	g_ptr_array_free(ordered, TRUE);
+	update_tool_position_spins(box);
+}
+
+static guchar *read_tool_order(Option *option)
+{
+	GList *kids, *next;
+	GString *list = g_string_new(NULL);
+	guchar *retval;
+
+	kids = gtk_container_get_children(GTK_CONTAINER(option->widget));
+	for (next = kids; next; next = next->next)
+	{
+		GtkWidget *row = GTK_WIDGET(next->data);
+		Tool *tool = g_object_get_data(G_OBJECT(row), "rox-toolbar-tool");
+		if (!tool)
+			continue;
+		if (list->len)
+			g_string_append_c(list, ',');
+		g_string_append(list, tool->name);
+	}
+	g_list_free(kids);
+	retval = (guchar *) g_string_free(list, FALSE);
 	return retval;
 }
 
 static GList *build_tool_options(Option *option, xmlNode *node, guchar *label)
 {
-	GtkWidget	*bar;
+	GtkWidget *box;
+	GPtrArray *ordered;
+	guint i;
 
+	(void) node;
+	(void) label;
 	g_return_val_if_fail(option != NULL, NULL);
 
-	bar = create_toolbar(NULL);
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+	gtk_box_pack_start(GTK_BOX(box), tool_option_fixed_partitions_row_new(),
+		FALSE, FALSE, 0);
 
+	ordered = toolbar_ordered_tools();
+	for (i = 0; i < ordered->len; i++)
+	{
+		Tool *tool = g_ptr_array_index(ordered, i);
+		gtk_box_pack_start(GTK_BOX(box), tool_option_row_new(tool),
+			FALSE, FALSE, 0);
+	}
+	g_ptr_array_free(ordered, TRUE);
+
+	/* Visibility and order share one customiser.  Each option keeps its own
+	 * reader so either checkbox or move changes are applied immediately. */
 	option->update_widget = update_tools;
 	option->read_widget = read_tools;
-	option->widget = bar;
+	option->widget = box;
+	o_toolbar_order.update_widget = update_tool_order;
+	o_toolbar_order.read_widget = read_tool_order;
+	o_toolbar_order.widget = box;
 
-	return g_list_append(NULL, bar);
+	update_tool_position_spins(box);
+	return g_list_append(NULL, box);
 }

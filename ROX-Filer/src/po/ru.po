@@ -14,10 +14,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-13 08:22-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -6579,3 +6579,107 @@ msgstr "Fast and lightweight file manager for X11 and Wayland, continued from RO
 
 msgid "Rox-Filer2 project"
 msgstr "Rox-Filer2 project"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr "Предпросмотр аудио работает с типами MIME аудио, поддерживаемыми mpv, включая MP3, WAV, OGG, FLAC, M4A, AAC и Opus."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr "Браузер и консоль"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr "Команда браузера:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr "Выберите команду браузера, используемую Rox-Filer2. Для URL можно использовать %u, например: firefox --new-tab %u. Оставьте поле пустым, чтобы сначала попробовать defaultbrowser, x-www-browser и gnome-www-browser с --new-tab, при необходимости повторить без --new-tab и использовать xdg-open только в крайнем случае."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr "Команда консоли:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr "Включено по умолчанию. Если указатель остаётся на аудиофайле одну секунду, Rox-Filer2 воспроизводит его через mpv. При уходе указателя завершается только процесс mpv, запущенный Rox-Filer2."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr "Предпросмотр изображений и видео"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr "Предпросмотр аудио при задержке указателя на файле"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr "Программа для «Открыть терминал здесь», «Запустить в терминале» и значка «Консоль» на рабочем столе. Оставьте поле пустым, чтобы по порядку попробовать defaultterminal, x-terminal-emulator, xterm и urxvt."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr "Выберите отображаемые кнопки и назначьте им номер позиции. Изменение номера сразу перемещает кнопку на выбранную позицию, а остальные автоматически перенумеровываются. «Разделы» закреплены на позиции 1 и не могут быть перемещены или скрыты."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr "Показывать миниатюры видео"
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "Кэш миниатюр использует расположение Freedesktop ~/.cache/thumbnails/normal."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr "Миниатюры видео создаются в фоне из кадра примерно на 10-й секунде; для коротких файлов используется кадр на 1-й секунде."
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr "Когда миниатюры включены, ffmpeg создаёт предпросмотр видеофайлов. Если ffmpeg не установлен, Rox-Filer2 сохраняет обычный MIME-значок видео."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr "Не удалось удалить миниатюры:\n%s"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr "Выберите позицию этой кнопки на панели инструментов"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr "Очистить кэш миниатюр"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr "Создать новый каталог, пустой файл или файл из шаблона"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr "Подходящий эмулятор терминала не найден. Настройте его в Параметры > Рабочий стол или установите defaultterminal, x-terminal-emulator, xterm либо urxvt."
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr "Подходящий веб-браузер не найден. Настройте его в Параметры > Рабочий стол или установите defaultbrowser, x-www-browser, gnome-www-browser либо xdg-open."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr "Разделы (закреплено)"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr "Позиция:"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr "На рабочий стол можно добавлять только локальные файлы."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr "Не удалось создать ссылку на рабочем столе."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr "Не удалось добавить один или несколько элементов на рабочий стол."
+
+#: Rox-Filer2 2.12.2-18
+msgid "Launcher"
+msgstr "Средство запуска"

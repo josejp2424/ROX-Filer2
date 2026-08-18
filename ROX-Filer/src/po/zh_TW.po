@@ -9,10 +9,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-13 08:22-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Traditional Chinese\n"
 "Language: zh_TW\n"
@@ -6566,3 +6566,107 @@ msgstr "Fast and lightweight file manager for X11 and Wayland, continued from RO
 
 msgid "Rox-Filer2 project"
 msgstr "Rox-Filer2 project"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr "音訊預覽適用於 mpv 支援的音訊 MIME 類型，包括 MP3、WAV、OGG、FLAC、M4A、AAC 和 Opus。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr "瀏覽器和終端機"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr "瀏覽器指令："
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr "選擇 Rox-Filer2 使用的瀏覽器指令。URL 可使用 %u，例如：firefox --new-tab %u。留空時會先嘗試 defaultbrowser、x-www-browser 和 gnome-www-browser 並加上 --new-tab；需要時再不加 --new-tab 重試，最後才使用 xdg-open。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr "終端機指令："
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr "預設啟用。指標在音訊檔案上停留一秒後，Rox-Filer2 會使用 mpv 播放。移開指標時只會停止 Rox-Filer2 啟動的 mpv 行程。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr "影像和影片預覽"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr "指標停留在檔案上時預覽音訊"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr "用於「在此開啟終端機」、「在終端機中執行」和桌面「終端機」圖示的程式。留空時會依序嘗試 defaultterminal、x-terminal-emulator、xterm 和 urxvt。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr "選擇要顯示的按鈕並指定其位置編號。變更編號會直接把該按鈕移到指定位置，並自動重新編號其他按鈕。「分割區」固定在位置 1，不能移動或隱藏。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr "顯示影片縮圖"
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "縮圖快取使用 Freedesktop 路徑 ~/.cache/thumbnails/normal。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr "影片縮圖會在背景從影片約第 10 秒的畫面產生；短影片則退回使用第 1 秒。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr "啟用縮圖時，使用 ffmpeg 為影片檔案建立預覽。如果未安裝 ffmpeg，Rox-Filer2 會保留一般的影片 MIME 圖示。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr "無法刪除縮圖：\n%s"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr "選擇此按鈕在工具列中的位置"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr "清除縮圖快取"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr "建立新目錄、空白檔案或從範本建立檔案"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr "找不到合適的終端機模擬器。請在「選項 > 桌面」中設定，或安裝 defaultterminal、x-terminal-emulator、xterm 或 urxvt。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr "找不到合適的網頁瀏覽器。請在「選項 > 桌面」中設定，或安裝 defaultbrowser、x-www-browser、gnome-www-browser 或 xdg-open。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr "分割區（固定）"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr "位置："
+
+#: Rox-Filer2 2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr "只能將本機檔案加入桌面。"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr "無法建立桌面連結。"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr "無法將一個或多個項目加入桌面。"
+
+#: Rox-Filer2 2.12.2-18
+msgid "Launcher"
+msgstr "啟動器"

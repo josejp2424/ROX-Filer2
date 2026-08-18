@@ -217,8 +217,15 @@ static gchar *diagnose_open_with_path = NULL;
 static gchar *diagnose_terminal_path = NULL;
 static gchar *diagnose_rename_path = NULL;
 
-/* Maps child PIDs to Callback pointers */
+/* Maps child PIDs to callback pointers. The status-aware table is used by
+ * launchers that need to distinguish an immediate command-line failure from a
+ * successful short-lived wrapper. */
 static GHashTable *death_callbacks = NULL;
+typedef struct {
+	ChildStatusCallbackFn callback;
+	gpointer data;
+} ChildStatusCallback;
+static GHashTable *death_status_callbacks = NULL;
 /* Rox-Filer2: serialize synchronous child waits against the legacy SIGCHLD
  * reaper. Without this, a worker-thread g_spawn_sync() can lose its child to
  * child_died_callback(), producing GLib ECHILD warnings. */
@@ -423,6 +430,7 @@ int main(int argc, char **argv)
 	 * child's PID to the callback function.
 	 */
 	death_callbacks = g_hash_table_new(NULL, NULL);
+	death_status_callbacks = g_hash_table_new(NULL, NULL);
 
 	/* Find out some information about ourself */
 	euid = geteuid();
@@ -976,6 +984,21 @@ void on_child_death(gint child, CallbackFn callback, gpointer data)
 	g_hash_table_insert(death_callbacks, GINT_TO_POINTER(child), cb);
 }
 
+/* Register a callback that also receives the waitpid() status. This shares
+ * ROX's existing SIGCHLD reaper instead of adding a competing GLib child
+ * watcher. */
+void on_child_death_status(gint child, ChildStatusCallbackFn callback, gpointer data)
+{
+	ChildStatusCallback *cb;
+
+	g_return_if_fail(callback != NULL);
+
+	cb = g_new(ChildStatusCallback, 1);
+	cb->callback = callback;
+	cb->data = data;
+	g_hash_table_insert(death_status_callbacks, GINT_TO_POINTER(child), cb);
+}
+
 void one_less_window(void)
 {
 	if (--number_of_windows < 1)
@@ -1133,8 +1156,11 @@ static void child_died_callback(void)
 	for (;;)
 	{
 		Callback *cb = NULL;
+		ChildStatusCallback *status_cb = NULL;
 		CallbackFn callback = NULL;
+		ChildStatusCallbackFn status_callback = NULL;
 		gpointer callback_data = NULL;
+		gpointer status_callback_data = NULL;
 
 		rox_child_reap_lock();
 		child = waitpid(-1, &status, WNOHANG);
@@ -1148,6 +1174,16 @@ static void child_died_callback(void)
 				g_hash_table_remove(death_callbacks, GINT_TO_POINTER(child));
 				g_free(cb);
 			}
+			status_cb = g_hash_table_lookup(death_status_callbacks,
+				GINT_TO_POINTER(child));
+			if (status_cb)
+			{
+				status_callback = status_cb->callback;
+				status_callback_data = status_cb->data;
+				g_hash_table_remove(death_status_callbacks,
+					GINT_TO_POINTER(child));
+				g_free(status_cb);
+			}
 		}
 		rox_child_reap_unlock();
 
@@ -1155,6 +1191,8 @@ static void child_died_callback(void)
 			return;
 		if (callback)
 			callback(callback_data);
+		if (status_callback)
+			status_callback(status_callback_data, status);
 	}
 }
 

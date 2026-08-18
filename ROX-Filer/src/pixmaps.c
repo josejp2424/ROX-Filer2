@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <string.h>
 
 #include <gtk/gtk.h>
@@ -57,7 +58,6 @@
 #include "diritem.h"
 #include "choices.h"
 #include "options.h"
-#include "action.h"
 #include "type.h"
 
 GFSCache *pixmap_cache = NULL;
@@ -90,6 +90,9 @@ MaskedPixmap *im_dirs;
 
 GtkIconSize mount_icon_size = -1;
 
+/* Rox-Filer2 2.12.2-8: optional ffmpeg video thumbnails. */
+static Option o_video_thumbnails;
+
 typedef struct _ChildThumbnail ChildThumbnail;
 
 /* There is one of these for each active child process */
@@ -115,6 +118,8 @@ static gchar *thumbnail_path(const gchar *path);
 static gchar *thumbnail_cache_dir(void);
 static gchar *thumbnail_program(MIME_type *type);
 static GdkPixbuf *extract_tiff_thumbnail(const gchar *path);
+static gboolean create_video_thumbnail_ffmpeg(const gchar *path);
+static void pixmaps_options_changed(void);
 
 /****************************************************************
  *			EXTERNAL INTERFACE			*
@@ -124,6 +129,7 @@ static GdkPixbuf *extract_tiff_thumbnail(const gchar *path);
  * tema GTK3 activo, conservando sólo los fallbacks necesarios. */
 void pixmaps_init(void)
 {
+	option_add_int(&o_video_thumbnails, "video_thumbnails", FALSE);
 	/* Modificado por josejp2424: GTK3 obtiene los iconos del GtkIconTheme.
 	 * Los iconos propios de ROX conservan fallback en AppDir/images mediante
 	 * image_new_icon()/mp_from_icon(), sin registrar un GtkIconFactory.
@@ -138,6 +144,7 @@ void pixmaps_init(void)
 	load_default_pixmaps();
 
 	option_register_widget("thumbs-purge-cache", thumbs_purge_cache);
+	option_add_notify(pixmaps_options_changed);
 }
 
 /* Map historical AppDir image names to the active icon theme. */
@@ -377,19 +384,38 @@ void pixmap_background_thumb(const gchar *path, GFunc callback, gpointer data)
 	if (!type)
 		type = text_plain;
 
-	/* Add an entry, set to NULL, so no-one else tries to load this
-	 * image.
-	 */
-	g_fscache_insert(pixmap_cache, path, NULL, TRUE);
+	/* Video previews are an explicit user choice.  Existing MIME-thumb
+	 * helpers are still honoured when enabled; otherwise Rox-Filer2 falls
+	 * back to its built-in ffmpeg launcher. */
+	if (strcmp(type->media_type, "video") == 0 && !o_video_thumbnails.int_value)
+	{
+		callback(data, NULL);
+		return;
+	}
 
 	thumb_prog = thumbnail_program(type);
 
-	/* Only attempt to load 'images' types ourselves */
+	/* Only attempt to load image types ourselves.  Video is also accepted
+	 * when the option is enabled and ffmpeg is available. */
 	if (thumb_prog == NULL && strcmp(type->media_type, "image") != 0)
 	{
-		callback(data, NULL);
-		return;		/* Don't know how to handle this type */
+		gchar *ffmpeg = NULL;
+
+		if (strcmp(type->media_type, "video") == 0 &&
+		    o_video_thumbnails.int_value)
+			ffmpeg = g_find_program_in_path("ffmpeg");
+
+		if (!ffmpeg)
+		{
+			callback(data, NULL);
+			return;		/* Don't know how to handle this type */
+		}
+		g_free(ffmpeg);
 	}
+
+	/* Mark this path as being generated only after we know it is eligible.
+	 * This lets enabling video thumbnails later work immediately. */
+	g_fscache_insert(pixmap_cache, path, NULL, TRUE);
 
 	child = fork();
 	if (child == -1)
@@ -424,6 +450,10 @@ void pixmap_background_thumb(const gchar *path, GFunc callback, gpointer data)
 			_exit(1);
 		}
 
+		if (strcmp(type->media_type, "video") == 0 &&
+		    o_video_thumbnails.int_value)
+			_exit(create_video_thumbnail_ffmpeg(path) ? 0 : 1);
+
 		child_create_thumbnail(path, type);
 		_exit(0);
 	}
@@ -447,6 +477,13 @@ MaskedPixmap *pixmap_try_thumb(const gchar *path, gboolean can_load)
 	gboolean  found;
 	MaskedPixmap *image;
 	GdkPixbuf *pixbuf;
+	MIME_type *type;
+
+	/* The option controls both creation and display of cached video previews. */
+	type = type_from_path(path);
+	if (type && strcmp(type->media_type, "video") == 0 &&
+	    !o_video_thumbnails.int_value)
+		return NULL;
 
 	image = g_fscache_lookup_full(pixmap_cache, path,
 					FSCACHE_LOOKUP_ONLY_NEW, &found);
@@ -635,6 +672,18 @@ static gchar *thumbnail_path(const char *path)
 	return ans;
 }
 
+/* When video thumbnail support changes, forget in-memory thumbnail state and
+ * redraw filer windows.  Disk thumbnails are left intact and are ignored while
+ * the option is disabled. */
+static void pixmaps_options_changed(void)
+{
+	if (!o_video_thumbnails.has_changed || !pixmap_cache)
+		return;
+
+	g_fscache_purge(pixmap_cache, 0);
+	full_refresh();
+}
+
 /* Return a program to create thumbnails for files of this type.
  * NULL to try to make it ourself (using gdk).
  * g_free the result.
@@ -659,6 +708,105 @@ static gchar *thumbnail_program(MIME_type *type)
 					  SITE);
 
 	return path;
+}
+
+/* Run one ffmpeg attempt from the already-forked thumbnail worker.
+ * Use only POSIX process functions here: no shell is involved and paths with
+ * spaces or metacharacters are passed as normal argv elements. */
+static gboolean run_ffmpeg_thumbnail_attempt(const gchar *path,
+					     const gchar *output,
+					     const gchar *seek,
+					     const gchar *filter)
+{
+	pid_t pid;
+	pid_t waited;
+	int status = 0;
+	struct stat st;
+
+	pid = fork();
+	if (pid == -1)
+		return FALSE;
+
+	if (pid == 0)
+	{
+		execlp("ffmpeg", "ffmpeg",
+			"-loglevel", "error", "-y",
+			"-ss", seek, "-i", path,
+			"-vf", filter, "-frames:v", "1", output,
+			(char *) NULL);
+		_exit(127);
+	}
+
+	do
+	{
+		waited = waitpid(pid, &status, 0);
+	} while (waited == -1 && errno == EINTR);
+
+	if (waited != pid)
+		return FALSE;
+
+	return WIFEXITED(status) && WEXITSTATUS(status) == 0 &&
+	       stat(output, &st) == 0 && st.st_size > 0;
+}
+
+/* Rox-Filer2 video thumbnailer.  First try around 10 seconds to avoid blank
+ * title frames; short clips fall back to one second. */
+static gboolean create_video_thumbnail_ffmpeg(const gchar *path)
+{
+	gchar *output;
+	gchar *temporary;
+	gchar *filter;
+	gboolean ok;
+	GdkPixbuf *frame = NULL;
+	GdkPixbuf *verified = NULL;
+
+	/* ffmpeg can create the picture, but a raw ffmpeg PNG does not contain
+	 * the Freedesktop Thumb::MTime/Size metadata that get_thumbnail_for()
+	 * uses to validate cached thumbnails.  Generate to a temporary PNG, load
+	 * it, then save it through ROX's normal save_thumbnail() path so video and
+	 * image thumbnails have exactly the same cache format. */
+	output = thumbnail_path(path);
+	temporary = g_strdup_printf("%s.ffmpeg-%ld.png", output, (long) getpid());
+	filter = g_strdup_printf(
+		"scale=%d:%d:force_original_aspect_ratio=decrease",
+		PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
+
+	/* Remove a thumbnail produced by 2.12.2-6/7 without metadata. */
+	unlink(output);
+	unlink(temporary);
+
+	ok = run_ffmpeg_thumbnail_attempt(path, temporary, "00:00:10", filter);
+	if (!ok)
+	{
+		unlink(temporary);
+		ok = run_ffmpeg_thumbnail_attempt(path, temporary, "00:00:01", filter);
+	}
+
+	if (ok)
+	{
+		frame = gdk_pixbuf_new_from_file(temporary, NULL);
+		if (frame)
+		{
+			save_thumbnail(path, frame);
+			g_object_unref(frame);
+
+			/* Verify using the same routine the parent will use. */
+			verified = get_thumbnail_for(path);
+			ok = verified != NULL;
+			if (verified)
+				g_object_unref(verified);
+		}
+		else
+			ok = FALSE;
+	}
+
+	unlink(temporary);
+	if (!ok)
+		unlink(output);
+	g_free(filter);
+	g_free(temporary);
+	g_free(output);
+	return ok;
 }
 
 /* Called in a subprocess. Load path and create the thumbnail
@@ -1077,44 +1225,82 @@ static void load_default_pixmaps(void)
 	}
 }
 
-/* Also purges memory cache */
-static void purge_disk_cache(GtkWidget *button, gpointer data)
+/* Delete cached thumbnails directly.  The old implementation passed cache
+ * files to action_delete(), which opened ROX's normal (and confusing) file
+ * deletion dialog and could fail while the Options window was open.  A cache
+ * purge should be a simple maintenance operation, not a normal delete action. */
+static guint purge_thumbnail_directory(const gchar *path, GString *errors)
 {
-	char *path;
-	GList *list = NULL;
 	DIR *dir;
 	struct dirent *ent;
-
-	g_fscache_purge(pixmap_cache, 0);
-
-	path = thumbnail_cache_dir();
+	guint removed = 0;
 
 	dir = opendir(path);
 	if (!dir)
 	{
-		report_error(_("Can't delete thumbnails in %s:\n%s"),
-				path, g_strerror(errno));
-		goto out;
+		if (errno != ENOENT)
+			g_string_append_printf(errors, "%s: %s\n", path, g_strerror(errno));
+		return 0;
 	}
 
 	while ((ent = readdir(dir)))
 	{
-		if (ent->d_name[0] == '.')
+		gchar *file;
+		struct stat st;
+
+		if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
 			continue;
-		list = g_list_prepend(list,
-				      g_build_filename(path, ent->d_name, NULL));
+
+		file = g_build_filename(path, ent->d_name, NULL);
+		if (lstat(file, &st) == 0 && !S_ISDIR(st.st_mode))
+		{
+			if (unlink(file) == 0)
+				removed++;
+			else
+				g_string_append_printf(errors, "%s: %s\n", file, g_strerror(errno));
+		}
+		g_free(file);
 	}
 
 	closedir(dir);
+	return removed;
+}
 
-	if (list)
-	{
-		action_delete(list);
-		destroy_glist(&list);
-	}
-	else
+/* Also purges the in-memory thumbnail cache and redraws filer windows. */
+static void purge_disk_cache(GtkWidget *button, gpointer data)
+{
+	gchar *path;
+	gchar *legacy_path;
+	GString *errors;
+	guint removed = 0;
+
+	(void) button;
+	(void) data;
+
+	errors = g_string_new(NULL);
+
+	/* Do not call thumbnail_cache_dir() here: that helper creates the
+	 * directory.  There is no reason to create a cache just to empty it. */
+	path = g_build_filename(g_get_user_cache_dir(),
+				"thumbnails", "normal", NULL);
+	removed += purge_thumbnail_directory(path, errors);
+
+	/* Clean the location used by older ROX releases too, if it still exists. */
+	legacy_path = g_build_filename(g_get_home_dir(),
+				       ".thumbnails", "normal", NULL);
+	if (g_strcmp0(path, legacy_path) != 0)
+		removed += purge_thumbnail_directory(legacy_path, errors);
+
+	g_fscache_purge(pixmap_cache, 0);
+	full_refresh();
+
+	if (errors->len > 0)
+		report_error(_("Can't delete thumbnails:\n%s"), errors->str);
+	else if (removed == 0)
 		info_message(_("There are no thumbnails to delete"));
-out:
+
+	g_string_free(errors, TRUE);
+	g_free(legacy_path);
 	g_free(path);
 }
 
@@ -1125,7 +1311,7 @@ static GList *thumbs_purge_cache(Option *option, xmlNode *node, guchar *label)
 	g_return_val_if_fail(option == NULL, NULL);
 
 	button = button_new_mixed(ROX_ICON_CLEAR,
-				  _("Purge thumbnails disk cache"));
+				  _("Clear thumbnail cache"));
 	gtk_widget_set_halign(button, GTK_ALIGN_START);
 	gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
 	g_signal_connect(button, "clicked", G_CALLBACK(purge_disk_cache), NULL);

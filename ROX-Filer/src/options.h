@@ -43,6 +43,10 @@ GtkWidget *options_show(void);
 
 /* Used by rpc_GetOption, rpc_SetOption */
 gchar *option_get(const gchar *key);
+/* Read the last value saved to the shared Options file. The caller owns
+ * the returned string. This is useful for settings used by another running
+ * Rox-Filer2 process (for example the desktop process). */
+gchar *option_get_saved(const gchar *key);
 void option_set(const gchar *key, const gchar *new_value);
 
 #endif /* _OPTIONS_H */

@@ -9,10 +9,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-13 08:22-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -6646,3 +6646,107 @@ msgstr "Fast and lightweight file manager for X11 and Wayland, continued from RO
 
 msgid "Rox-Filer2 project"
 msgstr "Rox-Filer2 project"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr "音声プレビューは、MP3、WAV、OGG、FLAC、M4A、AAC、Opus など、mpv が対応する音声 MIME タイプで動作します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr "ブラウザーとコンソール"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr "ブラウザーコマンド:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr "Rox-Filer2 で使用するブラウザーコマンドを選択します。URL には %u を使用できます。例: firefox --new-tab %u。空欄の場合は defaultbrowser、x-www-browser、gnome-www-browser を --new-tab 付きで順に試し、必要なら --new-tab なしで再試行し、最後の手段として xdg-open を使用します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr "コンソールコマンド:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr "既定で有効です。ポインターが音声ファイル上に 1 秒間留まると、Rox-Filer2 は mpv で再生します。ポインターを外すと、Rox-Filer2 が起動した mpv プロセスだけを停止します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr "画像と動画のプレビュー"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr "ポインターをファイル上に置いたとき音声をプレビュー"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr "「ここでターミナルを開く」「ターミナルで実行」およびデスクトップの「コンソール」アイコンで使用するプログラムです。空欄の場合は defaultterminal、x-terminal-emulator、xterm、urxvt の順に試します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr "表示するボタンを選び、位置番号を割り当てます。番号を変更すると、そのボタンは指定位置へ直接移動し、ほかのボタンは自動的に番号が振り直されます。「パーティション」は位置 1 に固定され、移動も非表示もできません。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr "動画のサムネイルを表示"
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "サムネイルキャッシュは Freedesktop の ~/.cache/thumbnails/normal を使用します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr "動画サムネイルはバックグラウンドで約 10 秒地点のフレームから生成し、短い動画では 1 秒地点を代わりに使用します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr "サムネイルが有効な場合、ffmpeg を使って動画ファイルのプレビューを作成します。ffmpeg がインストールされていない場合、Rox-Filer2 は通常の動画 MIME アイコンを使用します。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr "サムネイルを削除できません:\n%s"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr "このボタンのツールバー上の位置を選択"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr "サムネイルキャッシュを消去"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr "新しいディレクトリ、空のファイル、またはテンプレートからファイルを作成"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr "適切なターミナルエミュレーターが見つかりません。オプション > デスクトップで設定するか、defaultterminal、x-terminal-emulator、xterm、urxvt のいずれかをインストールしてください。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr "適切なウェブブラウザーが見つかりません。オプション > デスクトップで設定するか、defaultbrowser、x-www-browser、gnome-www-browser、xdg-open のいずれかをインストールしてください。"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr "パーティション（固定）"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr "位置:"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr "デスクトップに追加できるのはローカルファイルだけです。"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr "デスクトップリンクを作成できませんでした。"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr "1つ以上の項目をデスクトップに追加できませんでした。"
+
+#: Rox-Filer2 2.12.2-18
+msgid "Launcher"
+msgstr "ランチャー"

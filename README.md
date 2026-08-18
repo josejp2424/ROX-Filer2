@@ -15,7 +15,7 @@
 ---
 
 <p align="center">
-  <img src="screenshot/rox-desktop-demo-slow.gif"
+  <img src="screenshot/rox-desktop-demo-slow.png"
        alt="Rox-Filer2 desktop demonstration">
 </p>
 
@@ -142,11 +142,22 @@ rox-wayland
 - Improved file-operation dialogs
 - Back and Forward navigation
 - Open With and default application support
+- Optional video thumbnails using `ffmpeg`
+- Audio preview on pointer hover using optional `mpv`
+- Configurable browser command with `%u` URL substitution and system fallbacks
 - Terminal and script execution
 - File templates
 - ROX File Search
 - Paired filer windows
 - Multilingual interface
+
+## Optional media previews
+
+Rox-Filer2 keeps media helpers optional. Video thumbnails can be enabled from
+**Options > Thumbnails** and use `ffmpeg` when it is available. Audio hover
+preview is enabled by default and uses `mpv`; moving the pointer away stops
+only the preview process started by Rox-Filer2. Missing helpers never prevent
+the filer from starting or opening files normally.
 
 ## System MIME icons
 

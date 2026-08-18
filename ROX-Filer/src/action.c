@@ -219,7 +219,6 @@ static void rsync_copy_list_cb(gpointer data);
  * movimiento y borrado mediante un mensaje explícito de finalización. */
 static void finish_action(GUIside *gui_side);
 /* Agregado por josejp2424 (2026): papelera estándar Freedesktop mediante GIO. */
-static void trash_cb(gpointer data);
 static gboolean confirm_trash_paths(GList *paths);
 static gboolean confirm_permanent_delete_paths(GList *paths);
 
@@ -501,10 +500,9 @@ static void finish_action(GUIside *gui_side)
 	}
 
 	abox_cancel_ask(abox);
-	/* Modificado por josejp2424 (2026): el GIF sólo debe animarse mientras
-	 * la operación está activa. Detenerlo antes de dejar abierto un informe
-	 * de errores o información evita consumo continuo de CPU. */
-	abox_stop_operation_animation(abox);
+	/* Rox-Filer2 2.12.2-13: detener el spinner y la barra nativos al terminar
+	 * antes de mostrar un posible informe de errores o información. */
+	abox_stop_operation_progress(abox);
 
 	/* A short successful operation may finish without ever showing its
 	 * progress window. Errors or informational results must never remain
@@ -2598,50 +2596,6 @@ static void delete_cb(gpointer data)
 	send_done();
 }
 
-/* Agregado por josejp2424 (2026): mueve cada elemento seleccionado a la
- * papelera estándar usada por GIO, PCManFM y otros gestores compatibles con
- * la especificación Freedesktop. No recorre el contenido de las carpetas: el
- * backend de GIO realiza el movimiento del elemento completo. */
-static void trash_cb(gpointer data)
-{
-	GList *paths = (GList *) data;
-	const gint total = g_list_length(paths);
-	gint index = 0;
-
-	for (; paths; paths = paths->next, index++)
-	{
-		const gchar *path = paths->data;
-		gchar *parent = g_path_get_dirname(path);
-		GFile *file = g_file_new_for_path(path);
-		GError *error = NULL;
-
-		send_dir(parent);
-		if (total > 1 && index > 0)
-			printf_send("%%%d", (100 * index) / total);
-
-		if (!rox_trash_file(file, &error))
-		{
-			if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
-				printf_send(_("!The filesystem containing '%s' does not support the standard Trash.\n"), path);
-			else
-				printf_send(_("!Unable to move '%s' to the Trash: %s\n"),
-					path, error ? error->message : _("Unknown error"));
-			g_clear_error(&error);
-		}
-		else
-		{
-			/* Sólo se actualiza el elemento superior; no se generan miles de
-			 * notificaciones por el contenido interno de una carpeta. */
-			send_check_path(path);
-		}
-
-		g_object_unref(file);
-		g_free(parent);
-	}
-
-	send_done();
-}
-
 static void eject_cb(gpointer data)
 {
 	GList	*paths = (GList *) data;
@@ -2951,29 +2905,54 @@ static gboolean confirm_permanent_delete_paths(GList *paths)
  * papelera local del sistema de archivos, igual que otros gestores GTK. */
 void action_trash(GList *paths)
 {
-	GUIside *gui_side;
-	GtkWidget *abox;
+	GList *node;
+	GString *errors;
+	guint moved = 0;
 
 	if (!paths || !remove_pinned_ok(paths) || !confirm_trash_paths(paths))
 		return;
 
-	abox = abox_new(_("Move to Trash"), TRUE);
-	/* Agregado por josejp2424 (2026): animación nativa de borrado. */
-	abox_set_operation_animation(ABOX(abox), "rox_delet.gif");
-	if (paths->next)
-		abox_set_percentage(ABOX(abox), 0);
+	/* Modificado por josejp2424 (2026): la papelera no debe ejecutarse en el
+	 * proceso hijo de start_action(). g_file_trash()/GIO puede usar hilos y
+	 * servicios internos de GLib; llamarlo después de fork() podía dejar el
+	 * proceso hijo bloqueado y, por lo tanto, el diálogo "Move to Trash" no
+	 * recibía nunca la señal de finalización.
+	 *
+	 * Mover a la papelera es normalmente una operación de renombrado rápida.
+	 * Se hace aquí, en el proceso GTK principal, y se refrescan las vistas al
+	 * terminar. Así no queda ninguna ventana de progreso colgada. */
+	errors = g_string_new(NULL);
+	for (node = paths; node; node = node->next)
+	{
+		const gchar *path = (const gchar *) node->data;
+		GFile *file = g_file_new_for_path(path);
+		GError *error = NULL;
 
-	gui_side = start_action(abox, trash_cb, paths,
-				  TRUE, TRUE,
-				  o_action_recurse.int_value,
-				  o_action_merge.int_value,
-				  o_action_newer.int_value,
-				  o_action_ignore.int_value);
-	if (!gui_side)
-		return;
+		if (rox_trash_file(file, &error))
+		{
+			moved++;
+			dir_check_this((const guchar *) path);
+		}
+		else
+		{
+			if (errors->len)
+				g_string_append_c(errors, '\n');
+			g_string_append_printf(errors, "%s: %s", path,
+				error ? error->message : _("Unknown error"));
+			g_clear_error(&error);
+		}
+
+		g_object_unref(file);
+	}
 
 	log_info_paths("Trash", paths, NULL);
-	action_show_if_slow(gui_side);
+	if (moved)
+		filer_update_all();
+
+	if (errors->len)
+		report_error("%s", errors->str);
+
+	g_string_free(errors, TRUE);
 }
 
 /* Modificado por josejp2424 (2026): conserva el motor histórico para usos
@@ -2988,8 +2967,8 @@ void action_delete(GList *paths)
 
 	delete_batch_mode = FALSE;
 	abox = abox_new(_("Delete"), o_action_delete.int_value);
-	/* Agregado por josejp2424 (2026): animación nativa de borrado. */
-	abox_set_operation_animation(ABOX(abox), "rox_delet.gif");
+	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
 	gui_side = start_action(abox, delete_cb, paths,
@@ -3028,8 +3007,8 @@ void action_delete_permanently(GList *paths)
 
 	delete_batch_mode = TRUE;
 	abox = abox_new(_("Delete Permanently"), TRUE);
-	/* Agregado por josejp2424 (2026): animación nativa de borrado. */
-	abox_set_operation_animation(ABOX(abox), "rox_delet.gif");
+	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_start_operation_progress(ABOX(abox));
 	if (paths->next)
 		abox_set_percentage(ABOX(abox), 0);
 
@@ -3231,8 +3210,8 @@ void action_copy(GList *paths, const char *dest, const char *leaf, int quiet)
 	action_do_func = use_rsync_engine ? do_copy_fast : do_copy;
 
 	abox = abox_new(_("Copy"), quiet);
-	/* Agregado por josejp2424 (2026): animación nativa de copia. */
-	abox_set_operation_animation(ABOX(abox), "rox_copi.gif");
+	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
 	gui_side = start_action(abox,
@@ -3287,9 +3266,8 @@ void action_move(GList *paths, const char *dest, const char *leaf, int quiet)
 	action_do_func = use_rsync_engine ? do_move_fast : do_move;
 
 	abox = abox_new(_("Move"), quiet);
-	/* Agregado por josejp2424 (2026): mover comparte la misma animación de
-	 * transferencia usada por copiar. */
-	abox_set_operation_animation(ABOX(abox), "rox_copi.gif");
+	/* Rox-Filer2 2.12.2-13: mover usa el mismo progreso GTK3 que copiar. */
+	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
 	gui_side = start_action(abox, list_cb, paths,

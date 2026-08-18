@@ -94,10 +94,13 @@
   </section>
 
   <section title='Thumbnails'>
-    <frame label='Image previews'>
+    <frame label='Image and video previews'>
       <toggle name='display_show_thumbs' label='Show image thumbnails by default'>Individual filer windows can still enable or disable thumbnails from the Display menu or toolbar.</toggle>
-      <label help='1'>Thumbnails are generated in the background. Until a preview is ready, Rox-Filer2 displays the normal MIME icon.</label>
-      <label help='1'>The cache follows the Freedesktop location under ~/.cache/thumbnails/normal.</label>
+      <toggle name='video_thumbnails' label='Show video thumbnails'>When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon.</toggle>
+      <toggle name='audio_hover_preview' label='Preview audio when the pointer rests on a file'>Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2.</toggle>
+      <label help='1'>Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files.</label>
+      <label help='1'>Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus.</label>
+      <label help='1'>The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal.</label>
     </frame>
     <frame label='Thumbnail cache'>
       <thumbs-purge-cache/>
@@ -208,7 +211,7 @@
       <toggle name='toolbar_min_width' label='Toolbar defines the minimum window width'/>
     </frame>
     <frame label='Buttons'>
-      <label>Select the optional buttons to display. Partitions remains a permanent toolbar action.</label>
+      <label>Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden.</label>
       <tool-options name='toolbar_disable'/>
     </frame>
   </section>
@@ -217,6 +220,10 @@
     <frame label='ROX Desktop tools'>
       <desktop-tools/>
       <label help='1'>These buttons manage the single desktop started with Rox-Filer2 --desktop.</label>
+    </frame>
+    <frame label='Browser and Console'>
+      <entry name='browser_command' label='Browser command:'>Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback.</entry>
+      <entry name='menu_xterm' label='Console command:'>Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order.</entry>
     </frame>
   </section>
 
@@ -232,7 +239,6 @@
         <item label='Same as the current window' value='4'/>
         <item label='Same as the default view' value='5'/>
       </menu>
-      <entry name='menu_xterm' label='Terminal emulator:'>Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. The default for new configurations is xterm.</entry>
       <toggle name='menu_xterm_grave' label='Open a terminal with the grave (`) key'/>
       <menu-set-keys/>
     </frame>

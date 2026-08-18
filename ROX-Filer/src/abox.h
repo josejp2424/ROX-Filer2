@@ -35,10 +35,11 @@ struct _ABox
 	 * compactas las ventanas animadas de copia, movimiento y borrado. */
 	GtkWidget	*details;
 	gboolean	 compact_log;
-	/* Agregado por josejp2424 (2026): área opcional para mostrar las
-	 * animaciones de copia y borrado incluidas en ROX-Filer/images. */
-	GtkWidget	*operation_animation_box;
-	GtkWidget	*operation_animation;
+	/* Rox-Filer2 2.12.2-13: indicador nativo GTK3 para operaciones.
+	 * Reemplaza los GIF animados por GtkSpinner + GtkProgressBar. */
+	GtkWidget	*operation_status_box;
+	GtkWidget	*operation_spinner;
+	guint		 progress_pulse_id;
 	GtkWidget	*results;	/* List of filenames found */
 	GtkWidget	*entry;		/* Plain entry, or part of combo */
 	FilerWindow	*preview;
@@ -105,8 +106,7 @@ void	abox_show_compare		(ABox *abox, gboolean show);
 void	abox_set_file			(ABox *abox, int file,
 					 const gchar *path);
 void    abox_set_percentage             (ABox *abox, int per);
-void    abox_set_operation_animation    (ABox *abox,
-					 const gchar *filename);
-void    abox_stop_operation_animation   (ABox *abox);
+void    abox_start_operation_progress   (ABox *abox);
+void    abox_stop_operation_progress    (ABox *abox);
 
 #endif /* __ABOX_H__ */

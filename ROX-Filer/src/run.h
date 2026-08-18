@@ -9,6 +9,9 @@
 #include <gtk/gtk.h>
 
 void run_init(void);
+/* Central browser launcher. The configured command has priority; %u is
+ * replaced with the URL. System browser wrappers are used as fallbacks. */
+gboolean rox_open_browser(const gchar *url);
 void run_app(const char *path);
 void run_with_files(const char *path, GList *uri_list);
 void run_with_data(const char *path, gpointer data, gulong length);

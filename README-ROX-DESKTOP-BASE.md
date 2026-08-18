@@ -189,14 +189,14 @@ pinboard command-line and SOAP interfaces were removed in r64. Since r66, the
 classic pinboard implementation and its task list are no longer compiled or
 shipped; classic panel compatibility remains available through `desktop.c`.
 
-## Centred operation windows and animations
+## Centred operation windows and native progress
 
 Rox-Filer2 centres its operation and auxiliary dialogs when they are shown.
-Copy and Move display `Rox-Filer2/images/rox_copi.gif`; Trash and permanent or
-legacy deletion display `Rox-Filer2/images/rox_delet.gif`. These GIF files are
-loaded internally by GTK3 and do not require SendTo scripts or external
-programs. The normal ROX progress bar and operation log remain active so the
-animation is decorative and does not replace real progress or error details.
+Copy, Move and Delete now use only native GTK3 widgets: a `GtkSpinner` while
+the operation is active and a `GtkProgressBar` below it. When ROX has a real
+percentage the bar shows it; otherwise it pulses to indicate activity. No GIF
+files or external animation resources are required. The normal operation log
+and error handling remain available through **Details**.
 ## Revision r31 fixes
 
 ROX Desktop and the normal **Partitions** GUI now resolve drive icons through
@@ -207,7 +207,7 @@ Right-click a `.desktop` launcher on the desktop and choose **Remove** to delete
 only its copy from `XDG_DESKTOP_DIR`. The installed application and its system
 launcher are not modified.
 
-Animated copy, move and delete windows hide the empty operation log by default.
+Copy, move and delete progress windows hide the empty operation log by default.
 Use **Details** to expand it. ROX opens the details automatically when an error
 or a conflict question must be shown.
 

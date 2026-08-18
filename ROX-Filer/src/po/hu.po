@@ -8,10 +8,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-18\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-04 19:00-0300\n"
+"PO-Revision-Date: 2026-08-13 08:22-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Hungarian\n"
 "Language: hu\n"
@@ -6570,3 +6570,107 @@ msgstr "Fast and lightweight file manager for X11 and Wayland, continued from RO
 
 msgid "Rox-Filer2 project"
 msgstr "Rox-Filer2 project"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Audio preview works with audio MIME types supported by mpv, including MP3, WAV, OGG, FLAC, M4A, AAC and Opus."
+msgstr "A hangelőnézet az mpv által támogatott audio MIME-típusokkal működik, többek között MP3, WAV, OGG, FLAC, M4A, AAC és Opus formátummal."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser and Console"
+msgstr "Böngésző és konzol"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Browser command:"
+msgstr "Böngészőparancs:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose the browser command used by Rox-Filer2. You may use %u for the URL, for example: firefox --new-tab %u. Leave empty to try defaultbrowser, x-www-browser and gnome-www-browser with --new-tab first, retry without --new-tab if needed, and use xdg-open only as the last fallback."
+msgstr "Válassza ki a Rox-Filer2 által használt böngészőparancsot. Az URL helyén használható a %u, például: firefox --new-tab %u. Hagyja üresen, hogy először a defaultbrowser, x-www-browser és gnome-www-browser induljon --new-tab kapcsolóval, szükség esetén anélkül újrapróbálva, és az xdg-open csak végső tartalék legyen."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Console command:"
+msgstr "Konzolparancs:"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Enabled by default. After the pointer stays on an audio file for one second, Rox-Filer2 plays it with mpv. Moving away stops only the mpv process started by Rox-Filer2."
+msgstr "Alapértelmezés szerint engedélyezve. Ha a mutató egy másodpercig egy hangfájlon marad, a Rox-Filer2 mpv-vel lejátssza azt. A mutató elmozdításakor csak a Rox-Filer2 által indított mpv folyamat áll le."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Image and video previews"
+msgstr "Kép- és videóelőnézetek"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Preview audio when the pointer rests on a file"
+msgstr "Hang előnézete, amikor a mutató a fájlon marad"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Program used by Open Terminal Here, Run in Terminal and the desktop Console icon. Leave empty to try defaultterminal, x-terminal-emulator, xterm and urxvt in that order."
+msgstr "A „Terminál megnyitása itt”, „Futtatás terminálban” és az asztali Konzol ikon által használt program. Hagyja üresen a defaultterminal, x-terminal-emulator, xterm és urxvt sorrendben történő kipróbálásához."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Select the buttons to display and assign their position number. Changing a number moves that button directly to the chosen position and renumbers the others automatically. Partitions is fixed at position 1 and cannot be moved or hidden."
+msgstr "Válassza ki a megjelenítendő gombokat, és adja meg a pozíciószámukat. Egy szám módosítása közvetlenül a kiválasztott helyre mozgatja a gombot, a többit pedig automatikusan újraszámozza. A Partíciók az 1. helyen rögzített, nem mozgatható és nem rejthető el."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Show video thumbnails"
+msgstr "Videóbélyegképek megjelenítése"
+
+#: Rox-Filer2 2.12.2-11
+msgid "The thumbnail cache follows the Freedesktop location under ~/.cache/thumbnails/normal."
+msgstr "A bélyegkép-gyorsítótár a Freedesktop ~/.cache/thumbnails/normal helyét használja."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Video thumbnails are generated in the background from a frame around 10 seconds into the video, with a 1-second fallback for short files."
+msgstr "A videóbélyegképek a háttérben a videó körülbelül 10. másodpercének képkockájából készülnek; rövid fájloknál az 1. másodperc szolgál tartalékként."
+
+#: Rox-Filer2 2.12.2-11
+msgid "When thumbnails are enabled, use ffmpeg to create previews for video files. If ffmpeg is not installed, Rox-Filer2 keeps the normal video MIME icon."
+msgstr "Ha a bélyegképek engedélyezve vannak, az ffmpeg készít előnézetet a videófájlokhoz. Ha az ffmpeg nincs telepítve, a Rox-Filer2 a normál videó MIME-ikont használja."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Can't delete thumbnails:\n%s"
+msgstr "A bélyegképek nem törölhetők:\n%s"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Choose this button's position in the toolbar"
+msgstr "Válassza ki ennek a gombnak a helyét az eszköztáron"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Clear thumbnail cache"
+msgstr "Bélyegkép-gyorsítótár törlése"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Create a new directory, blank file, or file from a template"
+msgstr "Új könyvtár, üres fájl vagy sablonból származó fájl létrehozása"
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable terminal emulator was found. Configure one in Options > Desktop, or install defaultterminal, x-terminal-emulator, xterm or urxvt."
+msgstr "Nem található megfelelő terminálemulátor. Állítsa be a Beállítások > Asztal alatt, vagy telepítse a defaultterminal, x-terminal-emulator, xterm vagy urxvt egyikét."
+
+#: Rox-Filer2 2.12.2-11
+msgid "No suitable web browser was found. Configure one in Options > Desktop, or install defaultbrowser, x-www-browser, gnome-www-browser or xdg-open."
+msgstr "Nem található megfelelő webböngésző. Állítsa be a Beállítások > Asztal alatt, vagy telepítse a defaultbrowser, x-www-browser, gnome-www-browser vagy xdg-open egyikét."
+
+#: Rox-Filer2 2.12.2-11
+msgid "Partitions (fixed)"
+msgstr "Partíciók (rögzített)"
+
+#: Rox-Filer2 2.12.2-11
+msgid "Position:"
+msgstr "Pozíció:"
+
+#: Rox-Filer2 2.12.2-15
+msgid "Only local files can be added to the desktop."
+msgstr "Csak helyi fájlok adhatók az asztalhoz."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to create the desktop link."
+msgstr "Nem sikerült létrehozni az asztali hivatkozást."
+
+#: Rox-Filer2 2.12.2-15
+msgid "Unable to add one or more items to the desktop"
+msgstr "Nem sikerült egy vagy több elemet hozzáadni az asztalhoz."
+
+#: Rox-Filer2 2.12.2-18
+msgid "Launcher"
+msgstr "Indító"
