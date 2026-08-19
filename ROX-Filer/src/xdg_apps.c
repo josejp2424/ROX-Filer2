@@ -17,6 +17,7 @@
 
 #include <gio/gdesktopappinfo.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <glib/gstdio.h>
 
 #include "global.h"
 #include "xdg_apps.h"
@@ -28,6 +29,7 @@
 #include "main.h"
 #include "type.h"
 #include "custom_actions.h"
+#include "debug_log.h"
 
 #define CUSTOM_APP_PREFIX "rox-user-"
 #define CUSTOM_APP_MARKER "X-ROX-Filer-Created"
@@ -70,6 +72,230 @@ static void manager_add(GtkButton *button, gpointer data);
 static void manager_edit(GtkButton *button, gpointer data);
 static void manager_remove(GtkButton *button, gpointer data);
 static void remove_desktop_from_mimeapps(const gchar *desktop_id);
+
+/* Build a semicolon-terminated desktop-id list with desktop_id first and all
+ * previous entries preserved in their original order. */
+static gchar *mimeapps_prepend_id(const gchar *value, const gchar *desktop_id)
+{
+    GString *result;
+    gchar **ids;
+    gint i;
+
+    result = g_string_new(NULL);
+    if (desktop_id && *desktop_id) {
+        g_string_append(result, desktop_id);
+        g_string_append_c(result, ';');
+    }
+
+    ids = g_strsplit(value ? value : "", ";", -1);
+    for (i = 0; ids[i]; i++) {
+        gchar *id = g_strstrip(ids[i]);
+        if (!*id || g_strcmp0(id, desktop_id) == 0)
+            continue;
+        g_string_append(result, id);
+        g_string_append_c(result, ';');
+    }
+    g_strfreev(ids);
+    return g_string_free(result, FALSE);
+}
+
+/* Remove only desktop_id from one semicolon-separated association list. */
+static gchar *mimeapps_remove_id(const gchar *value, const gchar *desktop_id)
+{
+    GString *result;
+    gchar **ids;
+    gint i;
+
+    result = g_string_new(NULL);
+    ids = g_strsplit(value ? value : "", ";", -1);
+    for (i = 0; ids[i]; i++) {
+        gchar *id = g_strstrip(ids[i]);
+        if (!*id || g_strcmp0(id, desktop_id) == 0)
+            continue;
+        g_string_append(result, id);
+        g_string_append_c(result, ';');
+    }
+    g_strfreev(ids);
+    return g_string_free(result, FALSE);
+}
+
+static gboolean mimeapps_write_atomic(GKeyFile *key, const gchar *path,
+                                      GError **error)
+{
+    gchar *data = NULL;
+    gchar *tmp = NULL;
+    gsize length = 0;
+    gsize offset = 0;
+    gint fd = -1;
+    mode_t mode = 0600;
+    struct stat st;
+    gboolean ok = FALSE;
+
+    data = g_key_file_to_data(key, &length, error);
+    if (!data)
+        goto out;
+
+    if (stat(path, &st) == 0)
+        mode = st.st_mode & 0777;
+
+    tmp = g_strconcat(path, ".tmp.XXXXXX", NULL);
+    fd = g_mkstemp(tmp);
+    if (fd < 0) {
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+
+    if (fchmod(fd, mode) != 0) {
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+
+    while (offset < length) {
+        ssize_t written = write(fd, data + offset, length - offset);
+        if (written < 0) {
+            if (errno == EINTR)
+                continue;
+            g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                        "%s", g_strerror(errno));
+            goto out;
+        }
+        if (written == 0) {
+            g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                _("Unknown error"));
+            goto out;
+        }
+        offset += (gsize) written;
+    }
+
+    if (fsync(fd) != 0) {
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+
+    if (close(fd) != 0) {
+        fd = -1;
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+    fd = -1;
+
+    if (g_rename(tmp, path) != 0) {
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+
+    ok = TRUE;
+out:
+    if (fd >= 0)
+        close(fd);
+    if (!ok && tmp)
+        unlink(tmp);
+    g_free(tmp);
+    g_free(data);
+    return ok;
+}
+
+/* Rox-Filer2 must never ask GIO to regenerate the user's mimeapps.list when
+ * changing one association. Puppy installations in particular may carry
+ * hand-maintained associations that must survive. Load the existing file,
+ * update only the requested MIME key and write it back atomically. */
+gboolean xdg_apps_set_mime_association(GAppInfo *app,
+                                        const gchar *mime_type,
+                                        gboolean set_default,
+                                        GError **error)
+{
+    const gchar *desktop_id;
+    gchar *desktop_id_owned = NULL;
+    gchar *path = NULL;
+    GKeyFile *key = NULL;
+    gchar *old_value = NULL;
+    gchar *new_value = NULL;
+    gboolean exists;
+    gboolean ok = FALSE;
+
+    g_return_val_if_fail(G_IS_APP_INFO(app), FALSE);
+    g_return_val_if_fail(mime_type != NULL && *mime_type, FALSE);
+
+    desktop_id = g_app_info_get_id(app);
+    if ((!desktop_id || !*desktop_id) && G_IS_DESKTOP_APP_INFO(app)) {
+        const gchar *filename = g_desktop_app_info_get_filename(
+            G_DESKTOP_APP_INFO(app));
+        if (filename && *filename) {
+            desktop_id_owned = g_path_get_basename(filename);
+            desktop_id = desktop_id_owned;
+        }
+    }
+    if (!desktop_id || !*desktop_id) {
+        g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                            _("Invalid command."));
+        g_free(desktop_id_owned);
+        return FALSE;
+    }
+
+    if (g_mkdir_with_parents(g_get_user_config_dir(), 0700) != 0 &&
+        errno != EEXIST) {
+        g_set_error(error, G_IO_ERROR, g_io_error_from_errno(errno),
+                    "%s", g_strerror(errno));
+        goto out;
+    }
+
+    path = g_build_filename(g_get_user_config_dir(), "mimeapps.list", NULL);
+    key = g_key_file_new();
+    exists = g_file_test(path, G_FILE_TEST_EXISTS);
+    if (exists && !g_key_file_load_from_file(key, path,
+            G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, error)) {
+        /* Never replace an existing file that we could not parse. */
+        goto out;
+    }
+
+    if (set_default) {
+        old_value = g_key_file_get_string(key, "Default Applications",
+                                          mime_type, NULL);
+        new_value = mimeapps_prepend_id(old_value, desktop_id);
+        g_key_file_set_string(key, "Default Applications", mime_type,
+                              new_value);
+        g_clear_pointer(&old_value, g_free);
+        g_clear_pointer(&new_value, g_free);
+    }
+
+    old_value = g_key_file_get_string(key, "Added Associations",
+                                      mime_type, NULL);
+    new_value = mimeapps_prepend_id(old_value, desktop_id);
+    g_key_file_set_string(key, "Added Associations", mime_type, new_value);
+    g_clear_pointer(&old_value, g_free);
+    g_clear_pointer(&new_value, g_free);
+
+    /* The same desktop ID cannot validly be both added and removed for one
+     * MIME type. Remove only this ID and preserve every other removal. */
+    old_value = g_key_file_get_string(key, "Removed Associations",
+                                      mime_type, NULL);
+    if (old_value) {
+        new_value = mimeapps_remove_id(old_value, desktop_id);
+        if (new_value && *new_value)
+            g_key_file_set_string(key, "Removed Associations", mime_type,
+                                  new_value);
+        else
+            g_key_file_remove_key(key, "Removed Associations", mime_type,
+                                  NULL);
+        g_clear_pointer(&old_value, g_free);
+        g_clear_pointer(&new_value, g_free);
+    }
+
+    ok = mimeapps_write_atomic(key, path, error);
+out:
+    g_clear_pointer(&old_value, g_free);
+    g_clear_pointer(&new_value, g_free);
+    if (key)
+        g_key_file_unref(key);
+    g_free(path);
+    g_free(desktop_id_owned);
+    return ok;
+}
 
 static GList *copy_paths(GList *paths)
 {
@@ -948,16 +1174,14 @@ void xdg_apps_choose_for_paths(GList *paths, GtkWindow *parent,
                 GAppInfo *app = G_APP_INFO(g_ptr_array_index(apps, index));
                 GError *error = NULL;
 
-                if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(remember))) {
-                    if (!g_app_info_set_as_default_for_type(app, mime_type,
-                                                            &error)) {
-                        report_error(_("Unable to set the default application for %s: %s"),
-                                     mime_type,
-                                     error ? error->message : _("Unknown error"));
-                        g_clear_error(&error);
-                    }
-                } else {
-                    g_app_info_set_as_last_used_for_type(app, mime_type, NULL);
+                if (!xdg_apps_set_mime_association(
+                        app, mime_type,
+                        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(remember)),
+                        &error)) {
+                    report_error(_("Unable to set the default application for %s: %s"),
+                                 mime_type,
+                                 error ? error->message : _("Unknown error"));
+                    g_clear_error(&error);
                 }
                 xdg_apps_launch_app_info(app, paths, parent);
             }
@@ -1438,13 +1662,15 @@ static gboolean save_custom_application(GtkWindow *parent,
     }
 
     for (i = 0; i < mime_count; i++) {
-        g_app_info_add_supports_type(G_APP_INFO(desktop_app), mime_types[i], NULL);
-        if (set_default)
-            g_app_info_set_as_default_for_type(G_APP_INFO(desktop_app),
-                                               mime_types[i], NULL);
-        else
-            g_app_info_set_as_last_used_for_type(G_APP_INFO(desktop_app),
-                                                 mime_types[i], NULL);
+        GError *assoc_error = NULL;
+        if (!xdg_apps_set_mime_association(G_APP_INFO(desktop_app),
+                                           mime_types[i], set_default,
+                                           &assoc_error)) {
+            report_error(_("Unable to set the default application for %s: %s"),
+                         mime_types[i],
+                         assoc_error ? assoc_error->message : _("Unknown error"));
+            g_clear_error(&assoc_error);
+        }
     }
 
     update_desktop_database();
@@ -1720,10 +1946,16 @@ static void remove_desktop_from_mimeapps(const gchar *desktop_id)
     gchar *path = g_build_filename(g_get_user_config_dir(),
                                    "mimeapps.list", NULL);
     GKeyFile *key = g_key_file_new();
-    const gchar *groups[] = {"Default Applications", "Added Associations", NULL};
+    const gchar *groups[] = {
+        "Default Applications",
+        "Added Associations",
+        "Removed Associations",
+        NULL
+    };
     gint g;
 
-    if (!g_key_file_load_from_file(key, path, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+    if (!g_key_file_load_from_file(key, path,
+            G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS, NULL)) {
         g_key_file_unref(key);
         g_free(path);
         return;
@@ -1735,35 +1967,21 @@ static void remove_desktop_from_mimeapps(const gchar *desktop_id)
         gsize i;
         for (i = 0; keys && i < key_count; i++) {
             gchar *value = g_key_file_get_string(key, groups[g], keys[i], NULL);
-            gchar **ids = g_strsplit(value ? value : "", ";", -1);
-            GString *new_value = g_string_new(NULL);
-            gint j;
-            for (j = 0; ids[j]; j++) {
-                if (*ids[j] && g_strcmp0(ids[j], desktop_id) != 0) {
-                    g_string_append(new_value, ids[j]);
-                    g_string_append_c(new_value, ';');
-                }
-            }
-            if (new_value->len)
-                g_key_file_set_string(key, groups[g], keys[i], new_value->str);
+            gchar *new_value = mimeapps_remove_id(value, desktop_id);
+            if (new_value && *new_value)
+                g_key_file_set_string(key, groups[g], keys[i], new_value);
             else
                 g_key_file_remove_key(key, groups[g], keys[i], NULL);
-            g_string_free(new_value, TRUE);
-            g_strfreev(ids);
+            g_free(new_value);
             g_free(value);
         }
         g_strfreev(keys);
     }
 
-    {
-        gsize length;
-        gchar *data = g_key_file_to_data(key, &length, NULL);
-        if (data) {
-            g_mkdir_with_parents(g_get_user_config_dir(), 0755);
-            g_file_set_contents(path, data, length, NULL);
-            g_free(data);
-        }
-    }
+    if (!mimeapps_write_atomic(key, path, NULL))
+        ROX_LOG_WARNING("mimeapps", "unable to update %s while removing %s",
+                        path, desktop_id ? desktop_id : "(null)");
+
     g_key_file_unref(key);
     g_free(path);
 }

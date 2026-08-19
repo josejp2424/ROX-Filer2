@@ -1,4 +1,4 @@
-# Rox-Filer2 2.12.2-19 translation coverage
+# Rox-Filer2 2.12.2-23 translation coverage
 
 Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
 these 13 locales for the current GTK3/Desktop additions:
@@ -17,7 +17,7 @@ these 13 locales for the current GTK3/Desktop additions:
 - `zh_CN`
 - `zh_TW`
 
-For 2.12.2-19 the current strings added around video thumbnails, audio
+For 2.12.2-23 the current strings added around video thumbnails, audio
 hover preview, browser/console selection and numeric toolbar ordering remain
 translated in all 13 maintained locales. The new native operation indicator
 uses GtkSpinner/GtkProgressBar and existing translated ROX labels, so it adds
@@ -31,6 +31,28 @@ runs no longer miss labels and help text that live only in the Options file.
 The other historical ROX-Filer catalogues remain included unchanged. If a
 newer Rox-Filer2-specific string is not translated in one of those legacy
 catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-23
+
+2.12.2-23 adds icon selection and reset controls for Home, Browser, Console
+and Trash in Desktop Preferences. The controls reuse existing translated
+strings. Browser and Console labels were completed for all 13 maintained
+locales; Arabic/Catalan Reset and Traditional Chinese Trash were also completed.
+
+
+## 2.12.2-22
+
+2.12.2-22 fixes preservation of `~/.config/mimeapps.list` when changing
+Open With/default application associations. No new user-visible strings were
+added, so the existing translation catalogs remain complete.
+
+## 2.12.2-20
+
+2.12.2-20 replaces the GtkComboBox controls used by the native desktop dialogs
+with a shared GtkMenuButton + GtkPopover dropdown anchored to each control.
+The change reuses the existing labels and stored values, so no new translated
+strings are required and all 13 maintained locales remain complete.
 
 
 ## 2.12.2-19

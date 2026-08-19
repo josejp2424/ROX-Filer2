@@ -20,6 +20,7 @@
  * compatibilidad GTK3 usados por i18n.h, incluido RoxItemFactoryEntry. */
 #include "global.h"
 #include "desktop_apps.h"
+#include "desktop_dropdown.h"
 #include "i18n.h"
 
 #define APP_ICON_SIZE 36
@@ -510,14 +511,16 @@ gboolean desktop_apps_show_manager(GtkWindow *parent,
 
     settings_label = gtk_label_new(_("Icon size:"));
     gtk_box_pack_start(GTK_BOX(settings_box), settings_label, FALSE, FALSE, 0);
-    state.icon_size_combo = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(state.icon_size_combo), "24", "24");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(state.icon_size_combo), "32", "32");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(state.icon_size_combo), "48", "48");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(state.icon_size_combo), "64", "64");
     {
+        const RoxDesktopDropdownItem size_items[] = {
+            { "24", "24" },
+            { "32", "32" },
+            { "48", "48" },
+            { "64", "64" }
+        };
         gchar *size_id = g_strdup_printf("%d", *desktop_icon_size);
-        gtk_combo_box_set_active_id(GTK_COMBO_BOX(state.icon_size_combo), size_id);
+        state.icon_size_combo = rox_desktop_dropdown_new(size_items,
+            G_N_ELEMENTS(size_items), size_id);
         g_free(size_id);
     }
     gtk_box_pack_start(GTK_BOX(settings_box), state.icon_size_combo, FALSE, FALSE, 0);
@@ -612,8 +615,8 @@ gboolean desktop_apps_show_manager(GtkWindow *parent,
     }
 
     {
-        const gchar *size_id = gtk_combo_box_get_active_id(
-            GTK_COMBO_BOX(state.icon_size_combo));
+        const gchar *size_id = rox_desktop_dropdown_get_active_id(
+            state.icon_size_combo);
         if (size_id)
             *desktop_icon_size = atoi(size_id);
         *single_click = gtk_toggle_button_get_active(

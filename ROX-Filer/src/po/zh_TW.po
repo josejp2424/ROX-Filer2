@@ -9,7 +9,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-19\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
 "PO-Revision-Date: 2026-08-13 08:22-0300\n"
@@ -5449,7 +5449,7 @@ msgstr "_Empty Trash"
 
 #: trash.c desktop.c toolbar.c
 msgid "Trash"
-msgstr "Trash"
+msgstr "垃圾桶"
 
 #: trash.c desktop.c toolbar.c
 msgid "Open the Trash; use the arrow to restore selected items or empty it"
@@ -6670,3 +6670,9 @@ msgstr "無法將一個或多個項目加入桌面。"
 #: Rox-Filer2 2.12.2-19
 msgid "Launcher"
 msgstr "啟動器"
+
+msgid "Browser"
+msgstr "瀏覽器"
+
+msgid "Console"
+msgstr "終端機"

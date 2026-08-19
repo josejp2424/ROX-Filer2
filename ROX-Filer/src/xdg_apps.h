@@ -11,6 +11,16 @@ void xdg_apps_init(void);
 gboolean xdg_apps_launch_app_info(GAppInfo *app, GList *paths,
                                    GtkWindow *parent);
 
+/* Update the user MIME association without rewriting unrelated entries in
+ * ~/.config/mimeapps.list. If set_default is TRUE the application is also
+ * placed first in [Default Applications]. In both modes it is placed first
+ * in [Added Associations] and removed only from the matching MIME entry in
+ * [Removed Associations]. */
+gboolean xdg_apps_set_mime_association(GAppInfo *app,
+                                        const gchar *mime_type,
+                                        gboolean set_default,
+                                        GError **error);
+
 /* Hidden diagnostic entry point used by the bundled test script. */
 gboolean xdg_apps_diagnose_launch(const gchar *desktop_file,
                                    const gchar *path);

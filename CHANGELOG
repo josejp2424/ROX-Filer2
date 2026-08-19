@@ -1,3 +1,48 @@
+Rox-Filer2 2.12.2-23 (2026-08-19)
+======================================
+
+- Added per-icon customization for the four built-in desktop items: Home,
+  Browser, Console and Trash.
+- Desktop Preferences now shows the current icon for each built-in item with
+  Choose Icon and Reset controls.
+- Custom icon files are stored in desktop.conf and applied immediately without
+  changing the command or visibility setting for the desktop item.
+- Reset restores the original themed icon; Trash also regains its automatic
+  empty/full system-theme icon behavior after reset.
+- Reused existing translated Choose Icon/Reset/File/Image strings and completed
+  Browser/Console labels for all 13 actively maintained locales.
+
+Rox-Filer2 2.12.2-22 (2026-08-19)
+======================================
+
+- Fixed user MIME association updates so adding or changing an Open With
+  command no longer regenerates or truncates ~/.config/mimeapps.list.
+- New associations now preserve all unrelated MIME entries and sections.
+- The selected application is inserted only for the requested MIME type in
+  [Default Applications] and/or [Added Associations].
+- A matching entry is removed only from that MIME type in
+  [Removed Associations], leaving all other removals untouched.
+- Custom ROX applications no longer call the GIO association mutators that
+  could rewrite mimeapps.list on Puppy; ROX now performs a controlled update.
+- mimeapps.list is written through a temporary file in the same directory and
+  atomically renamed into place, preserving the existing file mode.
+- If an existing mimeapps.list cannot be parsed, ROX refuses to overwrite it.
+
+Rox-Filer2 2.12.2-20 (2026-08-18)
+------------------------------------
+
+- Replaced every GtkComboBox used by the native desktop GUIs with a shared
+  Wayland-safe dropdown based on GtkMenuButton + GtkPopover.
+- The anchored dropdown is now used by Desktop Preferences (desktop icon size,
+  drive icon size, drive position, drive orientation and one/double click),
+  Drive Icon Layout (orientation and horizontal/vertical position), Desktop
+  Background (wallpaper style), and Desktop Programs (icon size).
+- All values and saved configuration keys remain unchanged; only the popup
+  widget was replaced, so X11 behavior is preserved while Wayland no longer
+  places these menus in detached windows away from their controls.
+- No new user-visible strings were added; the existing translations remain
+  valid.
+
 Rox-Filer2 2.12.2-19 (2026-08-18)
 ------------------------------------
 

@@ -1,7 +1,7 @@
 # Rox-Filer2 GTK3 translation template.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-19\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-15 09:55-0300\n"
 "MIME-Version: 1.0\n"
@@ -6439,4 +6439,12 @@ msgstr ""
 
 #: desktop.c:3290 desktop.c:3392
 msgid "Launcher"
+msgstr ""
+
+#: desktop.c
+msgid "Browser"
+msgstr ""
+
+#: desktop.c
+msgid "Console"
 msgstr ""

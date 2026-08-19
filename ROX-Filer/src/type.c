@@ -66,6 +66,7 @@
 #include "xtypes.h"
 #include "run.h"
 #include "debug_log.h"
+#include "xdg_apps.h"
 
 #define TYPE_NS "http://www.freedesktop.org/standards/shared-mime-info"
 
@@ -776,14 +777,10 @@ void type_set_handler_dialog(MIME_type *type)
 		GAppInfo *app = gtk_app_chooser_get_app_info(GTK_APP_CHOOSER(dialog));
 		if (app) {
 			GError *error = NULL;
-			if (!g_app_info_set_as_default_for_type(app, mime_type, &error)) {
+			if (!xdg_apps_set_mime_association(app, mime_type, TRUE, &error)) {
 				report_error(_("Unable to set the default application for %s: %s"),
 					mime_type, error ? error->message : _("Unknown error"));
 				g_clear_error(&error);
-			} else {
-				/* También la registra como última usada para que los menús
-				 * Open With de aplicaciones XDG mantengan el mismo orden. */
-				g_app_info_set_as_last_used_for_type(app, mime_type, NULL);
 			}
 			g_object_unref(app);
 		}

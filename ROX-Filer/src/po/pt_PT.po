@@ -9,7 +9,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-19\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
 "PO-Revision-Date: 2026-08-13 08:22-0300\n"
@@ -6678,3 +6678,9 @@ msgstr "Não foi possível adicionar um ou mais itens ao ambiente de trabalho."
 #: Rox-Filer2 2.12.2-19
 msgid "Launcher"
 msgstr "Lançador"
+
+msgid "Browser"
+msgstr "Navegador"
+
+msgid "Console"
+msgstr "Consola"
