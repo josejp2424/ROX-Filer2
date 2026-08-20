@@ -1206,8 +1206,17 @@ static void load_default_pixmaps(void)
 	im_dirs = load_pixmap("dirs");
 	im_appdir = load_pixmap("application");
 
-	pixbuf = gdk_pixbuf_new_from_file(
-			make_path(app_dir, ".DirIcon"), &error);
+	/* Rox-Filer2 2.12.2-26: prefer the installed application icon from
+	 * hicolor.  Fall back to the historical .DirIcon when running directly
+	 * from an unpacked source tree before installation. */
+	pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),
+			"rox-filer2", 64, GTK_ICON_LOOKUP_FORCE_SIZE, &error);
+	if (!pixbuf)
+	{
+		g_clear_error(&error);
+		pixbuf = gdk_pixbuf_new_from_file(
+				make_path(app_dir, ".DirIcon"), &error);
+	}
 	if (pixbuf)
 	{
 		GList *icon_list;
@@ -1218,7 +1227,7 @@ static void load_default_pixmaps(void)
 
 		g_object_unref(G_OBJECT(pixbuf));
 	}
-	else
+	else if (error)
 	{
 		g_warning("%s\n", error->message);
 		g_error_free(error);

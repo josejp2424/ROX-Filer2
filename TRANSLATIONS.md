@@ -1,4 +1,4 @@
-# Rox-Filer2 2.12.2-23 translation coverage
+# Rox-Filer2 2.12.2-27 translation coverage
 
 Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
 these 13 locales for the current GTK3/Desktop additions:
@@ -17,12 +17,10 @@ these 13 locales for the current GTK3/Desktop additions:
 - `zh_CN`
 - `zh_TW`
 
-For 2.12.2-23 the current strings added around video thumbnails, audio
-hover preview, browser/console selection and numeric toolbar ordering remain
-translated in all 13 maintained locales. The new native operation indicator
-uses GtkSpinner/GtkProgressBar and existing translated ROX labels, so it adds
-no untranslated user-visible strings. Their compiled GNU gettext catalogues
-are included under `Rox-Filer/Messages/<locale>/LC_MESSAGES/ROX-Filer.mo`.
+For 2.12.2-27 the Desktop icons page, file-operation progress labels and
+desktop Paste action are translated in all 13 maintained locales. The
+operation animation uses only GTK theme icons and no GIF/custom artwork. The
+existing historical catalogues remain available as before.
 
 `po/options_strings.py` is now part of the translation update workflow. It
 extracts the user-visible strings from `Options.xml`, so future `update-po`
@@ -31,6 +29,39 @@ runs no longer miss labels and help text that live only in the Options file.
 The other historical ROX-Filer catalogues remain included unchanged. If a
 newer Rox-Filer2-specific string is not translated in one of those legacy
 catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-27
+
+2.12.2-27 completes the newest translation pass. `Browse`, the command-line
+help headings, the X11/Wayland desktop backend descriptions and the remaining
+new Desktop GUI labels are translated in all 13 actively maintained locales.
+The corresponding `.mo` files were regenerated.
+
+
+## 2.12.2-26
+
+2.12.2-26 adds desktop Paste, Cut visual feedback and the new hicolor
+application icon set. These changes reuse the existing translated `Paste`
+label and do not introduce new user-visible strings. The 13 maintained
+catalogues remain complete for the new behaviour.
+
+## 2.12.2-25
+
+2.12.2-25 adds direct editing of the four built-in desktop icons and their
+optional command overrides inside ROX Desktop Preferences. It also expands the
+file-operation dialog with current-file/source/destination information, real
+percentage, remaining-time estimate and a lightweight GTK3 file-transfer/delete
+animation. The new labels are translated in all 13 actively maintained locales.
+
+
+## 2.12.2-24
+
+2.12.2-24 adds a fixed Options button to the far right of the filer toolbar,
+adds `--config-rox` and `--desktop-preferences`, and simplifies file-operation
+dialogs to one animated GtkProgressBar with a static themed document icon.
+The implementation reuses existing translated strings, so all 13 actively
+maintained locales remain complete.
 
 
 ## 2.12.2-23

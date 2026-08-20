@@ -7,10 +7,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-27\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-13 08:22-0300\n"
+"PO-Revision-Date: 2026-08-20 13:47-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Arabic\n"
 "Language: ar\n"
@@ -6689,3 +6689,63 @@ msgstr "المتصفح"
 
 msgid "Console"
 msgstr "الطرفية"
+
+#: Rox-Filer2 2.12.2-25
+msgid "Desktop icons"
+msgstr "أيقونات سطح المكتب"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "From: %s"
+msgstr "من: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "To: %s"
+msgstr "إلى: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Current file: %s"
+msgstr "الملف الحالي: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Remaining: %s"
+msgstr "الوقت المتبقي: %s"
+
+#: desktop.c:3819 desktop.c:3875
+msgid "Browse"
+msgstr "تصفح"
+
+#: main.c:1057
+msgid "Launchers:"
+msgstr "المشغلات:"
+
+#: main.c:1061
+msgid "Desktop commands:"
+msgstr "أوامر سطح المكتب:"
+
+#: main.c:1079
+msgid "Diagnostics (disabled by default):"
+msgstr "التشخيص (معطّل افتراضيًا):"
+
+#: main.c:1071
+msgid "force the X11 desktop backend"
+msgstr "فرض الواجهة الخلفية X11 لسطح المكتب"
+
+#: main.c:1073
+msgid "force Wayland Layer Shell"
+msgstr "فرض Wayland Layer Shell"
+
+#: desktop.c
+msgid "Unable to start ROX Desktop"
+msgstr "تعذر بدء سطح مكتب ROX"
+
+#: desktop.c
+msgid "<b>Desktop icons</b>"
+msgstr "<b>أيقونات سطح المكتب</b>"
+
+#: desktop.c
+msgid "<b>Desktop settings</b>"
+msgstr "<b>إعدادات سطح المكتب</b>"

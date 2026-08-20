@@ -1,9 +1,9 @@
 # Rox-Filer2 GTK3 translation template.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-27\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
-"POT-Creation-Date: 2026-08-15 09:55-0300\n"
+"POT-Creation-Date: 2026-08-20 13:47-0300\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -6447,4 +6447,64 @@ msgstr ""
 
 #: desktop.c
 msgid "Console"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-25
+msgid "Desktop icons"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "From: %s"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "To: %s"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Current file: %s"
+msgstr ""
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Remaining: %s"
+msgstr ""
+
+#: desktop.c:3819 desktop.c:3875
+msgid "Browse"
+msgstr ""
+
+#: main.c:1057
+msgid "Launchers:"
+msgstr ""
+
+#: main.c:1061
+msgid "Desktop commands:"
+msgstr ""
+
+#: main.c:1079
+msgid "Diagnostics (disabled by default):"
+msgstr ""
+
+#: main.c:1071
+msgid "force the X11 desktop backend"
+msgstr ""
+
+#: main.c:1073
+msgid "force Wayland Layer Shell"
+msgstr ""
+
+#: desktop.c
+msgid "Unable to start ROX Desktop"
+msgstr ""
+
+#: desktop.c
+msgid "<b>Desktop icons</b>"
+msgstr ""
+
+#: desktop.c
+msgid "<b>Desktop settings</b>"
 msgstr ""

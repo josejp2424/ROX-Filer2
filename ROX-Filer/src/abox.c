@@ -150,19 +150,63 @@ static void abox_init(GTypeInstance *object, gpointer gclass)
 	gtk_box_pack_start(GTK_BOX(content),
 				abox->dir_label, FALSE, TRUE, 0);
 
-	/* Rox-Filer2 2.12.2-13: indicador de actividad GTK3 puro.
-	 * No requiere GIF ni ningún recurso gráfico externo. */
-	abox->operation_status_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-	gtk_widget_set_halign(abox->operation_status_box, GTK_ALIGN_CENTER);
+	/* Rox-Filer2 2.12.2-25: lightweight native GTK3 operation animation.
+	 * A document travels between two themed icons. No GIFs or external
+	 * artwork are used. The progress bar itself stays determinate. */
+	abox->operation_status_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	gtk_widget_set_halign(abox->operation_status_box, GTK_ALIGN_FILL);
 	gtk_widget_set_no_show_all(abox->operation_status_box, TRUE);
 	gtk_box_pack_start(GTK_BOX(content), abox->operation_status_box,
 			FALSE, FALSE, 4);
-	abox->operation_spinner = gtk_spinner_new();
-	gtk_widget_set_halign(abox->operation_spinner, GTK_ALIGN_CENTER);
-	gtk_widget_set_valign(abox->operation_spinner, GTK_ALIGN_CENTER);
+
+	abox->operation_animation = gtk_fixed_new();
+	gtk_widget_set_size_request(abox->operation_animation, 250, 54);
+	gtk_widget_set_halign(abox->operation_animation, GTK_ALIGN_CENTER);
+	abox->operation_source_icon = gtk_image_new_from_icon_name(
+			"folder", GTK_ICON_SIZE_DIALOG);
+	abox->operation_flying_icon = gtk_image_new_from_icon_name(
+			"text-x-generic", GTK_ICON_SIZE_BUTTON);
+	abox->operation_target_icon = gtk_image_new_from_icon_name(
+			"folder", GTK_ICON_SIZE_DIALOG);
+	gtk_fixed_put(GTK_FIXED(abox->operation_animation),
+			abox->operation_source_icon, 4, 4);
+	gtk_fixed_put(GTK_FIXED(abox->operation_animation),
+			abox->operation_flying_icon, 52, 17);
+	gtk_fixed_put(GTK_FIXED(abox->operation_animation),
+			abox->operation_target_icon, 198, 4);
 	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
-			abox->operation_spinner, FALSE, FALSE, 0);
-	abox->progress_pulse_id = 0;
+			abox->operation_animation, FALSE, FALSE, 0);
+
+	abox->operation_file_label = gtk_label_new("");
+	gtk_label_set_xalign(GTK_LABEL(abox->operation_file_label), 0.0);
+	gtk_label_set_ellipsize(GTK_LABEL(abox->operation_file_label), PANGO_ELLIPSIZE_MIDDLE);
+	gtk_label_set_max_width_chars(GTK_LABEL(abox->operation_file_label), 58);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
+			abox->operation_file_label, FALSE, FALSE, 0);
+
+	abox->operation_from_label = gtk_label_new("");
+	gtk_label_set_xalign(GTK_LABEL(abox->operation_from_label), 0.0);
+	gtk_label_set_ellipsize(GTK_LABEL(abox->operation_from_label), PANGO_ELLIPSIZE_MIDDLE);
+	gtk_label_set_max_width_chars(GTK_LABEL(abox->operation_from_label), 58);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
+			abox->operation_from_label, FALSE, FALSE, 0);
+
+	abox->operation_to_label = gtk_label_new("");
+	gtk_label_set_xalign(GTK_LABEL(abox->operation_to_label), 0.0);
+	gtk_label_set_ellipsize(GTK_LABEL(abox->operation_to_label), PANGO_ELLIPSIZE_MIDDLE);
+	gtk_label_set_max_width_chars(GTK_LABEL(abox->operation_to_label), 58);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
+			abox->operation_to_label, FALSE, FALSE, 0);
+
+	abox->operation_remaining_label = gtk_label_new("");
+	gtk_label_set_xalign(GTK_LABEL(abox->operation_remaining_label), 0.0);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box),
+			abox->operation_remaining_label, FALSE, FALSE, 0);
+
+	abox->operation_animation_id = 0;
+	abox->operation_animation_x = 52;
+	abox->operation_kind = ABOX_OPERATION_COPY;
+	abox->progress_started_us = 0;
 
 	abox->details = NULL;
 	abox->compact_log = FALSE;
@@ -445,10 +489,10 @@ static void abox_finalise(GObject *object)
 		g_source_remove(abox->next_timer);
 	}
 
-	if (abox->progress_pulse_id)
+	if (abox->operation_animation_id)
 	{
-		g_source_remove(abox->progress_pulse_id);
-		abox->progress_pulse_id = 0;
+		g_source_remove(abox->operation_animation_id);
+		abox->operation_animation_id = 0;
 	}
 
 	/* Chain-up */
@@ -786,43 +830,110 @@ void abox_set_file(ABox *abox, int i, const gchar *path)
 
 static GtkWidget *abox_ensure_progress(ABox *abox)
 {
-	GtkDialog *dialog;
-	GtkWidget *content;
-
 	g_return_val_if_fail(abox != NULL, NULL);
 	g_return_val_if_fail(IS_ABOX(abox), NULL);
 
 	if (abox->progress)
 		return abox->progress;
 
-	dialog = GTK_DIALOG(abox);
-	content = gtk_dialog_get_content_area(dialog);
 	abox->progress = gtk_progress_bar_new();
 	gtk_widget_set_hexpand(abox->progress, TRUE);
-	gtk_widget_set_margin_start(abox->progress, 10);
-	gtk_widget_set_margin_end(abox->progress, 10);
-	gtk_box_pack_start(GTK_BOX(content), abox->progress, FALSE, FALSE, 4);
+	gtk_widget_set_size_request(abox->progress, 390, -1);
+	gtk_widget_set_margin_start(abox->progress, 12);
+	gtk_widget_set_margin_end(abox->progress, 12);
+	gtk_widget_set_margin_top(abox->progress, 3);
+	gtk_widget_set_margin_bottom(abox->progress, 4);
+	gtk_box_pack_start(GTK_BOX(abox->operation_status_box), abox->progress,
+			FALSE, FALSE, 0);
 	return abox->progress;
 }
 
-static gboolean abox_pulse_progress(gpointer data)
+static gboolean abox_operation_animation_cb(gpointer data)
 {
 	ABox *abox = ABOX(data);
 
-	if (!IS_ABOX(abox) || !abox->progress ||
-	    !gtk_widget_get_visible(abox->progress))
+	if (!IS_ABOX(abox) || !abox->operation_animation ||
+	    !abox->operation_flying_icon ||
+	    !gtk_widget_get_visible(abox->operation_status_box))
 	{
-		abox->progress_pulse_id = 0;
+		if (IS_ABOX(abox))
+			abox->operation_animation_id = 0;
 		return G_SOURCE_REMOVE;
 	}
 
-	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(abox->progress));
+	abox->operation_animation_x += 4;
+	if (abox->operation_animation_x > 178)
+		abox->operation_animation_x = 52;
+	gtk_fixed_move(GTK_FIXED(abox->operation_animation),
+			abox->operation_flying_icon,
+			abox->operation_animation_x, 17);
 	return G_SOURCE_CONTINUE;
+}
+
+void abox_set_operation_kind(ABox *abox, ABoxOperationKind kind)
+{
+	const gchar *target_icon;
+
+	g_return_if_fail(abox != NULL);
+	g_return_if_fail(IS_ABOX(abox));
+	abox->operation_kind = kind;
+	target_icon = kind == ABOX_OPERATION_DELETE ? "edit-delete" : "folder";
+	if (abox->operation_target_icon)
+		gtk_image_set_from_icon_name(GTK_IMAGE(abox->operation_target_icon),
+				target_icon, GTK_ICON_SIZE_DIALOG);
+}
+
+void abox_set_operation_route(ABox *abox, const gchar *source,
+			      const gchar *dest)
+{
+	gchar *text;
+
+	g_return_if_fail(abox != NULL);
+	g_return_if_fail(IS_ABOX(abox));
+
+	if (source && *source) {
+		text = g_strdup_printf(_("From: %s"), source);
+		gtk_label_set_text(GTK_LABEL(abox->operation_from_label), text);
+		g_free(text);
+		gtk_widget_show(abox->operation_from_label);
+	} else {
+		gtk_label_set_text(GTK_LABEL(abox->operation_from_label), "");
+		gtk_widget_hide(abox->operation_from_label);
+	}
+
+	if (dest && *dest) {
+		text = g_strdup_printf(_("To: %s"), dest);
+		gtk_label_set_text(GTK_LABEL(abox->operation_to_label), text);
+		g_free(text);
+		gtk_widget_show(abox->operation_to_label);
+	} else {
+		gtk_label_set_text(GTK_LABEL(abox->operation_to_label), "");
+		gtk_widget_hide(abox->operation_to_label);
+	}
+}
+
+void abox_set_operation_file(ABox *abox, const gchar *path)
+{
+	gchar *base;
+	gchar *text;
+
+	g_return_if_fail(abox != NULL);
+	g_return_if_fail(IS_ABOX(abox));
+	if (!path || !*path)
+		return;
+
+	base = g_path_get_basename(path);
+	text = g_strdup_printf(_("Current file: %s"), base ? base : path);
+	gtk_label_set_text(GTK_LABEL(abox->operation_file_label), text);
+	gtk_widget_show(abox->operation_file_label);
+	g_free(text);
+	g_free(base);
 }
 
 void abox_set_percentage(ABox *abox, int per)
 {
 	GtkWidget *progress;
+	gchar *text;
 
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
@@ -833,31 +944,38 @@ void abox_set_percentage(ABox *abox, int per)
 
 	if (per < 0 || per > 100)
 	{
-		if (abox->progress_pulse_id)
-		{
-			g_source_remove(abox->progress_pulse_id);
-			abox->progress_pulse_id = 0;
-		}
 		gtk_widget_hide(progress);
 		return;
 	}
 
-	/* En cuanto ROX conoce un porcentaje real dejamos el modo indeterminado. */
-	if (abox->progress_pulse_id)
-	{
-		g_source_remove(abox->progress_pulse_id);
-		abox->progress_pulse_id = 0;
-	}
 	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), TRUE);
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress), NULL);
+	text = g_strdup_printf("%d%%", per);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress), text);
+	g_free(text);
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), per / 100.0);
 	gtk_widget_show(progress);
+
+	if (per > 0 && per < 100 && abox->progress_started_us > 0) {
+		gdouble elapsed = (g_get_monotonic_time() - abox->progress_started_us) / 1000000.0;
+		gdouble remain = elapsed * (100.0 - per) / per;
+		gint seconds = (gint) MAX(0.0, remain);
+		gchar *duration;
+		if (seconds >= 3600)
+			duration = g_strdup_printf("%d:%02d:%02d", seconds / 3600,
+				(seconds % 3600) / 60, seconds % 60);
+		else
+			duration = g_strdup_printf("%02d:%02d", seconds / 60, seconds % 60);
+		text = g_strdup_printf(_("Remaining: %s"), duration);
+		gtk_label_set_text(GTK_LABEL(abox->operation_remaining_label), text);
+		gtk_widget_show(abox->operation_remaining_label);
+		g_free(text);
+		g_free(duration);
+	} else if (per >= 100) {
+		gtk_label_set_text(GTK_LABEL(abox->operation_remaining_label), "");
+		gtk_widget_hide(abox->operation_remaining_label);
+	}
 }
 
-/* Rox-Filer2 2.12.2-13: sustituye las antiguas animaciones GIF por widgets
- * GTK3 nativos. El spinner indica actividad y la barra pulsa mientras no hay
- * un porcentaje conocido. Si action.c envía un porcentaje, abox_set_percentage
- * cambia automáticamente la barra a progreso real. */
 void abox_start_operation_progress(ABox *abox)
 {
 	GtkWidget *progress;
@@ -865,29 +983,34 @@ void abox_start_operation_progress(ABox *abox)
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
 
-	/* Mantener el diseño compacto que usaban las operaciones animadas. */
 	abox->compact_log = TRUE;
+	gtk_widget_hide(abox->dir_label);
 	gtk_widget_set_no_show_all(abox->log_hbox, TRUE);
 	if (!abox->details)
 		abox->details = abox_add_flag(abox,
 			_("Details"), _("Show Log"), 'D', FALSE);
 	abox_set_log_visible(abox, FALSE);
 
-	gtk_spinner_start(GTK_SPINNER(abox->operation_spinner));
-	gtk_widget_show(abox->operation_spinner);
+	gtk_widget_show_all(abox->operation_status_box);
 	gtk_widget_show(abox->operation_status_box);
+	if (abox->operation_kind == ABOX_OPERATION_DELETE && abox->operation_to_label)
+		gtk_widget_hide(abox->operation_to_label);
 
 	progress = abox_ensure_progress(abox);
 	if (!progress)
 		return;
 
-	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), FALSE);
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), TRUE);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress), "0%");
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), 0.0);
-	gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(progress), 0.08);
 	gtk_widget_show(progress);
-
-	if (!abox->progress_pulse_id)
-		abox->progress_pulse_id = g_timeout_add(90, abox_pulse_progress, abox);
+	abox->progress_started_us = g_get_monotonic_time();
+	abox->operation_animation_x = 52;
+	gtk_fixed_move(GTK_FIXED(abox->operation_animation),
+			abox->operation_flying_icon, 52, 17);
+	if (!abox->operation_animation_id)
+		abox->operation_animation_id = g_timeout_add(45,
+				abox_operation_animation_cb, abox);
 }
 
 void abox_stop_operation_progress(ABox *abox)
@@ -895,17 +1018,12 @@ void abox_stop_operation_progress(ABox *abox)
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
 
-	if (abox->progress_pulse_id)
+	if (abox->operation_animation_id)
 	{
-		g_source_remove(abox->progress_pulse_id);
-		abox->progress_pulse_id = 0;
+		g_source_remove(abox->operation_animation_id);
+		abox->operation_animation_id = 0;
 	}
-
-	if (abox->operation_spinner)
-	{
-		gtk_spinner_stop(GTK_SPINNER(abox->operation_spinner));
-		gtk_widget_hide(abox->operation_spinner);
-	}
+	abox->progress_started_us = 0;
 	if (abox->operation_status_box)
 		gtk_widget_hide(abox->operation_status_box);
 	if (abox->progress)

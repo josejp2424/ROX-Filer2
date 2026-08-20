@@ -181,6 +181,8 @@ static struct option long_opts[] =
 	{"desktop-refresh", 0, NULL, 1003},
 	{"pair", 0, NULL, 1004},
 	{"pair-realign", 0, NULL, 1005},
+	{"desktop-preferences", 0, NULL, 1006},
+	{"config-rox", 0, NULL, 1007},
 	{"debug", 0, NULL, 1200},
 	{"log-file", 1, NULL, 1201},
 	{"log-level", 1, NULL, 1202},
@@ -204,10 +206,12 @@ typedef enum {
 	DESKTOP_TOOL_NONE = 0,
 	DESKTOP_TOOL_WALLPAPER,
 	DESKTOP_TOOL_APPS,
-	DESKTOP_TOOL_REFRESH
+	DESKTOP_TOOL_REFRESH,
+	DESKTOP_TOOL_PREFERENCES
 } DesktopTool;
 
 static DesktopTool desktop_tool = DESKTOP_TOOL_NONE;
+static gboolean config_rox_mode = FALSE;
 static gboolean pair_mode = FALSE;
 static gboolean pair_realign_mode = FALSE;
 static gchar *pair_left_arg = NULL;
@@ -539,6 +543,14 @@ int main(int argc, char **argv)
 			case 1005:
 				pair_realign_mode = TRUE;
 				break;
+			case 1006:
+				desktop_tool = DESKTOP_TOOL_PREFERENCES;
+				new_copy = TRUE;
+				break;
+			case 1007:
+				config_rox_mode = TRUE;
+				new_copy = TRUE;
+				break;
 			case 1200: /* --debug: configured before gtk_init */
 			case 1201: /* --log-file */
 			case 1202: /* --log-level */
@@ -678,8 +690,8 @@ int main(int argc, char **argv)
 	}
 
 
-	ROX_LOG_DEBUG("command", "parsed desktop=%d tool=%d pair=%d new_copy=%d rpc=%d",
-	              desktop_mode, desktop_tool, pair_mode, new_copy, rpc_mode);
+	ROX_LOG_DEBUG("command", "parsed desktop=%d tool=%d config=%d pair=%d new_copy=%d rpc=%d",
+	              desktop_mode, desktop_tool, config_rox_mode, pair_mode, new_copy, rpc_mode);
 	if (show_user)
 		show_user_message = g_strdup_printf(_("Running as user '%s'"),
 						    user_name(euid));
@@ -739,7 +751,7 @@ int main(int argc, char **argv)
 		rpc = soap_rpc;
 	}
 	else if (!body->xmlChildrenNode && !desktop_mode &&
-	         desktop_tool == DESKTOP_TOOL_NONE &&
+	         desktop_tool == DESKTOP_TOOL_NONE && !config_rox_mode &&
 	         !diagnose_open_with_desktop && !diagnose_terminal_path &&
 	         !diagnose_rename_path)
 	{
@@ -766,7 +778,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Try to send the request to an already-running copy of the filer */
-	if (!desktop_mode && desktop_tool == DESKTOP_TOOL_NONE &&
+	if (!desktop_mode && desktop_tool == DESKTOP_TOOL_NONE && !config_rox_mode &&
 	    !diagnose_open_with_desktop && !diagnose_terminal_path &&
 	    !diagnose_rename_path && remote_init(rpc, new_copy)) {
 		ROX_LOG_INFO("remote", "request delivered to an existing Rox-Filer2 process");
@@ -907,6 +919,17 @@ int main(int argc, char **argv)
 	/* Agregado por josejp2424 (2026): iniciar el escritorio nativo. */
 	rox_config_init();
 	desktop_init();
+	if (config_rox_mode)
+	{
+		/* The toolbar Settings button and --config-rox intentionally use the
+		 * same ROX-Filer Options window. Keep this as a normal GTK window so
+		 * the command is also useful from a .desktop launcher or script. */
+		menu_show_options(NULL, 0, NULL);
+		xmlFreeDoc(rpc);
+		if (number_of_windows > 0)
+			gtk_main();
+		return EXIT_SUCCESS;
+	}
 	if (desktop_mode)
 	{
 		ROX_LOG_INFO("desktop", "starting ROX Desktop");
@@ -918,6 +941,8 @@ int main(int argc, char **argv)
 			desktop_open_wallpaper_manager();
 		else if (desktop_tool == DESKTOP_TOOL_APPS)
 			desktop_open_apps_manager();
+		else if (desktop_tool == DESKTOP_TOOL_PREFERENCES)
+			desktop_open_preferences();
 		else if (desktop_tool == DESKTOP_TOOL_REFRESH)
 		{
 			if (!desktop_send_refresh_request())
@@ -1029,17 +1054,20 @@ static void print_help_text(void)
 
 	prefix = g_strndup(formatted, (line_end + 1) - formatted);
 	g_print("%s", prefix);
-	g_print("\nLaunchers:\n");
+	g_print("\n%s\n", _("Launchers:"));
 	g_print("      rox\t\t%s\n", _("automatically select X11 or Wayland"));
 	g_print("      rox-x11\t\t%s\n", _("force the X11 backend"));
 	g_print("      rox-wayland\t%s\n\n", _("force the native Wayland backend"));
-	g_print("Desktop commands:\n");
+	g_print("%s\n", _("Desktop commands:"));
 	g_print("      --desktop-wallpaper\t%s\n",
 		_("open the desktop wallpaper manager"));
 	g_print("      --desktop-apps\t%s\n",
 		_("open the desktop application manager"));
 	g_print("      --desktop-refresh\t%s\n",
 		_("refresh the running Rox-Filer2 Desktop"));
+	g_print("      --desktop-preferences\t%s\n",
+		_("ROX Desktop Preferences"));
+	g_print("      --config-rox\t\t%s\n", _("Options"));
 	g_print("      rox-x11 --desktop\t%s\n",
 		_("force the X11 desktop backend"));
 	g_print("      rox-wayland --desktop\t%s\n",
@@ -1048,7 +1076,7 @@ static void print_help_text(void)
 		_("open two Rox-Filer2 windows side by side"));
 	g_print("      --pair-realign\t%s\n",
 		_("realign the current paired windows"));
-	g_print("\nDiagnostics (disabled by default):\n");
+	g_print("\n%s\n", _("Diagnostics (disabled by default):"));
 	g_print("      --debug\t\twrite a technical diagnostic log\n");
 	g_print("      --log-file=FILE\twrite the diagnostic log to FILE\n");
 	g_print("      --log-level=LEVEL\terror, warning, info, debug or trace\n");

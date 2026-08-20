@@ -22,6 +22,13 @@
 typedef struct _ABoxClass  ABoxClass;
 typedef struct _ABox ABox;
 
+typedef enum
+{
+	ABOX_OPERATION_COPY = 0,
+	ABOX_OPERATION_MOVE,
+	ABOX_OPERATION_DELETE
+} ABoxOperationKind;
+
 struct _ABox
 {
 	GtkDialog 	parent_widget;
@@ -35,11 +42,22 @@ struct _ABox
 	 * compactas las ventanas animadas de copia, movimiento y borrado. */
 	GtkWidget	*details;
 	gboolean	 compact_log;
-	/* Rox-Filer2 2.12.2-13: indicador nativo GTK3 para operaciones.
-	 * Reemplaza los GIF animados por GtkSpinner + GtkProgressBar. */
+	/* Rox-Filer2 2.12.2-25: compact Thunar-inspired operation status.
+	 * A small document icon travels from source to destination/delete while
+	 * the progress bar remains determinate and displays the real percentage. */
 	GtkWidget	*operation_status_box;
-	GtkWidget	*operation_spinner;
-	guint		 progress_pulse_id;
+	GtkWidget	*operation_animation;
+	GtkWidget	*operation_source_icon;
+	GtkWidget	*operation_flying_icon;
+	GtkWidget	*operation_target_icon;
+	GtkWidget	*operation_file_label;
+	GtkWidget	*operation_from_label;
+	GtkWidget	*operation_to_label;
+	GtkWidget	*operation_remaining_label;
+	guint		 operation_animation_id;
+	gint		 operation_animation_x;
+	ABoxOperationKind operation_kind;
+	gint64		 progress_started_us;
 	GtkWidget	*results;	/* List of filenames found */
 	GtkWidget	*entry;		/* Plain entry, or part of combo */
 	FilerWindow	*preview;
@@ -106,6 +124,10 @@ void	abox_show_compare		(ABox *abox, gboolean show);
 void	abox_set_file			(ABox *abox, int file,
 					 const gchar *path);
 void    abox_set_percentage             (ABox *abox, int per);
+void    abox_set_operation_kind         (ABox *abox, ABoxOperationKind kind);
+void    abox_set_operation_route        (ABox *abox, const gchar *source,
+                                         const gchar *dest);
+void    abox_set_operation_file         (ABox *abox, const gchar *path);
 void    abox_start_operation_progress   (ABox *abox);
 void    abox_stop_operation_progress    (ABox *abox);
 

@@ -572,6 +572,8 @@ static void process_message(GUIside *gui_side, const gchar *buffer)
 	}
 	else if (*buffer == '/')
 		abox_set_current_object(abox, buffer + 1);
+	else if (*buffer == '@')
+		abox_set_operation_file(abox, buffer + 1);
 	else if (*buffer == 'o')
 		filer_opendir(buffer + 1, NULL, NULL);
 	else if (*buffer == '!')
@@ -1172,6 +1174,7 @@ static void do_delete(const char *src_path, const char *unused)
 	gchar		*base = g_path_get_basename(src_path);
 
 	check_flags();
+	printf_send("@%s", src_path);
 
 	if (mc_lstat(src_path, &info))
 	{
@@ -1675,6 +1678,114 @@ static ConflictPolicy choose_conflict_policy(const gchar *operation)
 	return policy;
 }
 
+static void rsync_progress_line(const gchar *line, GString *output,
+                                gint *last_percent)
+{
+    const gchar *percent;
+
+    if (!line || !*line)
+        return;
+
+    if (g_str_has_prefix(line, "ROXFILE:")) {
+        const gchar *name = line + strlen("ROXFILE:");
+        if (*name && strcmp(name, ".") != 0)
+            printf_send("@%s", name);
+        return;
+    }
+
+    percent = strchr(line, '%');
+    if (percent) {
+        const gchar *start = percent;
+        gint value;
+        while (start > line && g_ascii_isdigit((guchar) start[-1]))
+            start--;
+        value = atoi(start);
+        if (value >= 0 && value <= 100 && (!last_percent || value != *last_percent)) {
+            printf_send("%%%d", value);
+            if (last_percent)
+                *last_percent = value;
+        }
+        return;
+    }
+
+    /* Keep non-progress output only for a useful failure report. */
+    if (output && strlen(line) < 2048) {
+        if (output->len < 8192) {
+            g_string_append(output, line);
+            g_string_append_c(output, '\n');
+        }
+    }
+}
+
+/* Rox-Filer2 2.12.2-25: run rsync with progress2 and feed its real byte
+ * percentage/current filename through the existing child->GUI protocol. */
+static gboolean run_rsync_with_progress(gchar **argv, gchar **captured,
+                                        gint *status)
+{
+    GString *command;
+    GString *line;
+    GString *output;
+    FILE *pipe;
+    gint c;
+    gint i;
+    gint last_percent = -1;
+    gint rc;
+
+    g_return_val_if_fail(argv != NULL && argv[0] != NULL, FALSE);
+
+    command = g_string_new("exec");
+    for (i = 0; argv[i]; i++) {
+        gchar *quoted = g_shell_quote(argv[i]);
+        g_string_append_c(command, ' ');
+        g_string_append(command, quoted);
+        g_free(quoted);
+    }
+    g_string_append(command, " 2>&1");
+
+    pipe = popen(command->str, "r");
+    g_string_free(command, TRUE);
+    if (!pipe)
+        return FALSE;
+
+    line = g_string_new(NULL);
+    output = g_string_new(NULL);
+    while ((c = fgetc(pipe)) != EOF) {
+        if (c == '\r' || c == '\n') {
+            if (line->len) {
+                rsync_progress_line(line->str, output, &last_percent);
+                g_string_truncate(line, 0);
+            }
+        } else if (line->len < 4096) {
+            g_string_append_c(line, (gchar) c);
+        }
+    }
+    if (line->len)
+        rsync_progress_line(line->str, output, &last_percent);
+    g_string_free(line, TRUE);
+
+    rc = pclose(pipe);
+    if (status)
+        *status = rc;
+    if (captured)
+        *captured = g_string_free(output, FALSE);
+    else
+        g_string_free(output, TRUE);
+    return TRUE;
+}
+
+static gboolean rsync_progress2_is_available(void)
+{
+    static gint cached = -1;
+    gint status;
+
+    if (cached >= 0)
+        return cached != 0;
+
+    status = system("rsync --info=progress2 --outbuf=L --version >/dev/null 2>&1");
+    cached = (status != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0) ? 1 : 0;
+    return cached != 0;
+}
+
 static gboolean rsync_is_available(void)
 {
 	gchar *program = g_find_program_in_path("rsync");
@@ -1693,7 +1804,6 @@ static RsyncResult run_rsync_operation(const char *source, const char *dest_path
 	gchar *source_arg = NULL;
 	gchar *dest_arg = NULL;
 	gchar *errors = NULL;
-	GError *spawn_error = NULL;
 	gint status = 0;
 	struct stat source_info;
 	struct stat dest_info;
@@ -1752,6 +1862,13 @@ static RsyncResult run_rsync_operation(const char *source, const char *dest_path
 	argv[argc++] = "rsync";
 	argv[argc++] = "-a";
 	argv[argc++] = "--partial";
+	if (rsync_progress2_is_available()) {
+		argv[argc++] = "--info=progress2";
+		argv[argc++] = "--outbuf=L";
+	} else {
+		argv[argc++] = "--progress";
+	}
+	argv[argc++] = "--out-format=ROXFILE:%n";
 	if (conflict_policy == CONFLICT_SKIP_EXISTING)
 		argv[argc++] = "--ignore-existing";
 	else if (conflict_policy == CONFLICT_UPDATE_NEWER)
@@ -1763,18 +1880,13 @@ static RsyncResult run_rsync_operation(const char *source, const char *dest_path
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = rox_spawn_sync(NULL, (gchar **) argv, NULL,
-		G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
-		NULL, NULL, NULL, &errors, &status, &spawn_error);
+	ok = run_rsync_with_progress((gchar **) argv, &errors, &status);
 
 	if (!ok)
 	{
-		printf_send(_("!Failed to start rsync: %s\n"),
-			spawn_error ? spawn_error->message : _("Unknown error"));
-		if (spawn_error)
-			g_error_free(spawn_error);
+		printf_send(_("!Failed to start rsync: %s\n"), g_strerror(errno));
 	}
-	else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	else if (status == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
 	{
 		if (errors && *errors)
 			printf_send(_("!rsync failed while processing '%s':\n%s\n"),
@@ -1833,14 +1945,20 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 	GList *iter;
 	gchar *dest_arg;
 	gchar *errors = NULL;
-	GError *spawn_error = NULL;
 	gint status = 0;
 	gboolean ok;
 
-	argv = g_new0(gchar *, count + 10);
+	argv = g_new0(gchar *, count + 14);
 	argv[argc++] = g_strdup("rsync");
 	argv[argc++] = g_strdup("-a");
 	argv[argc++] = g_strdup("--partial");
+	if (rsync_progress2_is_available()) {
+		argv[argc++] = g_strdup("--info=progress2");
+		argv[argc++] = g_strdup("--outbuf=L");
+	} else {
+		argv[argc++] = g_strdup("--progress");
+	}
+	argv[argc++] = g_strdup("--out-format=ROXFILE:%n");
 	if (conflict_policy == CONFLICT_SKIP_EXISTING)
 		argv[argc++] = g_strdup("--ignore-existing");
 	else if (conflict_policy == CONFLICT_UPDATE_NEWER)
@@ -1852,17 +1970,12 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = rox_spawn_sync(NULL, argv, NULL,
-		G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
-		NULL, NULL, NULL, &errors, &status, &spawn_error);
+	ok = run_rsync_with_progress(argv, &errors, &status);
 	if (!ok)
 	{
-		printf_send(_("!Failed to start rsync: %s\n"),
-			spawn_error ? spawn_error->message : _("Unknown error"));
-		if (spawn_error)
-			g_error_free(spawn_error);
+		printf_send(_("!Failed to start rsync: %s\n"), g_strerror(errno));
 	}
-	else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	else if (status == -1 || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
 	{
 		if (errors && *errors)
 			printf_send(_("!rsync batch copy failed:\n%s\n"), errors);
@@ -2014,6 +2127,7 @@ static void do_copy2(const char *path, const char *dest)
 	struct stat 	dest_info;
 
 	check_flags();
+	printf_send("@%s", path);
 
 	dest_path = make_dest_path(path, dest);
 
@@ -2194,6 +2308,7 @@ static void do_move2(const char *path, const char *dest)
 	guchar		*error = NULL;
 
 	check_flags();
+	printf_send("@%s", path);
 
 	dest_path = make_dest_path(path, dest);
 
@@ -2967,7 +3082,13 @@ void action_delete(GList *paths)
 
 	delete_batch_mode = FALSE;
 	abox = abox_new(_("Delete"), o_action_delete.int_value);
-	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_set_operation_kind(ABOX(abox), ABOX_OPERATION_DELETE);
+	if (paths) {
+		gchar *source_dir = g_path_get_dirname((const gchar *) paths->data);
+		abox_set_operation_route(ABOX(abox), source_dir, NULL);
+		abox_set_operation_file(ABOX(abox), (const gchar *) paths->data);
+		g_free(source_dir);
+	}
 	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
@@ -3007,7 +3128,13 @@ void action_delete_permanently(GList *paths)
 
 	delete_batch_mode = TRUE;
 	abox = abox_new(_("Delete Permanently"), TRUE);
-	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_set_operation_kind(ABOX(abox), ABOX_OPERATION_DELETE);
+	if (paths) {
+		gchar *source_dir = g_path_get_dirname((const gchar *) paths->data);
+		abox_set_operation_route(ABOX(abox), source_dir, NULL);
+		abox_set_operation_file(ABOX(abox), (const gchar *) paths->data);
+		g_free(source_dir);
+	}
 	abox_start_operation_progress(ABOX(abox));
 	if (paths->next)
 		abox_set_percentage(ABOX(abox), 0);
@@ -3210,7 +3337,13 @@ void action_copy(GList *paths, const char *dest, const char *leaf, int quiet)
 	action_do_func = use_rsync_engine ? do_copy_fast : do_copy;
 
 	abox = abox_new(_("Copy"), quiet);
-	/* Rox-Filer2 2.12.2-13: progreso nativo GTK3, sin GIF. */
+	abox_set_operation_kind(ABOX(abox), ABOX_OPERATION_COPY);
+	if (paths) {
+		gchar *source_dir = g_path_get_dirname((const gchar *) paths->data);
+		abox_set_operation_route(ABOX(abox), source_dir, dest);
+		abox_set_operation_file(ABOX(abox), (const gchar *) paths->data);
+		g_free(source_dir);
+	}
 	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
@@ -3266,7 +3399,13 @@ void action_move(GList *paths, const char *dest, const char *leaf, int quiet)
 	action_do_func = use_rsync_engine ? do_move_fast : do_move;
 
 	abox = abox_new(_("Move"), quiet);
-	/* Rox-Filer2 2.12.2-13: mover usa el mismo progreso GTK3 que copiar. */
+	abox_set_operation_kind(ABOX(abox), ABOX_OPERATION_MOVE);
+	if (paths) {
+		gchar *source_dir = g_path_get_dirname((const gchar *) paths->data);
+		abox_set_operation_route(ABOX(abox), source_dir, dest);
+		abox_set_operation_file(ABOX(abox), (const gchar *) paths->data);
+		g_free(source_dir);
+	}
 	abox_start_operation_progress(ABOX(abox));
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);

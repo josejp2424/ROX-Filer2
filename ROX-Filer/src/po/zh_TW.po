@@ -9,10 +9,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-27\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-13 08:22-0300\n"
+"PO-Revision-Date: 2026-08-20 13:47-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Traditional Chinese\n"
 "Language: zh_TW\n"
@@ -2227,7 +2227,7 @@ msgstr "條件式選擇"
 
 #: menu.c:270
 msgid "Paste"
-msgstr "Paste"
+msgstr "貼上"
 
 #: menu.c:272 toolbar.c:170
 msgid "New"
@@ -6676,3 +6676,63 @@ msgstr "瀏覽器"
 
 msgid "Console"
 msgstr "終端機"
+
+#: Rox-Filer2 2.12.2-25
+msgid "Desktop icons"
+msgstr "桌面圖示"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "From: %s"
+msgstr "來源：%s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "To: %s"
+msgstr "目的地：%s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Current file: %s"
+msgstr "目前檔案：%s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Remaining: %s"
+msgstr "剩餘時間：%s"
+
+#: desktop.c:3819 desktop.c:3875
+msgid "Browse"
+msgstr "瀏覽"
+
+#: main.c:1057
+msgid "Launchers:"
+msgstr "啟動器："
+
+#: main.c:1061
+msgid "Desktop commands:"
+msgstr "桌面命令："
+
+#: main.c:1079
+msgid "Diagnostics (disabled by default):"
+msgstr "診斷（預設停用）："
+
+#: main.c:1071
+msgid "force the X11 desktop backend"
+msgstr "強制使用 X11 桌面後端"
+
+#: main.c:1073
+msgid "force Wayland Layer Shell"
+msgstr "強制使用 Wayland Layer Shell"
+
+#: desktop.c
+msgid "Unable to start ROX Desktop"
+msgstr "無法啟動 ROX Desktop"
+
+#: desktop.c
+msgid "<b>Desktop icons</b>"
+msgstr "<b>桌面圖示</b>"
+
+#: desktop.c
+msgid "<b>Desktop settings</b>"
+msgstr "<b>桌面設定</b>"

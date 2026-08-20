@@ -44,6 +44,7 @@
 #include "support.h"
 #include "gui_support.h"
 #include "fscache.h"
+#include "menu.h"
 
 typedef struct _CellIcon CellIcon;
 typedef struct _CellIconClass CellIconClass;
@@ -325,6 +326,7 @@ static void cell_icon_render(GtkCellRenderer        *cell,
 	gboolean selected = (flags & GTK_CELL_RENDERER_SELECTED) != 0;
 	GdkRGBA color = {0.25, 0.45, 0.75, 1.0};
 	GtkStyleContext *context;
+	gboolean cut_visual;
 
 	if (!cr || !widget || !cell_area || !view_item)
 		return;
@@ -340,10 +342,15 @@ static void cell_icon_render(GtkCellRenderer        *cell,
 		&color);
 	color.alpha = 1.0;
 
+	cut_visual = menu_path_is_cut((const gchar *)make_path(
+		icon->view_details->filer_window->sym_path, item->leafname));
+
 	cairo_save(cr);
 	cairo_rectangle(cr, cell_area->x, cell_area->y,
 		cell_area->width, cell_area->height);
 	cairo_clip(cr);
+	if (cut_visual)
+		cairo_push_group(cr);
 
 	switch (size)
 	{
@@ -371,5 +378,10 @@ static void cell_icon_render(GtkCellRenderer        *cell,
 			break;
 	}
 
+	if (cut_visual)
+	{
+		cairo_pop_group_to_source(cr);
+		cairo_paint_with_alpha(cr, 0.45);
+	}
 	cairo_restore(cr);
 }

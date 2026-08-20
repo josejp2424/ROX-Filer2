@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Rox-Filer2
-Icon=/usr/share/pixmaps/Rox-Filer2.svg
+Icon=rox-filer2
 Comment=Lightweight X11 and Wayland file manager
 Exec=/usr/local/bin/roxfiler
 Terminal=false

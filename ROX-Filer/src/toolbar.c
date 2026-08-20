@@ -115,6 +115,7 @@ static void toolbar_new_show_menu(GtkMenuToolButton *button,
 				      FilerWindow *filer_window);
 static void toolbar_search_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window);
+static void toolbar_preferences_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 				FilerWindow *filer_window);
 static Tool *toolbar_find_tool(const gchar *name);
@@ -217,6 +218,14 @@ static Tool all_tools[] = {
 	{N_("Paired Windows"), "window-new", N_("Open two Rox-Filer2 windows side by side"),
 	 toolbar_pair_clicked, DROP_NONE, FALSE,
 	 FALSE},
+};
+
+/* Rox-Filer2 2.12.2-24: quick access requested by mistfire.  Settings stays
+ * fixed at the far right of the toolbar, after Trash, so it is always easy to
+ * find and does not disturb the user's custom order for normal tools. */
+static Tool toolbar_preferences_tool = {
+	N_("Options"), ROX_ICON_PREFERENCES, N_("Options..."),
+	toolbar_preferences_clicked, DROP_NONE, TRUE, FALSE
 };
 
 
@@ -672,6 +681,15 @@ static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window)
 	filer_pair_open(filer_window, NULL, NULL);
 }
 
+static void toolbar_preferences_clicked(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void)widget;
+	(void)filer_window;
+	/* Same entry point used by the normal Options menu.  The command-line
+	 * equivalent is ROX-Filer --config-rox. */
+	menu_show_options(NULL, 0, NULL);
+}
+
 static void toolbar_compact_tool_item(GtkToolItem *item)
 {
     static GtkCssProvider *provider = NULL;
@@ -834,6 +852,11 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), trash_item, -1);
 		toolbar_compact_tool_item(trash_item);
 		gtk_widget_get_preferred_size(GTK_WIDGET(trash_item), NULL, &trash_req);
+		width += trash_req.width;
+
+		/* Settings is intentionally the final toolbar item. */
+		b = add_button(bar, &toolbar_preferences_tool, filer_window);
+		gtk_widget_get_preferred_size(b, NULL, &trash_req);
 		width += trash_req.width;
 	}
 

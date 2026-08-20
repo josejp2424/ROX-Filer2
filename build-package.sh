@@ -134,6 +134,23 @@ rm -rf \
     "$PACKAGE_DIR/usr/local/apps/Rox-Filer/build" \
     "$PACKAGE_DIR/usr/local/apps/Rox-Filer/src"
 
+# Install Rox-Filer2 application icons supplied with the source.  Desktop
+# files use Icon=rox-filer2 so GTK/icon themes can choose the correct size.
+ROX_ICON_ROOT="$PROJECT_ROOT/data/icons/hicolor"
+for size in 16 22 24 32 48 64 96 128 192 256; do
+    install -Dm0644 \
+        "$ROX_ICON_ROOT/${size}x${size}/apps/rox-filer2.png" \
+        "$PACKAGE_DIR/usr/share/icons/hicolor/${size}x${size}/apps/rox-filer2.png"
+done
+install -Dm0644 \
+    "$ROX_ICON_ROOT/scalable/apps/rox-filer2.svg" \
+    "$PACKAGE_DIR/usr/share/icons/hicolor/scalable/apps/rox-filer2.svg"
+# Keep a pixmaps fallback for lightweight Puppy setups that do not consult
+# the icon theme cache.
+install -Dm0644 \
+    "$ROX_ICON_ROOT/scalable/apps/rox-filer2.svg" \
+    "$PACKAGE_DIR/usr/share/pixmaps/rox-filer2.svg"
+
 # Install the native ROX File Search companion application.
 install -Dm0755 "$PROJECT_ROOT/rox-find/rox-find" \
     "$PACKAGE_DIR/usr/bin/rox-find"

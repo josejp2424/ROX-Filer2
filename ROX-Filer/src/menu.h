@@ -39,6 +39,10 @@ gboolean menu_diagnose_run_in_terminal(const gchar *path);
 gboolean menu_diagnose_rename_dialog(const gchar *path);
 /* Shared helpers used by the native ROX Desktop. */
 void menu_set_clipboard_paths(GList *paths, gboolean cut);
+/* Clipboard helpers shared with the native desktop and file views. */
+gboolean menu_clipboard_has_files(void);
+gboolean menu_path_is_cut(const gchar *path);
+gboolean menu_paste_into_path(const gchar *dest_path);
 gboolean menu_rename_path(const gchar *path, GtkWindow *parent);
 /* For "New" toolbar button */
 void show_new_directory(FilerWindow *filer_window);

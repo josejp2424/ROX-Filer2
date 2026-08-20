@@ -1,3 +1,78 @@
+Rox-Filer2 2.12.2-27 (2026-08-20)
+======================================
+
+- Completed the translation pass for the newest Desktop Preferences controls.
+  The Browse button/file chooser label is now present in the translation
+  template and translated in all 13 actively maintained locales.
+- Localized the command-line help section headings: Launchers, Desktop
+  commands and Diagnostics (disabled by default).
+- Added the two previously missed backend help descriptions (force the X11
+  desktop backend / force Wayland Layer Shell) to all maintained catalogues.
+- Added the remaining new Desktop GUI strings to the maintained translation
+  catalogues, including Desktop icons/settings markup and the startup error.
+- Regenerated the 13 maintained ROX-Filer.mo catalogues and synchronized
+  translation/version metadata to 2.12.2-27.
+
+Rox-Filer2 2.12.2-26 (2026-08-20)
+======================================
+
+- Added Paste to the native desktop background context menu. Files or folders
+  copied/cut in a ROX-Filer window can now be pasted directly into ~/Desktop.
+- Added visual Cut feedback: icons selected with Cut are drawn at 45% opacity
+  until they are pasted, copied over, or the clipboard ownership changes. The
+  effect works in icon views, details view and for normal desktop file icons.
+- Centralized ROX clipboard state so filer windows and the desktop stay in sync
+  when Cut/Copy/Paste changes the pending operation.
+- Added the new Rox-Filer2 application icon set to the source and package in
+  hicolor sizes 16, 22, 24, 32, 48, 64, 96, 128, 192 and 256 plus scalable SVG.
+- The main .desktop launcher now uses Icon=rox-filer2, allowing GTK/icon themes
+  to choose the correct resolution automatically.
+- Updated the ROX application .DirIcon/About fallback to the new 256x256 icon,
+  while installed dialogs prefer the hicolor rox-filer2 icon by name.
+- No new translatable labels were required: Paste already exists in the ROX
+  translation catalogue. Translation metadata was synchronized to 2.12.2-26.
+
+Rox-Filer2 2.12.2-25 (2026-08-20)
+======================================
+
+- Expanded ROX Desktop Preferences with a dedicated Desktop icons page so the
+  four built-in objects (Home, Browser, Console and Trash) can be edited from
+  the same desktop settings window.
+- Each built-in desktop object now has visibility, icon preview, Choose Icon,
+  Reset, command entry and Browse controls. Command Browse starts in /usr/bin;
+  icon Browse starts in /usr/share/pixmaps.
+- Added optional per-icon command overrides stored in desktop.conf as
+  HomeCommand, BrowserCommand, ConsoleCommand and TrashCommand. Leaving a
+  command empty preserves the original safe action/fallback.
+- Improved Copy/Move/Delete progress windows with a lightweight native GTK3
+  animation: a generic document moves from a source folder toward the
+  destination folder, or toward the delete icon for permanent deletion.
+- The operation dialog now displays the current file, source, destination,
+  real percentage and an estimated remaining time when progress is available.
+- rsync operations now report progress/current filenames to the GTK dialog
+  using rsync progress2/output-format instead of hiding all transfer progress.
+- No GIFs or bundled animation artwork were added; all operation icons come
+  from the active GTK icon theme.
+- Added translations for the new Desktop icons/progress labels in all 13
+  actively maintained locales.
+
+Rox-Filer2 2.12.2-24 (2026-08-20)
+======================================
+
+- Added a fixed Settings/Options button at the far right of the filer toolbar,
+  after Trash, for quick access to the normal ROX-Filer settings.
+- Added `ROX-Filer --config-rox` so the same normal Options window can be
+  launched directly from a terminal, script or .desktop launcher.
+- Added `ROX-Filer --desktop-preferences`, requested by peebee, to open the
+  native Desktop Preferences dialog directly from scripts or launchers.
+- Simplified Copy/Move/Delete-style operation dialogs to a single animation:
+  the GTK3 progress bar. The previous GtkSpinner was removed.
+- Added a static themed `text-x-generic` document icon directly above the
+  progress bar. The icon is not animated and no GIF/custom animation is used.
+- Reused existing translated ROX labels (`Options`, `Options...`,
+  `ROX Desktop Preferences`), so no new user-visible translation strings were
+  required for the 13 actively maintained locales.
+
 Rox-Filer2 2.12.2-23 (2026-08-19)
 ======================================
 

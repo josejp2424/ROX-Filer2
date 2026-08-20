@@ -50,6 +50,7 @@
 #include "toolbar.h"	/* for resizing */
 #include "filer.h"
 #include "display.h"
+#include "menu.h"
 
 #define MIN_ITEM_WIDTH 64
 
@@ -405,6 +406,7 @@ static void draw_item(GtkWidget *widget,
 	GdkRGBA normal_colour = {0, 0, 0, 1};
 	GdkRGBA selection_colour = {0.2, 0.4, 0.8, 1};
 	GdkRGBA *type_colour;
+	gboolean cut_visual;
 
 	g_return_if_fail(view != NULL);
 	g_return_if_fail(filer_window != NULL);
@@ -432,6 +434,14 @@ static void draw_item(GtkWidget *widget,
 
 	fill_template(area, colitem, view_collection, &template);
 
+	/* Rox-Filer2 2.12.2-26: keep Cut items visibly pending until they
+	 * are pasted or the clipboard changes.  Fade only the file icon, not
+	 * its label, so names remain easy to read. */
+	cut_visual = menu_path_is_cut((const gchar *)make_path(
+		filer_window->sym_path, item->leafname));
+	if (cut_visual)
+		cairo_push_group(cr);
+
 	if (template.icon.width <= SMALL_WIDTH &&
 	    template.icon.height <= SMALL_HEIGHT)
 		draw_small_icon(cr, &template.icon, item, view->image,
@@ -443,6 +453,12 @@ static void draw_item(GtkWidget *widget,
 	else
 		draw_huge_icon(cr, &template.icon, item, view->image,
 				selected, &selection_colour);
+
+	if (cut_visual)
+	{
+		cairo_pop_group_to_source(cr);
+		cairo_paint_with_alpha(cr, 0.45);
+	}
 
 	draw_string(widget, cr, view->layout, &template.leafname,
 			view->name_width, selection_state, type_colour, TRUE);

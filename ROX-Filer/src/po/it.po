@@ -8,10 +8,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-27\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-13 08:22-0300\n"
+"PO-Revision-Date: 2026-08-20 13:47-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: Italian\n"
 "Language: it\n"
@@ -2226,7 +2226,7 @@ msgstr "Seleziona se..."
 
 #: menu.c:270
 msgid "Paste"
-msgstr "Paste"
+msgstr "Incolla"
 
 #: menu.c:272 toolbar.c:170
 msgid "New"
@@ -6677,3 +6677,63 @@ msgstr "Browser"
 
 msgid "Console"
 msgstr "Console"
+
+#: Rox-Filer2 2.12.2-25
+msgid "Desktop icons"
+msgstr "Icone del desktop"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "From: %s"
+msgstr "Da: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "To: %s"
+msgstr "A: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Current file: %s"
+msgstr "File corrente: %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Remaining: %s"
+msgstr "Tempo rimanente: %s"
+
+#: desktop.c:3819 desktop.c:3875
+msgid "Browse"
+msgstr "Sfoglia"
+
+#: main.c:1057
+msgid "Launchers:"
+msgstr "Avviatori:"
+
+#: main.c:1061
+msgid "Desktop commands:"
+msgstr "Comandi del desktop:"
+
+#: main.c:1079
+msgid "Diagnostics (disabled by default):"
+msgstr "Diagnostica (disabilitata per impostazione predefinita):"
+
+#: main.c:1071
+msgid "force the X11 desktop backend"
+msgstr "forza il backend X11 del desktop"
+
+#: main.c:1073
+msgid "force Wayland Layer Shell"
+msgstr "forza Wayland Layer Shell"
+
+#: desktop.c
+msgid "Unable to start ROX Desktop"
+msgstr "Impossibile avviare ROX Desktop"
+
+#: desktop.c
+msgid "<b>Desktop icons</b>"
+msgstr "<b>Icone del desktop</b>"
+
+#: desktop.c
+msgid "<b>Desktop settings</b>"
+msgstr "<b>Impostazioni del desktop</b>"

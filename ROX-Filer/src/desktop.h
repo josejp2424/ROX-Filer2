@@ -14,11 +14,14 @@ void desktop_start(void);
 gboolean desktop_is_running(void);
 GdkWindow *desktop_get_gdk_window(void);
 void desktop_refresh_now(void);
+/* Refresh only the visual cut/copy state of desktop file icons. */
+void desktop_refresh_cut_state(void);
 gboolean desktop_send_refresh_request(void);
 
 /* Herramientas independientes que pueden abrirse desde la línea de comandos. */
 void desktop_open_wallpaper_manager(void);
 void desktop_open_apps_manager(void);
+void desktop_open_preferences(void);
 
 /* Recalcula el área útil después de cambios externos de JWM/wbar. */
 void desktop_refresh_after_environment_change(void);

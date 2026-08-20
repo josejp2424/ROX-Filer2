@@ -8,10 +8,10 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-23\n"
+"Project-Id-Version: Rox-Filer2 2.12.2-27\n"
 "Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
 "POT-Creation-Date: 2026-08-04 19:00-0300\n"
-"PO-Revision-Date: 2026-08-13 08:22-0300\n"
+"PO-Revision-Date: 2026-08-20 13:47-0300\n"
 "Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -6687,3 +6687,63 @@ msgstr "Navigateur"
 
 msgid "Console"
 msgstr "Console"
+
+#: Rox-Filer2 2.12.2-25
+msgid "Desktop icons"
+msgstr "Icônes du bureau"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "From: %s"
+msgstr "Depuis : %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "To: %s"
+msgstr "Vers : %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Current file: %s"
+msgstr "Fichier actuel : %s"
+
+#: Rox-Filer2 2.12.2-25
+#, c-format
+msgid "Remaining: %s"
+msgstr "Temps restant : %s"
+
+#: desktop.c:3819 desktop.c:3875
+msgid "Browse"
+msgstr "Parcourir"
+
+#: main.c:1057
+msgid "Launchers:"
+msgstr "Lanceurs :"
+
+#: main.c:1061
+msgid "Desktop commands:"
+msgstr "Commandes du bureau :"
+
+#: main.c:1079
+msgid "Diagnostics (disabled by default):"
+msgstr "Diagnostic (désactivé par défaut) :"
+
+#: main.c:1071
+msgid "force the X11 desktop backend"
+msgstr "forcer le backend X11 du bureau"
+
+#: main.c:1073
+msgid "force Wayland Layer Shell"
+msgstr "forcer Wayland Layer Shell"
+
+#: desktop.c
+msgid "Unable to start ROX Desktop"
+msgstr "Impossible de démarrer ROX Desktop"
+
+#: desktop.c
+msgid "<b>Desktop icons</b>"
+msgstr "<b>Icônes du bureau</b>"
+
+#: desktop.c
+msgid "<b>Desktop settings</b>"
+msgstr "<b>Paramètres du bureau</b>"

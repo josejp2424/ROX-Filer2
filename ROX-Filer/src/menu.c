@@ -163,6 +163,22 @@ static GtkClipboard *clipboard;
 static const char *clipboard_action = NULL;
 static GList *selected_paths = NULL;
 
+/* Rox-Filer2 2.12.2-26: a Cut operation is represented visually in every
+ * open filer view and on the native desktop.  Keep the rendering state in
+ * one place: the clipboard owner maintained by menu.c. */
+static void menu_clipboard_visuals_changed(void)
+{
+	GList *node;
+
+	for (node = all_filer_windows; node; node = node->next)
+	{
+		FilerWindow *filer_window = node->data;
+		if (filer_window && filer_window->view)
+			gtk_widget_queue_draw(GTK_WIDGET(filer_window->view));
+	}
+	desktop_refresh_cut_state();
+}
+
 /* Static prototypes */
 
 static void save_menus(void);
@@ -3608,16 +3624,21 @@ static void show_rox_about_dialog(void)
 	gtk_about_dialog_set_website_label(GTK_ABOUT_DIALOG(dialog),
 		_("Rox-Filer2 project"));
 
-	/* Usar primero el icono incluido con ROX-Filer. De este modo el About no
-	 * depende de un nombre genérico del tema y siempre muestra el icono real. */
-	logo_path = g_build_filename(app_dir, "ROX-Filer.png", NULL);
-	logo = gdk_pixbuf_new_from_file_at_scale(logo_path, 96, 96, TRUE, NULL);
-	g_free(logo_path);
-	if (logo) {
-		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), logo);
-		g_object_unref(logo);
+	/* Rox-Filer2 2.12.2-26: use the installed application icon by name so
+	 * GTK selects the best hicolor size.  Keep the bundled legacy image as
+	 * a fallback when the source tree is run before installation. */
+	gtk_window_set_icon_name(GTK_WINDOW(dialog), "rox-filer2");
+	if (gtk_icon_theme_has_icon(gtk_icon_theme_get_default(), "rox-filer2")) {
+		gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog),
+			"rox-filer2");
 	} else {
-		gtk_window_set_icon_name(GTK_WINDOW(dialog), "system-file-manager");
+		logo_path = g_build_filename(app_dir, "ROX-Filer.png", NULL);
+		logo = gdk_pixbuf_new_from_file_at_scale(logo_path, 96, 96, TRUE, NULL);
+		g_free(logo_path);
+		if (logo) {
+			gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), logo);
+			g_object_unref(logo);
+		}
 	}
 
 	if (parent) {
@@ -3754,10 +3775,62 @@ static void clipboard_get(GtkClipboard *clipboard, GtkSelectionData *selection_d
 
 static void clipboard_clear(GtkClipboard *clipboard, gpointer user_data)
 {
-	if (!selected_paths)
-		return;
+	(void)clipboard;
+	(void)user_data;
 
-	destroy_glist(&selected_paths);
+	if (selected_paths)
+		destroy_glist(&selected_paths);
+	clipboard_action = NULL;
+	menu_clipboard_visuals_changed();
+}
+
+gboolean menu_path_is_cut(const gchar *path)
+{
+	GList *node;
+	gchar *candidate;
+
+	if (!path || !*path || !clipboard_action ||
+	    g_strcmp0(clipboard_action, "cut\n") != 0 || !selected_paths)
+		return FALSE;
+
+	for (node = selected_paths; node; node = node->next)
+	{
+		const gchar *stored = node->data;
+		if (g_strcmp0(path, stored) == 0)
+			return TRUE;
+	}
+
+	/* Normalise harmless /./ and /../ differences without resolving
+	 * symlinks.  This keeps a cut item faded if the same directory is shown
+	 * through an equivalent spelling. */
+	candidate = g_canonicalize_filename(path, NULL);
+	for (node = selected_paths; node; node = node->next)
+	{
+		gchar *stored = g_canonicalize_filename((const gchar *)node->data, NULL);
+		gboolean same = g_strcmp0(candidate, stored) == 0;
+		g_free(stored);
+		if (same)
+		{
+			g_free(candidate);
+			return TRUE;
+		}
+	}
+	g_free(candidate);
+	return FALSE;
+}
+
+gboolean menu_clipboard_has_files(void)
+{
+	GdkAtom copied_files;
+	GdkAtom uri_list;
+
+	if (!clipboard)
+		clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+	copied_files = gdk_atom_intern_static_string("x-special/gnome-copied-files");
+	uri_list = gdk_atom_intern_static_string("text/uri-list");
+
+	return gtk_clipboard_wait_is_target_available(clipboard, copied_files) ||
+	       gtk_clipboard_wait_is_target_available(clipboard, uri_list);
 }
 
 void menu_set_clipboard_paths(GList *paths, gboolean cut)
@@ -3780,15 +3853,26 @@ void menu_set_clipboard_paths(GList *paths, gboolean cut)
 	if (selected_paths)
 		gtk_clipboard_set_with_data(clipboard, clipboard_targets, 2,
 			clipboard_get, clipboard_clear, NULL);
+	else
+		clipboard_action = NULL;
+
+	menu_clipboard_visuals_changed();
 }
 
-static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
+gboolean menu_paste_into_path(const gchar *dest_path)
 {
 	const gchar *error = NULL;
-	const gchar *dest_path = (gchar *)window_with_focus->sym_path;
-	const gchar *dest_real_path = (gchar *)window_with_focus->real_path;
+	gchar *dest_real_path;
+	gboolean pasted = FALSE;
 	gboolean are_copying = TRUE;
 	gboolean ignore_no_local_paths = FALSE;
+
+	if (!dest_path || !*dest_path)
+		return FALSE;
+	dest_real_path = pathdup(dest_path);
+
+	if (!clipboard)
+		clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	GtkSelectionData *selection =
 				gtk_clipboard_wait_for_contents(clipboard, gnome_copied_files);
@@ -3797,7 +3881,8 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
 	if (selection == NULL)
 	{
 		delayed_error(_("The clipboard is empty."));
-		return;
+		g_free(dest_real_path);
+		return FALSE;
 	}
 
 	char **uri_list = gtk_selection_data_get_uris(selection);
@@ -3812,7 +3897,8 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
 		{
 			gtk_selection_data_free(selection);
 			delayed_error(_("The clipboard does not contain a file list."));
-			return;
+			g_free(dest_real_path);
+			return FALSE;
 		}
 
 		char *tmp = g_strndup((const gchar *) selection_bytes,
@@ -3864,6 +3950,7 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
 					i++;
 				}
 				action_copy(one_path, dest_path, new_name, -1);
+				pasted = TRUE;
 
 				g_free(new_name);
 				g_free(source_basename);
@@ -3893,10 +3980,14 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
 		if (are_copying == FALSE)
 		{
 			action_move(local_paths, dest_path, NULL, -1);
+			pasted = TRUE;
 			gtk_clipboard_clear(clipboard);
 		}
 		else
+		{
 			action_copy(local_paths, dest_path, NULL, -1);
+			pasted = TRUE;
+		}
 
 		destroy_glist(&local_paths);
 	}
@@ -3906,6 +3997,19 @@ static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
 
 	g_strfreev(uri_list);
 	gtk_selection_data_free(selection);
+	g_free(dest_real_path);
+	return pasted;
+}
+
+static void paste_from_clipboard(gpointer data, guint action, GtkWidget *unused)
+{
+	(void)data;
+	(void)action;
+	(void)unused;
+
+	if (!window_with_focus)
+		return;
+	menu_paste_into_path((const gchar *)window_with_focus->sym_path);
 }
 
 
@@ -4145,18 +4249,12 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 
 		case FILE_COPY_TO_CLIPBOARD:
 		case FILE_CUT_TO_CLIPBOARD:
-			gtk_clipboard_clear(clipboard);
-
-			if (action == FILE_COPY_TO_CLIPBOARD)
-				clipboard_action = "copy\n";
-			else
-				clipboard_action = "cut\n";
-
-			selected_paths = filer_selected_items(window_with_focus);
-
-			gtk_clipboard_set_with_data(clipboard, clipboard_targets, 2,
-				clipboard_get, clipboard_clear, NULL);
+		{
+			GList *paths = filer_selected_items(window_with_focus);
+			menu_set_clipboard_paths(paths, action == FILE_CUT_TO_CLIPBOARD);
+			destroy_glist(&paths);
 			return;
+		}
 		default:
 			break;
 	}
