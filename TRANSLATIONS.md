@@ -1,4 +1,4 @@
-# Rox-Filer2 2.12.2-27 translation coverage
+# Rox-Filer2 2.12.2-28 translation coverage
 
 Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
 these 13 locales for the current GTK3/Desktop additions:
@@ -26,9 +26,17 @@ existing historical catalogues remain available as before.
 extracts the user-visible strings from `Options.xml`, so future `update-po`
 runs no longer miss labels and help text that live only in the Options file.
 
+For 2.12.2-28 there are no new user-visible strings; the maintained translations from 2.12.2-27 remain valid.
+
 The other historical ROX-Filer catalogues remain included unchanged. If a
 newer Rox-Filer2-specific string is not translated in one of those legacy
 catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-28
+
+2.12.2-28 is a GTK3/X11 compatibility fix only. It adds no new user-visible
+strings, so the 13 actively maintained locales remain complete.
 
 
 ## 2.12.2-27

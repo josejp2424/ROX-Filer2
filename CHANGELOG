@@ -1,3 +1,13 @@
+Rox-Filer2 2.12.2-28 (2026-08-21)
+======================================
+
+- Fixed an X11/GTK3 startup/runtime critical reported on Arch Linux.
+- Removed eight obsolete `show_selection_state` property assignments from
+  `view_details.c`. The GTK3 details view now uses the standard
+  `GtkCellRendererText` selection handling without trying to set a property
+  that belonged to the historical custom renderer.
+- No user-visible strings changed; maintained translations remain complete.
+
 Rox-Filer2 2.12.2-27 (2026-08-20)
 ======================================
 

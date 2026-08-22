@@ -1192,7 +1192,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->name_column = column;
 
 	ADD_TEXT_COLUMN(_("_Type"), COL_TYPE);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, COL_TYPE);
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_column_set_reorderable(column, TRUE);
@@ -1201,7 +1200,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->type_column = column;
 
 	ADD_TEXT_COLUMN(_("_Size"), COL_SIZE);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	g_object_set(G_OBJECT(cell), "xalign", 1.0, "font", "monospace", NULL);
 	g_signal_connect_after(object, "realize",
 			       G_CALLBACK(set_column_mono_font),
@@ -1213,7 +1211,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->size_column = column;
 
 	ADD_TEXT_COLUMN(_("_Permissions"), COL_PERM);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	gtk_tree_view_column_set_reorderable(column, TRUE);
 	g_object_set(G_OBJECT(cell), "font", "monospace", NULL);
 	g_signal_connect_after(object, "realize",
@@ -1224,7 +1221,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->permissions_column = column;
 
 	ADD_TEXT_COLUMN(_("_Owner"), COL_OWNER);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, COL_OWNER);
 	gtk_tree_view_column_set_reorderable(column, TRUE);
 	if (o_display_show_owner.int_value == FALSE)
@@ -1232,7 +1228,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->owner_column = column;
 
 	ADD_TEXT_COLUMN(_("_Group"), COL_GROUP);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, COL_GROUP);
 	gtk_tree_view_column_set_reorderable(column, TRUE);
 	if (o_display_show_group.int_value == FALSE)
@@ -1240,7 +1235,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->group_column = column;
 
 	ADD_TEXT_COLUMN(_("Last _Modified"), COL_MTIME);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	g_object_set(G_OBJECT(cell), "font", "monospace", NULL);
 	g_signal_connect_after(object, "realize",
 			       G_CALLBACK(set_column_mono_font),
@@ -1252,7 +1246,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->mtime_column = column;
 
 	ADD_TEXT_COLUMN(_("Last _Changed"), COL_CTIME);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	g_object_set(G_OBJECT(cell), "font", "monospace", NULL);
 	g_signal_connect_after(object, "realize",
 			       G_CALLBACK(set_column_mono_font),
@@ -1264,7 +1257,6 @@ static void view_details_init(GTypeInstance *object, gpointer gclass)
 	view_details->ctime_column = column;
 
 	ADD_TEXT_COLUMN(_("Last _Accessed"), COL_ATIME);
-	g_object_set(G_OBJECT(cell), "show_selection_state", FALSE, NULL);
 	g_object_set(G_OBJECT(cell), "font", "monospace", NULL);
 	g_signal_connect_after(object, "realize",
 			       G_CALLBACK(set_column_mono_font),
