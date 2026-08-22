@@ -113,7 +113,13 @@ PORTABLE_TAR="$OUTPUT_DIR/${PACKAGE_NAME}-${DISPLAY_VERSION}-portable-${ARCH}.ta
 
 rm -rf "$PACKAGE_DIR" "$PORTABLE_DIR" "$DEB_FILE" "$PORTABLE_TAR"
 mkdir -p "$OUTPUT_DIR" "$PACKAGE_DIR"
+# Do not allow setuid/setgid bits inherited from the source/build directory
+# to leak into the Debian package tree. dpkg-deb requires DEBIAN itself to
+# have ordinary directory permissions (0755..0775, without special bits).
+chmod u-s,g-s "$OUTPUT_DIR" "$PACKAGE_DIR"
+chmod 0755 "$OUTPUT_DIR" "$PACKAGE_DIR"
 cp -a "$PACKAGE_BASE/." "$PACKAGE_DIR/"
+find "$PACKAGE_DIR" -type d -exec chmod u-s,g-s {} +
 
 # Build the installed ROX application from the freshly compiled source tree.
 # The user's supplied ROX directory is preserved exactly.
@@ -170,6 +176,8 @@ fi
 
 # Restore package-base integration files and normalize permissions.
 mkdir -p "$PACKAGE_DIR/DEBIAN"
+chmod u-s,g-s "$PACKAGE_DIR/DEBIAN"
+chmod 0755 "$PACKAGE_DIR/DEBIAN"
 cp -a "$PROJECT_ROOT/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postinst"
 cp -a "$PROJECT_ROOT/DEBIAN/postrm" "$PACKAGE_DIR/DEBIAN/postrm"
 chmod 0755 "$PACKAGE_DIR/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postrm"
