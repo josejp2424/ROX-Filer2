@@ -1,0 +1,5398 @@
+# Translation of Rox-Filer2 to Romanian
+# Romanian messages for Rox-Filer2
+# Copyright 2004 Florin Cosma <cosma_florin@yahoo.com>
+# Florin Cosma <cosma_florin@yahoo.com>, 2004.
+msgid ""
+msgstr ""
+"Project-Id-Version: Rox-Filer2 2.12-r82\n"
+"Report-Msgid-Bugs-To: puppylinuxjosejp2424@gmail.com\n"
+"POT-Creation-Date: 2026-07-29 17:41-0300\n"
+"PO-Revision-Date: 2026-07-29 17:41-0300\n"
+"Last-Translator: josejp2424 <puppylinuxjosejp2424@gmail.com>\n"
+"Language-Team: Romanian\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "<dir>"
+msgstr "<dir>"
+
+#: abox.c:218
+msgid "_Quiet"
+msgstr "_Fara mesaje"
+
+#: abox.c:227
+msgid "Quiet"
+msgstr "Fara mesaje"
+
+#: abox.c:227
+msgid "Don't confirm every operation"
+msgstr "Nu confirma toate opera�iile"
+
+#: abox.c:454 infobox.c:796 tips:38 tips:80
+msgid "Name"
+msgstr "Nume"
+
+#: abox.c:460 menu.c:273
+msgid "Directory"
+msgstr "Director"
+
+#: abox.c:550
+msgid "Expression:"
+msgstr "Expresie:"
+
+#: action.c:57
+msgid "See the attr(5) man page for full details."
+msgstr ""
+
+#: action.c:59
+msgid "See the fsattr(5) man page for full details."
+msgstr ""
+
+#: action.c:61
+msgid "You do not appear to have OS support."
+msgstr ""
+
+#: action.c:193
+msgid "Find expression reference"
+msgstr "Cauta expresia referin�a"
+
+#: action.c:204
+#, fuzzy
+msgid ""
+"<u>Quick Start</u>\n"
+"Just put the name of the file you're looking for in single quotes:\n"
+"<b>'index.html'</b> (to find a file called 'index.html')\n"
+"\n"
+"<u>Examples</u>\n"
+"<b>'*.htm', '*.html'</b> (finds HTML files)\n"
+"<b>IsDir 'lib'</b> (finds directories called 'lib')\n"
+"<b>IsReg 'core'</b> (finds a regular file called 'core')\n"
+"<b>! (IsDir, IsReg)</b> (is neither a directory nor a regular file)\n"
+"<b>mtime after 1 day ago and size > 1Mb</b> (big, and recently modified)\n"
+"<b>'CVS' prune, isreg</b> (a regular file not in CVS)\n"
+"<b>IsReg system(grep -q fred \"%\")</b> (contains the word 'fred')\n"
+"\n"
+"<u>Simple Tests</u>\n"
+"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</"
+"b> (types)\n"
+"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> "
+"(permissions)\n"
+"<b>IsEmpty, IsMine</b>\n"
+"<b>HasXattr</b> (extended attributes)\n"
+"A pattern in single quotes is a shell-style wildcard pattern to match. If "
+"it\n"
+"contains a slash then the match is against the full path; otherwise it is\n"
+"against the leafname only.\n"
+"\n"
+"<u>Comparisons</u>\n"
+"<b>&lt;, &lt;=, =, !=, &gt;, &gt;=, After, Before</b> (compare two values)\n"
+"<b>5 bytes, 1Kb, 2Mb, 3Gb</b> (file sizes)\n"
+"<b>2 secs|mins|hours|days|weeks|years  ago|hence</b> (times)\n"
+"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> "
+"(values)\n"
+"\n"
+"<u>Specials</u>\n"
+"<b>system(command)</b> (true if 'command' returns with a zero exit status;\n"
+"a % in 'command' is replaced with the path of the current file)\n"
+"<b>prune</b> (false, and prevents searching the contents of a directory)\n"
+"<b>label '<i>color</i>'</b> (true if user.label matches <i>color</i> as a "
+"color)\n"
+"<b>xattr '<i>attr</i>'</b> (true if file has non-empty extended attribute "
+"<i>attr</i>)."
+msgstr ""
+"<u>Start rapid</u>\n"
+"Pune numele fi�ierului care-l cau�i �ntre apostrofuri (ghilimele simple)�:\n"
+"<b>'index.html'</b> (pentru a cauta un fi�ier numit 'index.html')\n"
+"\n"
+"<u>Exemple</u>\n"
+"<b>'*.htm', '*.html'</b> (cauta fi�iere HTML)\n"
+"<b>IsDir 'lib'</b> (cauta un director numit 'lib')\n"
+"<b>IsReg 'core'</b> (cauta un fisier normal numit 'core')\n"
+"<b>! (IsDir, IsReg)</b> (nu este un director, nu este un fi�ier normal)\n"
+"<b>data ultimei modificari cu o zi in urma �i dimensiunea > 1Mb</b> (mare �i "
+"recent modificat)\n"
+"<b>'CVS' prune, isReg</b> (un fi�ier normal care nu este in CVS)\n"
+"<b>IsReg system(grep -q fred \\\"%\\\")</b> (fi�ier normal care con�ine "
+"cuv�ntul 'fred')\n"
+"\n"
+"<u>Teste simple</u>\n"
+"<b>IsReg, IsLink, IsDir, IsChar, IsBlock, IsDev, IsPipe, IsSocket, IsDoor</"
+"b> (tipuri)\n"
+"<b>IsSUID, IsSGID, IsSticky, IsReadable, IsWriteable, IsExecutable</b> "
+"(drepturi)\n"
+"<b>IsEmpty, IsMine</b>\n"
+"Un cuv�nt �ntre ghilimele simple este un cuv�nt �n stilul shell-lui, cu "
+"metacaractere. Daca\n"
+"con�ine un slash (bara de frac�ie), atunci cautarea se face cu calea\n"
+"data�; altfel cautarea se face numai dupa numele fi�ierului dat.\n"
+"\n"
+"<u>Compara�ii</u>\n"
+"<b>&lt;, &lt;=, =, !=, &gt;, &gt;=, After, Before</b> (compara doua valori)\n"
+"<b>5 bytes, 1Kb, 2Mb, 3Gb</b> (dimensiunea fi�ierelor)\n"
+"<b>2 secs|mins|hours|days|weeks|years  ago|hence</b> (date)\n"
+"<b>atime, ctime, mtime, now, size, inode, nlinks, uid, gid, blocks</b> "
+"(valori)\n"
+"\n"
+"<u>Func�ii speciale</u>\n"
+"<b>system(comanda)</b> (adevarat daca 'comanda' �ntoarce un rezultat zero;\n"
+"o intrare % in 'comanda' este inlocuita cu numele caii fi�ierului curent)\n"
+"<b>prune</b> (fals, previne cautarea in directorul specificat).\n"
+
+#: action.c:261
+#, fuzzy
+msgid "Change permissions reference"
+msgstr "Cauta expresia referin�a"
+
+#: action.c:272
+msgid ""
+"Normally, you can just select a command from the menu (click \n"
+"on the arrow beside the command box). Sometimes, you need more...\n"
+"\n"
+"The format of a command is: <b>CHANGE, CHANGE, ...</b>\n"
+"Each <b>CHANGE</b> is: <b>WHO HOW PERMISSIONS</b>\n"
+"<b>WHO</b> is some combination of <b>u</b>, <b>g</b> and <b>o</b> which "
+"determines whether to\n"
+"change the permissions for the User (owner), Group or Others.\n"
+"<b>HOW</b> is <b>+</b>, <b>-</b> or <b>=</b> to add, remove or set exactly "
+"the permissions.\n"
+"<b>PERMISSIONS</b> is some combination of the letters <b>rwxXstugo</b>\n"
+"\n"
+"Bracketed text and spaces are ignored.\n"
+"\n"
+"<u>Examples</u>\n"
+"<b>u+rw</b>: the file owner gains read and write permission\n"
+"<b>g=u</b>: the group permissions are set to be the same as the user's\n"
+"<b>o=u-w</b>: others get the same permissions as the owner, but without "
+"write permission\n"
+"<b>a+x</b>: <b>a</b>ll get execute/access permission - same as <b>ugo+x</b>\n"
+"<b>a+X</b>: directories become accessable by everyone; files which were\n"
+"executable by anyone become executable by everyone\n"
+"<b>u+rw, go+r</b>: two commands at once!\n"
+"<b>u+s</b>: set the SetUID bit - often has no effect on script files\n"
+"<b>755</b>: set the permissions directly\n"
+"\n"
+"See the chmod(1) man page for full details."
+msgstr ""
+"In mod normal, po�i selecta o comanda din meniu (apasa\n"
+"pe sageata de l�nga casu�a comenzii). Alta data, ai nevoie de mai mult...\n"
+"\n"
+"Formatul unei comenzi este : <b>SCHIMBA, SCHIMBA, ...</b>\n"
+"Fiecare <b>SCHIMBA</b> are forma�: <b>CINE CUM DREPTURI</b>\n"
+"<b>CINE</b> este o combina�ie de <b>u</b>, <b>g</b> �i <b>o</b> care "
+"determina daca se schimba drepturile pentru\n"
+"utilizator (propritar), pentru grup ori pentru al�ii.\n"
+"<b>CUM</b> este <b>+</b>, <b>-</b> sau <b>=</b> pentru a adauga, a anula sau "
+"pentru a fixa exact drepturile.\n"
+"<b>DREPTURI</b> este o combina�ie de litere <b>rwxXstugo</b>\n"
+"\n"
+"Textul intre paranteze �i spa�ille sunt ignorate.\n"
+"\n"
+"<u>Exemple</u>\n"
+"<b>u+rw</b>�: proprietarul fi�ierului ob�ine drepturi citire �i de scriere\n"
+"<b>g=u</b>�: drepturile grupului sunt la fel cu cele ale proprietarului\n"
+"<b>o=u-w</b>�: al�ii ob�in drepturi la fel cu ale propritarului mai pu�in, "
+"dreptul de scriere\n"
+"<b>a+x</b>�: toata lumea ob�ine dreptul de execu�ie/acces - identic cu <b>ugo"
+"+x</b>\n"
+"<b>a+X</b>�: directoarele devin accesibile pentru to�i ; fi�ierele\n"
+"care au putut fi executate de oricibe, vor putea fi executate de oricine\n"
+"<b>u+rw, go+r</b>�: doua comenzi �n una !\n"
+"<b>u+s</b>�: se seteaza bitul SetUID - nu are efect asupra fi�ierelor "
+"script\n"
+"<b>755</b>�: se seteaza drepturile direct"
+
+#: action.c:313
+msgid "Set type reference"
+msgstr "Seteaza tipul referin�a"
+
+#: action.c:324
+#, fuzzy
+msgid ""
+"Normally Rox-Filer2 determines the type of a regular file\n"
+"by matching it's name against a pattern. To change the\n"
+"type of the file you must rename it.\n"
+"\n"
+"Newer file systems can support something called 'Extended\n"
+"Attributes' which can be used to store additional data with\n"
+"each file as named parameters. Rox-Filer2 uses the\n"
+"'user.mime_type' attribute to store file types.\n"
+"\n"
+"File types are only supported for regular files, not\n"
+"directories, devices, pipes or sockets, and then only\n"
+"on certain file systems and where the OS implements them.\n"
+msgstr ""
+"In mod normal managerul de fi�iere ROX determina tipul unui fisier normal "
+"prin\n"
+"compararea numelui sau cu un tipar. Pentru a schimba tipul unui fisier, "
+"trebuie\n"
+"schimbat numele lui.\n"
+"\n"
+"Sistemele de fi�iere noi suporta a�a numitele \"Atribute extinse\" \n"
+"care pot fi folosite pentru a pastra date suplimentare ca parametri. \n"
+"Managerul de fi�iere ROX folose�te parametrul user.mime_type\n"
+"pentru a pastra tipul de fisier.\n"
+"\n"
+"Tipul fi�ierelor este suportat doar pentru fi�iere obi�nuite, \n"
+"nu pentru directoare, dispozitive, pipe-uri sau sochet-uri, �i \n"
+"doar pentru sistemele de fi�iere unde sistemul de operare la implementat.\n"
+"\n"
+
+#: action.c:431
+msgid ""
+"\n"
+"Process terminated.\n"
+msgstr ""
+"\n"
+"Proces terminat.\n"
+
+#: action.c:447
+msgid "There was one error.\n"
+msgstr "S-a �nregistrat o eroare.\n"
+
+#: action.c:449
+#, c-format
+msgid "There were %d errors.\n"
+msgstr "S-au �nregistrat %d erori.\n"
+
+#: action.c:473
+msgid "ERROR reading"
+msgstr "Eroare citind"
+
+#: action.c:516
+msgid ""
+"'\n"
+"Done\n"
+msgstr ""
+"'\n"
+"Terminat\n"
+
+#: action.c:572 support.c:395
+msgid "ERROR"
+msgstr "Eroare"
+
+#: action.c:731 main.c:703 main.c:717
+msgid "Yes"
+msgstr "Da"
+
+#: action.c:734 main.c:705 main.c:717
+msgid "No"
+msgstr "Nu"
+
+#: action.c:752
+msgid ""
+"\n"
+"Asking child process to terminate...\n"
+msgstr ""
+"\n"
+"Solicita procesului copil sa �ncheie execu�ia...\n"
+
+#: action.c:759
+msgid ""
+"\n"
+"Trying to KILL run-away process...\n"
+msgstr ""
+"\n"
+"Incerc sa �nchei execu�ia procesului care ruleaza...\n"
+
+#: action.c:914
+#, c-format
+msgid "?Count contents of %s?"
+msgstr "?Numar con�inutul %s ?"
+
+#: action.c:951
+#, c-format
+msgid "?Delete %s'%s'?"
+msgstr "?Sterge %s'%s' ?"
+
+#: action.c:952
+msgid "WRITE-PROTECTED "
+msgstr "Protejat la scriere "
+
+#: action.c:959
+#, c-format
+msgid "'Deleting '%s'\n"
+msgstr "'Sterg�nd '%s'\n"
+
+#: action.c:972
+#, c-format
+msgid "'Directory '%s' deleted\n"
+msgstr "'Directorul '%s' a fost �ters\n"
+
+#: action.c:1006
+#, c-format
+msgid "?Eject '%s'?"
+msgstr "?Scoate '%s' ?"
+
+#: action.c:1013
+#, c-format
+msgid "'Eject '%s'\n"
+msgstr "'Scoate '%s'\n"
+
+#: action.c:1032
+#, c-format
+msgid ""
+"!%s\n"
+"eject failed\n"
+msgstr ""
+"!%s\n"
+"scoaterea a e�uat\n"
+
+#: action.c:1052 action.c:1071
+#, c-format
+msgid "?Check '%s'?"
+msgstr "?Verifica '%s' ?"
+
+#: action.c:1068
+msgid "!Invalid find condition - change it and try again\n"
+msgstr "!Condi�ie de cautare invalida - schimba �i incearca din nou\n"
+
+#: action.c:1078
+#, c-format
+msgid "'(while checking '%s')\n"
+msgstr "'(in timp ce se verifica '%s')\n"
+
+#: action.c:1153 action.c:1178
+#, c-format
+msgid "?Change permissions of '%s'?"
+msgstr "?Schimba drepturile pentru '%s' ?"
+
+#: action.c:1159
+#, c-format
+msgid "'Changing permissions of '%s'\n"
+msgstr "'Schimband drepturile pentru '%s'\n"
+
+#: action.c:1176
+#, fuzzy
+msgid "!Invalid mode command - change it and try again\n"
+msgstr "!Mod invalid - schimba �i incearca din nou\n"
+
+#: action.c:1234
+#, fuzzy, c-format
+msgid "?Change contents of '%s'?"
+msgstr "?Schimba tipul pentru '%s' ?"
+
+#: action.c:1237 action.c:1257
+#, c-format
+msgid "?Change type of '%s'?"
+msgstr "?Schimba tipul pentru '%s' ?"
+
+#: action.c:1254
+msgid "!Invalid type - change it and try again\n"
+msgstr "!Tip invalid - schimba �i incearca din nou\n"
+
+#: action.c:1276
+#, c-format
+msgid "'Changing type of '%s' to '%s'\n"
+msgstr "'Schimb�nd tipul '%s' �n '%s'\n"
+
+#: action.c:1299
+#, fuzzy, c-format
+msgid "'Not changing type of directory '%s'\n"
+msgstr "'Schimb�nd tipul '%s' �n '%s'\n"
+
+#: action.c:1305
+#, c-format
+msgid "'Non-regular file '%s' not changed\n"
+msgstr ""
+
+#: action.c:1388 action.c:1581
+#, c-format
+msgid "?'%s' already exists - %s?"
+msgstr "?'%s' exista deja - %s ?"
+
+#: action.c:1390 action.c:1583
+msgid "merge contents"
+msgstr "fuzioneaza con�inutul"
+
+#: action.c:1391 action.c:1584
+msgid "overwrite"
+msgstr "scrie peste"
+
+#: action.c:1407
+msgid "'Trying copy anyway...\n"
+msgstr "'Incearca sa copiezi oricum...\n"
+
+#: action.c:1416
+#, c-format
+msgid "?Copy %s as %s?"
+msgstr "?Copiaza %s ca %s ?"
+
+#: action.c:1420
+#, c-format
+msgid "'Copying %s as %s\n"
+msgstr "'Copiind %s ca %s\n"
+
+#: action.c:1435 action.c:1630
+msgid "!ERROR: Destination already exists, but is not a directory\n"
+msgstr "!Eroare : destina�ia exista deja, dar nu este un director\n"
+
+#: action.c:1514
+#, c-format
+msgid ""
+"!%s\n"
+"Failed to copy '%s'\n"
+msgstr ""
+"!%s\n"
+"Nu se poate copia '%s'\n"
+
+#: action.c:1600
+msgid "'Trying move anyway...\n"
+msgstr "'Incearca sa mu�i oricum...\n"
+
+#: action.c:1609
+#, c-format
+msgid "?Move %s as %s?"
+msgstr "?Muta %s ca %s ?"
+
+#: action.c:1613
+#, c-format
+msgid "'Moving %s as %s\n"
+msgstr "'Mut�nd %s ca %s\n"
+
+#: action.c:1663
+#, c-format
+msgid ""
+"!%s\n"
+"Failed to move %s as %s\n"
+msgstr ""
+"!%s\n"
+"Nu se poate muta %s ca %s\n"
+
+#: action.c:1685
+msgid "!ERROR: Can't copy object into itself\n"
+msgstr "!Eroare : nu se poate copia obiectul peste el insu�i\n"
+
+#: action.c:1700
+msgid "!ERROR: Can't move/rename object into itself\n"
+msgstr "!Eroare : nu se poate muta/redenumi obiectul peste el insu�i\n"
+
+#: action.c:1712
+#, c-format
+msgid "'Linking %s as %s\n"
+msgstr "'Leg�nd %s ca %s\n"
+
+#: action.c:1717
+#, c-format
+msgid "?Link %s as %s?"
+msgstr "?Leaga %s ca %s ?"
+
+#: action.c:1760
+#, c-format
+msgid "'Mounting %s\n"
+msgstr "'Mont�nd %s\n"
+
+#: action.c:1761
+#, c-format
+msgid "'Unmounting %s\n"
+msgstr "'Demont�nd %s\n"
+
+#: action.c:1764
+#, c-format
+msgid "?Mount %s?"
+msgstr "?Monteaza %s ?"
+
+#: action.c:1765
+#, c-format
+msgid "?Unmount %s?"
+msgstr "?Demonteaza %s ?"
+
+#: action.c:1786
+#, c-format
+msgid ""
+"!%s\n"
+"Mount failed\n"
+msgstr ""
+"!%s\n"
+"Montarea a e�uat\n"
+
+#: action.c:1787
+#, c-format
+msgid ""
+"!%s\n"
+"Unmount failed\n"
+msgstr ""
+"!%s\n"
+"Demontarea a e�uat\n"
+
+#: action.c:1795
+msgid "'(seems to be mounted now anyway)\n"
+msgstr "'(pare sa fie montat oricum)\n"
+
+#: action.c:1844
+#, c-format
+msgid ""
+"'\n"
+"Total: %s ("
+msgstr ""
+"'\n"
+"Total: %s ("
+
+#: action.c:1850
+msgid "file"
+msgstr "fi�ier"
+
+#: action.c:1850
+msgid "files"
+msgstr "fi�iere"
+
+#: action.c:1854
+msgid "no directories)\n"
+msgstr "nu exista directoarele)\n"
+
+#: action.c:1858
+msgid "directory"
+msgstr "director"
+
+#: action.c:1859
+msgid "directories"
+msgstr "directoare"
+
+#: action.c:1900
+msgid "!No mount points selected!\n"
+msgstr "!Nu a fost selectat un punct de montare !\n"
+
+#: action.c:1984
+msgid "?Another search?"
+msgstr "?Inca o cautare?"
+
+#: action.c:2016 action.c:2050
+#, c-format
+msgid "!'%s' is a symbolic link\n"
+msgstr "!'%s' este o legatura simbolica\n"
+
+#: action.c:2091
+msgid "You need to select some items to search through"
+msgstr ""
+"Este nevoie sa selectezi anumite elemente �ntre care sa se faca cautarea"
+
+#: action.c:2101 menu.c:261
+msgid "Find"
+msgstr "Cauta"
+
+#: action.c:2136
+msgid "You need to select some items to count"
+msgstr "Este nevoie sa selectezi anumite elemente care sa fie numarate"
+
+#: action.c:2140
+msgid "Disk Usage"
+msgstr "Umplerea discului"
+
+#: action.c:2178
+msgid "Mount / Unmount"
+msgstr "Monteaza / Demonteaza"
+
+#: action.c:2197
+msgid "Rox-Filer2 does not yet support mount points on your system. Sorry."
+msgstr ""
+"Managerul de fi�iere ROX nu suporta montarea �n sistemul tau de operare. "
+"Scuze."
+
+#: action.c:2211 menu.c:246 tips:194
+msgid "Delete"
+msgstr "Sterge"
+
+#: action.c:2225 tips:199
+msgid "Force"
+msgstr "For�eaza"
+
+#: action.c:2225
+msgid "Don't confirm deletion of non-writeable items"
+msgstr "Nu confirma �tergerea obictelor protejate la scriere"
+
+#: action.c:2228 action.c:2289 action.c:2354 action.c:2437 action.c:2487
+#: tips:201
+msgid "Brief"
+msgstr "Rezumat"
+
+#: action.c:2228
+msgid "Only log directories being deleted"
+msgstr "Numai directoarele log vor fi �terse"
+
+#: action.c:2247
+msgid "You need to select the items whose permissions you want to change"
+msgstr "Trbuie sa selectezi elementele la care vrei sa schimbi drepturile"
+
+#: action.c:2255
+msgid "a+x (Make executable/searchable)"
+msgstr "a+x (Fa-le executabile/cautabile)"
+
+#: action.c:2257
+msgid "a-x (Make non-executable/non-searchable)"
+msgstr "a-x (Fa-le non-executabile/non-cautabile)"
+
+#: action.c:2259
+msgid "u+rw (Give owner read+write)"
+msgstr "u+rw (Seteaza proprietarul cu drepturi de citire+scriere)"
+
+#: action.c:2261
+msgid "go-rwx (Private - owner access only)"
+msgstr "go-rwx (Acces privat - are acces numai proprietarul)"
+
+#: action.c:2263
+msgid "go=u-w (Public access, not write)"
+msgstr "go=u-w (Acces public, fara scriere)"
+
+#: action.c:2274 menu.c:215 menu.c:259 tips:56 tips:86
+msgid "Permissions"
+msgstr "Drepturi"
+
+#: action.c:2289 action.c:2354
+msgid "Don't list processed files"
+msgstr "Nu lista fi�ierele procesate"
+
+#: action.c:2292 action.c:2357 tips:203
+msgid "Recurse"
+msgstr "Recursiv"
+
+#: action.c:2292
+msgid "Also change contents of subdirectories"
+msgstr "Schimba �i con�inutul subdirectoarelor"
+
+#: action.c:2296
+msgid "Command:"
+msgstr "Comanda:"
+
+#: action.c:2326
+msgid "You need to select the items whose type you want to change"
+msgstr "Trebuie sa selectezi elementele al caror tip vrei sa-l schimbi"
+
+#: action.c:2339
+msgid "Set type"
+msgstr "Seteaza tipul"
+
+#: action.c:2357
+msgid "Change contents of subdirectories"
+msgstr "Schimba con�inutul subdirectoarelor"
+
+#: action.c:2364 infobox.c:652
+msgid "Type:"
+msgstr "Tip:"
+
+#: action.c:2411 dnd.c:123 menu.c:241 tips:188
+msgid "Copy"
+msgstr "Copiaza"
+
+#: action.c:2425 action.c:2475 tips:209
+msgid "Ignore Older"
+msgstr ""
+
+#: action.c:2426 action.c:2476 tips:210
+#, fuzzy
+msgid "Silently ignore if source is older than destination."
+msgstr "Scrie peste doar atunci cand sursa este mai noua decat destina�ia."
+
+#: action.c:2429 action.c:2479 tips:207
+msgid "Newer"
+msgstr "Mai recent"
+
+#: action.c:2430 action.c:2480 tips:208
+#, fuzzy
+msgid "Always over-write if source is newer than destination."
+msgstr "Scrie peste doar atunci cand sursa este mai noua decat destina�ia."
+
+#: action.c:2433 action.c:2483 tips:205
+msgid "Merge"
+msgstr ""
+
+#: action.c:2434 action.c:2484 tips:206
+#, fuzzy
+msgid "Always merge directories."
+msgstr "directoare"
+
+#: action.c:2437
+#, fuzzy
+msgid "Only log directories as they are copied"
+msgstr "Numai directoarele log vor fi �terse"
+
+#: action.c:2461 dnd.c:124 tips:190
+msgid "Move"
+msgstr "Muta"
+
+#: action.c:2487
+msgid "Don't log each file as it is moved"
+msgstr ""
+
+#: action.c:2510 tips:192
+msgid "Link"
+msgstr "Leaga"
+
+#: action.c:2535 appmenu.c:112 filer.c:675 infobox.c:1068
+msgid "Eject"
+msgstr "Scoate"
+
+#: action.c:2608
+msgid "Deleting items such as "
+msgstr "Sterg�nd elemente cum ar fi "
+
+#: action.c:2612
+msgid "Deleting the item "
+msgstr "Sterg�nd elementul "
+
+#: action.c:2614
+msgid "Deleting the items "
+msgstr "Sterg�nd elementele "
+
+#: action.c:2633
+msgid " and "
+msgstr " �i "
+
+#: action.c:2642
+msgid " will affect some items on the pinboard or panel - really delete it?"
+msgstr ""
+" vor fi afectate anumite elemente din scurtaturi �i panouri - chiar vrei s�-"
+"l �tergi ?"
+
+#: action.c:2649
+msgid " will affect some items on the pinboard or panel - really delete them?"
+msgstr ""
+" vor fi afectate anumite elemente din scurtaturi �i panouri - chiar vrei s� "
+"le �terge�i ?"
+
+#: appmenu.c:198
+msgid "<missing label>"
+msgstr "<eticheta lips�>"
+
+#: appmenu.c:320
+#, c-format
+msgid ""
+"Symlink any programs you want into this directory. They will appear in the "
+"menu for all items of this type (%s/%s)."
+msgstr ""
+"Leag� orice program vrei in acest director. Vor ap�rea �n meniu pentru toate "
+"elementele de acest tip (%s/%s)."
+
+#: appmenu.c:347 menu.c:275
+msgid "Customise Menu..."
+msgstr "Personalizeaz� meniul..."
+
+#: appmenu.c:403 menu.c:293 toolbar.c:176
+msgid "Help"
+msgstr "Ajutor"
+
+#: bookmarks.c:148 log.c:165
+msgid "Path"
+msgstr "Cale"
+
+#: bookmarks.c:156
+msgid "Title"
+msgstr "Titlu"
+
+#: bookmarks.c:305
+#, c-format
+msgid "Can't bookmark non-local resource '%s'\n"
+msgstr "Nu pot �nsemna resursa non-local� '%s'\n"
+
+#: bookmarks.c:313 bookmarks.c:631
+#, c-format
+msgid "'%s' isn't a directory"
+msgstr "'%s'nu este un director"
+
+#: bookmarks.c:519
+msgid "You should first select some rows to delete"
+msgstr "Trebuie s� selectezi anumite r�nduri care s� fie �terse"
+
+#: bookmarks.c:543
+msgid "Put the cursor on an entry in the list to move it"
+msgstr "Plaseaz� cursorul pe o intrare �n list� pentru a o muta"
+
+#: bookmarks.c:563
+msgid "This item is already at the end"
+msgstr "Acest element este deja la sf�r�it"
+
+#: bookmarks.c:637
+#, c-format
+msgid "Can't bookmark non-local directories like '%s'"
+msgstr "Nu pot �nsemna directoare non-locale ca '%s'"
+
+#: bookmarks.c:780
+msgid "Add New Bookmark"
+msgstr "Adaug� un semn nou"
+
+#: bookmarks.c:787
+msgid "Edit Bookmarks"
+msgstr "Editeaz� semnele"
+
+#: bookmarks.c:792
+msgid "Recently Visited"
+msgstr "Recent vizitate"
+
+#: bulk_rename.c:66
+msgid "Bulk rename files"
+msgstr ""
+
+#: bulk_rename.c:69
+#, fuzzy
+msgid "Reset"
+msgstr "_Revenire"
+
+#: bulk_rename.c:74
+msgid "Make the New column a copy of Old"
+msgstr ""
+
+#: bulk_rename.c:79
+#, fuzzy
+msgid "_Rename"
+msgstr "Redenume�te"
+
+#: bulk_rename.c:92
+#, fuzzy
+msgid "Replace:"
+msgstr "_Inlocuie�te"
+
+#: bulk_rename.c:99
+msgid ""
+"This is a regular expression to search for.\n"
+"^ matches the start of a filename\n"
+"$ matches the end\n"
+"\\. matches a dot\n"
+"\\.htm$ matches the '.htm' in 'index.htm', etc"
+msgstr ""
+
+#: bulk_rename.c:107
+#, fuzzy
+msgid "With:"
+msgstr "Scrie"
+
+#: bulk_rename.c:114
+msgid ""
+"The first match in each filename will be replaced by this string. The only "
+"special characters are back-references from \\0 to \\9. To use them "
+"literally, they have to be escaped with a backslash."
+msgstr ""
+
+#: bulk_rename.c:120
+msgid "Apply"
+msgstr ""
+
+#: bulk_rename.c:123
+msgid ""
+"Do a search-and-replace in the New column. The files are not actually "
+"renamed until you click on the Rename button below."
+msgstr ""
+
+#: bulk_rename.c:142
+msgid "Old name"
+msgstr ""
+
+#: bulk_rename.c:151
+#, fuzzy
+msgid "New name"
+msgstr "Redenume�te"
+
+#: bulk_rename.c:293
+msgid "No strings (in the New column) matched the given expression"
+msgstr ""
+
+#: bulk_rename.c:298
+msgid "One name matched, but the result was the same"
+msgstr ""
+
+#: bulk_rename.c:301
+#, c-format
+msgid "%d names matched, but the results were all the same"
+msgstr ""
+
+#: bulk_rename.c:327
+msgid ""
+"Specify a regular expression to match, and a string to replace matches with."
+msgstr ""
+
+#: bulk_rename.c:344
+#, fuzzy, c-format
+msgid "%s (for '%s')"
+msgstr "%s '%s'"
+
+#: bulk_rename.c:377
+#, c-format
+msgid "A file called '%s' already exists. Aborting bulk rename."
+msgstr ""
+
+#: bulk_rename.c:382
+#, c-format
+msgid ""
+"Failed to rename '%s' as '%s':\n"
+"%s\n"
+"Aborting bulk rename."
+msgstr ""
+
+#: bulk_rename.c:444
+#, fuzzy, c-format
+msgid "A file called '%s' already exists"
+msgstr "?'%s' exista deja - %s ?"
+
+#: bulk_rename.c:455
+#, c-format
+msgid ""
+"Some of the New names contain / characters (eg '%s'). This will cause the "
+"files to end up in different directories. Continue?"
+msgstr ""
+
+#: bulk_rename.c:470
+msgid "None of the names have changed. Nothing to do!"
+msgstr ""
+
+#: choices.c:446
+#, c-format
+msgid "%d directories could not be migrated"
+msgstr ""
+
+#: choices.c:448
+#, c-format
+msgid ""
+"Choices have been moved from \n"
+"%s\n"
+" to the new location \n"
+"%s\n"
+"%s"
+msgstr ""
+
+#: dir.c:920
+#, c-format
+msgid "Can't stat directory: %s"
+msgstr "Nu se poate afla starea directorului: %s"
+
+#: dir.c:931
+#, c-format
+msgid "Can't open directory: %s"
+msgstr "Nu pot deschide directorul: %s"
+
+#: display.c:734
+#, c-format
+msgid "lstat(2) failed: %s"
+msgstr "lstat(2) a e�uat: %s"
+
+#: dnd.c:125
+msgid "Link (relative)"
+msgstr ""
+
+#: dnd.c:126
+msgid "Link (absolute)"
+msgstr ""
+
+#: dnd.c:427
+msgid "Internal error - bad info type"
+msgstr "Eroare intern� - tip gre�it"
+
+#: dnd.c:566
+msgid "Drag a directory here to bookmark it."
+msgstr "Trage un director aici pentru a fi �nsemnat."
+
+#: dnd.c:581
+msgid "XDS protocol error: leafname may not contain '/'\n"
+msgstr "Eroare de protocal XDS : numele fi�ierului nu con�ine '/'\n"
+
+#: dnd.c:606
+msgid ""
+"XdndDirectSave0 target provided, but the atom XdndDirectSave0 (type text/"
+"plain) did not contain a leafname\n"
+msgstr ""
+"Destina�ia XdndDirectSave0 este data, dar atomul XdndDirectSave0 (de tip "
+"text/plain) nu con�ine un nume de fi�ier\n"
+
+#: dnd.c:619
+msgid "Sorry - I require a target type of text/uri-list or XdndDirectSave0."
+msgstr ""
+"Scuze - este necesara o destina�ie de tip text/uri-lista sau XdndDirectSave0."
+
+#: dnd.c:622
+msgid ""
+"Sorry - I require a target type of text/uri-list or application/octet-stream."
+msgstr ""
+"Scuze - este necesara o destina�ie de tip text/uri-lista sau aplica�ie/�ir "
+"de octe�i."
+
+#: dnd.c:692
+#, c-format
+msgid ""
+"Failed to add some items to the pinboard, because they are on a remote "
+"machine. For example:\n"
+"\n"
+"%s"
+msgstr ""
+
+#: dnd.c:767
+msgid "Unknown target"
+msgstr "Destina�ie necunoscuta"
+
+#: dnd.c:800
+msgid "Remote app can't or won't send me the data - sorry"
+msgstr "Aplica�ia �ndepartata nu poate sau nu vrea sa trimita date - scuze"
+
+#: dnd.c:813
+msgid "XDS protocol error: return code should be 'S', 'F' or 'E'\n"
+msgstr ""
+"Eroare de protocal XDS: codul returnat trebuie sa fie 'S', 'F' sau 'E'\n"
+
+#: dnd.c:846
+msgid "Sorry, can't display a menu of actions for a remote file / raw data."
+msgstr ""
+"Scuze, nu pot afi�a un meniu de ac�iuni pentru un fi�ier �ndepartat / date "
+"pe r�nduri."
+
+#: dnd.c:862
+msgid "UntitledData"
+msgstr "Date fara titlu"
+
+#: dnd.c:889
+#, c-format
+msgid "Error saving file: %s"
+msgstr "Eroare la salvarea fi�ierului: %s"
+
+#: dnd.c:962
+msgid "No URIs in the text/uri-list (nothing to do!)"
+msgstr "Nu exista URI-uri �n text/lista de uri-uri (nimic de facut)"
+
+#: dnd.c:994
+msgid ""
+"Can't get data from remote machine (application/octet-stream not provided)"
+msgstr ""
+"Imposibil de ob�inut date de la ma�ina �ndepartata (aplica�ia/�irul de "
+"acte�i nedisponibil)"
+
+#: dnd.c:1017 menu.c:2380
+msgid ""
+"Some of these files are on a different machine - they will be ignored - sorry"
+msgstr ""
+"C�teva din aceste fi�iere sunt pe o alta ma�ina - vor fi ignorate - scuze"
+
+#: dnd.c:1024 menu.c:2388
+msgid ""
+"None of these files are on the local machine - I can't operate on multiple "
+"remote files - sorry."
+msgstr ""
+"Nici unul din aceste fi�iere nu sunt locale - nu se poate opera pe mai multe "
+"fi�iere �ndepartate - scuze."
+
+#: dnd.c:1037
+msgid "Unknown action requested"
+msgstr "Ac�iune solicitata necunoscuta"
+
+#: dnd.c:1045 menu.c:2406
+#, c-format
+msgid "Error getting file list: %s"
+msgstr "Eroare �n ob�inerea listei de fi�iere: %s"
+
+#: dropbox.c:112
+msgid "Show"
+msgstr "Arata"
+
+#: dropbox.c:118
+msgid "Show the current choice in a filer window"
+msgstr "Arata op�iunile curente �n fereastra managerului de fi�iere"
+
+#: dropbox.c:172
+msgid "<nothing>"
+msgstr "<nimic>"
+
+#: dropbox.c:237
+msgid ""
+"I can't show you the currently set item, because nothing is currently set. "
+"Drag something onto me!"
+msgstr ""
+"Nu pot sa-�i arat elementul curent setat, deoarece nu este setat nimic.Trage "
+"ceva peste mine�!"
+
+#: dropbox.c:261
+msgid "Sorry, you need to drop exactly one file onto the drop area."
+msgstr "Scuze, trebuie sa eliberezi exact un fi�ier �n aria desemnata."
+
+#: dropbox.c:271
+#, c-format
+msgid "Sorry, I can't use '%s' because it's not a local file."
+msgstr "Scuze, nu pot utiliza '%s' deoarece nu este un fi�ier local."
+
+#: dropbox.c:278 pinboard.c:951
+#, c-format
+msgid ""
+"Can't access '%s':\n"
+"%s"
+msgstr ""
+"Nu pot accesa '%s' :\n"
+"%s"
+
+#: filer.c:494
+#, c-format
+msgid ""
+"Error scanning '%s':\n"
+"%s\n"
+msgstr ""
+"Eroare la scanarea '%s'�:\n"
+"%s\n"
+
+#: filer.c:650
+msgid ""
+"Do you want to unmount this device?\n"
+"\n"
+"Unmounting a device makes it safe to remove the disk."
+msgstr ""
+"Vrei sa demontez acest dispozitiv?\n"
+"\n"
+"Demontarea unui dispozitiv face sigura scoaterea discului."
+
+#: filer.c:655
+msgid "Perform the same action in future for this mount point"
+msgstr ""
+
+#: filer.c:662
+#, fuzzy
+msgid "No change"
+msgstr "Nimic"
+
+#: filer.c:668 infobox.c:1066 menu.c:956
+msgid "Unmount"
+msgstr "Demonteaza"
+
+#: filer.c:1137
+#, c-format
+msgid ""
+"Group %s is not set. Select some files and press Ctrl+%s to set the group. "
+"Press %s on its own to reselect the files later.\n"
+"Make sure NumLock is on if you use the keypad."
+msgstr ""
+"Grupul %s nu este definit. Selecteaza anumite fi�iere �i apasa Ctrl+%s "
+"pentru a seta un grup. Apasa %s pentru a reselecta aceste fi�iere mai "
+"tarziu.\n"
+"Asigura-te ca NumLock este activ daca utilizezi o tastatura."
+
+#: filer.c:1822
+msgid "Cancel"
+msgstr "Anuleaza"
+
+#: filer.c:2106
+msgid "A"
+msgstr "T"
+
+#: filer.c:2108 find.c:1034
+msgid "G"
+msgstr ""
+
+#: filer.c:2113
+msgid "S"
+msgstr "L"
+
+#: filer.c:2115
+msgid "T"
+msgstr "I"
+
+#: filer.c:2116
+msgid "D"
+msgstr ""
+
+#: filer.c:2117
+msgid "F"
+msgstr ""
+
+#: filer.c:2127
+msgid "All, "
+msgstr "Toate, "
+
+#: filer.c:2130
+#, c-format
+msgid "Glob (%s), "
+msgstr ""
+
+#: filer.c:2138
+msgid "Scanning, "
+msgstr "Scan�nd, "
+
+#: filer.c:2140
+msgid "Thumbs, "
+msgstr "Monstre, "
+
+#: filer.c:2141
+msgid "Dirs only, "
+msgstr ""
+
+#: filer.c:2142
+msgid "Files only, "
+msgstr ""
+
+#: filer.c:2418
+msgid "Symbolic link to "
+msgstr "Legatura simbolica la "
+
+#: filer.c:2474
+msgid "This filename is not valid UTF-8. You should rename it.\n"
+msgstr "Numele fi�ierului nu este UTF-8 valid. Redenume�te-l\n"
+
+#: filer.c:2792 menu.c:2573
+msgid "Item no longer exists!"
+msgstr "Obiectul nu mai exista!"
+
+#: filer.c:3608
+msgid "Select display properties to save"
+msgstr "Selecteaza proprieta�ile afi�ajului pentru a fi salvate"
+
+#: filer.c:3612
+msgid "<b>Save display settings for directory</b>"
+msgstr ""
+
+#: filer.c:3619
+#, fuzzy
+msgid "Select settings to save"
+msgstr "Selecteaza proprieta�ile afi�ajului pentru a fi salvate"
+
+#: filer.c:3626
+msgid "Position"
+msgstr "Pozi�ie"
+
+#: filer.c:3631 toolbar.c:137 toolbar.c:141 tips:41 tips:84
+msgid "Size"
+msgstr "Dimensiune"
+
+#: filer.c:3636
+msgid "Show hidden"
+msgstr "Arata fisierele ascunse"
+
+#: filer.c:3642
+msgid "Display style"
+msgstr "Afi�eaza stilul"
+
+#: filer.c:3648
+#, fuzzy
+msgid "Sort type and order"
+msgstr "Sorteaza dupa tip si ordoneaza"
+
+#: filer.c:3653 toolbar.c:145
+msgid "Details"
+msgstr "Detalii"
+
+#: filer.c:3658 tips:115 tips:116
+msgid "Thumbnails"
+msgstr "Monstre"
+
+#: filer.c:3664
+msgid "Filter"
+msgstr "Filtru"
+
+#: find.c:532
+msgid "And"
+msgstr "Si"
+
+#: find.c:556
+msgid "Not"
+msgstr "Nu"
+
+#: find.c:599
+msgid "system"
+msgstr "sistem"
+
+#: find.c:607
+msgid "prune"
+msgstr "exclude"
+
+#: find.c:701
+msgid "After"
+msgstr "Dupa"
+
+#: find.c:703
+msgid "Before"
+msgstr "Inainte"
+
+#: find.c:798
+msgid "IsReg"
+msgstr "EsteReg"
+
+#: find.c:800
+msgid "IsLink"
+msgstr "EsteLegatura"
+
+#: find.c:802
+msgid "IsDir"
+msgstr "EsteDirector"
+
+#: find.c:804
+msgid "IsChar"
+msgstr "EsteCaracter"
+
+#: find.c:806
+msgid "IsBlock"
+msgstr "EsteBloc"
+
+#: find.c:808
+msgid "IsDev"
+msgstr "EsteDispozitiv"
+
+#: find.c:810
+msgid "IsPipe"
+msgstr "EsteTeava"
+
+#: find.c:812
+msgid "IsSocket"
+msgstr "EsteSocket"
+
+#: find.c:814
+msgid "IsDoor"
+msgstr "EstePoarta"
+
+#: find.c:816
+msgid "IsSUID"
+msgstr "EsteSUID"
+
+#: find.c:818
+msgid "IsSGID"
+msgstr "EsteSGID"
+
+#: find.c:820
+msgid "IsSticky"
+msgstr "EsteSub�iat"
+
+#: find.c:822
+msgid "IsReadable"
+msgstr "SePoateCiti"
+
+#: find.c:824
+msgid "IsWriteable"
+msgstr "SePoateScrie"
+
+#: find.c:826
+msgid "IsExecutable"
+msgstr "EsteExecutabil"
+
+#: find.c:828
+msgid "IsEmpty"
+msgstr "EsteGol"
+
+#: find.c:830
+msgid "IsMine"
+msgstr "EsteAlMeu"
+
+#: find.c:832
+msgid "HasXattr"
+msgstr ""
+
+#: find.c:897
+msgid "label"
+msgstr ""
+
+#: find.c:899
+msgid "xattr"
+msgstr ""
+
+#: find.c:1015
+msgid "Now"
+msgstr "Acum"
+
+#: find.c:1028
+msgid "Byte"
+msgstr "Octet"
+
+#: find.c:1028
+msgid "Bytes"
+msgstr "Octe�i"
+
+#: find.c:1030
+msgid "Kb"
+msgstr ""
+
+#: find.c:1030
+msgid "K"
+msgstr ""
+
+#: find.c:1032
+msgid "Mb"
+msgstr ""
+
+#: find.c:1032
+msgid "M"
+msgstr ""
+
+#: find.c:1034
+msgid "Gb"
+msgstr ""
+
+#: find.c:1036
+msgid "Sec"
+msgstr "Secunda"
+
+#: find.c:1036
+msgid "Secs"
+msgstr "Secunde"
+
+#: find.c:1038
+msgid "Min"
+msgstr "Minut"
+
+#: find.c:1038
+msgid "Mins"
+msgstr "Minute"
+
+#: find.c:1040
+msgid "Hour"
+msgstr "Ora"
+
+#: find.c:1040
+msgid "Hours"
+msgstr "Ore"
+
+#: find.c:1042
+msgid "Day"
+msgstr "Zi"
+
+#: find.c:1042
+msgid "Days"
+msgstr "Zile"
+
+#: find.c:1044
+msgid "Week"
+msgstr "Saptam�na"
+
+#: find.c:1044
+msgid "Weeks"
+msgstr "Saptam�ni"
+
+#: find.c:1046
+msgid "Year"
+msgstr "An"
+
+#: find.c:1046
+msgid "Years"
+msgstr "Ani"
+
+#: find.c:1055
+msgid "Ago"
+msgstr "Pana acum"
+
+#: find.c:1057
+msgid "Hence"
+msgstr "De aici incolo"
+
+#: find.c:1072
+msgid "atime"
+msgstr "atime"
+
+#: find.c:1074
+msgid "ctime"
+msgstr "ctime"
+
+#: find.c:1076
+msgid "mtime"
+msgstr "mtime"
+
+#: find.c:1078
+msgid "size"
+msgstr "dimensiune"
+
+#: find.c:1080
+msgid "inode"
+msgstr "inode"
+
+#: find.c:1082
+msgid "nlinks"
+msgstr "nlinks"
+
+#: find.c:1084
+msgid "uid"
+msgstr "uid"
+
+#: find.c:1086
+msgid "gid"
+msgstr "gid"
+
+#: find.c:1088
+msgid "blocks"
+msgstr "blocuri"
+
+#: gtksavebox.c:249
+msgid "Save As:"
+msgstr "Salveaza ca:"
+
+#: gtksavebox.c:398
+msgid "Unnamed"
+msgstr "Fara nume"
+
+#: gtksavebox.c:474
+msgid ""
+"Remote application wants to use Direct Save, but I can't read the "
+"XdndDirectSave0 (type text/plain) property.\n"
+msgstr ""
+"Aplica�ia �ndepartata vrea sa utilizeze Salvarea directa, dar nu se poate "
+"citi proprietatea XdndDirectSave0 (tip text/plain).\n"
+
+#: gtksavebox.c:599
+msgid ""
+"Drag the icon to a directory viewer\n"
+"(or enter a full pathname)"
+msgstr ""
+"Trage icoana �ntr-o fereastra a unui director\n"
+"(ori introdu calea completa)"
+
+#: gui_support.c:456
+msgid ""
+"\n"
+"---\n"
+msgstr ""
+"\n"
+"---\n"
+
+#: gui_support.c:525
+#, c-format
+msgid "Attempt to read an XML file as a text file. File '%s' may be corrupted."
+msgstr ""
+"Incerc sa citext fi�ierul XML ca un fi�ier text. Fi�ierul '%s' s-ar putea sa "
+"fie corupt."
+
+#: gui_support.c:542
+#, fuzzy, c-format
+msgid ""
+"Error in '%s' file at line %d: \n"
+"\"%s\"\n"
+"This may be due to upgrading from a previous version of Rox-Filer2. Open the "
+"Options window and try changing something and then changing it back (causing "
+"the file to be resaved).\n"
+"Further errors will be ignored."
+msgstr ""
+"Eroare �n fi�ierul '%s' la linia %d : \n"
+"\"%s\"\n"
+"Cauza poate fi din upgradarea de la o versiune anterioara a managerului de "
+"fi�iere ROX. Deschide fereastra op�iuni �i apasa butonul Salveaza."
+
+#: gui_support.c:1134
+msgid "Incorrect or missing line break in text/uri-list data"
+msgstr "Linie incorecta sau lipsa �n datele text/uri-lista"
+
+#: gui_support.c:1471
+#, fuzzy, c-format
+msgid "Failed to open file '%s': %s"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: gui_support.c:1515
+#, c-format
+msgid ""
+"Failed to load image '%s': reason not known, probably a corrupt image file"
+msgstr ""
+
+#: gui_support.c:1581
+#, c-format
+msgid ""
+"This program (%s) cannot be run, as the 0launch command is not available. It "
+"can be downloaded from here:\n"
+"\n"
+"http://0install.net/injector.html"
+msgstr ""
+
+#: i18n.c:39
+msgid ""
+"Note that you must save your choices and restart the filer for the new "
+"language setting to take full effect."
+msgstr ""
+"Pentru ca schimbarea limbii sa aiba efect trebuie salvate schimbarile �i "
+"repornit managerul de fi�iere."
+
+#: icon.c:76
+msgid "(click to set)"
+msgstr "(apasa pentru a seta)"
+
+#: icon.c:131
+msgid "Rox-Filer2"
+msgstr "Rox-Filer2"
+
+#: icon.c:132 menu.c:294
+msgid "About Rox-Filer2..."
+msgstr "Despre Rox-Filer2..."
+
+#: icon.c:133 menu.c:295
+msgid "Show Help Files"
+msgstr "Arata fi�ierele documenta�ie"
+
+#: icon.c:134 menu.c:296
+msgid "Manual"
+msgstr "Manual"
+
+#: icon.c:136 menu.c:268
+msgid "Options..."
+msgstr "Op�iuni..."
+
+#: icon.c:137 menu.c:280
+msgid "Home Directory"
+msgstr "Directorul acasa"
+
+#: icon.c:138 icon.c:1437 menu.c:240 type.c:224
+msgid "File"
+msgstr "Fi�ier"
+
+#: icon.c:139 menu.c:248 menu.c:969
+msgid "Shift Open"
+msgstr "Shift deschide"
+
+#: icon.c:140 menu.c:256
+msgid "Properties"
+msgstr "Proprieta�i"
+
+#: icon.c:141 menu.c:251
+msgid "Set Run Action..."
+msgstr "Seteaza ac�iunea de execu�ie..."
+
+#: icon.c:142 menu.c:252
+msgid "Set Icon..."
+msgstr "Seteaza icoana..."
+
+#: icon.c:143 icon.c:894
+msgid "Edit Item"
+msgstr "Editeaza elementul"
+
+#: icon.c:144
+msgid "Show Location"
+msgstr "Arata loca�ia"
+
+#: icon.c:145
+msgid "Remove Item(s)"
+msgstr "Indeparteaza elementul(le)"
+
+#: icon.c:318 log.c:111 menu.c:851
+#, c-format
+msgid "%s '%s'"
+msgstr "%s '%s'"
+
+#: icon.c:331
+msgid "Nothing"
+msgstr "Nimic"
+
+#: icon.c:620
+msgid "The location must contain at least one character!"
+msgstr "Loca�ia trebuie sa con�ina cel pu�in un caracter!"
+
+#: icon.c:685
+#, c-format
+msgid "You must unlock '%s' before removing it"
+msgstr ""
+
+#: icon.c:695
+msgid "You must first select some items to remove"
+msgstr "Trebuie �ntai sa selectezi anumite elemente pentru a fi �ndepartate"
+
+#: icon.c:701
+msgid "An item must be unlocked before it can be removed."
+msgstr ""
+
+#: icon.c:715
+msgid "You must open the menu over an item"
+msgstr "Trebuie sa deschizi un meniu deasupra unui element"
+
+#: icon.c:740 menu.c:1371
+msgid "You can only set the run action for a regular file"
+msgstr "Po�i selecta doar ac�iunea de execu�ie a unui fi�ier normal"
+
+#: icon.c:825
+msgid "Press the desired shortcut (eg, Control+F1)"
+msgstr "Apasa pe legatura dorita (ex, Control+F1)"
+
+#: icon.c:847
+msgid "Failed to get keyboard grab!"
+msgstr "Imposibil de captat evenimentul de la tastatura!"
+
+#: icon.c:897
+msgid "Clicking the icon opens:"
+msgstr "Apas�nd pe icoana se deschide:"
+
+#: icon.c:907
+msgid "Arguments to pass (for executables):"
+msgstr ""
+
+#: icon.c:921
+msgid "The text displayed under the icon is:"
+msgstr "Textul afi�at sub icoana este:"
+
+#: icon.c:934
+msgid "The keyboard shortcut is:"
+msgstr "Scurtatura pentru tastatura este:"
+
+#: icon.c:954
+#, fuzzy
+msgid "Locked"
+msgstr "Socket"
+
+#: icon.c:959
+msgid "Locking an item prevents it from being accidentally removed"
+msgstr ""
+
+#: infobox.c:113
+#, c-format
+msgid "Are you sure you want to open %d windows?"
+msgstr "E�ti sigur ca vrei sa deschizi fereastra %d ?"
+
+#: infobox.c:114
+msgid "Show Info"
+msgstr "Arata fereastra cu informa�ii"
+
+#: infobox.c:136 menu.c:856
+msgid "(bad utf-8)"
+msgstr "(utf-8 incorect)"
+
+#: infobox.c:274
+msgid "Show _Help Files"
+msgstr "Arata fi�ierele cu _documenta�ie"
+
+#: infobox.c:287
+msgid "<b>Permissions</b>"
+msgstr "<b>Drepturi</b>"
+
+#: infobox.c:305
+msgid "<b>Contents indicate...</b>"
+msgstr "<b>Con�inutul indica...</b>"
+
+#: infobox.c:315
+#, fuzzy
+msgid "<b>When all directories are closed</b>"
+msgstr "Numai directoarele log vor fi �terse"
+
+#: infobox.c:451 infobox.c:593 support.c:349
+msgid "bytes"
+msgstr "octe�i"
+
+#: infobox.c:474
+#, fuzzy
+msgid "Failed to read size"
+msgstr "Imposibil de scanat"
+
+#: infobox.c:536
+#, c-format
+msgid "'%s' is no longer a symlink"
+msgstr "'%s' nu mai este o legatura simbolica"
+
+#: infobox.c:543
+#, c-format
+msgid ""
+"Failed to unlink '%s':\n"
+"%s"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: infobox.c:548
+#, c-format
+msgid ""
+"Failed to create symlink from '%s':\n"
+"%s\n"
+"(note: old link has been deleted)"
+msgstr ""
+"Imposibil de creat legatura simbolica din '%s' :\n"
+"%s\n"
+"(nota: vechea legatura a fost �tearsa)"
+
+#: infobox.c:572 tips:272
+msgid "Error:"
+msgstr "Eroare:"
+
+#: infobox.c:579
+msgid "Real directory:"
+msgstr "Directorul real:"
+
+#: infobox.c:582
+msgid "Owner, Group:"
+msgstr "Proprietar, grup:"
+
+#: infobox.c:589 infobox.c:604 infobox.c:613
+msgid "Size:"
+msgstr "Dimensiune:"
+
+#: infobox.c:614
+msgid "Scanning"
+msgstr "Scaneaza"
+
+#: infobox.c:639
+msgid "Failed to scan"
+msgstr "Imposibil de scanat"
+
+#: infobox.c:646
+msgid "Change time:"
+msgstr "Data ultimei shimbari:"
+
+#: infobox.c:648
+msgid "Modify time:"
+msgstr "Data ultimei modificari:"
+
+#: infobox.c:650
+msgid "Access time:"
+msgstr "Data ultimului acces:"
+
+#: infobox.c:658
+msgid "Extended attributes:"
+msgstr ""
+
+#: infobox.c:660
+msgid "Present"
+msgstr ""
+
+#: infobox.c:661
+msgid "None"
+msgstr "Nimic"
+
+#: infobox.c:662
+#, fuzzy
+msgid "Not supported"
+msgstr "Suport dnotify"
+
+#: infobox.c:674
+msgid "Link target:"
+msgstr "Destina�ia legaturii:"
+
+#: infobox.c:686 infobox.c:689
+msgid "Run action:"
+msgstr "Executa ac�iunea:"
+
+#: infobox.c:686
+msgid "Execute file"
+msgstr "Excuta fi�ierul"
+
+#: infobox.c:798
+#, fuzzy
+msgid "Comment"
+msgstr "Comanda:"
+
+#: infobox.c:800
+#, fuzzy
+msgid "Execute"
+msgstr "Excuta fi�ierul"
+
+#: infobox.c:815
+msgid "<nothing yet>"
+msgstr "<nimica inca>"
+
+#: infobox.c:888
+#, c-format
+msgid "file(1) says... %s"
+msgstr "file(1) zice... %s"
+
+#: infobox.c:945
+#, c-format
+msgid "Could not change permissions: %s"
+msgstr "Nu pot schimba drepturile: %s"
+
+#: infobox.c:963 tips:88
+msgid "Owner"
+msgstr "Proprietar"
+
+#: infobox.c:965 tips:90
+msgid "Group"
+msgstr "Grup"
+
+#: infobox.c:967
+msgid "World"
+msgstr "Lumea"
+
+#: infobox.c:970
+msgid "Read"
+msgstr "Cite�te"
+
+#: infobox.c:973
+msgid "Write"
+msgstr "Scrie"
+
+#: infobox.c:976
+msgid "Exec"
+msgstr "Executa"
+
+#: infobox.c:994
+msgid "SUID"
+msgstr "SUID"
+
+#: infobox.c:1001
+msgid "SGID"
+msgstr "SGID"
+
+#: infobox.c:1008
+msgid "Sticky"
+msgstr "Sub�iat"
+
+#: infobox.c:1064
+#, fuzzy
+msgid "Do nothing"
+msgstr "<nimic>"
+
+#: infobox.c:1070
+msgid "Ask"
+msgstr ""
+
+#: infobox.c:1082
+msgid "Symbolic link"
+msgstr "Legatura simbolica"
+
+#: infobox.c:1085
+msgid "ROX application"
+msgstr "Aplica�ia ROX"
+
+#: infobox.c:1093
+msgid "mounted"
+msgstr "montat"
+
+#: infobox.c:1093
+msgid "unmounted"
+msgstr "demontat"
+
+#: infobox.c:1097
+#, c-format
+msgid "Mount point for %s (%s)"
+msgstr "Punctul de montare pentru %s (%s)"
+
+#: infobox.c:1100
+#, fuzzy, c-format
+msgid "Mount point (%s)"
+msgstr "Punct de montare (%s)"
+
+#: log.c:54
+#, fuzzy
+msgid "Rox-Filer2 started"
+msgstr "Rox-Filer2"
+
+#: log.c:115
+#, fuzzy, c-format
+msgid "%s on %d items"
+msgstr "%d obiecte"
+
+#: log.c:128
+#, fuzzy
+msgid "Item"
+msgstr "Editeaza elementul"
+
+#: log.c:154
+#, fuzzy
+msgid "Time"
+msgstr "Data & timp"
+
+#: log.c:159
+#, fuzzy
+msgid "Action"
+msgstr "Op�iuni"
+
+#: main.c:97
+#, fuzzy
+msgid ""
+"Copyright (C) 2005 Thomas Leonard.\n"
+"Rox-Filer2 comes with ABSOLUTELY NO WARRANTY,\n"
+"to the extent permitted by law.\n"
+"You may redistribute copies of Rox-Filer2\n"
+"under the terms of the GNU General Public License.\n"
+"For more information about these matters, see the file named COPYING.\n"
+msgstr ""
+"Drept de autor (C) 2003 Thomas Leonard.\n"
+"Rox-Filer2 este distribuit fara nici o garan�ie,\n"
+"�n condi�iile prevazute de lege.\n"
+"Po�i redistribui copii ale managerului de fi�iere Rox-Filer2\n"
+"sub condi�iile Licen�ei publice generale GNU.\n"
+"Pentru mai multe informa�ii vezi fi�ierul COPYING.\n"
+
+#: main.c:106
+msgid "Try `Rox-Filer2/AppRun --help' for more information.\n"
+msgstr "Incerca `AppRun --help' pentru mai multe informa�ii.\n"
+
+#: main.c:109
+msgid "Try `Rox-Filer2/AppRun -h' for more information.\n"
+msgstr "Incerca `AppRun -h' pentru mai multe informa�ii.\n"
+
+#: main.c:111
+msgid ""
+"NOTE: Your system does not support long options - \n"
+"you must use the short versions instead.\n"
+"\n"
+msgstr ""
+"NOTE : votre syst�me ne supporte pas les options longues - \n"
+"vous devez utiliser les versions courtes � la place.\n"
+"\n"
+
+#: main.c:239
+msgid ""
+"We got a BadWindow error from the X server. This might be due to this GTK "
+"bug (during drag-and-drop?):\n"
+"http://bugzilla.gnome.org/show_bug.cgi?id=152151\n"
+"Trying to continue..."
+msgstr ""
+
+#: main.c:401
+msgid ""
+"The -o argument is no longer used. You can turn on override redirect from "
+"the Options box instead."
+msgstr "Argumentul -o nu mai este folosit."
+
+#: main.c:532
+#, c-format
+msgid "Running as user '%s'"
+msgstr "Ruleaza ca utilizator '%s'"
+
+#: main.c:695
+#, c-format
+msgid "Compiled with GTK version %s\n"
+msgstr "Compilat cu GTK versiunea %s\n"
+
+#: main.c:696
+#, c-format
+msgid "Running with GTK version %d.%d.%d\n"
+msgstr "Ruleaza cu GTK versiunean %d.%d.%d\n"
+
+#: main.c:700
+msgid "features set at compile time"
+msgstr "func�ionalita�i fixate �n timpul compilarii"
+
+#: main.c:701
+msgid "Large File Support"
+msgstr "Suport pentru fi�iere mari"
+
+#: main.c:708
+msgid "Binary compatibility"
+msgstr "Compatibilitate binara"
+
+#: main.c:710
+msgid "Yes (can run with older glibc versions)"
+msgstr "Da (poate rula cu versiuni mai vechi ale glibc)"
+
+#: main.c:712
+msgid "No (apsymbols.h not found)"
+msgstr "Nu (apsymbols.h nu este gasit)"
+
+#: main.c:716
+#, fuzzy
+msgid "Extended attribute support"
+msgstr "Nu utiliza numele gazdei"
+
+#: main.c:863
+#, fuzzy, c-format
+msgid "Unable to read '%s': %s"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: main.c:902
+#, c-format
+msgid ""
+"Left-click to run %s.\n"
+"Right-click for a list of versions."
+msgstr ""
+
+#: main.c:949 menu.c:1472 menu.c:1478
+#, c-format
+msgid "Error creating '%s': %s"
+msgstr "Eroare la crearea '%s'�: %s"
+
+#: main.c:980
+#, fuzzy
+msgid "Save"
+msgstr "Salveaza ca:"
+
+#: main.c:985
+msgid "Start script"
+msgstr ""
+
+#: main.c:1010
+msgid ""
+"Click to save a script to run Rox-Filer2.\n"
+"If you are using Zero Install you should use 0alias instead."
+msgstr ""
+
+#: menu.c:211
+msgid "Display"
+msgstr "Afi�aj"
+
+#: menu.c:212 tips:35
+msgid "Icons View"
+msgstr "Sub forma de icoane"
+
+#: menu.c:213
+msgid "Icons, With..."
+msgstr "Icoane, cu..."
+
+#: menu.c:214 tips:55
+msgid "Sizes"
+msgstr "Dimensiuni"
+
+#: menu.c:216 tips:256
+msgid "Types"
+msgstr "Tipuri"
+
+#: menu.c:217 tips:58
+msgid "Times"
+msgstr "Data & timp"
+
+#: menu.c:218 tips:36 tips:73 tips:74
+msgid "List View"
+msgstr "Sub forma de lista"
+
+#: menu.c:220
+msgid "Bigger Icons"
+msgstr "Icoane mari"
+
+#: menu.c:221
+msgid "Smaller Icons"
+msgstr "Icoane mici"
+
+#: menu.c:222 tips:52
+msgid "Automatic"
+msgstr "Automatic"
+
+#: menu.c:224
+msgid "Sort by Name"
+msgstr "Sorteaza dupa nume"
+
+#: menu.c:225
+msgid "Sort by Type"
+msgstr "Sorteaza dupa tip"
+
+#: menu.c:226
+#, fuzzy
+msgid "Sort by Date (atime)"
+msgstr "Sorteaza dupa data"
+
+#: menu.c:227
+#, fuzzy
+msgid "Sort by Date (ctime)"
+msgstr "Sorteaza dupa data"
+
+#: menu.c:228
+#, fuzzy
+msgid "Sort by Date (mtime)"
+msgstr "Sorteaza dupa data"
+
+#: menu.c:229
+msgid "Sort by Size"
+msgstr "Sorteaza dupa dimensiune"
+
+#: menu.c:230
+msgid "Sort by Owner"
+msgstr "Sorteaza dupa proprietar"
+
+#: menu.c:231
+msgid "Sort by Group"
+msgstr "Sorteaza dupa grup"
+
+#: menu.c:232
+msgid "Reversed"
+msgstr "Invers"
+
+#: menu.c:234
+msgid "Show Hidden"
+msgstr "Arata fi�ierele ascunse"
+
+#: menu.c:235
+msgid "Filter Files..."
+msgstr "Filtreaza fi�ierele..."
+
+#: menu.c:236
+msgid "Filter Directories With Files"
+msgstr ""
+
+#: menu.c:237
+msgid "Show Thumbnails"
+msgstr "Arata monstre din fi�iere imagine"
+
+#: menu.c:238
+msgid "Refresh"
+msgstr "Actualizeaza"
+
+#: menu.c:239
+#, fuzzy
+msgid "Save Current Display Settings..."
+msgstr "Salveaza setarile afi�ajului..."
+
+#: menu.c:242
+#, fuzzy
+msgid "Cut"
+msgstr "Numara"
+
+#: menu.c:243
+msgid "Duplicate..."
+msgstr ""
+
+#: menu.c:244
+msgid "Rename..."
+msgstr "Redenume�te..."
+
+#: menu.c:245
+msgid "Link..."
+msgstr "Leaga..."
+
+#: menu.c:249
+#, fuzzy
+msgid "Open With..."
+msgstr "Icoane, cu..."
+
+#: menu.c:254
+#, fuzzy
+msgid "Extended attributes..."
+msgstr "Nu utiliza numele gazdei"
+
+#: menu.c:257
+msgid "Count"
+msgstr "Numara"
+
+#: menu.c:258
+msgid "Set Type..."
+msgstr "Seteaza tipul..."
+
+#: menu.c:262 toolbar.c:166
+msgid "Select"
+msgstr "Selecteaza"
+
+#: menu.c:263
+msgid "Select All"
+msgstr "Selecteaza tot"
+
+#: menu.c:264
+msgid "Clear Selection"
+msgstr "Sterge selec�ia"
+
+#: menu.c:265
+msgid "Invert Selection"
+msgstr "Inverseaza selec�ia"
+
+#: menu.c:266
+msgid "Select by Name..."
+msgstr "Selectaza dupa nume..."
+
+#: menu.c:267
+msgid "Select If..."
+msgstr "Selecteaza daca..."
+
+#: menu.c:270
+msgid "Paste"
+msgstr ""
+
+#: menu.c:272 toolbar.c:170
+msgid "New"
+msgstr "Nou"
+
+#: menu.c:274
+msgid "Blank file"
+msgstr "Fi�ier gol"
+
+#: menu.c:276 tasklist.c:305
+msgid "Window"
+msgstr "Fereastra"
+
+#: menu.c:277
+msgid "Parent, New Window"
+msgstr "Parinte, fereastra noua"
+
+#: menu.c:278
+msgid "Parent, Same Window"
+msgstr "Parinte, acea�i fereastra"
+
+#: menu.c:279 tips:30
+msgid "New Window"
+msgstr "Fereastra noua"
+
+#: menu.c:281
+msgid "Show Bookmarks"
+msgstr "Arata semnele"
+
+#: menu.c:282
+#, fuzzy
+msgid "Show Log"
+msgstr "Arata fereastra cu informa�ii"
+
+#: menu.c:283
+msgid "Follow Symbolic Links"
+msgstr "Urmare�te legatura simbolica"
+
+#: menu.c:284
+msgid "Resize Window"
+msgstr "Redimensioneaza fereastra"
+
+#: menu.c:287
+msgid "Close Window"
+msgstr "Inchide fereastra"
+
+#: menu.c:289
+msgid "Enter Path..."
+msgstr "Introdu calea..."
+
+#: menu.c:290
+msgid "Shell Command..."
+msgstr "Comanda shell..."
+
+#: menu.c:291
+#, fuzzy
+msgid "Terminal Here"
+msgstr "Xterm aici"
+
+#: menu.c:292
+#, fuzzy
+msgid "Switch to Terminal"
+msgstr "Comuta pe xterm"
+
+#: menu.c:803
+msgid "You should Shift+Menu click over a file to send it somewhere"
+msgstr ""
+"Trebuie sa execu�i Shift+click pe meniu pentru atrimite fi�ierul undeva"
+
+#: menu.c:841
+msgid "Next Click"
+msgstr "Urmatorul click"
+
+#: menu.c:863
+#, c-format
+msgid "%d items"
+msgstr "%d obiecte"
+
+#: menu.c:958
+msgid "Open unmounted"
+msgstr "Deschide nemontat"
+
+#: menu.c:961
+msgid "Show Target"
+msgstr "Arata destina�ia"
+
+#: menu.c:963
+msgid "Look Inside"
+msgstr "Prive�te �n interior"
+
+#: menu.c:965
+msgid "Open As Text"
+msgstr "Deschide ca text"
+
+#: menu.c:1136
+msgid ""
+"Extended attributes, used to store types, are not supported for this file or "
+"files.\n"
+"This may be due to lack of support from the filesystem or the C library, or "
+"it may simply be that the filesystem needs to be mounted with the right "
+"mount option ('user_xattr' on Linux)."
+msgstr ""
+
+#: menu.c:1142
+msgid "Setting type not supported for some of these files"
+msgstr ""
+
+#: menu.c:1179
+msgid "_Relative link"
+msgstr "_Legatura relativa"
+
+#: menu.c:1185
+msgid ""
+"If on, the symlink will store the path from the symlink to the target file. "
+"Use this if the symlink and the target will be moved together.\n"
+"If off, the path from the root directory is stored - use this if the symlink "
+"may move but the target will stay put."
+msgstr ""
+"Daca este activa, legatura simbolica va pastra calea de la legatura la "
+"fi�ieryl destina�ie. Utilizeaza aceasta daca legatura �i destina�ia vor fi "
+"mutate �npreuna.\n"
+"Daca este inactiva, va fi pastrata calea de la directorul radacina - "
+"utilizeaza aceasta daca legatura poate fi mutata dar destina�ia nu."
+
+#: menu.c:1257
+msgid "New pathname is not absolute"
+msgstr "Calea noua nu este absoluta"
+
+#: menu.c:1325
+#, c-format
+msgid "Symlink from '%s' already exists. Replace it with a link to '%s'?"
+msgstr ""
+"Legatura simbolica de la '%s' exista deja. Inlocuie�te-o cu o legatura la "
+"'%s' ?"
+
+#: menu.c:1331
+msgid "_Replace"
+msgstr "_Inlocuie�te"
+
+#: menu.c:1457 menu.c:1504 menu.c:1572
+msgid "Create"
+msgstr "Creaza"
+
+#: menu.c:1458
+msgid "NewDir"
+msgstr "DirectorNou"
+
+#: menu.c:1505
+msgid "NewFile"
+msgstr "Fi�ierNou"
+
+#: menu.c:1524
+#, c-format
+msgid "Error creating file: could not find the template for %s"
+msgstr "Eroare �n crearea fi�ierului�: nu pot gasi modelul pentru %s"
+
+#: menu.c:1611
+#, fuzzy, c-format
+msgid ""
+"The `Send To' menu provides a quick way to send some files to an "
+"application. The applications listed are those in the following "
+"directories:\n"
+"\n"
+"%s\n"
+"%s\n"
+"The `Send To' menu may be opened by Shift+Menu clicking over a file.\n"
+"\n"
+"Advanced use:\n"
+"You can also create subdirectories called `.text_html', `.text', etc which "
+"will only be shown for files of that type and shared with the file menu. In "
+"addition, `.group' is shown only when multiple files are selected. `.all' is "
+"only for the menu."
+msgstr ""
+"Meniul 'Trimite la' furnizeaza cale rapida pentru a trimite un fi�ier unei "
+"aplica�ii. Aplica�iile sunt acelea listate �n urmatoarele directoare:\n"
+"\n"
+"%s\n"
+"%s\n"
+"Meniul 'Trimite la' poate fi deschis prin Shift+click �n meniu pe un "
+"fi�ier.\n"
+"\n"
+"Utilizare avansata:\n"
+"Po�i crea de asemenea subdirectoare numite `.text_html', `.text', etc. care "
+"vor fi afi�ate numai pentru fi�iere de acest tip. '.group' este afi�at numai "
+"c�nd sun selectate mai multe fi�iere."
+
+#: menu.c:1623
+msgid ""
+"I'll show you your SendTo directory now; you should symlink (Ctrl+Shift "
+"drag) any applications you want into it."
+msgstr ""
+"I-�i voi arata directorul TrimiteLa; trebuie sa legi (Ctrl+Shift trage) "
+"orice aplica�ie vrei �n el."
+
+#: menu.c:1626 menu.c:1666
+msgid "Your CHOICESPATH variable setting prevents customisations - sorry."
+msgstr "Setarea variabilei CHOICESPATH nu permite modificari - scuze."
+
+#: menu.c:1659
+#, c-format
+msgid ""
+"Any files placed in your Templates directories will appear on the `New' "
+"menu. Choosing one of them will make a copy of it as the new file.\n"
+"\n"
+"The following directories contain templates:\n"
+"\n"
+"%s\n"
+"%s\n"
+msgstr ""
+
+#: menu.c:1664
+#, fuzzy
+msgid ""
+"I'll show you your Templates directory now; you should place any template "
+"files you want inside it."
+msgstr ""
+"I-�i voi arata directorul TrimiteLa; trebuie sa legi (Ctrl+Shift trage) "
+"orice aplica�ie vrei �n el."
+
+#: menu.c:2012
+msgid "Customise"
+msgstr "Personalizeaza"
+
+#: menu.c:2110
+msgid "This is already the canonical name for this directory."
+msgstr "Acesta este deja un nume canonic pentru acest director."
+
+#: menu.c:2141
+msgid ""
+"You can't open a second view onto this directory because the `Unique "
+"Windows' option is turned on in the Options window."
+msgstr ""
+"Nu po�i deschide a doua fereastra a acestui director deoarece a fost "
+"selectata op�iunea 'Fereastra unica' �n ferestra op�iuni."
+
+#: menu.c:2313
+msgid "The clipboard is empty."
+msgstr ""
+
+#: menu.c:2358
+#, fuzzy, c-format
+msgid "Copy of %s"
+msgstr "?Copiaza %s ca %s ?"
+
+#: menu.c:2364
+#, fuzzy, c-format
+msgid "Copy(%d) of %s"
+msgstr "?Copiaza %s ca %s ?"
+
+#: menu.c:2430
+msgid "Duplicate ... ?"
+msgstr ""
+
+#: menu.c:2433
+msgid "Rename ... ?"
+msgstr "Redenume�te ... ?"
+
+#: menu.c:2436
+msgid "Symlink ... ?"
+msgstr "Legatura simbolica ... ?"
+
+#: menu.c:2439
+msgid "Shift Open ... ?"
+msgstr "Shift deschide ... ?"
+
+#: menu.c:2442
+msgid "Properties of ... ?"
+msgstr "Proprieta�ile ... ?"
+
+#: menu.c:2446
+#, fuzzy
+msgid "Extended attributes of ... ?"
+msgstr "Nu utiliza numele gazdei"
+
+#: menu.c:2450
+msgid "Set type of ... ?"
+msgstr "Seteaza tipul la ... ?"
+
+#: menu.c:2453
+msgid "Set run action for ... ?"
+msgstr "Seteaza ac�iunea de execu�ie pentru ... ?"
+
+#: menu.c:2456
+msgid "Set icon for ... ?"
+msgstr "Seteaza icoana pentru ... ?"
+
+#: menu.c:2459
+msgid "Send ... to ... ?"
+msgstr "Trimite ... la ... ?"
+
+#: menu.c:2462
+msgid "DELETE ... ?"
+msgstr "STERGE ... ?"
+
+#: menu.c:2465
+msgid "Count the size of ... ?"
+msgstr "Calculeaza dimensiunea pentru ... ?"
+
+#: menu.c:2468
+msgid "Set permissions on ... ?"
+msgstr "Seteaza drepturile ... ?"
+
+#: menu.c:2471
+msgid "Search inside ... ?"
+msgstr "Cauta �n interior ... ?"
+
+#: menu.c:2474
+#, fuzzy
+msgid "Copy ... to clipboard ?"
+msgstr "Copiaza ... ?"
+
+#: menu.c:2477
+msgid "Cut ... to clipboard ?"
+msgstr ""
+
+#: menu.c:2556
+msgid "You cannot do this to more than one item at a time"
+msgstr "Nu po�i face asta de mai multe ori �n acela�i timp"
+
+#: menu.c:2583
+msgid "Duplicate"
+msgstr ""
+
+#: menu.c:2588
+msgid "Rename"
+msgstr "Redenume�te"
+
+#: menu.c:2593
+msgid "Symlink"
+msgstr "Legatura simbolica"
+
+#: menu.c:2628
+msgid ""
+"User-definable shortcuts are disabled by default in Gtk2, and you have not "
+"enabled them. You can turn this feature on by:\n"
+"\n"
+"1) using an XSettings manager, such as ROX-Session or gnome-settings-daemon, "
+"or\n"
+"\n"
+"2) adding this line to ~/.gtkrc-2.0:\n"
+"\tgtk-can-change-accels = 1\n"
+"\t(this only works if NOT using XSETTINGS)"
+msgstr ""
+"Scurtaturile definite de utilizator sunt dezactivate implicit �n GTK2, �i nu "
+"po�i sa-l activezi. Po�i sa activezi aceasta op�iune prin:\n"
+"\n"
+"1) utiliz�nd un manger XSettings, ca ROX-Session sau gnome-settings-daemon, "
+"ori\n"
+"\n"
+"2) adaug�nd aceasta linie �n ~/.gtkrc-2.0�:\n"
+"\tgtk-can-change-accels = 1\n"
+"\t(aceasta func�ioneaza daca nu se utilizeaza XSettings)"
+
+#: menu.c:2639
+msgid ""
+"To set a keyboard short-cut for a menu item:\n"
+"\n"
+"- Open the menu over a filer window,\n"
+"- Move the pointer over the item you want to use,\n"
+"- Press the key you want attached to it.\n"
+"\n"
+"The key will appear next to the menu item and you can just press that key "
+"without opening the menu in future."
+msgstr ""
+"Pentru a seta o scurtatura catre tastatura a unui element al meniului:\n"
+"\n"
+"- deschide meniul �ntr-o fereastra a managerului de fi�iere,\n"
+"- muta indicatorul mouse-ului deasupra elemntului dorit,\n"
+"- apasa tasta pe care vrei sa o ata�ezi.\n"
+"\n"
+"Tasta va aparea l�nga elementul de meniu �i po�i apasa tasta fara a deschide "
+"meniul."
+
+#: menu.c:2654
+msgid "Set keyboard shortcuts"
+msgstr "Seteaza scurtaturile pentru tastatura"
+
+#: minibuffer.c:129
+msgid "Goto:"
+msgstr "Dute la:"
+
+#: minibuffer.c:130
+msgid "Shell:"
+msgstr "Shell:"
+
+#: minibuffer.c:131
+msgid "Select If:"
+msgstr "Selecteaza daca:"
+
+#: minibuffer.c:132
+msgid "Select Named:"
+msgstr "Selecteaza dupa nume:"
+
+#: minibuffer.c:133
+msgid "Pattern:"
+msgstr "Tipar:"
+
+#: minibuffer.c:269
+msgid ""
+"Enter the name of a file and I'll display it for you. Press Tab to fill in "
+"the longest match. Escape to close the minibuffer."
+msgstr ""
+"Introdu numele unui fi�ier �i fi�ierul va fi afi�at. Apasa tasta Tab pentru "
+"a gasi cea mai lunga potrivire. Apasa tasta Esc pentru a �nchide minibuffer."
+
+#: minibuffer.c:275
+msgid ""
+"Enter a shell command to execute. Click on a file to add it to the buffer."
+msgstr ""
+"Introdu o comanda shell pentru afi executata. Fa click pe un fi�ier pentru "
+"afi adaugat la buffer."
+
+#: minibuffer.c:280
+#, fuzzy
+msgid ""
+"Enter a file name pattern to select all matching files:\n"
+"\n"
+"? means any character\n"
+"* means zero or more characters\n"
+"[aA] means 'a' or 'A'\n"
+"[a-z] means any character from a to z (lowercase)\n"
+"*.png means any name ending in '.png'"
+msgstr ""
+"Introdu un tipar pentru a selecta fi�ierele care se potrivesc:\n"
+"\n"
+"? �nseamna orice caracter\n"
+"* �nseamna zero sau mai multe caractere\n"
+"[aA] �nseamna 'a' ori 'A'\n"
+"[a-z] �nseamna toate caracterele de la a la z (litere mici)\n"
+"*.png �nseamna orice nume care se termina cu '.png'"
+
+#: minibuffer.c:292
+msgid ""
+"Enter a pattern to match for files to be shown.  An empty filter turns the "
+"filter off."
+msgstr ""
+"Introdu un tipar pentru a afi�a fi�ierele care se potrivesc. Un filtru gol "
+"dezactiveaza filtrarea."
+
+#: minibuffer.c:925
+msgid "Invalid Find condition"
+msgstr "Condi�ie de cautare invalida"
+
+#: mount.c:103
+#, c-format
+msgid "File system table \"%s\" not found, cannot monitor system mounts"
+msgstr ""
+
+#: mount.c:393
+#, c-format
+msgid "%s total, %s used, %s free (%.1f %%)"
+msgstr ""
+
+#: options.c:275
+msgid "Rox-Filer2 has converted your Options file to the new XML format"
+msgstr ""
+"Managerul de fi�iere Rox-Filer2 a convertit fi�ierul de Op�iuni �n noul "
+"format XML"
+
+#: options.c:535 options.c:1256
+msgid "(use default)"
+msgstr "(folose�te setarile implicite)"
+
+#: options.c:805
+#, c-format
+msgid "Internal error: %s unreadable"
+msgstr "Eroare interna�: %s nedisponibila"
+
+#: options.c:914
+msgid "Options"
+msgstr "Op�iuni"
+
+#: options.c:959
+msgid "_Revert"
+msgstr "_Revenire"
+
+#: options.c:965
+msgid "Restore all choices to how they were when the Options box was opened."
+msgstr ""
+"Restabile�te toate op�iunile la fel cum au fost c�nd a fost deschisa "
+"fereastra Op�iuni."
+
+#: options.c:980
+#, c-format
+msgid ""
+"Choices will be saved as:\n"
+"%s"
+msgstr ""
+"Op�iunile vor fi salvate ca:\n"
+"%s"
+
+#: options.c:988
+msgid "(saving disabled by CHOICESPATH)"
+msgstr "(salvarea dezactivata de CHOICESPATH)"
+
+#: options.c:1161 usericons.c:462
+#, c-format
+msgid "Error saving %s: %s"
+msgstr "Eroare salv�nd %s: %s"
+
+#: options.c:1794
+msgid "Missing '='"
+msgstr "Lipse�te '='"
+
+#: panel.c:325
+#, fuzzy, c-format
+msgid "Unable to replace '%s'"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: panel.c:329
+#, c-format
+msgid "Unable to save '%s'"
+msgstr ""
+
+#: panel.c:532
+msgid "Your old panel file has been converted to the new XML format."
+msgstr "Fi�ierul vechi al panoului a fost convertit �n noul format XML."
+
+#: panel.c:640
+msgid ""
+"You have tried to close a panel via the window manager - I usually find that "
+"this is accidental... really close?"
+msgstr ""
+"Ai �ncercat sa �nchizi un panou prin intermediul managerului de ferestre - "
+"In mod uzual aceasta este o eroare... vrei sa-l �nchizi ?"
+
+#: panel.c:741
+msgid "Missing < or > in panel config file"
+msgstr "Lipse�te '<' ori '>' �n fi�ierul de configurare al panoului"
+
+#: panel.c:1613
+#, c-format
+msgid "Error saving panel %s: %s"
+msgstr "Eroare �n crearea panoului %s: %s"
+
+#: panel.c:1938
+msgid "Applet quit without ever creating a widget!"
+msgstr "Applet-ul �i-a �ncheiat execu�ia fara a crea un obiect!"
+
+#: panel.c:2034
+#, c-format
+msgid ""
+"Error running applet:\n"
+"%s"
+msgstr ""
+"Eroare �n rularea applet-ului:\n"
+"%s"
+
+#: panel.c:2690
+#, fuzzy
+msgid "Are you sure you want to remove this panel from the desktop?"
+msgstr "E�ti sigur ca vrei sa deschizi fereastra %d ?"
+
+#: panel.c:2693 panel.c:2720
+#, fuzzy
+msgid "Remove Panel"
+msgstr "Indeparteaza elementul(le)"
+
+#: panel.c:2716
+#, fuzzy
+msgid "Panel Options..."
+msgstr "Op�iuni..."
+
+#: panel.c:2801
+#, c-format
+msgid "Xinerama monitor %d unavailable"
+msgstr "Monitorul Xinerama %d nu este disponibil"
+
+#: panel.c:2836
+msgid "Top"
+msgstr ""
+
+#: panel.c:2838
+#, fuzzy
+msgid "Bottom"
+msgstr "Marginea inferioara"
+
+#: panel.c:2840
+msgid "Left"
+msgstr ""
+
+#: panel.c:2842
+msgid "Right"
+msgstr ""
+
+#: panel.c:2844
+#, fuzzy
+msgid "Default"
+msgstr "Dimensiune implicita:"
+
+#: panel.c:2848
+#, fuzzy
+msgid "Unknown side"
+msgstr "Necunoscut"
+
+#: pinboard.c:354
+msgid "Your old pinboard file has been converted to the new XML format."
+msgstr "Fi�ierul vechi al scurtaturii a fost convertit �n noul format XML."
+
+#: pinboard.c:730
+msgid ""
+"The backdrop handler must be an application directory. Drag an application "
+"directory into the Set Backdrop dialog box, or (for programmers) pass it to "
+"the SOAP SetBackdropApp method."
+msgstr ""
+"Gestionarul fundalului trebuie sa fie un director aplica�ie. Trage un "
+"director aplica�ie �n fereastra de dialog 'Seteaza fundalul', ori (pentru "
+"programatori) transmite-l metodei SOAP SetBackdropApp."
+
+#: pinboard.c:749
+msgid ""
+"You can only set the backdrop to an image or to a program which knows how to "
+"manage Rox-Filer2's backdrop.\n"
+"\n"
+"Programmers: the application's AppInfo.xml must contain the CanSetBackdrop "
+"element, as described in Rox-Filer2's manual."
+msgstr ""
+"Po�i seta fundalul numai cu o imagine sau un program care �tie sa gestioneze "
+"fundalul managerului de fi�iere Rox-Filer2.\n"
+"\n"
+"Programatori: fi�ierul AppInfo.xml trebuie sa con�ina elementul "
+"CanSetBackdrop, cum este descris �n manualul Rox-Filer2."
+
+#: pinboard.c:769
+msgid "Set backdrop"
+msgstr "Seteaza imaginea din fundal"
+
+#: pinboard.c:780
+msgid "Choose a style and drag an image in:"
+msgstr "Alege un stil �i trage o imagine �n el:"
+
+#: pinboard.c:793
+msgid "Centre the image without scaling it"
+msgstr "Centreaza imaginea fara a o scala"
+
+#: pinboard.c:794
+msgid "Centre"
+msgstr "Centrat"
+
+#: pinboard.c:795
+msgid "Scale the image to fit the backdrop area, without distorting it"
+msgstr "Scaleaza imaginea pentru a umple fundalul, fara a o distorsiona"
+
+#: pinboard.c:797
+msgid "Scale"
+msgstr "Scaleaza"
+
+#: pinboard.c:798
+#, fuzzy
+msgid ""
+"Scale the image to fit the backdrop area, regardless of image dimensions - "
+"overscale"
+msgstr "Scaleaza imaginea pentru a umple fundalul, fara a o distorsiona"
+
+#: pinboard.c:800
+#, fuzzy
+msgid "Fit"
+msgstr "Filtru"
+
+#: pinboard.c:801
+msgid "Stretch the image to fill the backdrop area"
+msgstr "Dimensioneaza imaginea pentru a umple fundalul"
+
+#: pinboard.c:802
+msgid "Stretch"
+msgstr "Dimensioneaza"
+
+#: pinboard.c:803
+msgid "Tile the image over the backdrop area"
+msgstr "Paveaza fundalul cu imaginea respectiva"
+
+#: pinboard.c:804
+msgid "Tile"
+msgstr "Paveaza"
+
+#: pinboard.c:809
+msgid "Drop an image here"
+msgstr "Elibereaza o imagine aici"
+
+#: pinboard.c:870
+msgid ""
+"No pinboard was in use... the 'Default' pinboard has been selected. Use 'rox "
+"-p=Default' to turn it on in future."
+msgstr ""
+"Nici o scurtatura nua fost �n uz... scurtatura 'Implicita'a fost selectata. "
+"Utilizeaza  'rox -p=Default' pentru a activa aceasta op�iune."
+
+#: pinboard.c:964
+msgid ""
+"Only files (and certain applications) can be used to set the background "
+"image."
+msgstr ""
+"Numai fi�iere (�i anumite aplica�ii) pot fi utilizate pentru a seta imaginea "
+"de fundal."
+
+#: pinboard.c:1624
+msgid "Missing '>' in icon label"
+msgstr "Lipse�te '>' �n textul icoanei"
+
+#: pinboard.c:1633
+msgid "Missing ',' after icon label"
+msgstr "Lipse�te ',' dupa textul icoanei"
+
+#: pinboard.c:1721
+#, c-format
+msgid "Error saving pinboard %s: %s"
+msgstr "Eroare �n salvarea scurtaturii %s�: %s"
+
+#: pinboard.c:2266
+msgid "Backdrop..."
+msgstr "Imagine de fond..."
+
+#: pinboard.c:2269
+#, fuzzy
+msgid "Add Panel"
+msgstr "Panouri"
+
+#: pinboard.c:2363
+#, c-format
+msgid ""
+"Error loading backdrop image:\n"
+"%s\n"
+"Backdrop removed."
+msgstr ""
+"Eroare �n �ncarcarea imaginii de fundal:\n"
+"%s\n"
+"Fundal �ndepartat."
+
+#: pixmaps.c:1001
+#, c-format
+msgid ""
+"Can't delete thumbnails in %s:\n"
+"%s"
+msgstr ""
+"Nu pot �terge monstrele de imagine din %s�:\n"
+"%s"
+
+#: pixmaps.c:1022
+msgid "There are no thumbnails to delete"
+msgstr "Nu sunt monstre de imagini de �ters"
+
+#: pixmaps.c:1035
+msgid "Purge thumbnails disk cache"
+msgstr "Gole�te depozitul de monstre de imagini de pe disc"
+
+#: remote.c:722
+#, c-format
+msgid "Unknown style '%s'"
+msgstr "Stil necunoscut '%s'"
+
+#: remote.c:744
+#, c-format
+msgid "Unknown details type '%s'"
+msgstr "Tip de detalii necunoscut '%s'"
+
+#: remote.c:772
+#, c-format
+msgid "Unknown sorting type '%s'"
+msgstr "Tip de sortare necunoscut '%s'"
+
+#: remote.c:1243
+#, c-format
+msgid "Attempt to invoke unknown SOAP method '%s'"
+msgstr "Tentativa de invocare aunei metode SOAP necunoscute '%s'"
+
+#: run.c:99 run.c:152
+#, c-format
+msgid "Program %s not found - deleted?"
+msgstr "Programul %s nu este gasit - �ters ?"
+
+#: run.c:302
+#, c-format
+msgid "File doesn't exist, or I can't access it: %s"
+msgstr "Fi�ierul nu exista, sau nu poate fi accesat�: %s"
+
+#: run.c:307
+#, c-format
+msgid "I don't know how to open '%s'"
+msgstr "Nu �tiu cum sa-l deschid '%s'"
+
+#: run.c:338
+#, fuzzy, c-format
+msgid "'%s' is not a valid URI"
+msgstr "'%s' nu mai este o legatura simbolica"
+
+#: run.c:349
+#, fuzzy, c-format
+msgid "%s not accessable"
+msgstr "Diectorul '%s' nu este accesibil"
+
+#: run.c:357
+#, fuzzy, c-format
+msgid "Non-local URL %s"
+msgstr "%s neexecutabil"
+
+#: run.c:374
+#, fuzzy, c-format
+msgid "%s: no handler for %s"
+msgstr "Eroare �n gestionarul %s�: %s"
+
+#: run.c:394
+msgid ""
+"Application:\n"
+"This is an application directory - you can run it as a program, or open it "
+"(hold down Shift while you open it). Most applications provide their own "
+"help here, but this one doesn't."
+msgstr ""
+"Aplicatie:\n"
+"Acesta este un director aplica�ie - po�i sa-l rulezi ca un program, ori po�i "
+"sa-l deschizi (�ine tasta Shift apasata �n timp ce-l deschizi)."
+
+#: run.c:478
+#, c-format
+msgid "Could not send data to program: %s"
+msgstr "Nu se pot trimite datele catre program: %s"
+
+#: run.c:508
+#, c-format
+msgid "Could not read link: %s"
+msgstr "Nu se poate citi legatura: %s"
+
+#: run.c:536
+#, c-format
+msgid "Broken symlink (or you don't have permission to follow it): %s"
+msgstr "Legatura simbolica incorecta (sau nu ai permisiunea s-o folose�ti): %s"
+
+#: run.c:573
+#, fuzzy, c-format
+msgid ""
+"No run action specified for files of this type (%s/%s) - you can set a run "
+"action by choosing `Set Run Action' from the File menu, or you can just drag "
+"the file to an application.%s"
+msgstr ""
+"Nu este specificata o ac�iune de execu�ie pentru fi�ierele de tipul (%s/%s) "
+"- po�i seta o ac�iune de execu�ie aleg�nd 'Seteaza ac�iunea de execu�ie' di "
+"meniul Fi�ier, sau po�i trage un fi�ier peste o aplica�ie"
+
+#: run.c:579
+msgid ""
+"\n"
+"\n"
+"Note: If this is a computer program which you want to run, you need to set "
+"the execute bit by choosing Permissions from the File menu."
+msgstr ""
+
+#: run.c:753
+#, c-format
+msgid ""
+"Executable '%s' is world-writeable! Refusing to run. Please change the "
+"permissions now (this problem may have been caused by a bug in earlier "
+"versions of the filer).\n"
+"\n"
+"Having (non-symlink) run actions world-writeable means that other people who "
+"use your computer can replace your run actions with malicious versions.\n"
+"\n"
+"If you trust everyone who could write to these files then you needn't worry. "
+"Otherwise, you should check, or even just delete, all the existing run "
+"actions."
+msgstr ""
+"Executabilul '%s' poate fi scris de toata lumea! Refuza sa ruleze. Te rog "
+"schimba drepturile (aceasta problema poate fi cauzata de o greseala �n "
+"versiunile anterioare ale managerului de fi�iere).\n"
+"\n"
+"Av�nd ac�iuni de execu�ie care pot scrise de oricine, asta �nseamna ca "
+"oricine poate �nlocui ac�iunea de execu�ie cu una mali�ioasa.\n"
+"\n"
+"Daca ai �ncredere �n cei ce pot scrie aceste fi�iere, atunci nu este nici o "
+"problema. Altfel, trebuie sa verifici, sau sa �tergi toate ac�iunile de "
+"execu�ie."
+
+#: run.c:766
+msgid "go-w (Fix security problem)"
+msgstr "go-w (Corecteaza problema de securitate)"
+
+#: support.c:272
+msgid "B"
+msgstr "O"
+
+#: support.c:351
+msgid "byte"
+msgstr "octet"
+
+#: support.c:1607 support.c:1661
+#, fuzzy, c-format
+msgid "Failed to open and stat file '%s': %s"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: support.c:1618 support.c:1672
+#, fuzzy, c-format
+msgid "Failed to mmap file '%s': %s"
+msgstr ""
+"Imposibil de a desface legatura '%s' :\n"
+"%s"
+
+#: toolbar.c:117
+msgid "Close"
+msgstr "Inchide"
+
+#: toolbar.c:117
+msgid "Close filer window"
+msgstr "Inchide fereastra managerului de fi�iere"
+
+#: toolbar.c:121
+msgid "Up"
+msgstr "Sus"
+
+#: toolbar.c:121
+msgid "Change to parent directory"
+msgstr "Schimba la fereastra parinte"
+
+#: toolbar.c:125
+msgid "Home"
+msgstr "Acasa"
+
+#: toolbar.c:125
+msgid "Change to home directory"
+msgstr "Schimba la directorul acasa"
+
+#: toolbar.c:129
+msgid "Bookmarks"
+msgstr "Semne"
+
+#: toolbar.c:129
+msgid "Bookmarks menu"
+msgstr "Meniul semnelor"
+
+#: toolbar.c:133
+msgid "Scan"
+msgstr "Scaneaza"
+
+#: toolbar.c:133
+msgid "Rescan directory contents"
+msgstr "Rescaneaza con�inutul directorului"
+
+#: toolbar.c:137
+msgid "Change icon size"
+msgstr "Schimba dimensiunea icoanei"
+
+#: toolbar.c:141
+msgid "Automatic size mode"
+msgstr "Modul de dimensiune automat"
+
+#: toolbar.c:145
+msgid ""
+"Left: toggle List View\n"
+"Center: Return to normal Icon View\n"
+"Right: cycle extra details"
+msgstr ""
+
+#: toolbar.c:151
+msgid "Sort"
+msgstr "Sorteaza"
+
+#: toolbar.c:151
+msgid "Change sort criteria"
+msgstr "Schimba criteriul de sortare"
+
+#: toolbar.c:155
+msgid "Hidden"
+msgstr "Ascuns"
+
+#: toolbar.c:155
+msgid ""
+"Left: Show/hide hidden files\n"
+"Center: Reset to defaults\n"
+"Right: Show/hide thumbnails"
+msgstr ""
+
+#: toolbar.c:161
+msgid "Dirs"
+msgstr ""
+
+#: toolbar.c:161
+msgid ""
+"Left: Show dirs only\n"
+"Right: Show files only"
+msgstr ""
+
+#: toolbar.c:166
+msgid "Select all/invert selection"
+msgstr "Selecteaza tot/inverseaza selec�ia"
+
+#: toolbar.c:170
+msgid ""
+"Left: New Directory\n"
+"Center: New Blank file\n"
+"Right: Menu"
+msgstr ""
+
+#: toolbar.c:176
+msgid "Show Rox-Filer2 help"
+msgstr "Arata documenta�ia Rox-Filer2"
+
+#: toolbar.c:239
+#, c-format
+msgid " (%u hidden)"
+msgstr " (%u ascuns(e))"
+
+#: toolbar.c:247 tips:61
+msgid "items"
+msgstr "obiecte"
+
+#: toolbar.c:247
+msgid "item"
+msgstr "obiect"
+
+#: toolbar.c:250
+#, c-format
+msgid "No items%s"
+msgstr "Nu exista obiecte%s"
+
+#: toolbar.c:269
+#, c-format
+msgid "%u selected (%s)"
+msgstr "%u selectat(e) (%s)"
+
+#: toolbar.c:464
+msgid "Sort by name"
+msgstr "Sortat dupa nume"
+
+#: toolbar.c:464
+msgid "Sort by type"
+msgstr "Sortat dupa tip"
+
+#: toolbar.c:464
+msgid "Sort by date"
+msgstr "Sortat dupa data"
+
+#: toolbar.c:465
+msgid "Sort by size"
+msgstr "Sortat dupa dimensiune"
+
+#: toolbar.c:465
+msgid "Sort by owner"
+msgstr "Sortat dupa proprietar"
+
+#: toolbar.c:465
+msgid "Sort by group"
+msgstr "Sortat dupa grup"
+
+#: toolbar.c:499
+msgid "ascending"
+msgstr "ascendent"
+
+#: toolbar.c:499
+msgid "descending"
+msgstr "descendent"
+
+#: type.c:215
+msgid "Sym link"
+msgstr "Legatura"
+
+#: type.c:217
+msgid "Mount point"
+msgstr "Punct de montare"
+
+#: type.c:219
+msgid "App dir"
+msgstr "Dir. ap."
+
+#: type.c:226
+msgid "Dir"
+msgstr "Dir"
+
+#: type.c:228
+msgid "Char dev"
+msgstr "Disp. car."
+
+#: type.c:230
+msgid "Block dev"
+msgstr "Disp. bloc"
+
+#: type.c:232
+msgid "Pipe"
+msgstr "Teava"
+
+#: type.c:234
+msgid "Socket"
+msgstr "Socket"
+
+#: type.c:236
+msgid "Door"
+msgstr "Poarta"
+
+#: type.c:239
+msgid "Unknown"
+msgstr "Necunoscut"
+
+#: type.c:693
+msgid ""
+"Enter a shell command which will load \"$@\" into a suitable program. Eg:\n"
+"\n"
+"gimp \"$@\""
+msgstr ""
+"Introdu o comanda shell care va fi �ncarcata \"$@\" �ntr-un program adecvat. "
+"Ex.:\n"
+"\n"
+"gimp \"$@\""
+
+#: type.c:867
+msgid "This is not a program! Give me an application instead!"
+msgstr "Acesta nu este un program! Este necesara o aplica�ie adevarata!"
+
+#: type.c:927
+msgid "No run action defined"
+msgstr "Nu a fost definita o ac�iune de execu�ie"
+
+#: type.c:931
+#, c-format
+msgid "Error in handler %s: %s"
+msgstr "Eroare �n gestionarul %s�: %s"
+
+#: type.c:946
+#, c-format
+msgid "Invalid application %s (bad AppRun)"
+msgstr "Aplica�ia %s este invalida"
+
+#: type.c:957
+#, c-format
+msgid "Non-executable %s"
+msgstr "%s neexecutabil"
+
+#: type.c:990
+msgid "Set run action"
+msgstr "Seteaza ac�iunea de execu�ie"
+
+#: type.c:996
+msgid ""
+"If a handler for the specific type isn't set up, use this as the default."
+msgstr ""
+"Daca nu este setat un gestionar pentru acest tip specific, utilizeaza "
+"aceastaca setare implicita."
+
+#: type.c:998
+#, c-format
+msgid "Set default for all `%s/<anything>'"
+msgstr "Seteaza setarile implicite pentru toate `%s/<orice>'"
+
+#: type.c:1002
+msgid "Use this application for all files with this MIME type."
+msgstr "Utilizeaza aceasta pentru toate fi�ierele cu acest tip MIME."
+
+#: type.c:1004
+#, c-format
+msgid "Only for the type `%s' (%s/%s)"
+msgstr "Numai pentru tipul `%s' (%s/%s)"
+
+#: type.c:1010
+msgid "Drop a suitable application here"
+msgstr "Elibereaza o aplica�ie aici"
+
+#: type.c:1025
+msgid "OR"
+msgstr "OR"
+
+#: type.c:1033
+msgid "Enter a shell command:"
+msgstr "Introdu o camanda shell:"
+
+#: type.c:1062
+#, fuzzy
+msgid "_Use Command"
+msgstr "Comanda:"
+
+#: type.c:1092
+msgid ""
+"A run action already exists and is quite a big program - are you sure you "
+"want to delete it?"
+msgstr ""
+"O ac�iune de execu�ie exista deja �i este un program mare - chiar vrei s-o "
+"�tergi?"
+
+#: type.c:1103
+#, c-format
+msgid "Can't remove %s: %s"
+msgstr "Nu pot �ndeparta %s : %s"
+
+#: type.c:1140
+msgid "Choices saving is disabled by CHOICESPATH variable"
+msgstr "Salvarea schimbarilor este dezacyivata de variabila CHOICESPATH"
+
+#: type.c:1442
+#, c-format
+msgid ""
+"Failed to create symlink '%s':\n"
+"%s"
+msgstr ""
+"Imposibil de creat legatura simbolica '%s' :\n"
+"%s"
+
+#: usericons.c:189
+msgid "The pathname you gave does not exist. The icon has not been changed."
+msgstr "Calea pe care ai introdu-so nu exista. Icoana nu a fost schimbata."
+
+#: usericons.c:199 usericons.c:628
+msgid ""
+"Unable to load image file -- maybe it's not in a format I understand, or "
+"maybe the permissions are wrong?\n"
+"The icon has not been changed."
+msgstr ""
+"Imposibil de �ncarcat fi�ierul imagine - poate este �ntr-un format "
+"necunoscut, sau drepturile de acces nu permit acest lucru?\n"
+"Icoana nu a fost schimbata."
+
+#: usericons.c:245
+#, c-format
+msgid "Really delete icon '%s'?"
+msgstr "Chiar vrei sa �tergi icoana '%s'�?"
+
+#: usericons.c:249
+#, c-format
+msgid ""
+"Can't delete '%s':\n"
+"%s"
+msgstr ""
+"Nu pot �terge '%s' :\n"
+"%s"
+
+#: usericons.c:282
+msgid "Set icon"
+msgstr "Seteaza icoana"
+
+#: usericons.c:291
+msgid ""
+"Use a copy of the image as the default for all files of these MIME types."
+msgstr ""
+"Utilizeaza o copie a imaginii ca implicita pentru toate fi�ierele cu acest "
+"tip MIME."
+
+#: usericons.c:293
+#, c-format
+msgid "Set icon for all `%s/<anything>'"
+msgstr "Seteaza icoana pentru toate `%s/<orice>'"
+
+#: usericons.c:298
+msgid "Use a copy of the image for all files of this MIME type."
+msgstr ""
+"Utilizeaza o copie a imaginii pentru toate fi�ierele cu acest tip MIME."
+
+#: usericons.c:300
+#, c-format
+msgid "For all files of type `%s' (%s/%s)"
+msgstr "Pentru toate fi�ierele de acest tip `%s' (%s/%s)"
+
+#: usericons.c:306
+msgid ""
+"Add the file and image filenames to your personal list. The setting will be "
+"lost if the image or the file is moved."
+msgstr ""
+"Adauga fi�ierul �i numele fi�ierului imagine la lista personala. Setarile se "
+"vor pierde daca imaginea ori fi�ierul vor fi mutate."
+
+#: usericons.c:309
+#, c-format
+msgid "Only for the file `%s'"
+msgstr "Numai pentru acest fi�ier `%s'"
+
+#: usericons.c:317
+msgid ""
+"Copy the image inside the directory, as a hidden file called '.DirIcon'. All "
+"users will then see the icon, and you can move the directory around safely. "
+"This is usually the best option if you can write to the directory."
+msgstr ""
+"Copiaza imaginea �n director, ca un fi�ier ascuns numit '.DirIcon'. To�i "
+"utilizatorii vor vedea icoana, �i directorul se paote muta �n siguran�a."
+
+#: usericons.c:323
+msgid "Copy image into directory"
+msgstr "Copiaza imaginea �n directorul"
+
+#: usericons.c:329
+msgid "Drop an icon file here"
+msgstr "Elibereaza un fi�ier icoana aici"
+
+#: usericons.c:599
+msgid "Setting icon disabled by CHOICESPATH"
+msgstr "Setarea iconelor dezactivata de CHOICESPATH "
+
+#: usericons.c:643
+#, c-format
+msgid ""
+"Error creating image '%s':\n"
+"%s"
+msgstr ""
+"Eraore �n crearea imaginii '%s'�:\n"
+"%s"
+
+#: view_details.c:1011
+msgid "Mono font"
+msgstr ""
+
+#: view_details.c:1012
+msgid "Font for displaying mono-spaced text"
+msgstr ""
+
+#: view_details.c:1119
+msgid "_Name"
+msgstr "_Nume"
+
+#: view_details.c:1127
+msgid "_Type"
+msgstr "_Tip"
+
+#: view_details.c:1136
+msgid "_Size"
+msgstr "_Dimensiune"
+
+#: view_details.c:1148
+msgid "_Permissions"
+msgstr "_Drepturi"
+
+#: view_details.c:1159
+msgid "_Owner"
+msgstr "_Proprietar"
+
+#: view_details.c:1167
+msgid "_Group"
+msgstr "_Grup"
+
+#: view_details.c:1175
+msgid "Last _Modified"
+msgstr "Ultima _modificare"
+
+#: view_details.c:1187
+msgid "Last _Changed"
+msgstr ""
+
+#: view_details.c:1199
+msgid "Last _Accessed"
+msgstr ""
+
+#: xtypes.c:790 tips:300
+msgid "Extended attributes"
+msgstr ""
+
+#: tips:1
+msgid "Filer windows"
+msgstr "Fereastra managerului de fi�iere"
+
+#: tips:2
+msgid "Auto-resize filer windows"
+msgstr "Auto-dimensioneaza fereastra managerului de fi�iere"
+
+#: tips:3
+msgid "Never automatically resize"
+msgstr "Nu redimensiona automat fereastra managerului de fi�iere"
+
+#: tips:4
+msgid ""
+"You'll have to resize windows manually, using the window manager, the "
+"`Resize Window' menu entry or by double-clicking on the window background."
+msgstr ""
+"Va trebui sa redimensionezi fereastra manual, utiliz�nd managerul de "
+"ferestre, fie prin meniul 'Redimensioneaza fereastra' sau fac�nd dublu click "
+"�n fundalul ferestrei"
+
+#: tips:5
+msgid "Resize when changing the display style"
+msgstr "Redimensioneaza c�nd schimb stilul de afi�aj"
+
+#: tips:6
+msgid ""
+"Changing the size of the icons or which details are displayed will resize "
+"the window for you."
+msgstr ""
+"Schimb�nd dimensiunea icoanelor sau care detalii sunt afi�ate fereastra se "
+"va redimensiona pentru d-voastra."
+
+#: tips:7
+msgid "Always resize"
+msgstr "Intodeauna se redimensioneaza"
+
+#: tips:8
+msgid ""
+"The filer will resize windows whenever it seems useful (that is, when "
+"changing directory or display style)."
+msgstr ""
+"Managerul de fi�iere va redimensiona ferestrele c�nd va crede de cuviin�a "
+"(c�nd se va schimba directorul ori stilul de afi�aj)."
+
+#: tips:9
+msgid "Largest window size:"
+msgstr "Fereastra cu dimensiunea cea mai mare:"
+
+#: tips:10
+msgid "%"
+msgstr "%"
+
+#: tips:11
+msgid ""
+"The largest size, as a percentage of the screen size, that the auto-resizer "
+"will resize a window to."
+msgstr ""
+"Cea mai mare dimensiune, ca procentaj din dimensiunea ecranului, dimensiune "
+"la care ferestrele vor fi dimensionate."
+
+#: tips:12
+msgid "Window behaviour"
+msgstr "Comportamentul ferestrelor"
+
+#: tips:13
+msgid "Short titlebar flags"
+msgstr "Prescurtari �n bara de titlu"
+
+#: tips:14
+msgid ""
+"Use single letters instead of words for Scanning, All and Thumbs indicators "
+"in the titlebar."
+msgstr ""
+"Se utilizeaza litere �n schimbul unor cuvinte ca Scaneaza, Toate sau Index "
+"in bara de titlu."
+
+#: tips:15
+msgid "Unique windows"
+msgstr "Fereastra unica"
+
+#: tips:16
+msgid ""
+"If you open a directory and that directory is already displayed in another "
+"window, then this option causes the other window to be closed."
+msgstr ""
+"Daca deschizi un director �i acesta mai este deschis �ntr-o alta fereastra, "
+"atunci aceasta op�iune cauzeaza �nchiderea celeilalte ferestre."
+
+#: tips:17
+msgid "Close window when dir missing"
+msgstr ""
+
+#: tips:18
+msgid ""
+"If a directory that is open in a window disappears, (deleted or unmounted) "
+"automatically close window."
+msgstr ""
+
+#: tips:19
+msgid "New window on button 1"
+msgstr "O noua ferestra la butonul 1"
+
+#: tips:20
+msgid ""
+"Clicking with mouse button 1 (usually the left button) opens a directory in "
+"a new window with this turned on. Clicking with the button-2 (middle) will "
+"reuse the current window."
+msgstr ""
+"Fac�nd click cu butonul 1 al mouse-ului (butonul din st�nga) se deschide un "
+"director �ntr-o fereastra noua. Fac�nd click cu butonul 2 al mouse-ului (din "
+"dreapta) se va folosi ferestra curenta."
+
+#: tips:21
+msgid "Single-click navigation"
+msgstr "Navigare cu un singur click"
+
+#: tips:22 tips:139
+msgid ""
+"Clicking on an item opens it with this on. Hold down Control to select the "
+"item instead. If off, clicking once selects an item; double click to open "
+"things."
+msgstr ""
+"Fac�nd click pe un element ele se va deschide. Se apasa tasta Ctrl pentru a "
+"selecta acel obiect. Daca nu este activata aceasta op�iune, fac�nd un click "
+"pe element el se va selecta, la doua el se va deschide."
+
+#: tips:23
+msgid "Double-click on background resizes"
+msgstr "Dublu click �n fundalul ferestrei redimensioneaza fereastra"
+
+#: tips:24
+msgid ""
+"If on then double clicking on the window background resizes the window, just "
+"like clicking on the Automatic size mode button in the toolbar."
+msgstr ""
+"Daca este activa, dublu click �n fundalul ferestrei va redimensiona "
+"fereastra, ca �i cum s-ar apasa butonul de dimensionare Automatic din bara "
+"de unelte."
+
+#: tips:25
+msgid "Sorting"
+msgstr "Sorteaza"
+
+#: tips:26
+msgid "Directories come first (for sort by name)"
+msgstr "Directoarele sunt afi�ate primele (sortate dupa nume)"
+
+#: tips:27
+msgid ""
+"If this is on then directories will always appear before anything else when "
+"sorting by name."
+msgstr ""
+"Daca aceasta op�iune este activa atunci acestea vor aparea �naintea "
+"tuturora, sortate dupa nume."
+
+#: tips:28
+msgid "Capitalised names first (for sort by name)"
+msgstr "Numele cu majuscule sunt primele (pentru sortarea dupa nume)"
+
+#: tips:29
+msgid ""
+"If on, all filenames starting with a capital letter come before filenames "
+"starting with lowercase ones."
+msgstr ""
+"Daca aceasta op�iune este activa atunci toate fi�ierele al caror nume �ncepe "
+"cu litera mare vor fi afi�ate �naintea celor care �ncep cu litera mica."
+
+#: tips:31
+msgid "Default settings for new windows"
+msgstr "Op�iuni implicite pentru o noua ferestra"
+
+#: tips:32
+msgid "Inherit options from source window"
+msgstr "Mo�tene�te op�iunile de la fereastra sursa"
+
+#: tips:33
+msgid ""
+"If this is on then display options for a new window are inherited from the "
+"source window if possible, otherwise they are set to the defaults below."
+msgstr ""
+"Daca aceasta op�iune este activa, atunci op�iunile de afi�are pentru o noua "
+"fereastra sunt mo�tenite de la fereastra sursa, daca este posibil, daca nu, "
+"se adopta setarile implicite."
+
+#: tips:34
+msgid "View type:"
+msgstr "Tipul de afi�aj:"
+
+#: tips:37
+msgid "Sort by:"
+msgstr "Sorteaza dupa:"
+
+#: tips:39 tips:57 tips:82
+msgid "Type"
+msgstr "Tip"
+
+#: tips:40
+msgid "Date"
+msgstr "Data"
+
+#: tips:42
+msgid "Show hidden files"
+msgstr "Arata fi�ierele ascunse"
+
+#: tips:43
+msgid ""
+"If this is on then files whose names start with a dot are shown too, "
+"otherwise they are hidden."
+msgstr ""
+"Daca aceasta op�iune este activa atunci toate fi�ierele al caror nume �ncepe "
+"cu punct vor fi afi�te, altfel nu."
+
+#: tips:44
+#, fuzzy
+msgid "Show extended attribute indicator"
+msgstr "Nu utiliza numele gazdei"
+
+#: tips:45
+msgid ""
+"If this is on then files which have one or more extended attributes set will "
+"have an emblem added to indicate this."
+msgstr ""
+
+#: tips:46 tips:47
+msgid "Icon View"
+msgstr "Afi�eaza sub forma de icoane"
+
+#: tips:48
+msgid "Default size:"
+msgstr "Dimensiune implicita:"
+
+#: tips:49
+msgid "Huge Icons"
+msgstr "Icoane imense"
+
+#: tips:50 tips:242
+msgid "Large Icons"
+msgstr "Icoane mari"
+
+#: tips:51 tips:241
+msgid "Small Icons"
+msgstr "Icoane mici"
+
+#: tips:53
+msgid "Default details:"
+msgstr "Detalii implicite:"
+
+#: tips:54
+msgid "No details"
+msgstr "Fara detalii"
+
+#: tips:59
+msgid "Automatic small icons:"
+msgstr "Icoane mici automate:"
+
+#: tips:60
+msgid "Change at:"
+msgstr "Schimba la:"
+
+#: tips:62
+msgid ""
+"When automatic icon sizing is selected: If the directory contains this many "
+"items then it will be shown using Small Icons, otherwise Large Icons will be "
+"used."
+msgstr ""
+"C�nd este selectat modul de dimensionare automata a icoanelor: daca "
+"directorul con�ine multe icoane se vor folosi Icoane mici, altfel se vor "
+"folosi Icoane Mari."
+
+#: tips:63
+msgid "Max width (Large icons):"
+msgstr "La�ime maxima (Icoane mari):"
+
+#: tips:64 tips:67
+msgid "pixels"
+msgstr "pixeli"
+
+#: tips:65
+msgid ""
+"Text wider than this is broken onto two lines in Large Icons mode. In Huge "
+"Icons mode, text is wrapped when 50% wider than this."
+msgstr ""
+"Textul mai lat de at�t va fi spart �n doua linii �n modul Icoane mari. In "
+"modul Icoane uria�e, textul este �mpar�it la 50% din dimensiune."
+
+#: tips:66
+msgid "(Small Icons):"
+msgstr "(Icoane mici):"
+
+#: tips:68
+msgid "Maximum width for the text beside a Small Icon."
+msgstr "La�ime maxima pentru textul de sub icoanele mici."
+
+#: tips:69
+msgid "Order large icons vertically"
+msgstr ""
+
+#: tips:70
+msgid ""
+"If this option is on, then large icons are arranged in columns, not rows."
+msgstr ""
+
+#: tips:71
+msgid "Order small icons vertically"
+msgstr ""
+
+#: tips:72
+msgid ""
+"If this option is on, then small icons are arranged in columns, not rows."
+msgstr ""
+
+#: tips:75
+msgid "Show column headings"
+msgstr "Arata capul coloanelor"
+
+#: tips:76
+msgid "If this is on then column headings will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:77
+#, fuzzy
+msgid "Show full type"
+msgstr "Sortat dupa tip"
+
+#: tips:78
+msgid ""
+"If this is on then the full description of each object's type will be show "
+"rather than a short summary of its basic type."
+msgstr ""
+
+#: tips:79
+#, fuzzy
+msgid "Show Columns"
+msgstr "Arata capul coloanelor"
+
+#: tips:81
+#, fuzzy
+msgid "If this is on then Name column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:83
+#, fuzzy
+msgid "If this is on then Type column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:85
+#, fuzzy
+msgid "If this is on then Size column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:87
+#, fuzzy
+msgid "If this is on then Permissions column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:89
+#, fuzzy
+msgid "If this is on then Owner column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:91
+#, fuzzy
+msgid "If this is on then Group column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:92
+#, fuzzy
+msgid "Last Modified"
+msgstr "Ultima _modificare"
+
+#: tips:93
+#, fuzzy
+msgid "If this is on then Last Modified column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:94
+msgid "Last Changed"
+msgstr ""
+
+#: tips:95
+#, fuzzy
+msgid "If this is on then Last Changed column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:96
+#, fuzzy
+msgid "Last Accessed"
+msgstr "Diectorul '%s' nu este accesibil"
+
+#: tips:97
+#, fuzzy
+msgid "If this is on then Last Accessed column will be shown in the list view."
+msgstr ""
+"Daca aceasta op�iune este activa atunci capul coloanelor va fi afi�at "
+"�nmodul de afi�are sub forma de lista."
+
+#: tips:98
+msgid "Tools/Minibuffer"
+msgstr "Unelte/minibuffer"
+
+#: tips:99
+msgid "Toolbar"
+msgstr "Bara de unelte"
+
+#: tips:100
+msgid "Toolbar type:"
+msgstr "Tipul barii de unelte:"
+
+#: tips:101
+#, fuzzy
+msgid "No toolbar"
+msgstr "Bara de unelte"
+
+#: tips:102
+msgid "Icons only"
+msgstr "Numai icoane"
+
+#: tips:103
+msgid "Text under icons"
+msgstr "Text sub icoane"
+
+#: tips:104
+msgid "Text beside icons"
+msgstr "Text l�nga icoane"
+
+#: tips:105
+msgid "Show totals of items"
+msgstr "Arata totalul obictelor"
+
+#: tips:106
+msgid ""
+"Show the number of items displayed in a filer window, as well as the number "
+"of hidden items (if any). When there's a selection, show the number of "
+"selected items and their combined size."
+msgstr ""
+"Afi�eaza numarul elementelor dintr-o fereastra a managerului de fi�iere, la "
+"fel numarul fi�ierelor ascunse (daca sunt). C�nd este o selec�ie, arata "
+"numarul elementelor selectate �i dimensiunea totala."
+
+#: tips:107
+msgid "Select the buttons you want on the bar:"
+msgstr "Selecteaza butoanele pe care le vrei �n bara:"
+
+#: tips:108
+msgid "Width of toolbar sets minimum width of window"
+msgstr ""
+
+#: tips:109
+msgid ""
+"Each filer window is constrained to be wide enough to show the whole of the "
+"toolbar"
+msgstr ""
+
+#: tips:110
+msgid "Minibuffer"
+msgstr "Minibuffer"
+
+#: tips:111
+msgid "Beep if Tab-completion fails"
+msgstr "Avertizeaza sonor daca la apasarea tastei Tab nu se �nt�mpla nimic"
+
+#: tips:112
+msgid ""
+"When using the `Enter Path...' minibuffer and Tab is pressed, beep if "
+"nothing happens (eg, because there are several possibilities and the next "
+"letter varies)."
+msgstr ""
+"C�nd se utilizeaza 'Introdu calea...' �n minibuffer �i se apasa tasta Tab, "
+"avertizeaza sonor daca nu se �nt�mpla nimic (din cauza mai multor motive)."
+
+#: tips:113
+msgid "Beep if there are several matches"
+msgstr "Avertizeaza sonor daca daca s-au �nregistrat potriviri la cautare"
+
+#: tips:114
+msgid ""
+"When using the `Enter Path...' minibuffer and Tab is pressed, beep if there "
+"is more than one matching file, even though some more letters were added."
+msgstr ""
+"C�nd se utilizeaza 'Introdu calea...' �n minibuffer �i se apasa tasta Tab, "
+"avertizeaza sonor daca s-au inregistrat potriviri �n numele a cel pu�in unui "
+"fi�ier."
+
+#: tips:117
+msgid ""
+"When thumbnails are turned on, each image file in a directory is loaded and "
+"a small thumbnail of it is shown."
+msgstr ""
+"C�nd este activata op�iunea Monstre, fiecare fi�ier imagine este �ncarcat �i "
+"o mica monstra din el este afi�ta."
+
+#: tips:118
+msgid "Show image thumbnails"
+msgstr "Arata monstre din fi�ere imagine"
+
+#: tips:119
+msgid ""
+"This is the default setting for new windows. Use the Display menu to turn "
+"thumbnails on and off for individual windows."
+msgstr ""
+"Aceasta este setarea implicita pentru ferestrele noi. Utilizeaza meniul "
+"Afi�aj pentru a activa/dezactiva aceasta op�iune pentru fiecare feresatra �n "
+"parte."
+
+#: tips:120
+#, fuzzy
+msgid "Video thumbnails"
+msgstr "Arata monstre din fi�iere imagine"
+
+#: tips:121
+msgid "Thumbnails cache"
+msgstr "Depoziteaza monstrele fi�ierelor imagine"
+
+#: tips:122
+msgid ""
+"To speed things up, the generated thumbnails are stored in the hidden ~/."
+"thumbnails directory. Click here to remove all the cached thumbnails. They "
+"will be created again as needed."
+msgstr ""
+"Pentru a accelera acesta op�iune, monstrele generate sunt stocate �n "
+"directorul ascuns ~/.thumbnails. Apasa aici pentru a �terge aceste depozite. "
+"Ele vor fi generate c�nd este nevoie."
+
+#: tips:123
+#, fuzzy
+msgid "Manage thumbnails"
+msgstr "Arata monstre din fi�ere imagine"
+
+#: tips:124 tips:181
+msgid "Pinboard"
+msgstr "Scurtaturi"
+
+#: tips:125
+msgid ""
+"When using a pinboard, you can drag files and applications onto the desktop "
+"background to create shortcuts to them."
+msgstr ""
+"C�nd utilizezi scurtaturi, po�i sa tragi fi�iere �i aplica�ii pe spa�iul de "
+"lucru pentru a crea scurtaturi catre ele."
+
+#: tips:126 tips:238
+msgid "Appearance"
+msgstr "Decora�ii"
+
+#: tips:127
+msgid "Foreground:"
+msgstr "Prim plan:"
+
+#: tips:128
+msgid "Text shadow:"
+msgstr "Umbra textului:"
+
+#: tips:129
+msgid "Background:"
+msgstr "Fond:"
+
+#: tips:130
+#, fuzzy
+msgid "No shadow"
+msgstr "Umbra textului:"
+
+#: tips:131
+msgid "Thin"
+msgstr "Sub�ire"
+
+#: tips:132
+msgid "Thick"
+msgstr "Gros"
+
+#: tips:133
+msgid "Use custom font:"
+msgstr "Utilizeaza fontul:"
+
+#: tips:134
+msgid "The font used for the text displayed under the icons"
+msgstr "Tipul de caracter utilizat pentru textul de sub icoane"
+
+#: tips:135
+msgid "Fast scaling of images"
+msgstr ""
+
+#: tips:136
+msgid ""
+"Choose between the fast or slow method of scaling backdrop images.  The slow "
+"method can give better results."
+msgstr ""
+
+#: tips:137
+msgid "Pinboard behaviour"
+msgstr "Comportarea scurtaturilor"
+
+#: tips:138
+msgid "Single-click to open"
+msgstr "Simplu click pentru a deschide"
+
+#: tips:140
+msgid "Keep icons within screen limits"
+msgstr "Tine icoanele �n limita spa�iului ecranului"
+
+#: tips:141
+msgid ""
+"If this is set, pinboard icons are always kept completely within screen "
+"limits, including the label."
+msgstr ""
+"C�nd aceasta op�iune este activa, icoanele scurtaturilor sunt �inute �n "
+"limita spa�iului ecranului, incluz�nd �i textul de sub icoana."
+
+#: tips:142
+msgid "Icon grid step:"
+msgstr "Pasul de pozi�ionare al icoanelor:"
+
+#: tips:143
+msgid "Fine"
+msgstr "Fin"
+
+#: tips:144
+msgid "Use a 2-pixel grid for positioning icons on the desktop."
+msgstr ""
+"Utilizeaza un caroiaj de 2 pixeli pentru a pozi�iona icoanele �n ap�iul de "
+"lucru."
+
+#: tips:145
+msgid "Medium"
+msgstr "Mediu"
+
+#: tips:146
+msgid "Use a 16-pixel grid for positioning icons on the desktop."
+msgstr ""
+"Utilizeaza un caroiaj de 16 pixeli pentru a pozi�iona icoanele �n ap�iul de "
+"lucru."
+
+#: tips:147
+msgid "Coarse"
+msgstr "Larg"
+
+#: tips:148
+msgid "Use a 32-pixel grid for positioning icons on the desktop."
+msgstr ""
+"Utilizeaza un caroiaj de 32 pixeli pentru a pozi�iona icoanele �n ap�iul de "
+"lucru."
+
+#: tips:149 tips:151
+msgid "Iconified windows"
+msgstr "Iconificarea ferestrelor"
+
+#: tips:150
+msgid ""
+"Most window managers provide a way to iconify (or 'minimise') windows, and "
+"various programs, including Rox-Filer2, can be used to display the iconified "
+"windows."
+msgstr ""
+"Majoritatea managerelor de ferestre ofera un mod de a iconifica (ori "
+"minimiza) o ferestra, �i diferite programe, incluz�nd �i ROX, pot fi "
+"folosite pentru a afi�a o fereastra iconificata."
+
+#: tips:152
+msgid "Show iconified windows"
+msgstr "Arata ferestrele iconificate"
+
+#: tips:153
+msgid ""
+"If this option is on, the filer will show each iconified window as a small "
+"button on the pinboard. Requires a compatible window manager, and the "
+"pinboard must be in use."
+msgstr ""
+"Daca aceasta op�iune este activa, atunci managerul de fi�iere va reprezenta "
+"fiecare fereastra iconificata ca un mic buton �ntr-o bara de fi�iere �i "
+"aplica�ii. Este necesar un manager de ferestre compatibil �i sa fie activata "
+"barele de fi�iere �i aplica�ii."
+
+#: tips:154
+msgid "Show per workspace"
+msgstr ""
+
+#: tips:155
+#, fuzzy
+msgid ""
+"If this option is on, the filer will only show iconified windows associated "
+"with the current workspace."
+msgstr ""
+"Daca aceasta op�iune este activa, atunci managerul de fi�iere va reprezenta "
+"fiecare fereastra iconificata ca un mic buton �ntr-o bara de fi�iere �i "
+"aplica�ii. Este necesar un manager de ferestre compatibil �i sa fie activata "
+"barele de fi�iere �i aplica�ii."
+
+#: tips:156
+msgid "Iconify to the"
+msgstr "Iconifica pe"
+
+#: tips:157
+msgid "top-left"
+msgstr "sus-st�nga"
+
+#: tips:158
+msgid "top-right"
+msgstr "sus-dreapta"
+
+#: tips:159
+msgid "bottom-left"
+msgstr "jos-st�nga"
+
+#: tips:160
+msgid "bottom-right"
+msgstr "jos-dreapta"
+
+#: tips:161
+msgid ", going"
+msgstr ", se duce"
+
+#: tips:162
+msgid "horizontally"
+msgstr "orizontal"
+
+#: tips:163
+msgid "vertically"
+msgstr "vertical"
+
+#: tips:164
+msgid ""
+"Sometimes the filer doesn't know about your desktop furniture and puts "
+"iconified windows under (for example) the Gnome panel. You can define a top "
+"or bottom margin to avoid placing the icons there. The filer already knows "
+"about its own panel."
+msgstr ""
+"In anumite cazuri managerul de fi�iere nu �tie despre aranjarea spa�iului de "
+"lucru �i pune ferestrele iconificate, de exemplu, �n panoul Gnome. Po�i "
+"defini marginea superioara sau inferioara unde icoanele sa fie plasate. "
+"Managerul de fi�iere �tie despre panoul propriu."
+
+#: tips:165
+msgid "Top margin"
+msgstr "Marginea superioara"
+
+#: tips:166
+msgid "Height of no-go area at top of screen."
+msgstr "La�imea zonei superioare de excluziune."
+
+#: tips:167
+msgid "Bottom margin"
+msgstr "Marginea inferioara"
+
+#: tips:168
+msgid "Height of no-go area at bottom of screen."
+msgstr "La�imea zonei inferioare de excluziune."
+
+#: tips:169
+#, fuzzy
+msgid "Left margin"
+msgstr "Marginea superioara"
+
+#: tips:170
+#, fuzzy
+msgid "Width of no-go area at left of screen."
+msgstr "La�imea zonei superioare de excluziune."
+
+#: tips:171
+#, fuzzy
+msgid "Right margin"
+msgstr "Marginea inferioara"
+
+#: tips:172
+#, fuzzy
+msgid "Width of no-go area at right of screen."
+msgstr "La�imea zonei superioare de excluziune."
+
+#: tips:173
+msgid "Desktop"
+msgstr ""
+
+#: tips:174
+msgid ""
+"When run by a session manager program (such as ROX-Session) the filer can "
+"open up a panel and/or the pinboard.  Here you configure which."
+msgstr ""
+
+#: tips:175
+#, fuzzy
+msgid "Panel only"
+msgstr "Numai imagine"
+
+#: tips:176
+#, fuzzy
+msgid "Only a panel is shown."
+msgstr "Este reprezentata numai imaginea."
+
+#: tips:177
+#, fuzzy
+msgid "Pinboard only"
+msgstr "Scurtaturi"
+
+#: tips:178
+#, fuzzy
+msgid "Only the pinboard is shown."
+msgstr "Este reprezentata numai imaginea."
+
+#: tips:179
+#, fuzzy
+msgid "Panel and pinboard"
+msgstr "Scurtaturi"
+
+#: tips:180
+msgid "Both a panel and a pinboard are shown."
+msgstr ""
+
+#: tips:182
+msgid "Enter the name of the pinboard to show here."
+msgstr ""
+
+#: tips:183
+msgid "Changes here take effect the next time the filer is run."
+msgstr ""
+
+#: tips:184
+msgid ""
+"The session manager activates these options by\n"
+"using the -S or --rox-session argument to rox."
+msgstr ""
+
+#: tips:185
+msgid "Action windows"
+msgstr "Ferestrele de ac�iune"
+
+#: tips:186
+msgid ""
+"Action windows appear when you start a background\n"
+"operation, such as copying or deleting some files."
+msgstr ""
+"Ferestrele de ac�iune apar c�nd se lanseaza o opera�ie\n"
+"�n fundal, ca de exemplu copierea sau �tergerea fi�ierelor."
+
+#: tips:187
+msgid "Auto-start (Quiet) these actions"
+msgstr "Arata fara dialoguri aceste ferestre"
+
+#: tips:189
+msgid "Copy files without confirming first."
+msgstr "Copiaza fi�ierele fara a confirma la �nceput."
+
+#: tips:191
+msgid "Move files without confirming first."
+msgstr "Muta fi�ierele fara a confirma la �nceput."
+
+#: tips:193
+msgid "Create links to files without confirming first."
+msgstr "Creaza legaturi �ntre fi�iere fara a confirma la �nceput."
+
+#: tips:195
+msgid "Delete files without confirming first."
+msgstr "Sterge fi�ierele fara a confirma la �nceput."
+
+#: tips:196
+msgid "Mount"
+msgstr "Monteaza"
+
+#: tips:197
+msgid "Mount and unmount filesystems without confirming first."
+msgstr ""
+"Monteaza �i demonteaza sistemele de fi�iere fara a confirma la �nceput."
+
+#: tips:198
+msgid "Default settings"
+msgstr "Op�iuni implicite"
+
+#: tips:200
+msgid "Don't confirm deletion of non-writeable items."
+msgstr "Nu confirma �tergerea elementelor care nu se pot scrie."
+
+#: tips:202
+msgid "Don't display so much information in the message area."
+msgstr "Afi�eaza informa�ii minime �n aria de mesaje."
+
+#: tips:204
+msgid "Also change contents of subdirectories."
+msgstr "Schimba �i con�inutul subdirectoarelor."
+
+#: tips:211
+#, fuzzy
+msgid "Mount commands"
+msgstr "Punct de montare"
+
+#: tips:212
+#, fuzzy
+msgid "Mount command"
+msgstr "Punct de montare"
+
+#: tips:213
+msgid "The command used to mount a filesystem. If unsure, use \"mount\"."
+msgstr ""
+
+#: tips:214
+#, fuzzy
+msgid "Unmount command"
+msgstr "Demonteaza"
+
+#: tips:215
+msgid ""
+"The command used to unmount a filesystem. If unsure, use \"umount\" (yes, "
+"without the first \"n\")."
+msgstr ""
+
+#: tips:216
+#, fuzzy
+msgid "Eject command"
+msgstr "Comanda:"
+
+#: tips:217
+msgid "The command used to eject removable media. If unsure, use \"eject\"."
+msgstr ""
+
+#: tips:218
+msgid "Drag and Drop"
+msgstr "Trage �i elibereaza"
+
+#: tips:219
+msgid "Dragging to icons"
+msgstr "Trage pe icoane"
+
+#: tips:220
+msgid "Allow dragging to icons in filer windows"
+msgstr "Permite tragerea pe icoane �n managerul de fi�iere"
+
+#: tips:221
+msgid ""
+"When this is on you can drag a file over a sub-directory or program in a "
+"filer window. The item will highlight when you do this and dropping the file "
+"will put it into that directory, or load it into the program."
+msgstr ""
+"C�nd aceasta este activa, po�i trage un fi�ier peste un subdirector sau un "
+"program �ntr-o fereastra a managerului de fi�iere. Elementul va fi nuan�at "
+"c�nd faci asta �i �i eliber�nd-ul el vafi pus �n director, ori �ncarcat �n "
+"program."
+
+#: tips:222
+msgid "Directories spring open"
+msgstr "Directoarele simuleaza o selectare"
+
+#: tips:223
+msgid ""
+"This option, which requires the above option to be turned on too, causes the "
+"highlighted directory to 'spring open' after the file is held over it for a "
+"short while."
+msgstr ""
+"Aceasta op�iune, care necesita op�iunea dinainte sa fie activa, cauzeaza "
+"directorelor sa simuleze o selectare c�nd fi�ierul este �inut peste ele o "
+"scurta perioada de timp."
+
+#: tips:224
+msgid "Spring delay:"
+msgstr "Int�rzierea la simulare:"
+
+#: tips:225
+msgid "ms"
+msgstr "ms"
+
+#: tips:226
+msgid ""
+"This option sets how long, in ms, you must hold a file over a directory "
+"before it will spring open. The above option must be turned on for this to "
+"have any effect."
+msgstr ""
+"Aceasta op�iune seteaza c�t timp, �n ms, trebuie �inut un fi�ier deasupra "
+"unui director �nainte ca acesta sa simuleze o selec�ie."
+
+#: tips:227
+msgid "When dragging files with the left mouse button"
+msgstr "C�nd trage�i fi�ierele cu butonul din st�nga al mouse-ului"
+
+#: tips:228 tips:232
+msgid "Show a menu of possible actions"
+msgstr "Arata un meniu al posibilelor ac�iuni"
+
+#: tips:229
+msgid "Copy the files"
+msgstr "Copiaza fi�ierele"
+
+#: tips:230
+msgid ""
+"Note that you can still get the menu to appear, by dragging with Alt held "
+"down."
+msgstr "Se poate face ca meniul sa apara, trag�nd cu tasta Alt �inuta apasata."
+
+#: tips:231
+msgid "When dragging files with the middle mouse button"
+msgstr "C�nd trage�i fi�ierele cu butonul din mijloc al mouse-ului"
+
+#: tips:233
+msgid "Move the files"
+msgstr "Muta fi�ierele"
+
+#: tips:234
+msgid ""
+"Note that you can still get the menu to appear, by dragging with the left "
+"button and holding down the Alt key."
+msgstr ""
+"Se poate face ca meniul sa apara, trag�nd cu butonul din st�nga al mouse-"
+"ului �i cu tasta Alt �inuta apasata. "
+
+#: tips:235
+msgid "Download handler"
+msgstr "Gestionarul de descarcari web"
+
+#: tips:236
+msgid ""
+"When you drag a file from a web browser or other remote source, this program "
+"will be run to download it. $1 is the URI dragged to the filer, and the "
+"current directory is the destination. Eg:\n"
+"xterm -e wget $1"
+msgstr ""
+
+#: tips:237
+msgid "Menus"
+msgstr "Meniu"
+
+#: tips:239
+msgid "Size of icons in menus:"
+msgstr "Dimensiunea icoanelor �n meniu:"
+
+#: tips:240
+msgid "No Icons"
+msgstr "Fara icoane"
+
+#: tips:243
+msgid "Same as current window"
+msgstr "La fel ca fereastra curenta"
+
+#: tips:244
+msgid "Same as default"
+msgstr "La fel ca cele implicite"
+
+#: tips:245
+msgid "Behaviour"
+msgstr "Comportament"
+
+#: tips:246
+msgid "File menu on right-click"
+msgstr "Meniul Fi�ier la click cu butonul din dreapta"
+
+#: tips:247
+msgid ""
+"Show the File menu instead of the main menu when right-clicking with files "
+"selected (the main menu can be accessed by holding down Control)."
+msgstr ""
+"Arata meniul Fi�ier �n locul meniului principal c�nd fac click cu butonul "
+"din dreapta pe un fi�ier selectat (meniul principal poate fi accesat �in�nd "
+"tasta Ctrl apasata)."
+
+#: tips:248
+#, fuzzy
+msgid "Terminal emulator program"
+msgstr "Programul pentru � Xterm aici��"
+
+#: tips:249
+#, fuzzy
+msgid "The program to launch when you choose `Terminal Here' from the menu."
+msgstr ""
+"Programul care va fi lansat c�nd se alega op�iunea ��Xterm aici�� din meniu."
+
+#: tips:250
+msgid "Open terminal with grave (`) key"
+msgstr ""
+
+#: tips:251
+msgid "Open terminal emulator when the backtick/tilde key is pressed."
+msgstr ""
+
+#: tips:252
+msgid "Keyboard shortcuts"
+msgstr "Scurtaturi pentru tastatura"
+
+#: tips:253
+#, fuzzy
+msgid "Applications"
+msgstr "Aplica�ia ROX"
+
+#: tips:254
+msgid "Show .desktop applications in \"Send To\" menu."
+msgstr ""
+
+#: tips:255
+msgid ""
+"Show applications installed via .desktop files (usually in /usr/share/"
+"applications and ~/.local/share/applications) in \"Send To\" menus."
+msgstr ""
+
+#: tips:257
+msgid "MIME types"
+msgstr "Tipul MIME"
+
+#: tips:258
+#, fuzzy
+msgid ""
+"The filer uses a set of rules to work out the correct MIME type for each "
+"regular file, and then chooses a suitable icon for that type."
+msgstr ""
+"Mangerul de fi�iere folose�te un set de reguli pentru a determina tipul MIME "
+"al fiecarui fi�ier normal �n parte, �i alege o icoana potrivita pentru acest "
+"tip. Utilizeaza aplica�ia MIME-Editor pentru a schimba regulile fi�ier la "
+"tip:\n"
+"\n"
+"http://rox.sourceforge.net/mime_editor.html"
+
+#: tips:259
+msgid "Edit MIME rules"
+msgstr ""
+
+#: tips:260
+#, fuzzy
+msgid "Themes"
+msgstr "Data & timp"
+
+#: tips:261
+msgid "Icon theme"
+msgstr "Tema icoanelor"
+
+#: tips:262
+msgid "Themes should be placed inside the ~/.icons directory."
+msgstr "Temele trebuie plasate �n directorul ~/.icons."
+
+#: tips:263
+msgid ""
+"Use the 'Set Icon...' dialog box to set the icon for each MIME type. Note "
+"that icons set this way override those from the selected theme."
+msgstr ""
+"Utilizeaza ferestra de dialog 'Seteaza icoana...'pentru a seta icoana pentru "
+"fiecare tip MIME. Aceste setari vor suprascrie setarile din tema selectata."
+
+#: tips:264
+msgid "Colours"
+msgstr "Culori"
+
+#: tips:265
+msgid "File type colours"
+msgstr "Tipul fi�ierelor prin culori"
+
+#: tips:266
+msgid "Colour files based on their types"
+msgstr "Coloreaza fi�ierele dupa tipul lor"
+
+#: tips:267
+msgid "Filenames (and details) are coloured according to the file's type."
+msgstr ""
+"Numele fi�ierelor (�i detaliile) sunt colorate �n concordan�a cu tipul lor"
+
+#: tips:268
+msgid "Directory:"
+msgstr "Director:"
+
+#: tips:269
+msgid "Regular file:"
+msgstr "Fi�ier normal:"
+
+#: tips:270
+msgid "Pipe:"
+msgstr "Fi�ier �eava:"
+
+#: tips:271
+msgid "Socket:"
+msgstr "Socket:"
+
+#: tips:273
+msgid ""
+"Error, such as a symlink which points to a non-existant file, or a file "
+"which the filer does not have permission to examine."
+msgstr ""
+"Eroare, posibil o legatura care are ca destina�ie un fi�ier neexistent, ori "
+"un fi�ier pe care managerul de fi�iere nu are permisiunea sa-l examineze."
+
+#: tips:274
+msgid "Character device:"
+msgstr "Dispozitiv caracter:"
+
+#: tips:275
+msgid "Block device:"
+msgstr "Dispozitiv bloc:"
+
+#: tips:276
+msgid "Door:"
+msgstr "Fi�ier poarta:"
+
+#: tips:277
+msgid ""
+"Door files are a bit like sockets or pipes, and have only been seen on "
+"Solaris."
+msgstr ""
+"Fi�ierele poarta seamana pu�in cu socket-urile sau fi�ierele �eava, "
+"darexista numai �n sistemul de operare Solaris."
+
+#: tips:278
+msgid "Executable file:"
+msgstr "Fi�ier executabil:"
+
+#: tips:279
+msgid "Application directory:"
+msgstr "Directorul aplica�ie:"
+
+#: tips:280
+msgid "Unknown type:"
+msgstr "Tip necunoscut:"
+
+#: tips:281
+msgid "Compatibility"
+msgstr "Compatibilitate"
+
+#: tips:282
+msgid "Command line program"
+msgstr ""
+
+#: tips:283
+msgid "Make script"
+msgstr ""
+
+#: tips:284
+msgid "Window manager problems"
+msgstr "Probleme ale managerului de ferestre"
+
+#: tips:285
+msgid "Override window manager control of the pinboard and panels"
+msgstr ""
+"Intareste controlul managerului de fi�iere asupra scurtaturilor �i a "
+"panourilor de fi�iere �i aplica�ii"
+
+#: tips:286
+msgid ""
+"Some window managers don't support the new Extended Window Manager Hints "
+"system, and so treat the pinboard and panels like normal windows. Turn this "
+"on to fix problems such as the pinboard coming to the front when you click "
+"on it, titlebars and other decorations appearing around windows, or having "
+"them appear in window-select lists."
+msgstr ""
+"Anumite managere de fi�iere nu suporta noul sistem extins de aspect al "
+"ferestrelor, �i trateaza scurtaturile �i panourile de fi�iere �i aplica�ii "
+"ca ferestre normale. Activeaza aceasta op�iune pentru a remedia anumite "
+"probleme cum sunt: faptul ca fac�nd click pe o scurtatura ea vine �n fa�a, "
+"bara de titlu sau alte decora�iuni �n jurul ferestrei sau apare �n lista de "
+"ferestre."
+
+#: tips:287
+msgid "Pass all backdrop mouse clicks to window manager"
+msgstr ""
+"Redirec�ioneaza toate click-urile de fundal ale mouse-ului catre managerul "
+"de fi�iere"
+
+#: tips:288
+msgid ""
+"Normally, right clicking on the desktop background will open the pinboard "
+"menu and left clicking will clear the selection. Turn this on to forward the "
+"events to your window manager instead. Clicks on icons will not be forwarded."
+msgstr ""
+"In mod normal, click cu butonul din dreapta pe fundalul spa�iului de lucru "
+"va deschide meniul scurtaturilor �i click cu butonul din st�nga va �terge "
+"selec�ia. Activeaza aceasta op�iune pentru a redirec�iona mesajele catre "
+"managerul de fi�iere. Click-urile pe icoane nu vor fi redirec�ionate."
+
+#: tips:289
+msgid "Blackbox root menus hack"
+msgstr "Inbunata�iri ale meniului radacina Blackbox"
+
+#: tips:290
+msgid ""
+"Blackbox, Fluxbox and similar window managers do not yet work well with the "
+"Rox-Filer2 pinboard. This option enables some workarounds. These window "
+"managers are expected to change their behaviour in new versions so that this "
+"isn't necessary."
+msgstr ""
+"Blackbox, Fluxbox �i alte managere de fi�iere similare nu lucreaza corect cu "
+"scurtaturile managerului de fi�iere ROX. Aceasta op�iune activeaza anumite "
+"�nbunata�iri. Aceste managere de ferestre a�teapta sa-�i schimbe "
+"comportamentul �n versiunile ulterioare, a�a ca aceasta op�iune nu va mai fi "
+"necesara."
+
+#: tips:291
+msgid "Panel is a 'dock'"
+msgstr ""
+
+#: tips:292
+msgid ""
+"Makes sure panels stay against screen edges. Disable this option if the "
+"panel stays above other windows against your wishes. Requires a restart to "
+"take effect."
+msgstr ""
+
+#: tips:293
+#, fuzzy
+msgid "Panel stays on top"
+msgstr "Stilul panoului"
+
+#: tips:294
+msgid ""
+"Keeps the panel above other windows. Enable this option to make sure the "
+"dock option works correctly in some versions of compiz. May require a "
+"restart to take effect."
+msgstr ""
+
+#: tips:295
+msgid "Panel confined to work area"
+msgstr ""
+
+#: tips:296
+msgid ""
+"Keeps the panel confined to the work area specified by the Extended Window "
+"Manager Specification. Applies to new panels."
+msgstr ""
+
+#: tips:297
+msgid "Drag and drop"
+msgstr "Trage �i elibereaza"
+
+#: tips:298
+msgid "Don't use hostnames"
+msgstr "Nu utiliza numele gazdei"
+
+#: tips:299
+msgid ""
+"Some older applications don't support XDND fully and may need to have this "
+"option turned on. Use this if dragging files to an application shows a + "
+"sign on the pointer but the drop doesn't work."
+msgstr ""
+"Anumite aplica�ii vechi nu suporta complet protocolul XDND �i trebuie sa "
+"aiba activata aceasta op�iune. Utilizeaza aceasta op�iune daca trage�i un "
+"fi�ier intr-o aplica�ie, apare semnul + langa indicatorului mouse-ului, dar "
+"ac�iunea nu \"produce\" nimic."
+
+#: tips:301
+#, fuzzy
+msgid "Don't use extended attributes"
+msgstr "Nu utiliza numele gazdei"
+
+#: tips:302
+msgid ""
+"This disables the use of extended attributes available in newer operating "
+"systems and file systems.  With this option set the 'Set Type' menu entry is "
+"disabled, the MIME type of the file is only derived from the file name and "
+"the properties window does not report extended attributes."
+msgstr ""
+
+#: ../Templates.ui.h:1
+#, fuzzy
+msgid "Rox-Filer2 log viewer"
+msgstr "Rox-Filer2"
+
+#: ../Templates.ui.h:2
+msgid "Recently performed actions..."
+msgstr ""
+
+#: ../Templates.ui.h:3
+#, fuzzy
+msgid "Open Directory"
+msgstr "Directorul acasa"
+
+#: ../Templates.ui.h:4
+#, fuzzy
+msgid "Panel Options"
+msgstr "Op�iuni"
+
+#: ../Templates.ui.h:5
+#, fuzzy
+msgid "Image and Text"
+msgstr "Imagine �i text"
+
+#: ../Templates.ui.h:6
+#, fuzzy
+msgid "Every icon on this panel is shown with an image and some text."
+msgstr "Fiecare icoana a panoului este reprezentata de o imagine �i text."
+
+#: ../Templates.ui.h:7
+msgid "Image only for applications"
+msgstr "Numai imagini pentru aplica�ii"
+
+#: ../Templates.ui.h:8
+#, fuzzy
+msgid ""
+"Applications in this panel have just an image, everything else has both an "
+"image and text."
+msgstr "Aplica�iile au numai o imagine, restul au �i imagine �i text."
+
+#: ../Templates.ui.h:9
+msgid "Image only"
+msgstr "Numai imagine"
+
+#: ../Templates.ui.h:10
+#, fuzzy
+msgid "Only the image is shown for icons in this panel."
+msgstr "Este reprezentata numai imaginea."
+
+#: ../Templates.ui.h:11
+#, fuzzy
+msgid "Panel width"
+msgstr "La�imea panoului (sub�ire)"
+
+#: ../Templates.ui.h:12
+#, fuzzy
+msgid "The size of this panel."
+msgstr "Dimensiunea panoului."
+
+#: ../Templates.ui.h:13
+msgid "px"
+msgstr ""
+
+#: ../Templates.ui.h:14
+msgid "Do not cover panel"
+msgstr ""
+
+#: ../Templates.ui.h:15
+msgid ""
+"Ask the window manager not to cover this panel when maximising windows, "
+"otherwise leave just 2 pixels at the edge of the screen to allow auto-"
+"raising. Some window managers may not honour this setting."
+msgstr ""
+
+#: ../Templates.ui.h:16
+#, fuzzy
+msgid "<b>Panel style</b>"
+msgstr "Stilul panoului"
+
+#: ../Templates.ui.h:17
+msgid "Confine to Xinerama monitor"
+msgstr "Limiteaza la un monitor"
+
+#: ../Templates.ui.h:18
+#, fuzzy
+msgid ""
+"If you use multiple monitors with Xinerama, use this option to confine the "
+"panel to one monitor."
+msgstr ""
+"Daca op�iunea Xinerama multi-monitor este activa, utilizeaza aceasta op�iune "
+"pentru a limita un panou pe un singur monitor, �n loc sa fie �mpar�it pe "
+"doua."
+
+#: ../Templates.ui.h:19
+#, fuzzy
+msgid ""
+"The monitor this panel is confined to when using Xinerama. The numbering "
+"starts from zero."
+msgstr ""
+"Monitorul �i panourile sunt limitate �n modul Xinerama (numerotat de la 0)."
+
+#: ../Templates.ui.h:20
+#, fuzzy
+msgid "<b>Xinerama</b>"
+msgstr "Xinerama"
+
+#: ../Templates.ui.h:21
+msgid "Right edge"
+msgstr ""
+
+#: ../Templates.ui.h:22
+msgid "Left edge"
+msgstr ""
+
+#: ../Templates.ui.h:23
+#, fuzzy
+msgid "Bottom edge"
+msgstr "Marginea inferioara"
+
+#: ../Templates.ui.h:24
+msgid "Top edge"
+msgstr ""
+
+#: ../Templates.ui.h:25
+#, fuzzy
+msgid "<b>Position</b>"
+msgstr "<b>Drepturi</b>"
+
+#~ msgid "Show extra details"
+#~ msgstr "Arata detalii suplimentare"
+
+#, fuzzy
+#~ msgid "Inotify support"
+#~ msgstr "Suport dnotify"
+
+#~ msgid "Dnotify support"
+#~ msgstr "Suport dnotify"
+
+#, fuzzy
+#~ msgid "Panel (obsolete)"
+#~ msgstr "Stilul panoului"
+
+#~ msgid ""
+#~ "Error scanning '%s':\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Eroare la scanarea '%s'�:\n"
+#~ "%s"
+
+#~ msgid "Directory missing/deleted"
+#~ msgstr "Director lipsa/�ters"
+
+#~ msgid "Directory '%s' is not accessible"
+#~ msgstr "Diectorul '%s' nu este accesibil"
+
+#~ msgid "Directory '%s' not found."
+#~ msgstr "Directorul '%s' nu se gase�te."
+
+#~ msgid "Copy..."
+#~ msgstr "Copiaza..."
+
+#~ msgid "Copy ... ?"
+#~ msgstr "Copiaza ... ?"
+
+#~ msgid "?'%s' already exists - overwrite?"
+#~ msgstr "?'%s' exista deja - scriu peste ?"
+
+#, fuzzy
+#~ msgid "Choices migration"
+#~ msgstr "Chinois (traditionnel)"
+
+#~ msgid "GNOME-VFS library"
+#~ msgstr "biblioteca GNOME-VFS"
+
+#~ msgid "Open AVFS"
+#~ msgstr "Deschide AVFS"
+
+#~ msgid "Send To..."
+#~ msgstr "Trimite la..."
+
+#~ msgid "Look inside ... ?"
+#~ msgstr "Prive�te �n interior ... ?"
+
+#, fuzzy
+#~ msgid "Panel: %s"
+#~ msgstr "Panouri"
+
+#~ msgid "Invalid .gmo translation file (too short): %s"
+#~ msgstr "Fi�ier de traducere .gmo invalid (prea scurt): %s"
+
+#~ msgid "Invalid .gmo translation file (GNU magic number not found): %s"
+#~ msgstr ""
+#~ "Fi�ier de traducere .gmo invalid (numarul magic GNU nu este gasit): %s"
+
+#~ msgid "Show/hide hidden files"
+#~ msgstr "Arata/ascunde fi�ierele ascunse"
+
+#~ msgid ""
+#~ "Icon theme '%s' does not contain MIME icons. Using ROX default theme "
+#~ "instead."
+#~ msgstr ""
+#~ "Tema icoanelor '%s' nu con�ine icoane MIME. Se utilizeaza tema ROX "
+#~ "implicita."
+
+#~ msgid "Translation"
+#~ msgstr "Traducere"
+
+#~ msgid "Language"
+#~ msgstr "Limba"
+
+#~ msgid "Use the LANG environment variable"
+#~ msgstr "Utilizeaza variabila LANG"
+
+#~ msgid "Chinese (traditional)"
+#~ msgstr "Chinois (traditionnel)"
+
+#~ msgid "Chinese (simplified)"
+#~ msgstr "Chinois (simplifi�)"
+
+#~ msgid "Czech"
+#~ msgstr "Tch�que"
+
+#~ msgid "Danish"
+#~ msgstr "Danois"
+
+#~ msgid "Dutch"
+#~ msgstr "N�erlandais"
+
+#~ msgid "English (no translation)"
+#~ msgstr "Engleza (fara traducere)"
+
+#, fuzzy
+#~ msgid "Finnish"
+#~ msgstr "Danois"
+
+#~ msgid "French"
+#~ msgstr "Franceza"
+
+#~ msgid "German"
+#~ msgstr "Germana"
+
+#~ msgid "Hungarian"
+#~ msgstr "Maghiara"
+
+#~ msgid "Japanese"
+#~ msgstr "Japonais"
+
+#~ msgid "Norwegian"
+#~ msgstr "Norv�gien"
+
+#~ msgid "Italian"
+#~ msgstr "Italiana"
+
+#~ msgid "Polish"
+#~ msgstr "Polonais"
+
+#~ msgid "Russian"
+#~ msgstr "Russe"
+
+#~ msgid "Spanish"
+#~ msgstr "Spaniola"
+
+#~ msgid "Swedish"
+#~ msgstr "Su�dois"
+
+#~ msgid "Panels"
+#~ msgstr "Panouri"
+
+#~ msgid ""
+#~ "Panels are bars of icons that run along the side of the screen. See the "
+#~ "manual for information about using panels."
+#~ msgstr ""
+#~ "Panourile sunt bari de icoane situate de-a lungul marginii ecranului."
+
+#~ msgid "(thick)"
+#~ msgstr "(gros)"
+
+#~ msgid ""
+#~ "Error loading MIME database:\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Eroare �n �ncarcarea bazei de date MIME:\n"
+#~ "%s"
+
+#~ msgid "File '%s' corrupted!"
+#~ msgstr "Fi�ierul '%s' este corupt !"
+
+#~ msgid ""
+#~ "The ~/.mime directory has moved. It should now be ~/.local/share/mime. "
+#~ "You should move it there (and make a symlink from ~/.mime to it for older "
+#~ "applications)."
+#~ msgstr ""
+#~ "directorul ~/.mime a fost mutat. El trebuie sa fie ~/.local/share/mime. "
+#~ "Trebuie sa-l mu�i acolo (�i sa creezi o legatura simbolica de la ~/.mime "
+#~ "la el pentru ca aplica�iile mai vechi sa ruleze)."
+
+#~ msgid ""
+#~ "The standard MIME type database (version 0.9 or later) was not found. The "
+#~ "filer will probably not show the correct types for different files. You "
+#~ "should download and install the 'shared-mime-info-0.9' package from "
+#~ "here:\n"
+#~ "http://www.freedesktop.org/software/shared-mime-info\n"
+#~ "\n"
+#~ "If you have already installed this package, check that the permissions "
+#~ "allow the files to be read (check /usr/local/share/mime/globs or /usr/"
+#~ "share/mime/globs)."
+#~ msgstr ""
+#~ "Baza de date standard MIME (versiunea 0.9 sau ulterioara) nu a fost "
+#~ "gasita. Managerul de fi�iere probabil nu va arata tipul corect pentru "
+#~ "diferitele fi�iere. Trebuie sa descarci �i sa instalezi pachetul 'shared-"
+#~ "mime-info-0.9' din loca�ia http://www.freedesktop.org/software/shared-"
+#~ "mime-info\n"
+#~ "\n"
+#~ "Daca ai instalat deja acest pachet, atunci verifica drepturile de citire "
+#~ "pentru fi�iere (verifica /usr/local/share/mime/globs sau /usr/share/mime/"
+#~ "globs)."
+
+#~ msgid "Icon '%s' not present in theme"
+#~ msgstr "Icoana '%s' nu este prezenta in tema"
+
+#~ msgid "Executable files"
+#~ msgstr "Fi�ier executabil"
+
+#~ msgid "Ignore eXecutable bit for known extensions"
+#~ msgstr "Ignora bitul executabil pentru extensiile cunoscute"
+
+#~ msgid ""
+#~ "If a file has a known extension (eg '.gif') then ignore the executable "
+#~ "bit. This is useful if you have files on a Windows-type filesystem which "
+#~ "are being shown as executable programs."
+#~ msgstr ""
+#~ "Daca un fi�ier are o extensie cunoscuta (ex. '.gif') atunci ignora bitul "
+#~ "executabil. Aceasta ete utila c�nd fi�ierele sunt pe un sistem de fi�iere "
+#~ "de tip Windows, unde toate sunt executabile."
+
+#, fuzzy
+#~ msgid "Umount"
+#~ msgstr "Demonteaza"
+
+#~ msgid ""
+#~ "Pinboard icons cannot be drawn because Rox-Filer2 was compiled against GTK"
+#~ "+-2.0 but is running with GTK+-2.2. Please recompile it."
+#~ msgstr ""
+#~ "Les ic�nes du punaiseur ne peuvent pas �tre dessin�es car Rox-Filer2 a �t� "
+#~ "compil� avec GTK+-2.0 mais tourne avec GTK+-2.2. Recompilez-le SVP."
+
+#~ msgid "No (gnome-vfs-config not found)"
+#~ msgstr "Nu (gnome-vfs-config nu este gasit)"
+
+#~ msgid "ROX icon theme not found... installing..."
+#~ msgstr "Tema cu icoanele ROX nu este gasita... instaleaza..."
+
+#: trash.c desktop.c toolbar.c
+msgid "Unable to create the Trash directory '%s': %s"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Unable to create the Trash information directory '%s': %s"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Only local files can be moved to this Trash."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Open the Trash and select the items you want to restore."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Select one or more items to restore."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "The Trash information for '%s' has no valid original path."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Cannot restore '%s' because '%s' already exists."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Cannot restore '%s' because its original folder no longer exists: %s"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "The Trash is already empty."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Permanently delete every item in the Trash?\n\nThis action cannot be undone."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "_Empty Trash"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Trash"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Open the Trash; use the arrow to restore selected items or empty it"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Open Trash"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Restore Selected"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Empty Trash"
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Restore Items..."
+msgstr ""
+
+#: trash.c desktop.c toolbar.c
+msgid "Unable to move one or more desktop items to the Trash"
+msgstr ""
+
+#: trash.c
+msgid "One item was restored."
+msgid_plural "%u items were restored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: trash.c
+msgid "%u items were restored."
+msgstr ""
+
+msgid "automatically select X11 or Wayland"
+msgstr "automatically select X11 or Wayland"
+
+msgid "force the X11 backend"
+msgstr "force the X11 backend"
+
+msgid "force the native Wayland backend"
+msgstr "force the native Wayland backend"
+
+msgid "refresh the running Rox-Filer2 Desktop"
+msgstr "refresh the running Rox-Filer2 Desktop"
+
+msgid "open two Rox-Filer2 windows side by side"
+msgstr "open two Rox-Filer2 windows side by side"
+
+msgid "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+msgstr "Fast and lightweight file manager for X11 and Wayland, continued from ROX-Filer."
+
+msgid "Rox-Filer2 project"
+msgstr "Rox-Filer2 project"

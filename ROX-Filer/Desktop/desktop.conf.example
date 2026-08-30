@@ -1,0 +1,60 @@
+# ROX Desktop configuration example.
+# Active file:
+# ~/.config/rox.sourceforge.net/ROX-Filer/desktop.conf
+
+[Desktop]
+# ROX Desktop always uses ~/Desktop for files and launchers.
+# Wallpaper=/usr/share/backgrounds/example.jpg
+WallpaperMode=fill
+ShowVolumes=true
+
+[DesktopIcons]
+IconSize=48
+SingleClick=false
+SnapToGrid=true
+
+[DesktopDrives]
+# Device filters
+ShowInternal=true
+ShowRemovable=true
+ShowNetwork=false
+
+# Appearance
+IconSize=32
+ShowLabels=true
+ShowFrame=false
+ShowQuickAction=true
+
+# Layout compatible with the EssoraWM drive geometry.
+# Use Desktop > Drive Icons > Arrange Drive Icons... to edit these values.
+# Horizontal: false = row, true = column in the [Main] compatibility keys.
+Orientation=horizontal
+ReversePack=true
+SpacingX=87
+SpacingY=87
+XOffset=20
+YOffset=-40
+XPos=0.0
+YPos=1.0
+
+# Legacy corner name retained for older configurations and the GUI menu.
+Position=bottom-left
+
+# Compatibility aliases understood by both the new ROX Desktop layout and
+# EssoraWM. ROX writes these values automatically when preferences are saved.
+[Main]
+desktop_drive_icons=true
+desktop_drive_show_internal=true
+desktop_drive_show_removable=true
+desktop_drive_show_network=false
+desktop_drive_icon_size=32
+ShowLabels=true
+ShowFrame=false
+Vertical=false
+ReversePack=true
+SpacingX=87
+SpacingY=87
+XOffset=20
+YOffset=-40
+XPos=0.0
+YPos=1.0

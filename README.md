@@ -271,6 +271,34 @@ rox --desktop-apps
 
 Applications can be added to or removed from `~/Desktop`.
 
+## Desktop preferences
+
+Open the native desktop preferences directly from a script, terminal or
+launcher with:
+
+```sh
+rox --desktop-preferences
+```
+
+The drive-icon layout dialog is also scriptable:
+
+```sh
+rox --desktop-drive-icon-layout
+```
+
+For compatibility with the name suggested by Puppy scripts,
+`--desktop-drive_icon_layout` is accepted as an alias. Applying a layout asks
+the running ROX Desktop to reload its settings immediately.
+
+## ROX-Filer settings
+
+The normal ROX-Filer Options window is available from the fixed Settings
+button at the far right of the filer toolbar. It can also be opened directly:
+
+```sh
+rox --config-rox
+```
+
 ## Drives and partitions
 
 Rox-Filer2 can display and manage real storage devices.
@@ -350,14 +378,38 @@ rox-find --content 'Rox-Filer2' /root/projects
 
 ## Quick start
 
-Compile Rox-Filer2:
+The recommended build method is Meson:
+
+```sh
+meson setup build
+meson compile -C build
+```
+
+This builds both executables in the build directory:
+
+```text
+build/ROX-Filer
+build/rox-find
+```
+
+The Meson-built `build/ROX-Filer` executable can be run directly from the
+build tree and automatically uses the source `ROX-Filer/` AppDir for its
+runtime resources.
+
+The historical ROX build remains available for compatibility:
 
 ```sh
 cd ROX-Filer
-./AppRun --compile
+./AppRun --compile-only
 ```
 
-Open a filer window:
+Run the freshly built file manager directly from the source tree:
+
+```sh
+./build/ROX-Filer .
+```
+
+After installation, the normal launcher remains:
 
 ```sh
 rox .
@@ -408,6 +460,8 @@ Typical development dependencies include:
 - X11 development files for the X11/XLibre backend
 - SM / ICE
 - `pkg-config`
+- Meson 0.61 or newer
+- Ninja
 
 For the native Wayland desktop, `gtk-layer-shell` is required at runtime.
 
@@ -421,6 +475,10 @@ Optional tools include:
 Package names differ between Debian/Ubuntu/Puppy, Arch, Fedora, Slackware and
 other distributions, so the repository documents libraries rather than
 distribution-specific dependency package names.
+
+For Debian/Puppy packaging, `./build-package.sh` now uses Meson by default when
+Meson and Ninja are available. Use `./build-package.sh --legacy-build` only when
+the historical AppRun/autoconf path is specifically required.
 ## Compatibility
 
 Rox-Filer2 keeps important historical paths so existing ROX and Puppy Linux

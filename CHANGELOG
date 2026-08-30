@@ -1,3 +1,95 @@
+Rox-Filer2 2.12.2-34 (2026-08-28)
+======================================
+
+- Integrated the new Rox-Filer2 artwork as the official application icon set.
+- Installed the supplied hicolor icons at 16, 22, 24, 32, 48, 64, 96, 128,
+  192 and 256 pixels plus the scalable SVG.
+- ROX AppDir `.DirIcon` now uses the new transparent 256x256 artwork.
+- Legacy `ROX-Filer.svg` and `Rox-Filer2.svg` pixmap fallbacks now use the
+  same new scalable artwork, avoiding the old icon in lightweight setups.
+- Packaging explicitly refreshes every application-icon fallback from the
+  official hicolor set, so Debian/Puppy, portable and Arch packages stay
+  visually consistent.
+- No user-visible strings were added.
+
+Rox-Filer2 2.12.2-33 (2026-08-28)
+======================================
+
+- Packaging: `build-package.sh` now detects Arch Linux or an available
+  `makepkg` and automatically creates a native `.pkg.tar.zst` package in
+  addition to the Debian package and portable archive.
+- Arch packaging reuses the exact already-built portable runtime tree instead
+  of recompiling, keeping Debian/Puppy and Arch binaries identical.
+- Added `--arch-package` and `--no-arch-package` switches for explicit control.
+- Native Arch package metadata declares the direct GTK3/GLib/libxml2/X11
+  runtime dependencies, optional gtk-layer-shell Wayland support, and versioned
+  Rox-Filer provides/conflicts compatibility.
+- The Arch package includes the bundled Puppy MIME icons directly. Icon and
+  desktop caches are left to pacman hooks, following current Arch packaging
+  guidance. `!strip` keeps the packaged binaries identical to the portable tree.
+- No new user-visible strings were introduced.
+
+Rox-Filer2 2.12.2-32 (2026-08-28)
+======================================
+
+- Added `--desktop-drive-icon-layout` for scripts and launchers, opening the
+  same native Arrange Drive Icons dialog used by the desktop menu.
+- Added `--desktop-drive_icon_layout` as a compatibility alias matching the
+  name suggested for Puppy scripts.
+- Applying drive-layout settings from the standalone command now refreshes the
+  running ROX Desktop, and desktop refresh reloads saved desktop preferences.
+- Wayland cursor handling now restores an explicit default pointer instead of
+  a NULL cursor when directory scanning or target-selection mode finishes. X11
+  and XLibre keep the historical inherited-cursor behaviour.
+- Corrected the Meson project version, which was still advertising 2.12.2-30
+  in the 2.12.2-31 source tree.
+
+Rox-Filer2 2.12.2-31 (2026-08-28)
+======================================
+
+- Fixed direct X11 launch leaving background ROX-Filer2 processes with no
+  visible window.
+- Removed the historical post-gtk_init() daemonising fork. Rox-Filer2 now
+  remains a normal foreground GTK process whenever it services a request
+  itself; requests can still be forwarded to an already running instance
+  through the existing ROX remote/IPC path.
+- Meson remains the recommended build system introduced in 2.12.2-30.
+
+Rox-Filer2 2.12.2-30 (2026-08-22)
+======================================
+
+- Added a native Meson build as the recommended cross-distribution build path.
+  A normal source checkout can now be configured with `meson setup build` and
+  compiled with `meson compile -C build`, without editing AppRun or Makefiles.
+- Meson builds the main ROX-Filer2 executable and the `rox-find` companion with
+  the same declared GTK3, GIO, libxml2, SM/ICE and X11 dependencies.
+- Added compatibility compiler flags for the historical ROX C code when the
+  compiler supports them (`-fcommon`, pointer-sign handling and non-fatal
+  incompatible-pointer warnings).
+- The Meson-generated config header performs the feature/header checks formerly
+  provided only by autoconf.
+- The Meson-built executable recognizes when it is running directly from the
+  build tree and loads its AppDir resources from the source tree. A packaged
+  binary continues to resolve resources relative to its installed AppDir.
+- `build-package.sh` now prefers Meson/Ninja and packages the exact Meson-built
+  ROX-Filer2 and rox-find binaries. `--legacy-build` keeps the historical
+  AppRun/autoconf path available for compatibility.
+- The existing dpkg-deb control-directory permission fix remains preserved.
+- No new user-visible GUI strings were introduced; existing translations remain
+  valid.
+
+Rox-Filer2 2.12.2-29 (2026-08-21)
+======================================
+
+- Fixed Debian package generation when the source tree is extracted from a
+  directory carrying the setgid bit. `dpkg-deb` rejected the generated
+  `DEBIAN` control directory with mode 2755.
+- The packaging script now explicitly normalizes the generated package and
+  `DEBIAN` directory permissions to 0755 before invoking `dpkg-deb`.
+- Source directory permissions are normalized so packaged trees do not inherit
+  accidental setgid bits from the build environment.
+- No user-visible strings changed; maintained translations remain valid.
+
 Rox-Filer2 2.12.2-28 (2026-08-21)
 ======================================
 

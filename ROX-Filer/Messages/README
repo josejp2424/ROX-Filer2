@@ -1,0 +1,19 @@
+This directory contains various translations.
+Set the environment variable 'LANG' to the name of a translation (without
+the extension) before running the filer, eg:
+
+	$ LANG=fr; export LANG
+	$ ROX-Filer/AppRun
+
+will cause the filer to display all messages in French.
+
+See the ROX-Filer manual for details.
+
+This GTK3 AppDir binds the ROX-Filer gettext domain directly to this Messages
+directory. When installed under /usr/local/apps/ROX-Filer, keep the compiled
+catalogues here:
+
+    /usr/local/apps/ROX-Filer/Messages/<locale>/LC_MESSAGES/ROX-Filer.mo
+
+A second copy under /usr/share/locale is not required unless i18n.c is changed
+to bind the domain to a system-wide locale directory.

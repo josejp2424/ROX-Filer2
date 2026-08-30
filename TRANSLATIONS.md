@@ -1,4 +1,4 @@
-# Rox-Filer2 2.12.2-28 translation coverage
+# Rox-Filer2 2.12.2-34 translation coverage
 
 Rox-Filer2 keeps the historical ROX-Filer catalogues, and actively maintains
 these 13 locales for the current GTK3/Desktop additions:
@@ -31,6 +31,27 @@ For 2.12.2-28 there are no new user-visible strings; the maintained translations
 The other historical ROX-Filer catalogues remain included unchanged. If a
 newer Rox-Filer2-specific string is not translated in one of those legacy
 catalogues, gettext falls back to the English source text.
+
+
+## 2.12.2-34
+
+2.12.2-34 changes packaging only. It adds automatic native Arch Linux package
+generation and introduces no user-visible Rox-Filer2 strings, so all 13
+maintained translations from 2.12.2-32 remain valid.
+
+
+## 2.12.2-32
+
+2.12.2-32 adds the scriptable drive-icon layout command and the Wayland cursor
+restore fix. The command-line help reuses the already translated `Arrange Drive
+Icons...` string, so no new msgids are introduced and the maintained
+translations remain valid.
+
+
+## 2.12.2-31
+
+2.12.2-31 adds the Meson build system and packaging integration. It does not
+add new user-visible GUI strings, so the maintained translations remain valid.
 
 
 ## 2.12.2-28

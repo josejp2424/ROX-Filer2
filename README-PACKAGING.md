@@ -7,7 +7,9 @@ Run from the project root:
 ```
 
 The script compiles both **Rox-Filer2** and the companion **ROX File Search**
-application, then creates everything under `output/`:
+application. Meson/Ninja is the preferred build path; if Meson is unavailable,
+the script falls back to the historical AppRun/autoconf build. It then creates
+everything under `output/`:
 
 - `rox-filer2_<version>_<architecture>.deb`
 - the complete Debian package directory;
@@ -22,10 +24,10 @@ The generated runtime trees include:
 - the ROX File Search desktop entry, icon and translation catalogues
 - the standard Puppy MIME icons installed through the Debian maintenance scripts
 
-The runtime trees do not contain `Rox-Filer/src` or `Rox-Filer/build`. The
-development source keeps `ROX-Filer/src`, because it is required for future
-compilation. The temporary `ROX-Filer/build` directory is removed after
-packaging.
+The runtime trees do not contain `Rox-Filer/src` or legacy `Rox-Filer/build`.
+The development source keeps `ROX-Filer/src`, because it is required for future
+compilation. Meson output lives in the top-level `build/` directory and is
+never copied into runtime packages.
 
 The installed `Rox-Filer/ROX` directory comes from the package base supplied by
 josejp2424 in `package-base/usr/local/apps/Rox-Filer/ROX`.
@@ -36,10 +38,23 @@ To package binaries that have already been compiled:
 ./build-package.sh --skip-compile
 ```
 
-To compile without creating packages:
+To compile without creating packages (recommended):
+
+```sh
+meson setup build
+meson compile -C build
+```
+
+The legacy compiler remains available:
 
 ```sh
 ./ROX-Filer/AppRun --compile-only
+```
+
+To force the package builder to use that historical build path:
+
+```sh
+./build-package.sh --legacy-build
 ```
 
 To remove generated package output and temporary binaries:
@@ -90,3 +105,41 @@ recomienda, pero X11 continúa funcionando sin ella.
 session and `/usr/bin/rox-x11` in X11. `/usr/bin/rox` points to this selector.
 Desktop menu entries use this wrapper. The AppDir can still be launched
 directly because the binary now avoids the X11-only remote IPC path on Wayland.
+
+## Native Arch Linux package (2.12.2-34+)
+
+`build-package.sh` now detects Arch Linux (`/etc/arch-release` / `ID_LIKE=arch`)
+or an available `makepkg`. When detected, the normal build also creates a native
+Arch package after the portable tree has been produced:
+
+```sh
+./build-package.sh
+```
+
+Typical output:
+
+```text
+output/rox-filer2-2.12.2-34-x86_64.pkg.tar.zst
+```
+
+The Arch package is made from the same already-compiled portable filesystem tree
+used by the Debian/Puppy package path; Rox-Filer2 is not compiled a second time.
+The generated `PKGBUILD` is kept under `output/arch-build/` for inspection.
+Pacman hooks handle icon and desktop cache updates, so no obsolete `.install`
+hook is generated.
+
+To force this path on another distribution that has `makepkg` installed:
+
+```sh
+./build-package.sh --arch-package
+```
+
+To disable it even on Arch:
+
+```sh
+./build-package.sh --no-arch-package
+```
+
+`makepkg` must be run as a normal user. If the build script itself is run as
+root, Debian/portable outputs are still generated but the Arch package step is
+skipped with a warning.

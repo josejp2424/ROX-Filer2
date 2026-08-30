@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Modificado por josejp2424: construcción de esta versión contra GTK3.
+
+# This script is called by ROX-Filer-src.xml. It builds the filer
+# against the GTK3 headers supplied by the build environment.
+
+# This should already exist for releases, but is needed for Git checkouts
+if [ ! -f "$SRCDIR/ROX-Filer/src/configure" ]; then
+  (cd "$SRCDIR/ROX-Filer/src" && autoconf) || exit 1
+fi
+
+# This should already exist for releases, but is needed for Git checkouts
+if [ ! -f "$SRCDIR/rox.1" ]; then
+  (make -C "$SRCDIR/ROX-Filer/src/Docs") || exit 1
+fi
+
+if [ ! -f Makefile ]; then
+  "$SRCDIR/ROX-Filer/src/configure" "$@" || exit 1
+fi
+
+[ -d "$DISTDIR/ROX-Filer" ] || mkdir "$DISTDIR/ROX-Filer" || exit 1
+
+make "PLATFORM_DIR=$DISTDIR/ROX-Filer"|| exit 1
+
+(cd "$SRCDIR" && cp -r Choices README README-es rox.xml rox.1 "$DISTDIR") || exit 1
+(cd "$SRCDIR/ROX-Filer" && cp -r .DirIcon Help images Messages ROX AppInfo.xml AppRun Options.xml style.css subclasses Templates.ui "$DISTDIR/ROX-Filer") || exit 1
+find "$DISTDIR" -name '.svn' -type d |xargs rm -rf
+
+# Remove debugging symbols, if any
+rm -f "$DISTDIR/ROX-Filer/ROX-Filer.dbg"

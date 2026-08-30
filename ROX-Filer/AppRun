@@ -1,0 +1,103 @@
+#!/bin/sh
+
+# Rox-Filer2: compilación GTK3, limpieza del binario anterior
+# y actualización de los catálogos de idiomas incluidos.
+
+PROG=ROX-Filer
+
+APP_DIR=`dirname "$0"`
+APP_DIR=`cd "$APP_DIR";pwd`; export APP_DIR
+
+DEBUGGER=""
+
+if [ "x$MAKE" = x ]; then
+  MAKE=make export MAKE
+fi
+
+case $1 in
+	--gdb) shift ;
+		if [ "$#" != 0 ] ; then
+		  DEBUGGER="gdb --args" ; DEBUG_OPTIONS="-n --g-fatal-warnings"
+		else
+		  DEBUGGER="gdb"
+		fi ;;
+	--valgrind) shift ; DEBUGGER="valgrind --num-callers=8";;
+	--valgrind-verbose) shift ; DEBUGGER="valgrind -v --num-callers=8";;
+	--massif) shift ; DEBUGGER="valgrind --tool=massif --alloc-fn=g_malloc --alloc-fn=g_realloc --alloc-fn=g_malloc0 --alloc-fn=g_try_malloc --alloc-fn=g_mem_chunk_alloc";;
+	--calltree) shift ; DEBUGGER="calltree";;
+	--leaks) shift ; DEBUGGER="valgrind --num-callers=8 --leak-check=yes";;
+	--compile|--compile-only)
+		COMPILE_MODE=$1
+		shift
+		if [ ! -d "$APP_DIR/src" ] ; then
+			echo "ERROR from $0:" >&2
+			echo "Cannot compile - source code is missing!" >&2
+			exit 1
+		fi
+		echo "Compiling Rox-Filer2 in $APP_DIR... please wait..." >&2
+		if [ ! -x "$APP_DIR/src/configure" ]; then
+		  echo "No 'configure' script! Trying to run autoconf..."
+		  (cd "$APP_DIR/src"; autoconf)
+		fi
+		BUILDDIR="$APP_DIR/build"
+		[ ! -d "$BUILDDIR" ] && mkdir "$BUILDDIR"
+		rm -f "$BUILDDIR/config.cache"
+		rm -f "$APP_DIR/ROX-Filer" "$APP_DIR/ROX-Filer.dbg"
+		rm -f "$APP_DIR/src/config.h"	# (for upgrading)
+		# Run configure through a relative path from build/.  This keeps
+		# srcdir as ../src even when the extracted package is inside a
+		# directory whose name contains spaces (common under /initrd).
+		if cd "$BUILDDIR" && ../src/configure "$@" \
+			&& $MAKE clean && $MAKE; then
+			PROJECT_ROOT=`dirname "$APP_DIR"`
+			if [ -d "$PROJECT_ROOT/rox-find" ]; then
+				echo "Compiling ROX File Search..." >&2
+				$MAKE -C "$PROJECT_ROOT/rox-find" clean all || exit $?
+			fi
+			if command -v msgfmt >/dev/null 2>&1 && command -v iconv >/dev/null 2>&1; then
+				(
+					cd "$APP_DIR/src/po" || exit 0
+					for lang in ar ca de es fr it pt_PT pt_BR ja hu ru zh_CN zh_TW; do
+						[ -f "$lang.po" ] && ./make-mo "$lang" || true
+					done
+					mkdir -p "$APP_DIR/Messages/pt/LC_MESSAGES" "$APP_DIR/Messages/zh/LC_MESSAGES"
+					cp -f "$APP_DIR/Messages/pt_PT/LC_MESSAGES/ROX-Filer.mo" \
+						"$APP_DIR/Messages/pt/LC_MESSAGES/ROX-Filer.mo" 2>/dev/null || true
+					cp -f "$APP_DIR/Messages/zh_CN/LC_MESSAGES/ROX-Filer.mo" \
+						"$APP_DIR/Messages/zh/LC_MESSAGES/ROX-Filer.mo" 2>/dev/null || true
+				)
+			else
+				echo "gettext tools not found; using bundled translations." >&2
+			fi
+			echo Done >&2
+			if [ "$COMPILE_MODE" = "--compile" ]; then
+				if [ -x "$PROJECT_ROOT/build-package.sh" ]; then
+					"$PROJECT_ROOT/build-package.sh" --skip-compile || exit $?
+				fi
+			fi
+			exit 0
+		fi
+		echo Compile failed >&2
+		echo Press Return... >&2
+		read WAIT
+		exit 1
+esac
+
+BIN="$APP_DIR/$PROG"
+
+if [ -x "$BIN" ]; then
+  exec $DEBUGGER "$BIN" $DEBUG_OPTIONS "$@"
+else
+  echo "ERROR from $0:" >&2
+  echo "I cannot find an executable binary." >&2
+  echo "Trying to compile..." >&2
+  if [ -n "$DISPLAY" ]; then
+    xterm -e "$0" --compile
+  else
+    "$0" --compile
+  fi
+  if [ -x "$BIN" ]; then
+    exec "$BIN" "$@"
+  fi
+  exit 1
+fi

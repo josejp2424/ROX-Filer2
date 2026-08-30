@@ -43,45 +43,85 @@ case "$DISPLAY_VERSION" in
         ;;
 esac
 SKIP_COMPILE=0
+LEGACY_BUILD=0
+ARCH_PACKAGE_MODE=auto
+MESON_BUILD_DIR="${ROX_MESON_BUILD_DIR:-$PROJECT_ROOT/build}"
+ROX_BINARY=""
+ROX_FIND_BINARY=""
 
 usage() {
     cat <<USAGE
-Usage: $0 [--skip-compile] [--clean]
+Usage: $0 [--skip-compile] [--legacy-build] [--arch-package] [--no-arch-package] [--clean]
 
-  --skip-compile  Package the existing Rox-Filer2-compatible ROX-Filer/ROX-Filer binary.
-  --clean         Remove generated package output and ROX-Filer/build.
+  --skip-compile    Package an existing Meson or legacy Rox-Filer2 build.
+  --legacy-build    Use the historical AppRun/autoconf build instead of Meson.
+  --arch-package    Force generation of an Arch Linux package with makepkg.
+  --no-arch-package Disable automatic Arch Linux package generation.
+  --clean           Remove generated package output and build directories.
 
-Without options, the script compiles Rox-Filer2 and then creates:
-  - a Debian .deb package;
+Without options, the script prefers Meson, falling back to the historical
+AppRun/autoconf build only when Meson is unavailable. It then creates:
+  - a Debian .deb package when dpkg-deb is available;
   - the complete Debian package directory;
-  - a portable root filesystem directory and tar.gz archive.
+  - a portable root filesystem directory and tar.gz archive;
+  - an Arch Linux .pkg.tar.zst when Arch/makepkg is detected.
 USAGE
 }
 
-case "${1:-}" in
-    --skip-compile) SKIP_COMPILE=1 ;;
-    --clean)
-        rm -rf "$OUTPUT_DIR" "$APP_DIR/build"
-        rm -f "$PROJECT_ROOT/rox-find/rox-find"
-        echo "Cleaned generated output."
-        exit 0
-        ;;
-    -h|--help) usage; exit 0 ;;
-    "") ;;
-    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
-esac
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --skip-compile) SKIP_COMPILE=1 ;;
+        --legacy-build) LEGACY_BUILD=1 ;;
+        --arch-package) ARCH_PACKAGE_MODE=force ;;
+        --no-arch-package) ARCH_PACKAGE_MODE=off ;;
+        --clean)
+            rm -rf "$OUTPUT_DIR" "$APP_DIR/build" "$MESON_BUILD_DIR"
+            rm -f "$PROJECT_ROOT/rox-find/rox-find"
+            echo "Cleaned generated output."
+            exit 0
+            ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+    esac
+    shift
+done
 
 if [ "$SKIP_COMPILE" -eq 0 ]; then
-    "$APP_DIR/AppRun" --compile-only
+    if [ "$LEGACY_BUILD" -eq 0 ] && command -v meson >/dev/null 2>&1 && command -v ninja >/dev/null 2>&1; then
+        echo "Building Rox-Filer2 with Meson..." >&2
+        if [ -f "$MESON_BUILD_DIR/build.ninja" ]; then
+            meson setup --reconfigure --buildtype=release "$MESON_BUILD_DIR" "$PROJECT_ROOT"
+        else
+            meson setup --buildtype=release "$MESON_BUILD_DIR" "$PROJECT_ROOT"
+        fi
+        meson compile -C "$MESON_BUILD_DIR"
+        ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
+        ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
+    else
+        if [ "$LEGACY_BUILD" -eq 0 ]; then
+            echo "WARNING: Meson/Ninja unavailable; falling back to AppRun/autoconf." >&2
+        fi
+        "$APP_DIR/AppRun" --compile-only
+        ROX_BINARY="$APP_DIR/ROX-Filer"
+        ROX_FIND_BINARY="$PROJECT_ROOT/rox-find/rox-find"
+    fi
+else
+    if [ "$LEGACY_BUILD" -eq 0 ] && [ -x "$MESON_BUILD_DIR/ROX-Filer" ] && [ -x "$MESON_BUILD_DIR/rox-find" ]; then
+        ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
+        ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
+    else
+        ROX_BINARY="$APP_DIR/ROX-Filer"
+        ROX_FIND_BINARY="$PROJECT_ROOT/rox-find/rox-find"
+    fi
 fi
 
-if [ ! -x "$APP_DIR/ROX-Filer" ]; then
-    echo "ERROR: compiled binary not found: $APP_DIR/ROX-Filer" >&2
+if [ ! -x "$ROX_BINARY" ]; then
+    echo "ERROR: compiled Rox-Filer2 binary not found: $ROX_BINARY" >&2
     exit 1
 fi
 
-if [ ! -x "$PROJECT_ROOT/rox-find/rox-find" ]; then
-    echo "ERROR: ROX File Search binary not found: $PROJECT_ROOT/rox-find/rox-find" >&2
+if [ ! -x "$ROX_FIND_BINARY" ]; then
+    echo "ERROR: ROX File Search binary not found: $ROX_FIND_BINARY" >&2
     exit 1
 fi
 
@@ -130,6 +170,11 @@ cp -a "$PACKAGE_BASE/usr/local/apps/Rox-Filer/ROX" "$SUPPLIED_ROX_TMP"
 rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer" "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
 mkdir -p "$PACKAGE_DIR/usr/local/apps/Rox-Filer"
 cp -a "$APP_DIR/." "$PACKAGE_DIR/usr/local/apps/Rox-Filer/"
+# Always install the binary produced by the selected build system. This keeps
+# Debian/Puppy packaging on the exact same Meson-built executable used by
+# Arch/Fedora/Slackware users when Meson is available.
+install -m0755 "$ROX_BINARY" "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer"
+rm -f "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer.dbg"
 rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
 cp -a "$SUPPLIED_ROX_TMP" "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
 rm -rf "$SUPPLIED_ROX_TMP"
@@ -140,25 +185,43 @@ rm -rf \
     "$PACKAGE_DIR/usr/local/apps/Rox-Filer/build" \
     "$PACKAGE_DIR/usr/local/apps/Rox-Filer/src"
 
-# Install Rox-Filer2 application icons supplied with the source.  Desktop
-# files use Icon=rox-filer2 so GTK/icon themes can choose the correct size.
+# Install the official Rox-Filer2 application icon set supplied in
+# data/icons/hicolor.  Desktop files use Icon=rox-filer2 so GTK/icon themes
+# select the best size.  Also refresh every legacy/AppDir fallback here so a
+# stale icon from package-base can never override the current artwork.
 ROX_ICON_ROOT="$PROJECT_ROOT/data/icons/hicolor"
 for size in 16 22 24 32 48 64 96 128 192 256; do
-    install -Dm0644 \
-        "$ROX_ICON_ROOT/${size}x${size}/apps/rox-filer2.png" \
+    icon_file="$ROX_ICON_ROOT/${size}x${size}/apps/rox-filer2.png"
+    if [ ! -f "$icon_file" ]; then
+        echo "ERROR: missing Rox-Filer2 icon: $icon_file" >&2
+        exit 1
+    fi
+    install -Dm0644 "$icon_file" \
         "$PACKAGE_DIR/usr/share/icons/hicolor/${size}x${size}/apps/rox-filer2.png"
 done
-install -Dm0644 \
-    "$ROX_ICON_ROOT/scalable/apps/rox-filer2.svg" \
+
+ROX_SCALABLE_ICON="$ROX_ICON_ROOT/scalable/apps/rox-filer2.svg"
+if [ ! -f "$ROX_SCALABLE_ICON" ]; then
+    echo "ERROR: missing Rox-Filer2 scalable icon: $ROX_SCALABLE_ICON" >&2
+    exit 1
+fi
+install -Dm0644 "$ROX_SCALABLE_ICON" \
     "$PACKAGE_DIR/usr/share/icons/hicolor/scalable/apps/rox-filer2.svg"
-# Keep a pixmaps fallback for lightweight Puppy setups that do not consult
-# the icon theme cache.
+
+# ROX AppDir fallback used when the icon theme is unavailable.
 install -Dm0644 \
-    "$ROX_ICON_ROOT/scalable/apps/rox-filer2.svg" \
-    "$PACKAGE_DIR/usr/share/pixmaps/rox-filer2.svg"
+    "$ROX_ICON_ROOT/256x256/apps/rox-filer2.png" \
+    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer.png"
+ln -sfn ROX-Filer.png "$PACKAGE_DIR/usr/local/apps/Rox-Filer/.DirIcon"
+
+# Legacy pixmaps fallbacks used by lightweight Puppy setups and old launchers.
+for legacy_name in rox-filer2.svg ROX-Filer.svg Rox-Filer2.svg; do
+    install -Dm0644 "$ROX_SCALABLE_ICON" \
+        "$PACKAGE_DIR/usr/share/pixmaps/$legacy_name"
+done
 
 # Install the native ROX File Search companion application.
-install -Dm0755 "$PROJECT_ROOT/rox-find/rox-find" \
+install -Dm0755 "$ROX_FIND_BINARY" \
     "$PACKAGE_DIR/usr/bin/rox-find"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.desktop" \
     "$PACKAGE_DIR/usr/share/applications/rox-find.desktop"
@@ -222,6 +285,145 @@ if command -v dpkg-deb >/dev/null 2>&1; then
 else
     echo "WARNING: dpkg-deb is unavailable; the .deb was not created." >&2
     echo "The complete package directory is still available at: $PACKAGE_DIR" >&2
+fi
+
+# Arch Linux packaging is optional and automatic.  The package is made from
+# the exact portable tree produced above, so Debian/Puppy and Arch packages
+# contain the same freshly compiled Rox-Filer2 and rox-find binaries.
+IS_ARCH_LINUX=0
+if [ -f /etc/arch-release ]; then
+    IS_ARCH_LINUX=1
+elif [ -r /etc/os-release ]; then
+    OS_ID=
+    OS_ID_LIKE=
+    # os-release is shell syntax by specification.  Read only ID fields here.
+    OS_ID=$(sed -n 's/^ID=//p' /etc/os-release | head -n1 | tr -d '\"')
+    OS_ID_LIKE=$(sed -n 's/^ID_LIKE=//p' /etc/os-release | head -n1 | tr -d '\"')
+    case " $OS_ID $OS_ID_LIKE " in
+        *" arch "*) IS_ARCH_LINUX=1 ;;
+    esac
+fi
+
+MAKEPKG_AVAILABLE=0
+if command -v makepkg >/dev/null 2>&1; then
+    MAKEPKG_AVAILABLE=1
+fi
+
+BUILD_ARCH_PACKAGE=0
+case "$ARCH_PACKAGE_MODE" in
+    force) BUILD_ARCH_PACKAGE=1 ;;
+    off) BUILD_ARCH_PACKAGE=0 ;;
+    auto)
+        if [ "$IS_ARCH_LINUX" -eq 1 ] || [ "$MAKEPKG_AVAILABLE" -eq 1 ]; then
+            BUILD_ARCH_PACKAGE=1
+        fi
+        ;;
+esac
+
+ARCH_PACKAGE_FILE=
+if [ "$BUILD_ARCH_PACKAGE" -eq 1 ]; then
+    if [ "$MAKEPKG_AVAILABLE" -ne 1 ]; then
+        if [ "$ARCH_PACKAGE_MODE" = force ]; then
+            echo "ERROR: --arch-package requested, but makepkg is not installed." >&2
+            exit 1
+        fi
+        echo "WARNING: Arch Linux detected but makepkg is unavailable; skipping native Arch package." >&2
+        echo "Install Arch base-devel (which provides makepkg) and run the script again." >&2
+    elif [ "$(id -u)" -eq 0 ]; then
+        echo "WARNING: makepkg refuses to run as root; skipping native Arch package." >&2
+        echo "Run build-package.sh as a normal user to create the Arch package." >&2
+    else
+        case "$DISPLAY_VERSION" in
+            *-r*)
+                ARCH_PKGVER="${BASE_VERSION}.r${REVISION}"
+                ARCH_PKGREL=1
+                ;;
+            *-*)
+                ARCH_PKGVER=${DISPLAY_VERSION%-*}
+                ARCH_PKGREL=${DISPLAY_VERSION##*-}
+                ;;
+            *)
+                ARCH_PKGVER=$DISPLAY_VERSION
+                ARCH_PKGREL=1
+                ;;
+        esac
+
+        case "$(uname -m)" in
+            x86_64) ARCH_NATIVE_ARCH=x86_64 ;;
+            i?86) ARCH_NATIVE_ARCH=i686 ;;
+            aarch64) ARCH_NATIVE_ARCH=aarch64 ;;
+            armv7*|armv6*) ARCH_NATIVE_ARCH=armv7h ;;
+            *) ARCH_NATIVE_ARCH=$(uname -m) ;;
+        esac
+
+        ARCH_BUILD_DIR="$OUTPUT_DIR/arch-build"
+        ARCH_SOURCE_BASENAME=$(basename "$PORTABLE_TAR")
+        ARCH_PORTABLE_BASENAME=$(basename "$PORTABLE_DIR")
+        ARCH_SOURCE_SHA256=$(sha256sum "$PORTABLE_TAR" | awk '{print $1}')
+
+        rm -rf "$ARCH_BUILD_DIR"
+        mkdir -p "$ARCH_BUILD_DIR"
+        cp -a "$PORTABLE_TAR" "$ARCH_BUILD_DIR/$ARCH_SOURCE_BASENAME"
+
+        cat > "$ARCH_BUILD_DIR/PKGBUILD" <<ARCHPKG
+pkgname=rox-filer2
+pkgver=$ARCH_PKGVER
+pkgrel=$ARCH_PKGREL
+pkgdesc='Rox-Filer2 lightweight GTK3 file manager and desktop'
+arch=('$ARCH_NATIVE_ARCH')
+url='https://github.com/josejp2424/ROX-Filer-gtk3'
+license=('GPL-3.0-or-later')
+depends=('glibc' 'glib2' 'gtk3' 'libxml2' 'libsm' 'libice' 'libx11' 'shared-mime-info' 'hicolor-icon-theme')
+optdepends=('gtk-layer-shell: Wayland desktop layer support')
+provides=('rox-filer=$ARCH_PKGVER' 'file-manager')
+conflicts=('rox-filer')
+options=('!strip' '!debug')
+source=('$ARCH_SOURCE_BASENAME')
+sha256sums=('$ARCH_SOURCE_SHA256')
+
+package() {
+    cp -a "\$srcdir/$ARCH_PORTABLE_BASENAME/usr" "\$pkgdir/"
+
+    # Debian's maintainer script installs these bundled Puppy MIME icons.
+    # Add them directly to the Arch package so both package formats expose
+    # the same runtime icon set without relying on a Debian postinst.
+    local icon size source_dir
+    source_dir="\$pkgdir/usr/local/apps/Rox-Filer/ROX/MIME"
+    for size in 48x48 24x24 scalable 16x16; do
+        install -d "\$pkgdir/usr/share/icons/hicolor/\$size/mimetypes"
+        for icon in application-pet.svg application-x-sfs.svg application-x-squashfs-image.svg; do
+            install -m0644 "\$source_dir/\$icon" \
+                "\$pkgdir/usr/share/icons/hicolor/\$size/mimetypes/\$icon"
+        done
+    done
+}
+ARCHPKG
+
+        echo "Building Arch Linux package with makepkg..." >&2
+        (
+            cd "$ARCH_BUILD_DIR"
+            PKGDEST="$ARCH_BUILD_DIR" \
+            SRCDEST="$ARCH_BUILD_DIR" \
+            SRCPKGDEST="$ARCH_BUILD_DIR" \
+            LOGDEST="$ARCH_BUILD_DIR" \
+                makepkg --force --cleanbuild --clean
+        )
+
+        ARCH_PACKAGE_FILE=$(
+            find "$ARCH_BUILD_DIR" -maxdepth 1 -type f \
+                -name "${PACKAGE_NAME}-${ARCH_PKGVER}-${ARCH_PKGREL}-*.pkg.tar.*" \
+                ! -name '*.sig' -print | head -n1
+        )
+        if [ -z "$ARCH_PACKAGE_FILE" ]; then
+            echo "ERROR: makepkg completed but no Arch package was found." >&2
+            exit 1
+        fi
+        ARCH_FINAL_FILE="$OUTPUT_DIR/$(basename "$ARCH_PACKAGE_FILE")"
+        cp -f "$ARCH_PACKAGE_FILE" "$ARCH_FINAL_FILE"
+        ARCH_PACKAGE_FILE=$ARCH_FINAL_FILE
+        echo "Arch Linux package: $ARCH_PACKAGE_FILE"
+        echo "Generated PKGBUILD: $ARCH_BUILD_DIR/PKGBUILD"
+    fi
 fi
 
 # build/ is disposable. src/ remains only in the development source tree;
