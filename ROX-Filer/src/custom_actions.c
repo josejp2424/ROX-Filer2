@@ -293,7 +293,6 @@ static void action_activate(GtkMenuItem *item, gpointer data)
 
 static GtkWidget *action_menu_item(ActionInfo *info)
 {
-    GtkWidget *item = gtk_image_menu_item_new_with_label(info->name);
     GtkWidget *image;
 
     if (info->icon && *info->icon) {
@@ -306,9 +305,7 @@ static GtkWidget *action_menu_item(ActionInfo *info)
         image = gtk_image_new_from_icon_name("system-run",
                                               GTK_ICON_SIZE_MENU);
     }
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
-    gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(item), TRUE);
-    return item;
+    return rox_menu_item_new_with_image(info->name, image);
 }
 
 GList *custom_actions_create_items(GList *paths, GtkWindow *parent)
@@ -550,7 +547,7 @@ static gboolean save_action(const gchar *existing_path,
                      error ? error->message : _("Unknown error"));
         g_clear_error(&error);
         g_free(data);
-        g_string_free(targets, TRUE);
+        g_free(g_string_free(targets, FALSE));
         g_free(exec);
         g_free(icon);
         g_free(action_id);
@@ -560,7 +557,7 @@ static gboolean save_action(const gchar *existing_path,
     }
     chmod(path, 0644);
     g_free(data);
-    g_string_free(targets, TRUE);
+    g_free(g_string_free(targets, FALSE));
     g_free(exec);
     g_free(icon);
     g_free(action_id);

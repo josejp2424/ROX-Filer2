@@ -338,8 +338,8 @@ static void view_collection_init(GTypeInstance *object, gpointer gclass)
 	/* Use one explicitly-created adjustment during instance initialisation.
 	 * GtkViewport may replace it while finishing construction;
 	 * view_collection_new() synchronises Collection with the final one. */
-	adj = GTK_ADJUSTMENT(gtk_adjustment_new(
-		0.0, 0.0, 0.0, 1.0, 1.0, 0.0));
+	adj = GTK_ADJUSTMENT(g_object_ref_sink(gtk_adjustment_new(
+		0.0, 0.0, 0.0, 1.0, 1.0, 0.0)));
 	collection_set_vadjustment(view_collection->collection, adj);
 	gtk_scrollable_set_vadjustment(GTK_SCROLLABLE(viewport), adj);
 	g_object_unref(adj);
@@ -1126,15 +1126,36 @@ static void view_collection_style_changed(ViewIface *view, int flags)
 	gtk_widget_queue_draw(GTK_WIDGET(view_collection));
 }
 
-/* Modificado por josejp2424 (2026): orden seguro y determinista.
- * La función sort_by_name ya mantiene las carpetas normales primero; usarla
- * directamente evita comparadores con contexto global durante actualizaciones. */
+typedef int (*SortFn)(gconstpointer a, gconstpointer b);
+
+static SortFn view_collection_sort_fn(FilerWindow *filer_window)
+{
+	switch (filer_window->sort_type)
+	{
+		case SORT_NAME:  return sort_by_name;
+		case SORT_TYPE:  return sort_by_type;
+		case SORT_DATEA: return sort_by_datea;
+		case SORT_DATEC: return sort_by_datec;
+		case SORT_DATEM: return sort_by_datem;
+		case SORT_SIZE:  return sort_by_size;
+		case SORT_OWNER: return sort_by_owner;
+		case SORT_GROUP: return sort_by_group;
+		default:
+			g_assert_not_reached();
+	}
+	return sort_by_name;
+}
+
+/* Rox-Filer2 2.12.2-49: restore ROX's requested sort mode instead of
+ * forcing Name/Ascending in icon view. */
 static void view_collection_sort(ViewIface *view)
 {
 	ViewCollection *view_collection = VIEW_COLLECTION(view);
+	FilerWindow *filer_window = view_collection->filer_window;
 
-	collection_qsort(view_collection->collection, sort_by_name,
-			GTK_SORT_ASCENDING);
+	collection_qsort(view_collection->collection,
+			view_collection_sort_fn(filer_window),
+			filer_window->sort_order);
 	gtk_widget_queue_resize(GTK_WIDGET(view_collection->collection));
 }
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <!-- Rox-Filer2 only adds filename globs which are missing on several older
+       Puppy/shared-mime-info releases.  Detection in image_mounter.c also
+       checks the filename/content type, so mounting does not depend on this
+       database being present. -->
+  <mime-type type="application/vnd.squashfs">
+    <glob pattern="*.sfs" weight="85"/>
+    <glob pattern="*.squashfs" weight="85"/>
+    <glob pattern="*.sqfs" weight="85"/>
+    <glob pattern="*.sqsh" weight="85"/>
+  </mime-type>
+  <mime-type type="application/vnd.efi.iso">
+    <glob pattern="*.iso" weight="80"/>
+  </mime-type>
+  <mime-type type="application/vnd.efi.img">
+    <glob pattern="*.img" weight="80"/>
+  </mime-type>
+</mime-info>

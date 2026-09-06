@@ -96,10 +96,31 @@ fi
 
 ROX_REQUIRE(sm, 1)
 ROX_REQUIRE(gtk+-3.0, 3.22.0)
-ROX_REQUIRE(gio-unix-2.0, 2.50.0)
+ROX_REQUIRE(gio-unix-2.0, 2.70.0)
 AC_DEFINE(ROX_USING_GTK3, 1, [Build against GTK3])
 ROX_REQUIRE(libxml-2.0, 2.0.0)
 ROX_REQUIRE(shared-mime-info, 0.14)
+
+dnl Rox-Filer2: optional libsmbclient. SMB remains a local-mount feature.
+AC_ARG_ENABLE([smb],
+  [AS_HELP_STRING([--enable-smb@<:@=auto/yes/no@:>@],
+    [use libsmbclient for optional SMB share discovery/probing @<:@default=auto@:>@])],
+  [], [enable_smb=auto])
+SMBCLIENT_PKG=
+AC_MSG_CHECKING(for optional libsmbclient)
+if test "x$enable_smb" = xno ; then
+  AC_MSG_RESULT(disabled)
+elif "$PKG_CONFIG" --exists smbclient ; then
+  SMBCLIENT_PKG=smbclient
+  AC_DEFINE(HAVE_LIBSMBCLIENT, 1, [Build optional SMB validation with libsmbclient])
+  AC_MSG_RESULT(yes)
+elif test "x$enable_smb" = xyes ; then
+  AC_MSG_RESULT(no)
+  AC_MSG_ERROR([--enable-smb=yes requested but libsmbclient development files are missing])
+else
+  AC_MSG_RESULT(no; SMB mount dialog remains available through mount.cifs)
+fi
+AC_SUBST(SMBCLIENT_PKG)
 
 GTK_VERSION=`"$PKG_CONFIG" --modversion gtk+-3.0`
 AC_DEFINE_UNQUOTED(GTK_VERSION, "$GTK_VERSION")
@@ -166,6 +187,8 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h mntent.h sys/ucred.h sys/mntent.h apsymbols.h apbuild/apsymbols.h sys/statvfs.h sys/vfs.h wctype.h libintl.h sys/inotify.h)
+AC_CHECK_HEADERS([sys/mman.h])
+AC_CHECK_FUNCS([mmap])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

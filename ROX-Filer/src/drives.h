@@ -34,10 +34,14 @@ struct _RoxDriveInfo
 	gchar *type;
 	gchar *transport;
 	gchar *model;
+	gchar *parent_device;
 	gboolean removable;
+	gboolean hardware_removable;
 	gboolean optical;
 	gboolean network;
+	gboolean foreign;
 	gboolean solid_state;
+	gboolean label_is_synthetic;
 };
 
 GtkToolItem *drives_toolbar_button_new(struct _FilerWindow *filer_window);
@@ -48,12 +52,18 @@ GtkToolItem *drives_toolbar_button_new(struct _FilerWindow *filer_window);
 GPtrArray *rox_drives_read(GError **error);
 RoxDriveInfo *rox_drive_info_copy(const RoxDriveInfo *source);
 void rox_drive_info_free(gpointer data);
-RoxDriveInfo *rox_drive_find_by_device(const gchar *device, GError **error);
 
-gchar *rox_drive_find_mountpoint(const gchar *device);
-gchar *rox_drive_mount(const RoxDriveInfo *drive, gchar **error_text);
-gboolean rox_drive_unmount(const RoxDriveInfo *drive, gchar **error_text);
-gboolean rox_drive_eject(const RoxDriveInfo *drive, gchar **error_text);
+gchar *rox_drive_current_mountpoint(const RoxDriveInfo *drive);
+gboolean rox_drive_can_eject(const RoxDriveInfo *drive);
+void rox_drive_mount_async(const RoxDriveInfo *drive,
+		GAsyncReadyCallback callback, gpointer user_data);
+gchar *rox_drive_mount_finish(GAsyncResult *result, gchar **error_text);
+void rox_drive_unmount_async(const RoxDriveInfo *drive,
+		GAsyncReadyCallback callback, gpointer user_data);
+gboolean rox_drive_unmount_finish(GAsyncResult *result, gchar **error_text);
+void rox_drive_eject_async(const RoxDriveInfo *drive,
+		GAsyncReadyCallback callback, gpointer user_data);
+gboolean rox_drive_eject_finish(GAsyncResult *result, gchar **error_text);
 
 /* Agregado por josejp2424 (2026): resolvedor único de iconos.
  * ROX Desktop y la GUI de Particiones deben usar este mismo GIcon para que

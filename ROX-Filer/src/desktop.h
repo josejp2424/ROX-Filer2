@@ -14,6 +14,8 @@ void desktop_start(void);
 gboolean desktop_is_running(void);
 GdkWindow *desktop_get_gdk_window(void);
 void desktop_refresh_now(void);
+/* Return a newly allocated copy of the exact directory used by ROX Desktop. */
+gchar *desktop_dup_directory(void);
 /* Refresh only the visual cut/copy state of desktop file icons. */
 void desktop_refresh_cut_state(void);
 gboolean desktop_send_refresh_request(void);

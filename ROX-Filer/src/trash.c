@@ -74,6 +74,17 @@ static gboolean directory_has_entries(const gchar *path)
     return name != NULL;
 }
 
+gchar *rox_trash_open_path(GError **error)
+{
+    gchar *files;
+
+    if (!ensure_trash_dirs(error))
+        return NULL;
+
+    files = rox_trash_files_dir();
+    return files;
+}
+
 gboolean rox_trash_is_empty(void)
 {
     gchar *files = rox_trash_files_dir();
@@ -201,13 +212,12 @@ gboolean rox_trash_file(GFile *file, GError **error)
 
 void rox_trash_open(FilerWindow *source_window)
 {
-    gchar *files = rox_trash_files_dir();
     GError *error = NULL;
+    gchar *files = rox_trash_open_path(&error);
 
-    if (!ensure_trash_dirs(&error)) {
-        report_error("%s", error->message);
+    if (!files) {
+        report_error("%s", error ? error->message : _("Unable to open Trash"));
         g_clear_error(&error);
-        g_free(files);
         return;
     }
     filer_opendir(files, source_window, NULL);
@@ -350,11 +360,10 @@ void rox_trash_restore_selected(FilerWindow *filer_window)
 
     if (errors->len)
         report_error("%s", errors->str);
-    else if (restored == 1)
-        info_message(_("One item was restored."));
-    else if (restored > 1)
-        info_message(_("%u items were restored."), restored);
-    g_string_free(errors, TRUE);
+    else if (restored > 0)
+        info_message(ngettext("%u item was restored.",
+                              "%u items were restored.", restored), restored);
+    g_free(g_string_free(errors, FALSE));
 }
 
 static gboolean delete_recursively(GFile *file, GError **error)
@@ -442,7 +451,7 @@ void rox_trash_empty(GtkWindow *parent)
 
     if (errors->len)
         report_error("%s", errors->str);
-    g_string_free(errors, TRUE);
+    g_free(g_string_free(errors, FALSE));
     g_free(info);
     g_free(files);
 }

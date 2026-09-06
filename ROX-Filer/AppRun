@@ -57,14 +57,10 @@ case $1 in
 			if command -v msgfmt >/dev/null 2>&1 && command -v iconv >/dev/null 2>&1; then
 				(
 					cd "$APP_DIR/src/po" || exit 0
-					for lang in ar ca de es fr it pt_PT pt_BR ja hu ru zh_CN zh_TW; do
-						[ -f "$lang.po" ] && ./make-mo "$lang" || true
+					for lang in ar ca de es fr hu it ja pt ru zh; do
+						msgfmt -c "$lang.po" -o /dev/null || exit $?
+						./make-mo "$lang" || exit $?
 					done
-					mkdir -p "$APP_DIR/Messages/pt/LC_MESSAGES" "$APP_DIR/Messages/zh/LC_MESSAGES"
-					cp -f "$APP_DIR/Messages/pt_PT/LC_MESSAGES/ROX-Filer.mo" \
-						"$APP_DIR/Messages/pt/LC_MESSAGES/ROX-Filer.mo" 2>/dev/null || true
-					cp -f "$APP_DIR/Messages/zh_CN/LC_MESSAGES/ROX-Filer.mo" \
-						"$APP_DIR/Messages/zh/LC_MESSAGES/ROX-Filer.mo" 2>/dev/null || true
 				)
 			else
 				echo "gettext tools not found; using bundled translations." >&2
@@ -78,8 +74,10 @@ case $1 in
 			exit 0
 		fi
 		echo Compile failed >&2
-		echo Press Return... >&2
-		read WAIT
+		if [ "$COMPILE_MODE" != "--compile-only" ] && [ -t 0 ]; then
+			echo Press Return... >&2
+			read WAIT
+		fi
 		exit 1
 esac
 

@@ -413,8 +413,11 @@ static void migrate_choices(void)
 		errno=0;
 		if(exists(src)) {
 			if(rename(src, dest)==0) {
-				if(to_migrate[i].symlink)
-					symlink(dest, src);
+				/* 2.12.2-82: el enlace de compatibilidad es opcional,
+				 * pero si falla conviene dejar rastro. */
+				if(to_migrate[i].symlink && symlink(dest, src) != 0)
+					g_warning("symlink('%s' -> '%s') failed: %s",
+						  src, dest, g_strerror(errno));
 				migrated_something = TRUE;
 			} else {
 				g_warning("rename(%s, %s): %s\n",

@@ -9,6 +9,8 @@
 #mesondefine HAVE_MNTENT_H
 #mesondefine HAVE_SYS_MNTENT_H
 #mesondefine HAVE_FCNTL_H
+#mesondefine HAVE_SYS_MMAN_H
+#mesondefine HAVE_MMAP
 #mesondefine HAVE_GETOPT_LONG
 #mesondefine HAVE_UNSETENV
 #mesondefine FILE_B_FLAG
@@ -48,6 +50,7 @@
 # define _(String) dgettext("ROX-Filer", String)
 #else
 # define _(String) (String)
+# define ngettext(Singular, Plural, N) ((N) == 1 ? (Singular) : (Plural))
 #endif
 #define N_(String) (String)
 
@@ -64,3 +67,5 @@
 #ifndef S_ISDOOR
 # define S_ISDOOR(mode) (FALSE)
 #endif
+
+#mesondefine HAVE_LIBSMBCLIENT

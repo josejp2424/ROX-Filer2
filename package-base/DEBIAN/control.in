@@ -5,14 +5,15 @@ Priority: optional
 Architecture: @ARCH@
 Maintainer: josejp2424 <puppylinuxjosejp2424@gmail.com>
 Installed-Size: @INSTALLED_SIZE@
-Depends: libc6, libglib2.0-0t64 | libglib2.0-0, libgtk-3-0t64 | libgtk-3-0, libxml2, shared-mime-info
-Recommends: libgtk-layer-shell0
+Depends: @SHLIBS_DEPENDS@, shared-mime-info
+Recommends: libgtk-layer-shell0, cifs-utils, feh | xwallpaper
+Suggests: udisks2
 Provides: rox-filer, file-manager
 Conflicts: rox-filer
 Replaces: rox-filer
 Homepage: https://github.com/josejp2424/ROX-Filer-gtk3
-Description: Rox-Filer2 lightweight GTK3 file manager and desktop
- Rox-Filer2 continues the original ROX-Filer as a fast GTK3 file manager.
- This build includes the Rox-Filer2 Desktop, wallpaper management, desktop applications,
- drive icons, paired filer windows, the native ROX File Search companion,
- standard XDG MIME associations, user applications, custom actions, trash support and templates.
+Description: lightweight GTK3 file manager and desktop environment component
+ A fast continuation of the original ROX-Filer for GTK3.
+ It includes the Rox-Filer2 Desktop, wallpaper and desktop application
+ management, drive icons, paired filer windows, ROX File Search, XDG MIME
+ integration, custom actions, Trash support and file templates.

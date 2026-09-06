@@ -624,7 +624,7 @@ again:
 				load_error ? load_error->message : "unknown");
 		}
 		g_clear_error(&load_error);
-		gtk_icon_info_free(full);
+		g_object_unref(full);
 		g_clear_pointer(&resolved_icon_name, g_free);
 		if (type->image)
 			goto out;
@@ -677,7 +677,7 @@ again:
 				type->media_type, type->subtype,
 				load_error ? load_error->message : "unknown");
 		g_clear_error(&load_error);
-		gtk_icon_info_free(full);
+		g_object_unref(full);
 	}
 
 out:

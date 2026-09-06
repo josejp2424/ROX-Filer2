@@ -1,10 +1,12 @@
 [Desktop Entry]
-Encoding=UTF-8
 Name=Rox-Filer2
 Icon=rox-filer2
 Comment=Lightweight X11 and Wayland file manager
-Exec=/usr/local/bin/roxfiler
+Exec=rox %F
 Terminal=false
 Type=Application
 Categories=System;FileTools;FileManager;Utility;
 GenericName=File manager
+MimeType=inode/directory;
+StartupNotify=false
+Keywords=files;folders;file manager;desktop;ROX;

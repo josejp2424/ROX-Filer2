@@ -121,4 +121,6 @@ GdkPixbuf *create_spotlight_pixbuf(GdkPixbuf *src, const GdkRGBA *color);
 GtkBuilder *get_gtk_builder(gchar **ids);
 void menu_item_set_icon(GtkWidget *item, const char *icon_name);
 
+GtkWidget *rox_menu_item_new_with_image(const gchar *label, GtkWidget *image);
+
 #endif /* _GUI_SUPPORT_H */

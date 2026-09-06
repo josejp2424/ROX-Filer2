@@ -41,6 +41,7 @@
 #include <gdk/gdkx.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gio/gio.h>
 
 #include "global.h"
 
@@ -544,6 +545,8 @@ void info_message(const char *message, ...)
 	va_start(args, message);
 
 	run_error_info_dialog(GTK_MESSAGE_INFO, message, args);
+
+	va_end(args);
 }
 
 /* Display a message in a window with "ROX-Filer" as title */
@@ -554,6 +557,8 @@ void report_error(const char *message, ...)
 	va_start(args, message);
 
 	run_error_info_dialog(GTK_MESSAGE_ERROR, message, args);
+
+	va_end(args);
 }
 
 void set_cardinal_property(GdkWindow *window, GdkAtom prop, gulong value)
@@ -608,8 +613,8 @@ gboolean get_cardinal_property(GdkWindow *window, GdkAtom prop, gulong length,
 
 int get_current_desktop(void)
 {
-        gint act_len;
-        gulong current;
+        gint act_len = 0;
+        gulong current = 0;
         GdkWindow *gdk_root = gdk_get_default_root_window();int desk=0;
 
         if(get_cardinal_property(gdk_root, xa__NET_CURRENT_DESKTOP, 1,
@@ -621,8 +626,8 @@ int get_current_desktop(void)
 
 int get_number_of_desktops(void)
 {
-        gint act_len;
-        gulong num;
+        gint act_len = 0;
+        gulong num = 0;
         GdkWindow *gdk_root = gdk_get_default_root_window();int desks=1;
 
         if(get_cardinal_property(gdk_root, xa__NET_NUMBER_OF_DESKTOPS, 1,
@@ -636,7 +641,7 @@ int get_number_of_desktops(void)
  * panels. */
 void get_work_area(int *x, int *y, int *width, int *height)
 {
-        gint act_len;
+        gint act_len = 0;
         gulong *work_area;
         GdkWindow *gdk_root = gdk_get_default_root_window();int x0, y0, w0, h0;
         int idesk, ndesk, nval;
@@ -1152,6 +1157,11 @@ const char *rox_icon_name(const char *icon_name)
 		{ROX_ICON_SYMLINK, {"emblem-symbolic-link", "emblem-symbolic-link-symbolic", NULL, NULL}},
 		{"application-x-executable", {"application-x-executable", "application-x-executable-symbolic", NULL, NULL}},
 		{ROX_ICON_DIRECTORY, {"folder", "folder-symbolic", NULL, NULL}},
+		/* 2.12.2-84 image-mounter actions: stay entirely within the active
+		 * system icon theme and fall back to common freedesktop names. */
+		{"media-mount", {"media-mount", "media-mount-symbolic", "drive-removable-media", "drive-harddisk", NULL}},
+		{"folder-open", {"folder-open", "folder-open-symbolic", "folder", "folder-symbolic", NULL}},
+		{"media-eject", {"media-eject", "media-eject-symbolic", "media-removable", "drive-removable-media", NULL}},
 	};
 	GtkIconTheme *theme;
 	const char *resolved;
@@ -1315,6 +1325,129 @@ GtkWidget *dialog_add_icon_button(GtkDialog *dialog, const char *icon_name,
 	return button;
 }
 
+#define ROX_MENU_ICON_MAX 18
+
+/* Keep application/action icons in menus visually uniform without replacing
+ * the application's real icon.  A number of .desktop files use an absolute
+ * PNG/SVG path; GtkImage can otherwise request that file at its native
+ * (sometimes 128/256 px) size and make one menu row enormous.
+ *
+ * Follow the active GTK menu icon size when it is smaller, but never allow a
+ * menu icon to exceed 18 px.  Large pixbuf/file icons preserve aspect ratio
+ * and already-small pixbufs are never enlarged. */
+static gint menu_icon_limit_pixels(void)
+{
+	gint width = ROX_MENU_ICON_MAX;
+	gint height = ROX_MENU_ICON_MAX;
+
+	if (gtk_icon_size_lookup(GTK_ICON_SIZE_MENU, &width, &height))
+		return MIN(ROX_MENU_ICON_MAX, MAX(width, height));
+	return ROX_MENU_ICON_MAX;
+}
+
+static GdkPixbuf *menu_pixbuf_fit(GdkPixbuf *source, gint limit)
+{
+	gint width, height, new_width, new_height;
+	double scale;
+
+	if (!source)
+		return NULL;
+
+	width = gdk_pixbuf_get_width(source);
+	height = gdk_pixbuf_get_height(source);
+	if (width <= limit && height <= limit)
+		return g_object_ref(source);
+
+	scale = MIN((double) limit / (double) width,
+	            (double) limit / (double) height);
+	new_width = MAX(1, (gint) (width * scale + 0.5));
+	new_height = MAX(1, (gint) (height * scale + 0.5));
+
+	return gdk_pixbuf_scale_simple(source, new_width, new_height,
+	                               GDK_INTERP_BILINEAR);
+}
+
+static void menu_image_limit(GtkWidget *image)
+{
+	GdkPixbuf *source = NULL;
+	GdkPixbuf *fitted = NULL;
+	GtkImageType storage;
+	gboolean source_owned = FALSE;
+	gint limit;
+
+	if (!GTK_IS_IMAGE(image))
+		return;
+
+	limit = menu_icon_limit_pixels();
+	storage = gtk_image_get_storage_type(GTK_IMAGE(image));
+	switch (storage)
+	{
+		case GTK_IMAGE_PIXBUF:
+			source = gtk_image_get_pixbuf(GTK_IMAGE(image));
+			break;
+
+		case GTK_IMAGE_ANIMATION:
+		{
+			GdkPixbufAnimation *animation =
+				gtk_image_get_animation(GTK_IMAGE(image));
+			if (animation)
+				source = gdk_pixbuf_animation_get_static_image(animation);
+			break;
+		}
+
+		case GTK_IMAGE_GICON:
+		{
+			GIcon *gicon = NULL;
+			GtkIconSize icon_size = GTK_ICON_SIZE_MENU;
+
+			gtk_image_get_gicon(GTK_IMAGE(image), &gicon, &icon_size);
+			/* Absolute Icon=/path/file.png desktop entries commonly arrive
+			 * as GFileIcon.  Load that exact file and clamp its pixbuf so a
+			 * 256 px application icon cannot dictate the menu-row height. */
+			if (gicon && G_IS_FILE_ICON(gicon))
+			{
+				GFile *file = g_file_icon_get_file(G_FILE_ICON(gicon));
+				gchar *path = file ? g_file_get_path(file) : NULL;
+
+				if (path)
+				{
+					source = gdk_pixbuf_new_from_file(path, NULL);
+					source_owned = source != NULL;
+				}
+				g_free(path);
+			}
+
+			if (!source)
+				gtk_image_set_pixel_size(GTK_IMAGE(image), limit);
+			break;
+		}
+
+		case GTK_IMAGE_ICON_NAME:
+			gtk_image_set_pixel_size(GTK_IMAGE(image), limit);
+			break;
+
+		default:
+			/* Stock/icon-set/surface images are uncommon in current Rox-Filer2
+			 * menu paths.  Keep them untouched rather than replacing the real
+			 * icon with a generic fallback. */
+			break;
+	}
+
+	if (source)
+	{
+		fitted = menu_pixbuf_fit(source, limit);
+		if (source_owned)
+			g_object_unref(source);
+		if (fitted)
+		{
+			gtk_image_set_from_pixbuf(GTK_IMAGE(image), fitted);
+			g_object_unref(fitted);
+		}
+	}
+
+	gtk_widget_set_valign(image, GTK_ALIGN_CENTER);
+}
+
 static void menu_item_set_content(GtkWidget *item, const char *label, GtkWidget *image)
 {
 	GList *children, *iter;
@@ -1323,6 +1456,7 @@ static void menu_item_set_content(GtkWidget *item, const char *label, GtkWidget 
 
 	gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
 	gtk_widget_set_valign(text, GTK_ALIGN_CENTER);
+	menu_image_limit(image);
 
 	children = gtk_container_get_children(GTK_CONTAINER(item));
 	for (iter = children; iter; iter = iter->next)
@@ -2333,4 +2467,33 @@ void menu_item_set_icon(GtkWidget *item, const char *icon_name)
 	menu_item_set_content(item, label,
 			image_new_icon(icon_name, GTK_ICON_SIZE_MENU));
 	g_free(label);
+}
+
+/* Agregado en 2.12.2-82: reemplazo de GtkImageMenuItem.
+ *
+ * GtkImageMenuItem esta obsoleto desde GTK 3.10 y generaba 23 de los 41
+ * avisos de compilacion de 2.12.2-81.  Un GtkMenuItem con una caja
+ * horizontal (icono + etiqueta) reproduce el mismo aspecto sin API
+ * obsoleta y respeta el espaciado del tema activo.
+ *
+ * 'image' se consume: si es NULL solo se muestra la etiqueta.
+ */
+GtkWidget *rox_menu_item_new_with_image(const gchar *label, GtkWidget *image)
+{
+	GtkWidget *item;
+	GtkWidget *box;
+	GtkWidget *text;
+
+	item = gtk_menu_item_new();
+	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	menu_image_limit(image);
+	if (image)
+		gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
+	/* Application names are literal labels, not Rox mnemonic strings. */
+	text = gtk_label_new(label ? label : "");
+	gtk_label_set_xalign(GTK_LABEL(text), 0.0);
+	gtk_box_pack_start(GTK_BOX(box), text, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(item), box);
+	gtk_widget_show_all(box);
+	return item;
 }

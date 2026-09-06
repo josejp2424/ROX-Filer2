@@ -121,6 +121,27 @@ struct _FilerWindow
 	GtkWidget	*toolbar_back;
 	GtkWidget	*toolbar_forward;
 
+	/* Rox-Filer2 Modern window chrome. These widgets are only created when
+	 * the persisted interface style is Modern; the file/view backend remains
+	 * the normal FilerWindow backend shared with Classic ROX. */
+	gboolean	modern_mode;
+	GtkWidget	*modern_menubar;
+	GtkWidget	*modern_navbar;
+	GtkWidget	*modern_tabbar;
+	GtkWidget	*modern_path_entry;
+	GtkWidget	*modern_back;
+	GtkWidget	*modern_forward;
+	GtkWidget	*modern_menu_back;
+	GtkWidget	*modern_menu_forward;
+	GtkWidget	*modern_sidebar;
+	GtkWidget	*modern_places_list;
+	GtkWidget	*modern_tree_view;
+	GtkWidget	*modern_bookmarks_list;
+	GtkWidget	*modern_devices_list;
+	GtkWidget	*modern_paned;
+	GtkWidget	*modern_content_box;
+	GtkWidget	*modern_sidebar_menu_item;
+
 	gint		open_timeout;	/* Will resize and show window... */
 	/* Agregado por josejp2424: estado del tamaño inicial GTK3. */
 	gboolean	initial_geometry_pending; /* Suppress initial auto-size */

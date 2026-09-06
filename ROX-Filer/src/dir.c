@@ -590,7 +590,7 @@ static DirItem *insert_item(Directory *dir, const guchar *leafname)
 {
 	const gchar  	*full_path;
 	DirItem		*item;
-	DirItem		old;
+	DirItem		old = {0};
 	gboolean	do_compare = FALSE;	/* (old is filled in) */
 
 	if (leafname[0] == '.' && (leafname[1] == '\n' ||

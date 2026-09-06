@@ -9,6 +9,8 @@
 #undef HAVE_MNTENT_H
 #undef HAVE_SYS_MNTENT_H
 #undef HAVE_FCNTL_H
+#undef HAVE_SYS_MMAN_H
+#undef HAVE_MMAP
 #undef HAVE_GETOPT_LONG
 #undef HAVE_UNSETENV
 #undef FILE_B_FLAG
@@ -52,6 +54,7 @@
 # define _(String) dgettext("ROX-Filer", String)
 #else
 # define _(String) (String)
+# define ngettext(Singular, Plural, N) ((N) == 1 ? (Singular) : (Plural))
 #endif
 /* Short for gettext_noop() - marks a string as translatable without
  * actually translating it at that point. Used by xgettext.
@@ -80,3 +83,6 @@
 #ifndef S_ISDOOR
 # define S_ISDOOR(mode) (FALSE)
 #endif
+
+/* Optional libsmbclient support for SMB share validation. */
+#undef HAVE_LIBSMBCLIENT

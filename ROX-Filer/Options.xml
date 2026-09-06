@@ -2,6 +2,14 @@
 <!-- Rox-Filer2 GTK3 options. Kept generic so future releases only need
      feature-specific documentation updates. -->
 <options>
+  <section title='Interface'>
+    <frame label='Interface style'>
+      <interface-style-chooser name='interface_style'/>
+      <label help='1'>Choose the interface used by Rox-Filer2. The selection is saved for the current user and used again the next time Rox-Filer2 starts.</label>
+      <label help='1'>Classic ROX keeps the traditional toolbar layout. Modern follows the tabbed reference layout with Places, Devices and Network in a clean sidebar while using the same file, MIME, mount, Trash and Desktop backends.</label>
+    </frame>
+  </section>
+
   <section title='General'>
     <frame label='Filer windows'>
       <toggle name='filer_unique_windows' label='Use one window for each directory'>When a directory is already open, reuse its existing filer window instead of opening another copy.</toggle>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rox-Filer2 マニュアル</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1c1f24; --muted: #5a6270;
+  --accent: #2f6fb0; --rule: #dde2e8; --code-bg: #f4f6f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1e23; --fg: #e6e9ee; --muted: #9aa4b2;
+          --accent: #6fa8dc; --rule: #333941; --code-bg: #23272e; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 1.2rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font-family: system-ui, "DejaVu Sans", "Noto Sans", sans-serif;
+  font-size: 16px; line-height: 1.65;
+}
+main { max-width: 46rem; margin: 0 auto; }
+header { border-bottom: 2px solid var(--accent); margin: 2rem 0 1.5rem; }
+.brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.manual-logo { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
+.brand-copy { min-width: 0; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+@media (max-width: 34rem) {
+  .manual-logo { width: 56px; height: 56px; flex-basis: 56px; }
+  h1 { font-size: 1.55rem; }
+}
+h2 {
+  font-size: 1.25rem; margin: 2.2rem 0 .6rem;
+  padding-bottom: .25rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: .7rem 0; }
+ul { margin: .6rem 0 .6rem 1.3rem; padding: 0; }
+li { margin: .3rem 0; }
+code, kbd {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+  font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: .9em;
+}
+nav.toc {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 8px; padding: .9rem 1.2rem; margin: 1.5rem 0;
+}
+nav.toc ol { margin: .3rem 0 0 1.2rem; padding: 0; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+footer {
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .88rem;
+}
+[dir="rtl"] ul, [dir="rtl"] nav.toc ol { margin: .6rem 1.3rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">
+<img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
+<div class="brand-copy">
+<h1>Rox-Filer2 マニュアル</h1>
+<p class="sub">X11 と Wayland 向けの高速・軽量なファイルマネージャー。ROX-Filer の後継です。 &mdash; 2.12.2-89</p>
+</div>
+</div>
+</header>
+<nav class="toc"><b>目次</b><ol>
+<li><a href="#intro">Rox-Filer2 とは</a></li>
+<li><a href="#interfaces">クラシックとモダンのインターフェース</a></li>
+<li><a href="#window">ファイラーウィンドウ</a></li>
+<li><a href="#desktop">ROX デスクトップ</a></li>
+<li><a href="#drives">ドライブとマウント</a></li>
+<li><a href="#images">ディスクイメージ (ISO, IMG, SFS, SquashFS)</a></li>
+<li><a href="#network">SMB と Windows 共有</a></li>
+<li><a href="#trash">ごみ箱</a></li>
+<li><a href="#mime">ファイル種別と「アプリケーションで開く」</a></li>
+<li><a href="#actions">カスタムアクションとテンプレート</a></li>
+<li><a href="#tools">検索・ブックマーク・ペアウィンドウ</a></li>
+<li><a href="#options">オプションと設定ファイル</a></li>
+<li><a href="#cmdline">コマンドライン</a></li>
+<li><a href="#diagnostics">診断</a></li>
+<li><a href="#support">問題の報告</a></li>
+</ol></nav>
+<h2 id="intro">Rox-Filer2 とは</h2>
+<p>Rox-Filer2 は ROX-Filer の後継であり、GTK3 に更新したうえで、モダンなインターフェース、ネイティブな SMB 対応、ドライブアイコン、そして X11 と Wayland の両方で動作するデスクトップモードを追加しています。</p>
+<p>ひとつのプロセスでひとつの仕事だけを行います。ファイルを管理し、必要であればデスクトップも管理します。常駐デーモンも、仮想ファイルシステム層も、デスクトップ環境への依存もありません。表示されるものはすべて通常の POSIX パスです。</p>
+<h2 id="interfaces">クラシックとモダンのインターフェース</h2>
+<p>Rox-Filer2 には 2 つのインターフェーススタイルがあり、ファイル、MIME、マウント、ごみ箱、デスクトップの各基盤を共有しています。</p>
+<ul><li><b>クラシック ROX</b> は従来の ROX-Filer のレイアウトとツールバーをそのまま保ちます。ROX-Filer からの移行であれば、配置は変わりません。</li><li><b>モダン</b> はメニューバー、ナビゲーション行、タブ、そして「場所」「デバイス」「ネットワーク」を含むサイドバーを追加します。</li></ul>
+<p>常用するスタイルは <b>オプション &gt; インターフェース</b> で選びます。変更は Rox-Filer2 を再起動したあとに開くウィンドウに適用されます。</p>
+<p>保存された設定を変えずに一度だけ試すには、<code>rox --classic</code> または <code>rox --modern</code> で起動してください。</p>
+<h2 id="window">ファイラーウィンドウ</h2>
+<p>ディレクトリはダブルクリックで開きます。シングルクリックは選択で、空白部分を左ボタンでドラッグすると矩形選択になります。</p>
+<ul><li>右ボタンはポインター下の項目のコンテキストメニューを開きます。空白部分ではウィンドウ全体のメニューになります。</li><li>中ボタンはディレクトリを新しいウィンドウで開きます。</li><li><kbd>Backspace</kbd> で 1 階層上に移動し、<kbd>Ctrl+L</kbd> でパス入力欄にフォーカスします。</li><li>モダンでは <kbd>Ctrl+T</kbd> でタブを開き、<kbd>Ctrl+W</kbd> で閉じます。各タブはそれぞれのパスと履歴を保持します。</li></ul>
+<p>アイコン表示と詳細表示はビュー切り替えで変更でき、アイコンの大きさはスライダーで調整します。</p>
+<h2 id="desktop">ROX デスクトップ</h2>
+<p>デスクトップは <code>rox --desktop</code> で起動します。同時に動作するのは 1 つだけです。壁紙を描画し、デスクトップディレクトリのアイコンを表示し、ドライブアイコンを表示することもできます。</p>
+<ul><li><b>壁紙:</b> <code>rox --desktop-wallpaper</code>、またはデスクトップの右クリック。モードは塗りつぶし、全体表示、引き伸ばし、中央、タイルです。</li><li><b>アプリケーション:</b> <code>rox --desktop-apps</code> がデスクトップのランチャーを管理します。</li><li><b>ドライブアイコン:</b> <code>rox --desktop-drive-icon-layout</code> で整列します。</li><li><b>設定:</b> <code>rox --desktop-preferences</code>。</li></ul>
+<p>X11 ではデスクトップ種別のヒントを付けた通常のウィンドウを使います。Wayland では Layer Shell の背景レイヤーを使うため、<code>gtk-layer-shell</code> がインストールされ、Labwc のように <code>zwlr_layer_shell_v1</code> を公開するコンポジターが必要です。<code>rox-x11 --desktop</code> または <code>rox-wayland --desktop</code> でバックエンドを固定できます。</p>
+<p>擬似透過のターミナルや conky に同じ画像を見せるため X11 のルートウィンドウの背景も設定したい場合は、<code>feh</code> または <code>xwallpaper</code> をインストールしてください。</p>
+<h2 id="drives">ドライブとマウント</h2>
+<p>ローカルおよびリムーバブルのドライブは、モダンのサイドバーの<b>デバイス</b>に表示され、必要に応じてデスクトップアイコンにもなります。ドライブをクリックするとマウントして開き、アンマウントはコンテキストメニューから行います。</p>
+<p>ドライブの情報は <code>lsblk</code>、<code>/proc/mounts</code>、sysfs から取得するため、常駐サービスは不要です。一般ユーザーがマウントするには <code>udisksctl</code> か、それを許可する fstab エントリーが必要です。</p>
+<p>リムーバブルメディアは取り外す前に必ずアンマウントしてください。Rox-Filer2 はウィンドウを閉じたあとにデバイスへ書き込むことはありませんが、カーネルが未書き込みのデータを保持している場合があります。</p>
+<h2 id="images">ディスクイメージ (ISO, IMG, SFS, SquashFS)</h2>
+<p>イメージファイルを右クリックして<b>イメージをマウント</b>を選びます。Rox-Filer2 はループデバイスに割り当てて読み取り専用でマウントし、その結果を通常のディレクトリと同じように開きます。対応する拡張子は <code>.iso</code>、<code>.img</code>、<code>.sfs</code>、<code>.squashfs</code>、<code>.sqfs</code>、<code>.sqsh</code> です。</p>
+<p>マウント後は同じメニューに<b>マウント済みイメージを開く</b>と<b>イメージをアンマウント</b>が現れます。マウント先は <code>/media/rox-filer2-images/</code> の下で、イメージごとに 1 つのディレクトリです。</p>
+<ul><li><b>常に読み取り専用です。</b>ループデバイス、ブロックデバイス、マウントのいずれも読み取り専用に設定されるため、イメージを誤って変更することはありません。</li><li><b>root の場合</b>（Puppy と Essora の通常の形態）は <code>losetup</code> と <code>mount</code> を直接使います。一般ユーザーの場合は <code>udisksctl</code> を使うため、これがインストールされている必要があります。</li><li><b>生の <code>.img</code> ファイル</b>にはパーティションテーブルが含まれることがあります。複数見つかった場合、Rox-Filer2 はどれをマウントするか尋ね、各パーティションの実際の番号、ファイルシステム、サイズ、ラベルを表示します。ISO と SquashFS のイメージは、ハイブリッド ISO がパーティションテーブルを持つ場合でも常に全体をマウントします。</li><li><b>GVfs は使いません。</b>イメージは通常のローカルマウントになるため、コピー、ドラッグ＆ドロップ、MIME 処理、カスタムアクションはほかのディレクトリとまったく同じように動作します。</li></ul>
+<p>マウントはバックグラウンドで実行されます。ループデバイスの準備とパーティションの走査の間は小さなウィンドウにスピナーが表示され、ファイラーは操作可能なままです。</p>
+<p>イメージファイルを削除または移動する前にアンマウントしてください。Rox-Filer2 の知らないうちにマウントが消えた場合、メニュー項目は再び<b>イメージをマウント</b>を表示します。</p>
+<h2 id="network">SMB と Windows 共有</h2>
+<p><b>移動 &gt; SMB 共有に接続</b>、またはモダンのサイドバーの<b>ネットワークを参照</b>を開きます。サーバー名と、分かっていれば共有名を入力します。一覧ボタンはサーバーに提供している共有を問い合わせます。</p>
+<p>Rox-Filer2 は仮想ファイルシステムで見せるのではなく、<code>mount.cifs</code> を使って通常のローカルマウントとして共有をマウントします。そのためコピー、ドラッグ＆ドロップ、MIME 処理、ごみ箱、カスタムアクションはローカルファイルとまったく同じように動作します。</p>
+<ul><li><code>cifs-utils</code> がインストールされている必要があります。</li><li>マウントには root 権限が必要です。一般ユーザーの場合 Rox-Filer2 は <code>sudo -n</code> を試みます。<code>mount.cifs</code> に対するパスワード不要の許可は事実上 root を与えることと同じですので、理解したうえで設定するか、ご自身でマウントしてください。</li><li>パスワードが設定ファイルに書かれることはありません。本人だけが読める一時的な資格情報ファイルを経由し、<code>mount.cifs</code> が終了した時点で削除されます。記憶されるのはサーバー、共有、ユーザー、ドメインだけです。</li></ul>
+<h2 id="trash">ごみ箱</h2>
+<p>メニューからの削除は項目を XDG のごみ箱へ移動するため、あとから復元できます。復元はごみ箱ディレクトリのコンテキストメニューから行います。</p>
+<p>ごみ箱はごみ箱ディレクトリと同じファイルシステム内でのみ機能します。別のパーティションやリムーバブルデバイス上のファイルの削除は復元できないことがあり、その場合 Rox-Filer2 が警告します。</p>
+<h2 id="mime">ファイル種別と「アプリケーションで開く」</h2>
+<p>ファイル種別は共有 MIME データベースと、ファイル自体に設定された拡張属性から判定されます。コンテキストメニューの<b>アプリケーションで開く</b>に、その種別に登録されたアプリケーションが並びます。</p>
+<p>既定の処理プログラムや独自のアイコンは、項目の<b>アイコンを設定</b>と<b>アクションを設定</b>から指定します。これらはご自身の設定に保存され、システムのデータベースを変更することはありません。</p>
+<h2 id="actions">カスタムアクションとテンプレート</h2>
+<p>カスタムアクションは独自のコマンドをコンテキストメニューに追加し、選択されたパスを引数として受け取ります。通常のデスクトップエントリーなので、別のマシンへコピーできます。</p>
+<p>テンプレートを使うと、指定した種類の空ファイルをコンテキストメニューから作成できます。アプリケーションディレクトリの Templates ディレクトリにファイルを置けば、独自のテンプレートを追加できます。</p>
+<h2 id="tools">検索・ブックマーク・ペアウィンドウ</h2>
+<ul><li><b>検索:</b> <code>rox-find</code> は名前、サイズ、種別、内容で検索し、結果をファイラーへ返します。</li><li><b>ブックマーク:</b> よく使うディレクトリをワンクリックで開けるようにします。モダンでは「場所」にも表示されます。</li><li><b>ペアウィンドウ:</b> <code>rox --pair</code> はディレクトリ間のコピー用に 2 つのウィンドウを並べて開き、<code>rox --pair-realign</code> で並べ直せます。</li></ul>
+<h2 id="options">オプションと設定ファイル</h2>
+<p><b>オプション</b>は編集メニュー、デスクトップメニュー、または <code>rox --config-rox</code> から開けます。</p>
+<p>設定は XDG の設定ディレクトリ、通常は <code>~/.config/rox.sourceforge.net/ROX-Filer/</code> に置かれます。ファイルは XML、INI、プレーンテキストなので、バックアップ、編集、別マシンへのコピーができます。ファイルを削除すると、その設定群が既定値に戻ります。</p>
+<h2 id="cmdline">コマンドライン</h2>
+<ul><li><code>rox</code> &mdash; X11 か Wayland のバックエンドを自動選択します。</li><li><code>rox-x11</code>、<code>rox-wayland</code> &mdash; バックエンドを固定します。</li><li><code>rox DIR</code> &mdash; ディレクトリを開きます。</li><li><code>rox -d DIR</code> &mdash; アプリケーションディレクトリであってもディレクトリとして開きます。</li><li><code>rox -D DIR</code> &mdash; そのディレクトリとサブディレクトリを閉じます。</li><li><code>rox --classic</code>、<code>rox --modern</code> &mdash; インターフェースの一時的な切り替えです。</li><li><code>rox --desktop</code> &mdash; デスクトップを起動します。<code>--desktop-refresh</code> は動作中のものを更新します。</li><li><code>rox --help</code> &mdash; 全一覧です。</li></ul>
+<h2 id="diagnostics">診断</h2>
+<p>ログ出力は既定で無効です。技術ログを書き出すには <code>rox --debug</code> で起動し、出力先は <code>--log-file=ファイル</code>、詳細度は <code>--log-level=レベル</code> に error、warning、info、debug、trace のいずれかを指定します。<code>rox --clear-logs</code> は Rox-Filer2 が自動管理しているログを削除します。</p>
+<p>問題を報告する際はこのログを添えてください。どのデスクトップバックエンドが選ばれたか、どのインターフェーススタイルが有効か、SMB マウントやドライブ走査がなぜ失敗したかが記録されています。</p>
+<h2 id="support">問題の報告</h2>
+<p>不具合や提案はプロジェクトページ <a href="https://github.com/josejp2424/ROX-Filer-gtk3">github.com/josejp2424/ROX-Filer-gtk3</a> へお寄せください。</p>
+<p>ご使用のバージョン（<b>ヘルプ &gt; Rox-Filer2 について</b>を参照）、X11 と Wayland のどちらか、インターフェースのスタイル、そして問題を再現する正確な手順をお知らせください。</p>
+<footer>Rox-Filer2 は GNU 一般公衆利用許諾書バージョン 2 以降のもとで 配布される自由ソフトウェアです。オリジナルの ROX-Filer &copy; 2005 Thomas Leonard および貢献者、Rox-Filer2 の継続開発 &copy; 2026 josejp2424。</footer>
+</main>
+</body>
+</html>

@@ -6,6 +6,28 @@ Run from the project root:
 ./build-package.sh
 ```
 
+## Dedicated native builders
+
+The normal builder remains independent. For a package compiled natively on
+the target distribution, the source tree also provides:
+
+```sh
+./build_arch.sh
+```
+
+On Arch/Arch-based systems this compiles with Meson + `-Dsmb=enabled` and
+creates a native `output/rox-filer2-*.pkg.tar.zst` with `makepkg`. Run it as a
+normal user.
+
+```sh
+./build_void.sh
+```
+
+On Void/KLV this compiles with Meson + `-Dsmb=enabled` and creates a native
+`output/rox-filer2-*.xbps`, then indexes `output/` as a local XBPS repository.
+Both scripts have `--clean` and intentionally do not call or modify the normal
+`build-package.sh` path.
+
 The script compiles both **Rox-Filer2** and the companion **ROX File Search**
 application. Meson/Ninja is the preferred build path; if Meson is unavailable,
 the script falls back to the historical AppRun/autoconf build. It then creates
@@ -18,7 +40,7 @@ everything under `output/`:
 
 The generated runtime trees include:
 
-- `/usr/local/apps/Rox-Filer`
+- `/usr/lib/rox-filer2` (runtime real) + `/usr/local/apps/Rox-Filer` y `/usr/local/apps/ROX-Filer` (enlaces de compatibilidad)
 - `/usr/bin/Rox-Filer2`
 - `/usr/bin/rox-find`
 - the ROX File Search desktop entry, icon and translation catalogues
@@ -30,7 +52,7 @@ compilation. Meson output lives in the top-level `build/` directory and is
 never copied into runtime packages.
 
 The installed `Rox-Filer/ROX` directory comes from the package base supplied by
-josejp2424 in `package-base/usr/local/apps/Rox-Filer/ROX`.
+josejp2424 in `package-assets/ROX`.
 
 To package binaries that have already been compiled:
 
@@ -95,7 +117,7 @@ build. Use diagnostic 1.5 to identify stale processes and test the real terminal
 ## Enlaces de backend r73
 
 El paquete instala `/usr/bin/rox-x11` y `/usr/bin/rox-wayland` como enlaces al
-mismo binario `/usr/local/apps/Rox-Filer/Rox-Filer2`. El soporte Wayland carga
+mismo binario `/usr/lib/rox-filer2/ROX-Filer`. El soporte Wayland carga
 `libgtk-layer-shell.so.0` solo cuando el display es Wayland; el paquete la
 recomienda, pero X11 continúa funcionando sin ella.
 
@@ -106,7 +128,7 @@ session and `/usr/bin/rox-x11` in X11. `/usr/bin/rox` points to this selector.
 Desktop menu entries use this wrapper. The AppDir can still be launched
 directly because the binary now avoids the X11-only remote IPC path on Wayland.
 
-## Native Arch Linux package (2.12.2-34+)
+## Native Arch Linux package (2.12.2-33+)
 
 `build-package.sh` now detects Arch Linux (`/etc/arch-release` / `ID_LIKE=arch`)
 or an available `makepkg`. When detected, the normal build also creates a native
@@ -119,7 +141,7 @@ Arch package after the portable tree has been produced:
 Typical output:
 
 ```text
-output/rox-filer2-2.12.2-34-x86_64.pkg.tar.zst
+output/rox-filer2-2.12.2-33-x86_64.pkg.tar.zst
 ```
 
 The Arch package is made from the same already-compiled portable filesystem tree

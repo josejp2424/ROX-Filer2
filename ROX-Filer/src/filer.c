@@ -47,6 +47,8 @@
 #include "global.h"
 
 #include "filer.h"
+#include "interface_style.h"
+#include "modern_ui.h"
 #include "display.h"
 #include "main.h"
 #include "fscache.h"
@@ -463,6 +465,14 @@ static gboolean apply_standard_initial_geometry(gpointer data)
 
 	if (!filer_exists(filer_window))
 		return G_SOURCE_REMOVE;
+
+	/* Modern owns its geometry in modern-session.ini. Directory changes and
+	 * the Classic safety resize must never overwrite a user-resized window. */
+	if (filer_window->modern_mode)
+	{
+		filer_window->initial_geometry_pending = FALSE;
+		return G_SOURCE_REMOVE;
+	}
 
 	/* Paired windows have their own work-area layout and a smaller minimum. */
 	if (g_object_get_data(G_OBJECT(filer_window->window), "rox-paired-window"))
@@ -1118,8 +1128,8 @@ static void selection_get(GtkWidget *widget,
 		gtk_selection_data_set_text(selection_data, "", 0);
 	}
 
-	g_string_free(reply, TRUE);
-	g_string_free(header, TRUE);
+	g_free(g_string_free(reply, FALSE));
+	g_free(g_string_free(header, FALSE));
 }
 
 /* Selection has been changed -- try to grab the primary selection
@@ -1988,7 +1998,8 @@ void filer_change_to(FilerWindow *filer_window,
 
 	display_set_actual_size(filer_window, FALSE);
 
-	if (o_filer_auto_resize.int_value == RESIZE_ALWAYS)
+	if (!filer_window->modern_mode &&
+	    o_filer_auto_resize.int_value == RESIZE_ALWAYS)
 		view_autosize(filer_window->view);
 
 	if (filer_window->mini_type == MINI_PATH)
@@ -2037,6 +2048,42 @@ DirItem *filer_selected_item(FilerWindow *filer_window)
  * Returns the new filer window, or NULL on error.
  * Note: if unique windows is in use, may return an existing window.
  */
+static void modern_status_zoom_changed(GtkRange *range, FilerWindow *filer_window)
+{
+	gint step;
+	DisplayStyle style;
+
+	if (!filer_window || !filer_window->modern_mode)
+		return;
+	step = (gint) (gtk_range_get_value(range) + 0.5);
+	style = step <= 0 ? SMALL_ICONS : (step >= 2 ? HUGE_ICONS : LARGE_ICONS);
+	if (filer_window->display_style == style)
+		return;
+	display_set_layout(filer_window, style, filer_window->details_type, FALSE);
+	display_set_default_size(style);
+}
+
+static gdouble modern_status_zoom_value(FilerWindow *filer_window)
+{
+	if (!filer_window)
+		return 1.0;
+	if (filer_window->display_style == SMALL_ICONS)
+		return 0.0;
+	if (filer_window->display_style == HUGE_ICONS)
+		return 2.0;
+	return 1.0;
+}
+
+static void modern_status_view_clicked(GtkButton *button, FilerWindow *filer_window)
+{
+	(void) button;
+	if (!filer_window || !filer_window->modern_mode)
+		return;
+	filer_set_view_type(filer_window,
+		filer_window->view_type == VIEW_TYPE_COLLECTION ?
+		VIEW_TYPE_DETAILS : VIEW_TYPE_COLLECTION);
+}
+
 FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 			   const gchar *wm_class)
 {
@@ -2088,6 +2135,20 @@ FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 	filer_window->history_navigation = FALSE;
 	filer_window->toolbar_back = NULL;
 	filer_window->toolbar_forward = NULL;
+	filer_window->modern_mode = interface_style_is_modern();
+	filer_window->modern_menubar = NULL;
+	filer_window->modern_navbar = NULL;
+	filer_window->modern_tabbar = NULL;
+	filer_window->modern_path_entry = NULL;
+	filer_window->modern_back = NULL;
+	filer_window->modern_forward = NULL;
+	filer_window->modern_menu_back = NULL;
+	filer_window->modern_menu_forward = NULL;
+	filer_window->modern_sidebar = NULL;
+	filer_window->modern_places_list = NULL;
+	filer_window->modern_tree_view = NULL;
+	filer_window->modern_bookmarks_list = NULL;
+	filer_window->modern_devices_list = NULL;
 	filer_window->toplevel_vbox = NULL;
 	filer_window->view_hbox = NULL;
 	filer_window->view = NULL;
@@ -2208,7 +2269,7 @@ FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 		gtk_window_set_position(GTK_WINDOW(filer_window->window),
 					GTK_WIN_POS_CENTER);
 
-	if (dir_settings)
+	if (dir_settings && !filer_window->modern_mode)
 	{
 		if (dir_settings->flags & SET_POSITION)
 		{
@@ -2341,7 +2402,8 @@ void filer_set_view_type(FilerWindow *filer_window, ViewType type)
 		filer_window->directory = dir;
 		attach(filer_window);
 
-		if (o_filer_auto_resize.int_value != RESIZE_NEVER)
+		if (!filer_window->modern_mode &&
+		    o_filer_auto_resize.int_value != RESIZE_NEVER)
 			view_autosize(filer_window->view);
 	}
 
@@ -2375,23 +2437,27 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	 */
 	filer_window->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_position(GTK_WINDOW(filer_window->window), GTK_WIN_POS_CENTER);
-	gtk_window_set_default_size(GTK_WINDOW(filer_window->window),
-			DEFAULT_FILER_WIDTH, DEFAULT_FILER_HEIGHT);
-	/* Agregado por josejp2424 (2026): solicitud mínima directa adicional.
-	 * Esto evita que un gestor de ventanas o una requisición tardía de GTK3
-	 * reduzca la instancia por debajo de 640x400. */
-	gtk_widget_set_size_request(filer_window->window,
-		DEFAULT_FILER_WIDTH, DEFAULT_FILER_HEIGHT);
+	if (filer_window->modern_mode)
 	{
-		GdkGeometry minimum_geometry;
-
-		/* Agregado por josejp2424 (2026): mínimo directo en cada ventana
-		 * del filer. No depende del tema, del autoajuste ni de un hook global. */
-		memset(&minimum_geometry, 0, sizeof(minimum_geometry));
-		minimum_geometry.min_width = DEFAULT_FILER_WIDTH;
-		minimum_geometry.min_height = DEFAULT_FILER_HEIGHT;
-		gtk_window_set_geometry_hints(GTK_WINDOW(filer_window->window), NULL,
-			&minimum_geometry, GDK_HINT_MIN_SIZE);
+		/* Modern starts at 800x640 only on first use.  modern_ui.c may
+		 * immediately replace this with the exact size saved by the user. */
+		gtk_window_set_default_size(GTK_WINDOW(filer_window->window), 800, 640);
+		gtk_window_set_resizable(GTK_WINDOW(filer_window->window), TRUE);
+	}
+	else
+	{
+		gtk_window_set_default_size(GTK_WINDOW(filer_window->window),
+			DEFAULT_FILER_WIDTH, DEFAULT_FILER_HEIGHT);
+		gtk_widget_set_size_request(filer_window->window,
+			DEFAULT_FILER_WIDTH, DEFAULT_FILER_HEIGHT);
+		{
+			GdkGeometry minimum_geometry;
+			memset(&minimum_geometry, 0, sizeof(minimum_geometry));
+			minimum_geometry.min_width = DEFAULT_FILER_WIDTH;
+			minimum_geometry.min_height = DEFAULT_FILER_HEIGHT;
+			gtk_window_set_geometry_hints(GTK_WINDOW(filer_window->window), NULL,
+				&minimum_geometry, GDK_HINT_MIN_SIZE);
+		}
 	}
 	filer_set_title(filer_window);
 	gtk_widget_set_name(filer_window->window, "rox-filer");
@@ -2435,18 +2501,39 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 		gtk_widget_show(filer_window->message);
 	}
 
+	/* Modern is an alternative window shell only. The directory view created
+	 * below is still the normal Rox-Filer2 view and therefore shares all file,
+	 * MIME, mount, Trash, Desktop and operation code with Classic ROX. */
+	if (filer_window->modern_mode)
+		modern_ui_build(filer_window, vbox);
+
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	filer_window->view_hbox = GTK_BOX(hbox);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-	/* Add the main View widget */
+	if (filer_window->modern_mode)
+		modern_ui_attach_sidebar(filer_window, hbox);
+	/* Add the main View widget.  In Modern mode the existing ROX view is
+	 * placed in the right side of the resizable sidebar paned container. */
 	filer_set_view_type(filer_window, filer_window->view_type);
+	/* Modern should open with keyboard focus in the file view.  Otherwise GTK
+	 * may choose the path entry as the first focusable widget and select its
+	 * complete contents, making a newly opened window look as if Ctrl+L had
+	 * already been invoked. */
+	if (filer_window->modern_mode && filer_window->view)
+		gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
 	/* Put the scrollbar next to the View */
-	gtk_box_pack_end(GTK_BOX(hbox),
+	if (filer_window->modern_mode && filer_window->modern_content_box)
+		gtk_box_pack_end(GTK_BOX(filer_window->modern_content_box),
+			filer_window->scrollbar, FALSE, TRUE, 0);
+	else
+		gtk_box_pack_end(GTK_BOX(hbox),
 			filer_window->scrollbar, FALSE, TRUE, 0);
 	gtk_widget_show(hbox);
 
-	/* If we want a toolbar, create it now */
-	toolbar_update_toolbar(filer_window);
+	/* Classic keeps the original configurable ROX toolbar unchanged. Modern
+	 * supplies its own navigation row from modern_ui.c. */
+	if (!filer_window->modern_mode)
+		toolbar_update_toolbar(filer_window);
 
 	/* And the minibuffer (hidden to start with) */
 	create_minibuffer(filer_window);
@@ -2464,13 +2551,11 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	gtk_box_pack_start(GTK_BOX(filer_window->thumb_bar),
 			filer_window->thumb_progress, TRUE, TRUE, 0);
 
-	/* Compact bottom status row: directory/selection information on the left
-	 * and About on the right. Both use the same small text scale so the row is
-	 * informative without competing with the filer contents. */
+	/* Bottom status row. Modern follows the reference design: information on
+	 * the left and compact icon-size/view controls on the right. Classic keeps
+	 * the historical About link. */
 	{
 		GtkWidget *status_row;
-		GtkWidget *about_link;
-		GtkWidget *about_label;
 		PangoAttrList *attrs;
 
 		status_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
@@ -2479,37 +2564,73 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 		gtk_widget_set_halign(filer_window->toolbar_text, GTK_ALIGN_START);
 		gtk_widget_set_valign(filer_window->toolbar_text, GTK_ALIGN_CENTER);
 		gtk_label_set_xalign(GTK_LABEL(filer_window->toolbar_text), 0.0);
-		gtk_label_set_ellipsize(GTK_LABEL(filer_window->toolbar_text),
-				PANGO_ELLIPSIZE_END);
+		gtk_label_set_ellipsize(GTK_LABEL(filer_window->toolbar_text), PANGO_ELLIPSIZE_END);
 		attrs = pango_attr_list_new();
-		pango_attr_list_insert(attrs, pango_attr_scale_new(0.85));
+		pango_attr_list_insert(attrs, pango_attr_scale_new(0.90));
 		gtk_label_set_attributes(GTK_LABEL(filer_window->toolbar_text), attrs);
 		pango_attr_list_unref(attrs);
-		gtk_box_pack_start(GTK_BOX(status_row), filer_window->toolbar_text,
-				TRUE, TRUE, 6);
+		gtk_box_pack_start(GTK_BOX(status_row), filer_window->toolbar_text, TRUE, TRUE, 10);
 
-		about_link = gtk_link_button_new_with_label("about:rox-filer2",
-				_("About"));
-		gtk_button_set_relief(GTK_BUTTON(about_link), GTK_RELIEF_NONE);
-		gtk_widget_set_can_focus(about_link, FALSE);
-		gtk_widget_set_tooltip_text(about_link, _("About Rox-Filer2"));
+		if (filer_window->modern_mode)
+		{
+			GtkWidget *controls;
+			GtkWidget *minus;
+			GtkWidget *scale;
+			GtkWidget *view_button;
+			GtkWidget *image;
 
-		about_label = gtk_bin_get_child(GTK_BIN(about_link));
-		if (GTK_IS_LABEL(about_label)) {
-			attrs = pango_attr_list_new();
-			pango_attr_list_insert(attrs, pango_attr_scale_new(0.85));
-			gtk_label_set_attributes(GTK_LABEL(about_label), attrs);
-			pango_attr_list_unref(attrs);
+			/* Keep the reference controls together as one compact right-hand group.
+			 * Packing them into their own box makes the visual order independent of
+			 * GtkBox pack-end insertion rules: minus, slider, view. */
+			controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+			gtk_widget_set_valign(controls, GTK_ALIGN_CENTER);
+
+			minus = gtk_label_new("−");
+			gtk_widget_set_margin_start(minus, 4);
+			gtk_widget_set_margin_end(minus, 2);
+			gtk_box_pack_start(GTK_BOX(controls), minus, FALSE, FALSE, 0);
+
+			scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0.0, 2.0, 1.0);
+			gtk_scale_set_draw_value(GTK_SCALE(scale), FALSE);
+			gtk_range_set_value(GTK_RANGE(scale), modern_status_zoom_value(filer_window));
+			gtk_widget_set_size_request(scale, 110, -1);
+			gtk_widget_set_tooltip_text(scale, _("Icon size"));
+			gtk_box_pack_start(GTK_BOX(controls), scale, FALSE, FALSE, 0);
+			g_signal_connect(scale, "value-changed", G_CALLBACK(modern_status_zoom_changed), filer_window);
+
+			view_button = gtk_button_new();
+			gtk_button_set_relief(GTK_BUTTON(view_button), GTK_RELIEF_NONE);
+			gtk_widget_set_can_focus(view_button, FALSE);
+			image = gtk_image_new_from_icon_name("view-list-symbolic", GTK_ICON_SIZE_MENU);
+			gtk_button_set_image(GTK_BUTTON(view_button), image);
+			gtk_widget_set_tooltip_text(view_button, _("View"));
+			gtk_box_pack_start(GTK_BOX(controls), view_button, FALSE, FALSE, 0);
+			g_signal_connect(view_button, "clicked", G_CALLBACK(modern_status_view_clicked), filer_window);
+
+			gtk_box_pack_end(GTK_BOX(status_row), controls, FALSE, FALSE, 6);
+		}
+		else
+		{
+			GtkWidget *about_link;
+			GtkWidget *about_label;
+
+			about_link = gtk_link_button_new_with_label("about:rox-filer2", _("About"));
+			gtk_button_set_relief(GTK_BUTTON(about_link), GTK_RELIEF_NONE);
+			gtk_widget_set_can_focus(about_link, FALSE);
+			gtk_widget_set_tooltip_text(about_link, _("About Rox-Filer2"));
+			about_label = gtk_bin_get_child(GTK_BIN(about_link));
+			if (GTK_IS_LABEL(about_label)) {
+				attrs = pango_attr_list_new();
+				pango_attr_list_insert(attrs, pango_attr_scale_new(0.85));
+				gtk_label_set_attributes(GTK_LABEL(about_label), attrs);
+				pango_attr_list_unref(attrs);
+			}
+			gtk_box_pack_end(GTK_BOX(status_row), about_link, FALSE, FALSE, 4);
+			g_signal_connect(about_link, "activate-link", G_CALLBACK(filer_about_link), filer_window);
 		}
 
-		gtk_box_pack_end(GTK_BOX(status_row), about_link, FALSE, FALSE, 4);
 		gtk_box_pack_end(GTK_BOX(vbox), status_row, FALSE, FALSE, 0);
-		g_signal_connect(about_link, "activate-link",
-				G_CALLBACK(filer_about_link), filer_window);
 		gtk_widget_show_all(status_row);
-
-		/* The label did not exist when the toolbar was constructed, so populate
-		 * it now with the current translated item/hidden/selection information. */
 		toolbar_update_info(filer_window);
 	}
 
@@ -2681,7 +2802,7 @@ void filer_check_mounted(const char *real_path)
 			if (s == '/' || s == '\0')
 			{
 				if (filer_update_dir(filer_window, FALSE) &&
-				    resize)
+				    resize && !filer_window->modern_mode)
 					view_autosize(filer_window->view);
 			}
 		}
@@ -2783,6 +2904,28 @@ void filer_set_title(FilerWindow *filer_window)
 	gchar	*title = NULL;
 	guchar	*flags = "";
 
+	/* Modern follows the reference shell: the title names the folder being
+	 * viewed, while the full path remains in the location entry and tab tooltip. */
+	if (filer_window->modern_mode)
+	{
+		gchar *folder_name;
+		if (!filer_window->sym_path || g_strcmp0(filer_window->sym_path, "/") == 0)
+			folder_name = g_strdup(_("File System"));
+		else
+			folder_name = g_filename_display_basename(filer_window->sym_path);
+		if (!folder_name || !*folder_name)
+		{
+			g_free(folder_name);
+			folder_name = g_strdup("Rox-Filer2");
+		}
+		title = g_strdup_printf("%s - Rox-Filer2", folder_name);
+		g_free(folder_name);
+		gtk_window_set_title(GTK_WINDOW(filer_window->window), title);
+		modern_ui_update_path(filer_window);
+		g_free(title);
+		return;
+	}
+
 	if (filer_window->scanning ||
 	    filer_window->filter != FILER_SHOW_ALL ||
 	    filer_window->show_hidden || filer_window->show_thumbs ||
@@ -2868,6 +3011,7 @@ void filer_set_title(FilerWindow *filer_window)
 
 
 	gtk_window_set_title(GTK_WINDOW(filer_window->window), title);
+	modern_ui_update_path(filer_window);
 
 	g_free(title);
 
@@ -3217,9 +3361,8 @@ static guchar *filer_create_uri_list(FilerWindow *filer_window)
 		g_free(uri);
 	}
 
-	g_string_free(leader, TRUE);
-	retval = string->str;
-	g_string_free(string, FALSE);
+	g_free(g_string_free(leader, FALSE));
+	retval = g_string_free(string, FALSE);
 
 	return retval;
 }
@@ -3242,6 +3385,18 @@ void filer_perform_action(FilerWindow *filer_window, GdkEventButton *event)
 
 	view_get_iter_at_point(view, &iter, event->window, event->x, event->y);
 	item = iter.peek(&iter);
+
+	/* Rox-Filer2 2.12.2-40: in Modern mode, middle-clicking a normal
+	 * directory opens it in a new tab. Classic ROX keeps its historical
+	 * button bindings unchanged. */
+	if (filer_window->modern_mode && item && press && event->button == 2 &&
+	    item->base_type == TYPE_DIRECTORY && !(item->flags & ITEM_FLAG_APPDIR))
+	{
+		const gchar *tab_path = (const gchar *) make_path(
+			filer_window->sym_path, item->leafname);
+		modern_ui_open_path_in_new_tab(filer_window, tab_path);
+		return;
+	}
 
 	if (item && view_cursor_visible(view))
 		view_cursor_to_iter(view, &iter);
@@ -3340,7 +3495,19 @@ void filer_perform_action(FilerWindow *filer_window, GdkEventButton *event)
 			else
 				flags |= OPEN_SAME_WINDOW;
 
-			if (o_new_button_1.int_value)
+			/* Modern tabs own normal directory navigation: primary-click/double-
+			 * click changes the directory inside the active tab, and the tab label
+			 * then follows that folder.  The Classic "button 1 opens a new window"
+			 * preference must not turn Modern navigation into a separate window.
+			 * Middle-click is handled above and explicitly opens a new Modern tab. */
+			if (filer_window->modern_mode && item &&
+			    item->base_type == TYPE_DIRECTORY &&
+			    !(item->flags & ITEM_FLAG_APPDIR) && event->button == 1)
+			{
+				flags |= OPEN_SAME_WINDOW;
+				flags &= ~OPEN_CLOSE_WINDOW;
+			}
+			else if (o_new_button_1.int_value)
 				flags ^= OPEN_SAME_WINDOW;
 			if (event->type == GDK_2BUTTON_PRESS)
 				view_set_selected(view, &iter, FALSE);
@@ -3439,8 +3606,7 @@ static gboolean tooltip_activate(GtkWidget *window)
 		tooltip_show(tip->str);
 	}
 
-	g_string_free(tip, TRUE);
-
+	g_free(g_string_free(tip, FALSE));
 	return FALSE;
 }
 
@@ -4186,10 +4352,10 @@ static void check_settings(FilerWindow *filer_window)
 					      filer_window->sym_path);
 
 	if(set) {
-		if(set->flags & SET_POSITION)
+		if(!filer_window->modern_mode && (set->flags & SET_POSITION))
 			gtk_window_move(GTK_WINDOW(filer_window->window),
 					    set->x, set->y);
-		if(set->flags & SET_SIZE)
+		if(!filer_window->modern_mode && (set->flags & SET_SIZE))
 			filer_window_set_size(filer_window, set->width,
 					      set->height);
 		if(set->flags & SET_HIDDEN)

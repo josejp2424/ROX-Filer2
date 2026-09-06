@@ -484,14 +484,13 @@ static gboolean read_du_output(GIOChannel *source, GIOCondition cond, DU *du)
 				 _("Failed to read size"));
 			break;
 		case G_IO_STATUS_AGAIN:
-			g_string_free(line, TRUE);
+			g_free(g_string_free(line, FALSE));
 			return TRUE;
 		case G_IO_STATUS_ERROR:
 			set_cell(du->store, du->path, err->message);
 			break;
 	}
-	g_string_free(line, TRUE);
-
+	g_free(g_string_free(line, FALSE));
 	return FALSE;
 }
 

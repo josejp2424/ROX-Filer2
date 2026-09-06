@@ -2608,6 +2608,8 @@ static void panel_show_options(Panel *panel)
 	g_object_unref(builder);
 }
 
+/* 2.12.2-82: sin uso desde la migracion a GTK3. */
+#if 0
 static void panel_position_menu(GtkMenu *menu, gint *x, gint *y,
 				gboolean  *push_in, gpointer data)
 {
@@ -2641,6 +2643,7 @@ static void panel_position_menu(GtkMenu *menu, gint *x, gint *y,
 
 	*push_in = FALSE;
 }
+#endif
 
 static void panel_remove_callback(PanelSide side)
 {

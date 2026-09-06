@@ -671,8 +671,7 @@ guchar *shell_escape(const guchar *word)
 		word++;
 	}
 
-	retval = tmp->str;
-	g_string_free(tmp, FALSE);
+	retval = g_string_free(tmp, FALSE);
 	return retval;
 }
 
@@ -851,8 +850,7 @@ guchar *get_relative_path(const guchar *from, const guchar *to)
 		g_free(dst->pdata[i]);
 	g_ptr_array_free(dst, TRUE);
 
-	retval = path->str;
-	g_string_free(path, FALSE);
+	retval = g_string_free(path, FALSE);
 
 	return retval;
 }
@@ -1373,8 +1371,7 @@ EscapedPath *escape_uri_path(const char *path)
 			str = g_string_append_c(str, *s);
 	}
 
-	ans = str->str;
-	g_string_free(str, FALSE);
+	ans = g_string_free(str, FALSE);
 
 	return (EscapedPath *) ans;
 }

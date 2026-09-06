@@ -8,6 +8,16 @@
  * ROX-Filer header files.
  */
 
+/* 2.12.2-85: guarda de inclusion.
+ *
+ * Hasta 2.12.2-84 este archivo no tenia guarda y la convencion no escrita
+ * era que SOLO los .c lo incluyeran, una vez y primero.  image_mounter.h
+ * lo incluyo desde un header y eso redeclaraba todos los enums, rompiendo
+ * la compilacion de image_mounter.c y menu.c: el tarball de -84 no
+ * compilaba.  La guarda hace que ese error no pueda repetirse. */
+#ifndef _ROX_GLOBAL_H
+#define _ROX_GLOBAL_H
+
 /*
  * Modificado por josejp2424 (2026):
  * port a GTK3 y adaptaciones específicas de esta versión.
@@ -243,3 +253,5 @@ enum
 #define ROX_ICON_SYMLINK          "emblem-symbolic-link"
 
 #include <libxml/tree.h>
+
+#endif /* _ROX_GLOBAL_H */

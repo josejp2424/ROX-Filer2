@@ -1,3 +1,442 @@
+2026-09-05 Rox-Filer2 2.12.2-89
+
+- Keep each application's real icon in Rox-Filer2 menus but clamp oversized file/pixbuf/GIcon menu artwork to a maximum of 18 px while preserving aspect ratio.
+- Prevent large absolute-path .desktop/AppDir icons from expanding a single Open With or custom-action menu row.
+- Add separate native build_arch.sh and build_void.sh builders to the source tree; the original build-package.sh remains independent.
+
+2026-09-05 Rox-Filer2 2.12.2-88
+
+- Fix the 2.12.2-87 Modern UI build failure by declaring modern_tabs_sync_current() before its first use.
+- Keep the 2.12.2-87 mounted-image tab navigation fix unchanged; this release is a compile-order correction only.
+
+2026-09-05 Rox-Filer2 2.12.2-87
+
+- Fix Modern Image Mounter integration so a mounted ISO/SFS/SquashFS/IMG opens as the real directory of the new tab, not only as a tab label.
+- Keep the Modern location entry, file view, tab path and navigation state synchronized with the actual mountpoint.
+- Cancel any pending initial Modern session-restore idle before an explicit new-tab navigation so stale startup state cannot compete with the requested mountpoint.
+
+2026-09-05 Rox-Filer2 2.12.2-86
+
+- Make asynchronous Image Mounter jobs safe if their originating filer/progress windows are destroyed.
+- Wait for IMG partition sets to stabilize before deciding between automatic single-partition mount and the chooser.
+- Use XDG_RUNTIME_DIR only when explicitly supplied; otherwise keep image-mounter state in transient /tmp storage.
+- Run failed-state rollback outside the GTK thread and verify the unmount command before reporting success.
+- Remove stale compiled ROX-Filer/ROX-Filer.dbg/rox-find binaries from the source tree and add source-hygiene checks.
+- Synchronize version metadata, manuals, man pages, Debian changelog and translation headers.
+
+2026-09-05 Rox-Filer2 2.12.2-85
+
+- Fix the Image Mounter include-order build failure introduced in 2.12.2-84.
+- Move loop setup, partition probing, mount and unmount work to GTask workers so GTK remains responsive.
+- Reject state-file mountpoints outside /media/rox-filer2-images before privileged cleanup.
+- Sort IMG partitions numerically and label them with their real partition numbers.
+- Roll back a successful mount when its state cannot be saved.
+- Resolve privileged helpers through fixed system directories rather than an inherited PATH.
+- Add Image Mounter documentation to every localized manual.
+
+2026-09-05 Rox-Filer2 2.12.2-84
+
+- Add native image_mounter.c/image_mounter.h, independent of Puppy filemnt and GVfs.
+- Add context actions Mount Image, Open Mounted Image and Unmount Image using system-theme icons.
+- Mount ISO, SFS, SquashFS/SQFS and raw IMG read-only.
+- For partitioned IMG files, auto-select a single partition or show a GTK chooser for multiple partitions.
+- Open successful mounts directly in Rox-Filer2: new Modern tab or Classic filer window.
+- Use direct losetup/mount when root and udisksctl for normal-user sessions.
+- Extend shared MIME globs for SFS/SquashFS/ISO/IMG on older distributions.
+- Translate all Image Mounter UI and error strings in the eleven runtime catalogues.
+
+2026-09-04 Rox-Filer2 2.12.2-83
+
+- Use the user-supplied 2.12.2-82 correctness/infrastructure source as the new base.
+- Simplify Modern Help to Show Help Files + About; remove the direct Manual menu item.
+- Open bundled Manual*.html with defaultbrowser on Puppy and x-www-browser on Essora/other distributions, with fallback to the normal Rox browser launcher.
+- Keep generic HTML MIME handling unchanged; the browser override applies only to Rox-Filer2's bundled manuals.
+- Add the official Rox-Filer2 SVG logo to every generated localized HTML manual.
+- Verify all eleven runtime PO catalogues have no empty or fuzzy translations and all twelve manual languages contain every required section.
+- Correct the inherited Arabic and Catalan translations for Show _Help Files.
+
+2026-09-04 Rox-Filer2 2.12.2-81
+
+- Move the Modern tab strip out of the full window width: it now belongs only to the right content pane, so the left sidebar reaches the top below the toolbar as in the approved reference.
+- Keep the Modern sidebar as a full-height navigation column while the file view and tabs occupy the right pane.
+- Preserve the 2.12.2-80 uniform sidebar styling, compact tabs, SMB access, Classic/Modern chooser, CLI switches and fixed user-controlled geometry behaviour.
+
+
+2026-09-04 Rox-Filer2 2.12.2-79
+
+- Rebuild Modern to match the approved reference layout instead of the temporary filesystem-tree design.
+- Modern sidebar is now exactly Places, Devices and Network; remove the embedded filesystem tree and sidebar bookmark block.
+- Add a permanent Browse Network row under Network using the existing SMB connector.
+- Give Modern navigation labelled Back, Forward, Up, Home and Reload controls plus the existing location/search controls.
+- Restore the Help menu in Modern.
+- Modern tabs now show each opened folder's own name and icon, keep the full path in the tooltip, and update in place on navigation without closing the tab.
+- Make the tab strip wider and reference-like with a dedicated close button and trailing New Tab button.
+- Use a folder-name Modern window title, keep the 800x640 first geometry and preserve user-controlled resizing.
+- Replace Modern's bottom About link with a compact icon-size slider and view switcher while leaving Classic unchanged.
+- Keep the visual Classic/Modern chooser, --classic/--modern launch overrides and Classic Network toolbar button from 2.12.2-78.
+
+2026-09-04 Rox-Filer2 2.12.2-78
+
+- Replace the broken Interface combo with two visible Classic ROX / Modern preview cards using real screenshots.
+- Add --classic and --modern temporary launch modes; they never overwrite the saved Interface choice.
+- Document the new interface switches in rox --help and the rox(1) manual page.
+- Restore/finalize Modern at 800x640 on first use and preserve the exact user-resized geometry across navigation and tabs.
+- Keep the lazy filesystem tree, visible Modern SMB access and path-aware tab labels from 2.12.2-76.
+- Keep the permanent Classic Network toolbar button beside Partitions, reusing the existing SMB connector.
+
+2026-09-04 Rox-Filer2 2.12.2-77
+
+- Add a permanent Network button to the Classic toolbar beside Partitions.
+- Reuse the existing SMB connector; no second network backend is introduced.
+- Intermediate test used a larger 1100x700 Modern geometry; 2.12.2-78 restores the requested 800x640 user-controlled behaviour.
+
+2026-09-04 Rox-Filer2 2.12.2-76
+
+- Modern starts at 800x640 on the first 2.12.2-76 launch, resetting pre-76 geometry once; after that the exact user-selected size is persisted.
+- Once the user resizes a Modern window, directory changes, tab changes, refreshes and per-directory settings no longer resize or move it.
+- Add a real lazy filesystem directory tree to the Modern sidebar.
+- Expose Connect to SMB Share directly in Modern Places and in the Go menu.
+- Modern tab labels now show the actual location (~/... or absolute path) instead of generic Home/basename-only labels.
+- Keep Classic geometry and file-operation behaviour unchanged.
+
+2026-09-04 Rox-Filer2 2.12.2-75
+
+- Keep the real packaged AppDir at /usr/lib/rox-filer2.
+- Migrate stale /usr/local/apps/Rox-Filer and ROX-Filer directories to compatibility symlinks during Debian installation.
+- Give Modern a 960x620 default when its saved geometry is missing or still Classic-sized.
+- Remove the Modern Help menu; the existing bottom About link remains the single information action.
+- Drive, SMB and filesystem backend logic is unchanged from 2.12.2-74.
+
+2026-09-04 Rox-Filer2 2.12.2-74
+
+- Restore the historical runtime AppDir at /usr/local/apps/Rox-Filer.
+- Restore /usr/local/apps/ROX-Filer as a compatibility symlink.
+- Restore /usr/local/bin/roxfiler as the automatic backend selector and the
+  traditional /usr/bin launcher links.
+- No filer, drive, SMB, Classic or Modern runtime logic changed.
+
+2.12.2-73 (2026-09-03)
+- Fix lsblk -P parser field-boundary matching (TYPE no longer aliases FSTYPE).
+- Restore parent disk metadata inheritance and direct RM/USB hardware removable signals.
+- Keep Eject safety independent from fuzzy removable labels.
+
+2.12.2-72 (2026-09-03)
+------------------------
+- Separate broad removable-media UI heuristics from hardware-safe Eject eligibility.
+- Cache each drive's physical parent during enumeration and never run a second lsblk from Eject.
+- Open optical trays with eject first; power off only hardware-removable devices.
+
+2.12.2-71 (2026-09-03)
+------------------------
+- Centralize shared-drive rescans in async mount/unmount/eject completion.
+- Remove unused synchronous public drive action wrappers.
+- Offer safe Eject for removable USB media as well as optical drives.
+
+2.12.2-70 (2026-09-03)
+------------------------
+- Bound waits for the legacy child-reaper mutex so drive scans cannot pin a GTask worker indefinitely.
+- Treat timeout and busy helper failures as infrastructure errors and preserve the last valid drive snapshot.
+- Use a five-second drive scan timeout and a 90-second ceiling for mount, unmount and eject helpers.
+- Run unmount and eject asynchronously in Classic, Modern and Desktop, matching the existing async mount path.
+- Remove the unused rox_drive_open_in_filer API.
+
+2.12.2-69 (2026-09-03)
+------------------------
+- Lower the shared drive helper timeout from eight seconds to three seconds.
+- Run local drive mount/udisks waits in a GTask worker instead of the GTK main thread.
+- Keep Classic ROX, Modern UI and Desktop on the same shared drive backend.
+
+2.12.2-68 (2026-09-03)
+------------------------
+- Add a hard timeout around drive helper commands used by the shared monitor.
+- Keep the previous valid drive snapshot when a scan times out or fails.
+- Do not block GTK behind the legacy SIGCHLD reaper while a worker waits.
+- Remove the obsolete inaccessible flag from RoxDriveInfo.
+- Avoid the duplicate ROX Desktop startup scan.
+
+2.12.2-67 (2026-09-02)
+
+- Fix the drives monitor include so both Autotools and Meson builds compile.
+- Marshal drive refresh requests from SMB workers back to the GTK main context and coalesce bursts.
+- Make the Classic Partitions popover a live subscriber alongside Modern UI and ROX Desktop.
+- Run the 8-second fallback poll only while at least one live subscriber exists.
+- Snapshot subscribers before callbacks so widget rebuilds cannot mutate the active iteration.
+- Keep periodic drive scans local: discover CIFS/FUSE bridges from /proc/self/mounts without access(), stat() or directory traversal of remote filesystems.
+
+2.12.2-66 (2026-09-02)
+
+- Add one global drives monitor for scan workers, GVolumeMonitor events and the periodic fallback poll.
+- Make Classic ROX, Modern UI and ROX Desktop consume the same drive snapshot instead of running independent scans.
+- Keep the last valid snapshot when a transient drive scan fails.
+- Keep drive discovery independent of the X11/XLibre and Wayland desktop backends.
+
+2.12.2-65 (2026-09-02)
+
+- Keep existing Modern Devices rows visible while the shared scan refreshes.
+- Stop ordinary directory navigation from re-enumerating drives.
+- Guard stale network rows after resolving their current mountpoint so they can never fall through to local mount/udisks paths.
+
+2.12.2-64 (2026-09-02)
+
+- Share one Modern Devices scan across all filer windows instead of consuming one GTask worker per window.
+- Check CIFS/SMB3 mount presence through the local mount table without remote stat/realpath calls.
+- Remove the unused exported raw mountpoint resolver and explicitly block network drives from local mount paths.
+- Keep the Modern File System row and scanning indicator visible on every refresh, including retry scans.
+- Add a translated stale-network diagnostic when a CIFS share was unmounted externally.
+
+2.12.2-63 (2026-09-02)
+
+- Never resolve network/FUSE device paths with realpath from GTK drive callbacks; use the mountpoint already captured by the drive scan.
+- Use getmntent_r() for Linux /proc/self/mounts and fstab iteration that can now run concurrently.
+- Make ShowSystemPartitions initialization one-time/thread-safe and access the value atomically.
+- Keep Modern Devices useful during a slow async scan by showing File System immediately with a spinner.
+- Keep KIO-FUSE discovery best-effort; global drive-scan pooling remains a separate follow-up refactor.
+
+2.12.2-62 (2026-09-02)
+
+- Move Modern Devices discovery off the GTK main loop so slow or stale network mounts cannot freeze the interface.
+- Reuse one managed-SMB mountpoint policy for cleanup safety.
+- Add translated diagnostics for foreign-managed and inaccessible network resources.
+- Respect inaccessible network mounts consistently and avoid remote stat() calls from GTK device callbacks.
+- Keep KIO-FUSE discovery as best-effort compatibility only.
+
+Rox-Filer2 2.12.2-61 (2026-09-02)
+
+- Run the libsmbclient diagnostic probe only after mount.cifs fails, avoiding an extra SMB session on successful connections.
+- Fix the libsmbclient share-entry test and prevent Connect from racing an in-flight share listing.
+- Keep only the actually-used Last connection metadata and reject the mount.cifs cred= credentials alias in advanced options.
+- Discover SMB shares exposed through GVfs, kio-fuse and smbnetfs as foreign POSIX paths.
+- Mark foreign network mounts explicitly so ROX can open them but never unmount or clean up another manager's mount.
+
+Rox-Filer2 2.12.2-60 (2026-09-02)
+
+- Make libsmbclient preflight advisory rather than a veto before mount.cifs.
+- Add asynchronous server share listing through libsmbclient.
+- Remember server/share/user/domain in smb.ini without ever storing passwords.
+- Stop creating persistent bookmarks to temporary SMB mount points.
+- Register successful ROX-created SMB paths with mount_user_mount().
+- Serialize mount attempts to prevent stacked duplicate mounts.
+- Add an optional advanced mount-options field for old NAS/protocol tuning.
+- Raise the declared GLib/GIO minimum to 2.70.
+
+Rox-Filer2 2.12.2-59 (2026-09-02)
+
+- Serialize libsmbclient preflights with an internal mutex instead of the non-exported smbc_thread_posix symbol.
+- Restrict SMB mount-directory cleanup to paths owned by ROX-Filer2; never remove /mnt or foreign CIFS parents.
+- Move orphan SMB unmount cleanup off the GTK main thread when a connection dialog is destroyed.
+
+Rox-Filer2 2.12.2-58 (2026-09-02)
+- Route every SMB mount/unmount synchronous child wait through rox_spawn_sync().
+- Track dialog destruction explicitly so async completion never touches freed GTK children.
+- Initialize libsmbclient POSIX thread support once before creating SMB contexts.
+- Scrub job passwords before freeing them and clean failed share/server mount directories.
+
+Rox-Filer2 2.12.2-57 (2026-09-02)
+- Fix the public libsmbclient SMBCCTX directory API calls used by SMB preflight.
+- Move SMB preflight and mount.cifs execution off the GTK main thread.
+- Locate mount.cifs/umount in /sbin and /usr/sbin when they are absent from PATH.
+- Try direct non-root mount first, then passwordless sudo when configured.
+- Avoid stacking a second mount on an already-mounted SMB share.
+- Show mounted CIFS/SMB3 shares in the Partitions UI with the network-drive icon.
+- Allow those network mounts to be unmounted and clean their mount directories.
+- Preserve smb.conf workgroup when Domain is empty and omit empty domain credentials.
+- Handle partial credential writes and stop forcing noserverino.
+
+Rox-Filer2 2.12.2-56 (2026-09-02)
+- Add an experimental SMB connection dialog under the Window menu.
+- Mount SMB shares locally with mount.cifs and open them through filer_opendir().
+- Keep GVfs out of the architecture and leave the POSIX filer core unchanged.
+- Use optional libsmbclient only to validate shares before mounting.
+- Never store SMB passwords in Choices or bookmark history.
+- Add successful SMB mount points to ROX bookmarks.
+- Translate the new SMB UI in ar, de, es, fr, ca, it, pt, hu, ja, ru and zh.
+
+Rox-Filer2 2.12.2-55 (2026-09-02)
+- ROX Desktop: Home is now a real directory drop target.
+- Trash DnD processes every dropped file and reports all failures together.
+- Trash DnD advertises MOVE only when the drag source supports it.
+- Added the dedicated translated error message "Unable to move to Trash".
+- Added German to the complete maintained runtime catalogue set.
+- Added braces around the all_on_desktop DnD loop guard.
+
+Rox-Filer2 2.12.2-53 (2026-09-01)
+
+- Avoid duplicated size text for drives whose label is synthesized as "Volume SIZE".
+- Make the ROX Desktop Trash icon a real drop target using the existing trash backend.
+- Highlight folder and Trash icons while they are active DnD targets.
+- Cache desktop directory type so drag-motion does not perform synchronous file-type I/O.
+- Remove redundant DnD destination work while preserving Copy / Move / Link behavior.
+
+Rox-Filer2 2.12.2-52 (2026-09-01)
+
+- Desktop folder icons are now real DnD destinations.
+- Dropping onto a normal folder icon uses that folder as drop_dest_path and
+  continues through the existing ROX Copy / Move / Link backend.
+- Dropping on empty desktop space still targets ~/Desktop.
+- Files already in ~/Desktop are repositioned only when dropped on the desktop
+  background; dropping them onto a folder moves/copies/links into that folder.
+
+Rox-Filer2 2.12.2-51 (2026-09-01)
+
+- Packaging-only follow-up to 2.12.2-50.
+- Wrap the Debian changelog entry to satisfy lintian line-length checks.
+- No file-manager runtime behavior changed in this release.
+
+Rox-Filer2 2.12.2-50 (2026-09-01)
+
+- Fixed ROX Desktop DnD so only the ROX DnD backend completes each drop.
+- Fixed the Modern sidebar being hidden/empty on a fresh visible startup.
+- Device rows now prioritize the volume name; mount state is available as a tooltip.
+
+Rox-Filer2 2.12.2-49 (2026-09-01)
+
+- ROX Desktop drops now reuse the normal Copy / Move / Link DnD backend.
+- Fixed Edit Bookmarks deleting rows below the selection.
+- Restored requested sort mode/order in icon and list views.
+- Restored native GtkTreeView wheel/smooth scrolling in List view.
+- Added a persistent, warned Show boot/system partitions option; system partitions stay hidden by default.
+- Reduced rubber-band selection redraws to the affected desktop rectangles.
+- Added complete translations for the new drive safety UI in all maintained runtime languages.
+
+Rox-Filer2 2.12.2-48 (2026-09-01)
+
+- Small Modern UI corrective release; no backend or Classic ROX behaviour changed.
+- Showing the Modern sidebar again now reveals the complete Places, Bookmarks and Devices hierarchy instead of an empty strip.
+- Device rows explicitly expand to the sidebar width so Volume labels use the available horizontal space before ellipsizing.
+- New Modern windows put initial keyboard focus on the file view, so the path field is not preselected unless Ctrl+L is requested.
+- The release gate from 2.12.2-47 remains mandatory and unchanged.
+
+Rox-Filer2 2.12.2-47 (2026-09-01)
+
+- Corrective packaging-only release; no file-manager runtime feature changed.
+- Replaced the raw GPL copy installed as Debian copyright with a DEP-5 file.
+- Added a valid Debian-format changelog for the binary package.
+- Normalized Templates/python3.py to mode 0644 in the source tree.
+
+Rox-Filer2 2.12.2-46 (2026-09-01)
+
+- Final release-engineering correction pass; no new user-facing feature.
+- Trash restore status now uses real ngettext plural handling and the PO extractor declares ngettext:1,2.
+- Removed the stale duplicate Trash plural entry and normalized it as C printf format data.
+- Debian packages now ship copyright and compressed changelog documentation.
+- Debian package binaries are stripped consistently before dependency analysis and packaging.
+- The Python template is shipped as non-executable data, so it does not create a runtime Python dependency.
+- Added manual pages for all installed Rox-Filer2 command names and rox-find.
+- Lintian is now a mandatory release-gate dependency instead of an optional machine-dependent check.
+- Release publication still requires ./release-gate.sh to end with Release gate: PASS.
+
+Rox-Filer2 2.12.2-45 (2026-09-01)
+
+- Corrective release only; no new user-facing feature.
+- Fixed unsafe gettext c-format translations, including Copy of %s / Copy(%d) of %s, and corrected additional placeholder mismatches in maintained catalogues.
+- Added check-po-formats.py and made the release/package gates reject c-format placeholder mismatches before generating runtime catalogues.
+- build-package.sh now validates every PO before replacing ROX-Filer/Messages.
+- Added HAVE_MMAP to both Meson and autoconf config.h templates so the existing mmap probes actually reach xdgmimecache.c.
+- Regenerated the shipped autoconf configure script after configure.in changes.
+- AppRun no longer waits for stdin after a --compile-only failure or when stdin is not a TTY.
+- Wayland datagram control now keeps the control socket on empty datagrams, EINTR, EAGAIN and EWOULDBLOCK while still removing the watch on persistent socket errors.
+- Initialized warning-prone state in dir.c and gui_support.c instead of relying on compiler flow inference.
+- Bundled runtime .mo files were regenerated from the corrected maintained PO catalogues.
+- Full native publication still requires ./release-gate.sh to report PASS on the release build machine.
+
+Rox-Filer2 2.12.2-42 (2026-09-01)
+
+- Modern session persistence: remembers open tabs, the active tab, window size, maximized state, sidebar visibility and sidebar width.
+- The first Modern window restores the previous Modern session; additional windows still open normally at the requested path.
+- The Modern sidebar is now resizable with a GtkPaned splitter and its width is saved.
+- Added View -> Show Sidebar and F9 to show/hide the Modern sidebar.
+- Session state is stored separately in ~/.config/rox.sourceforge.net/ROX-Filer/modern-session.ini so Classic ROX preferences are not changed.
+- The existing ROX directory view remains the right-hand content widget; no file, MIME, mount, Trash, Desktop or operation backend was duplicated.
+- Classic ROX remains unchanged.
+
+Rox-Filer2 2.12.2-41 (2026-09-01)
+
+- Modern mode: added Drag & Drop directly onto tabs using the existing ROX DnD backend.
+- Hovering a dragged item over another tab activates that tab after a short delay, allowing continued navigation/drop workflows without opening another window.
+- Dropping files directly on a tab uses that tab directory as the normal ROX drop destination; Copy/Move/Link semantics remain handled by dnd.c.
+- Added a Bookmarks section to the Modern sidebar backed by the same Bookmarks.xml used by Classic ROX.
+- Existing bookmarks open through filer_change_to; no second bookmark store was created.
+- Directories can be dragged onto the Modern Bookmarks section using ROX's existing drop_dest_bookmark path.
+- Right-click on the Modern Bookmarks section provides Add New Bookmark and Edit Bookmarks, both using the existing ROX bookmark functions.
+- Classic ROX layout and bookmark menu remain unchanged.
+
+Rox-Filer2 2.12.2-39 (2026-09-01)
+======================================
+
+- Phase 5 of the optional Modern interface: added the first basic tab bar.
+- Modern windows start with one tab representing the current directory and provide a + button for additional tabs.
+- Each basic tab stores its own directory path; selecting a tab navigates the existing Rox-Filer2 FilerWindow through filer_change_to rather than creating a second file-management backend.
+- The active tab label follows the real directory name, with Home and File System handled explicitly.
+- Added New Tab and Close Tab to the Modern File menu.
+- Added Ctrl+T for a new tab and Ctrl+W to close the current tab.
+- Closing the last tab closes the Modern filer window; closing another active tab selects the nearest remaining tab.
+- Navigation performed with Back, Forward, Up, Home, Places, Devices or the path field updates the active tab path automatically.
+- This first tab phase intentionally shares the current FilerWindow view/history. Independent per-tab history, view/scroll state, middle-click folder opening and advanced tab navigation are reserved for 2.12.2-41.
+- Classic ROX is unchanged and receives no tab bar.
+- Added New Tab and Close Tab translations to all 13 actively maintained locales.
+
+Rox-Filer2 2.12.2-38 (2026-09-01)
+======================================
+
+- Phase 4 of the optional Modern interface: added Devices below Places.
+- Devices is a view of the existing Rox-Filer2 drives.c model; no alternate partition or mount backend was added.
+- Added File System for direct access to /.
+- Physical disks, partitions, USB media, SD/MMC and optical media use the same detection and GTK icon resolver as the traditional ROX Partitions UI and ROX Desktop.
+- Left click opens a mounted drive or mounts it through the existing ROX backend and then opens it in the current filer.
+- Right click provides Open, Mount and Unmount; optical media also expose Eject, all through the existing drive backend.
+- Device mount state is refreshed after navigation and drive actions.
+- Network resources are intentionally excluded from this phase.
+- Classic ROX layout and partition controls remain unchanged.
+- Added Devices and File System translations to all 13 actively maintained locales.
+
+Rox-Filer2 2.12.2-37 (2026-09-01)
+======================================
+
+- Phase 3 of the optional Modern interface: added the first real Places sidebar.
+- The sidebar is a visual layer over the existing Rox-Filer2 backend; it does not introduce a second file manager or alternate file-operation logic.
+- Home uses the existing Rox-Filer2 home directory.
+- Desktop uses the exact directory selected by the ROX Desktop backend rather than a separate XDG assumption.
+- Trash uses the existing Rox-Filer2/Freedesktop Trash backend and standard trash directory.
+- Documents, Downloads, Music, Pictures, Videos, Templates and Public come from GLib/XDG user directories. Their visible labels use the real configured folder basename, so translated or customized user-directory names are respected.
+- Clicking a Places item navigates the current Modern filer through the normal filer_change_to path.
+- The currently open Place is selected automatically when its exact path is active.
+- Classic ROX keeps its existing layout and behaviour; the new sidebar is created only for Modern windows.
+- Devices, partitions and Network are intentionally left for the next phase so they can reuse the existing ROX drive/mount code without duplication.
+- Added the Places section label to all 13 actively maintained translations.
+
+Rox-Filer2 2.12.2-36
+
+- Phase 2 of the optional Modern interface.
+- Added a real Modern window shell selected by the persistent Interface style option.
+- Modern now adds a GTK3 menu bar, Back/Forward/Up/Home/Refresh navigation row, editable path field and Search button around the existing Rox-Filer2 directory view.
+- The bottom status information continues to use the existing Rox-Filer2 item/selection counter.
+- Navigation buttons use the same per-window history and filer_change_to backend as Classic ROX.
+- Search uses the existing rox-find integration; Options and bookmarks use the existing Rox-Filer2 code.
+- Classic ROX keeps its original configurable toolbar and layout. Modern toolbar option changes are isolated so they cannot inject the Classic toolbar into a Modern window.
+- No new partition, mount, MIME, Trash, Desktop or file-operation backend was introduced.
+- Added the new Modern shell source as modern_ui.c / modern_ui.h and added the single new menu label to the maintained translations.
+- Tabs, Places/Devices sidebar and session restoration remain for later phases.
+
+Rox-Filer2 2.12.2-35 (2026-09-01)
+======================================
+
+- Added the first stage of the selectable filer interface architecture.
+- Added a persistent Interface style preference with two choices: Classic ROX
+  and Modern. Classic ROX remains the default for existing and new profiles.
+- The selected interface is stored in the normal Rox-Filer2 user Options file,
+  so the choice is restored automatically on later starts.
+- Added a small shared interface-style module that exposes the selected mode to
+  future window code without duplicating file-manager backends.
+- No classic filer, mount, MIME, Trash, Desktop, partition or file-operation
+  logic was replaced. The Modern window will reuse those existing Rox-Filer2
+  backends in later stages.
+- Stage 1 intentionally keeps the current classic filer renderer for both
+  choices until the new Modern window container is introduced in the next
+  stage; this allows the preference and persistence layer to land without
+  risking regressions in the classic ROX interface.
+- Added translations for the new interface selector and explanatory text in
+  all 13 actively maintained locales and regenerated their .mo catalogues.
+
 Rox-Filer2 2.12.2-34 (2026-08-28)
 ======================================
 

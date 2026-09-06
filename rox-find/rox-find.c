@@ -737,9 +737,17 @@ static void menu_trash(GtkMenuItem *item, gpointer data)
 
 static GtkWidget *menu_item_with_icon(const gchar *label, const gchar *icon_name)
 {
-    GtkWidget *item = gtk_image_menu_item_new_with_label(label);
+    /* 2.12.2-82: GtkImageMenuItem esta obsoleto desde GTK 3.10. */
+    GtkWidget *item = gtk_menu_item_new();
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     GtkWidget *image = gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
+    GtkWidget *text = gtk_label_new(label);
+
+    gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
+    gtk_label_set_xalign(GTK_LABEL(text), 0.0);
+    gtk_box_pack_start(GTK_BOX(box), text, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(item), box);
+    gtk_widget_show_all(box);
     return item;
 }
 

@@ -242,7 +242,9 @@ static time_t read_time(char *path)
 static void read_table(void)
 {
 	FILE		*tab;
+	struct mntent	ent_buf;
 	struct mntent	*ent;
+	char		mntbuf[4096];
 	MountPoint	*mp;
 #  ifdef HAVE_FCNTL_H
 	struct flock	lb;
@@ -263,7 +265,7 @@ static void read_table(void)
 	fcntl(fileno(tab), F_SETLKW, &lb);
 #  endif
 
-	while ((ent = getmntent(tab)))
+	while ((ent = getmntent_r(tab, &ent_buf, mntbuf, sizeof(mntbuf))) != NULL)
 	{
 		if (strcmp(ent->mnt_dir, "swap") == 0)
 			continue;

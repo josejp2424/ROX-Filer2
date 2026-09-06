@@ -30,6 +30,13 @@ Existing user settings intentionally remain in the historical
 ~/.config/rox.sourceforge.net/ROX-Filer directory so upgrades keep the user's
 configuration.
 
+The localized manuals in this directory are ordinary HTML files. When one of
+these bundled Manual*.html files is opened from Rox-Filer2, Puppy uses its
+`defaultbrowser` wrapper; Essora and other distributions use `x-www-browser`.
+If the preferred wrapper is unavailable Rox-Filer2 falls back to its normal
+browser launcher. Ordinary HTML files outside this Help directory keep their
+normal MIME action.
+
 To compile the source AppDir:
 
 	$ ./ROX-Filer/AppRun --compile-only

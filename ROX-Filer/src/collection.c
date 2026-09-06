@@ -316,8 +316,8 @@ static void collection_init(GTypeInstance *instance, gpointer g_class)
 	 * a CONSTRUCT property: GtkViewport may replace its own construct-time
 	 * adjustment after child initialisation, and WIP 15 could then expose an
 	 * invalid direct field value to view_collection.c. */
-	object->vadj = GTK_ADJUSTMENT(gtk_adjustment_new(
-		0.0, 0.0, 0.0, 1.0, 1.0, 0.0));
+	object->vadj = GTK_ADJUSTMENT(g_object_ref_sink(gtk_adjustment_new(
+		0.0, 0.0, 0.0, 1.0, 1.0, 0.0)));
 
 	object->items = g_new(CollectionItem, MINIMUM_ITEMS);
 	object->cursor_item = -1;
@@ -593,9 +593,9 @@ void collection_set_vadjustment(Collection *collection,
         g_object_unref(collection->vadj);
 
     collection->vadj = vadj
-        ? g_object_ref(vadj)
-        : GTK_ADJUSTMENT(gtk_adjustment_new(
-              0.0, 0.0, 0.0, 1.0, 1.0, 0.0));
+        ? GTK_ADJUSTMENT(g_object_ref_sink(vadj))
+        : GTK_ADJUSTMENT(g_object_ref_sink(gtk_adjustment_new(
+              0.0, 0.0, 0.0, 1.0, 1.0, 0.0)));
 }
 
 GtkAdjustment *collection_get_vadjustment(Collection *collection)
@@ -603,8 +603,8 @@ GtkAdjustment *collection_get_vadjustment(Collection *collection)
     g_return_val_if_fail(IS_COLLECTION(collection), NULL);
 
     if (!GTK_IS_ADJUSTMENT(collection->vadj))
-        collection->vadj = GTK_ADJUSTMENT(gtk_adjustment_new(
-            0.0, 0.0, 0.0, 1.0, 1.0, 0.0));
+        collection->vadj = GTK_ADJUSTMENT(g_object_ref_sink(gtk_adjustment_new(
+            0.0, 0.0, 0.0, 1.0, 1.0, 0.0)));
 
     return collection->vadj;
 }

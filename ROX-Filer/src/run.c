@@ -327,6 +327,82 @@ void run_init(void)
 	option_add_string(&o_browser_command, "browser_command", "");
 }
 
+static gboolean browser_spawn_simple(const gchar *program, const gchar *url)
+{
+	gchar *resolved;
+	gchar *argv[3];
+	GError *error = NULL;
+	gboolean ok;
+
+	if (!program || !*program || !url || !*url)
+		return FALSE;
+	resolved = g_find_program_in_path(program);
+	if (!resolved)
+		return FALSE;
+
+	argv[0] = resolved;
+	argv[1] = (gchar *) url;
+	argv[2] = NULL;
+	ok = g_spawn_async(g_get_home_dir(), argv, NULL, G_SPAWN_DEFAULT,
+		NULL, NULL, NULL, &error);
+	if (!ok)
+	{
+		rox_debug_log("BROWSER", "manual browser=%s failed=%s",
+			program, error ? error->message : "unknown error");
+		g_clear_error(&error);
+	}
+	else
+	{
+		rox_debug_log("BROWSER", "manual browser=%s url=%s", program, url);
+	}
+	g_free(resolved);
+	return ok;
+}
+
+/* Open one of Rox-Filer2's bundled HTML manuals in a real web browser.
+ * Puppy provides defaultbrowser as its desktop-neutral browser wrapper.
+ * Essora and ordinary Debian/Devuan-style systems use x-www-browser.
+ * If the preferred wrapper is missing, try the other one and finally the
+ * normal Rox browser selection logic. No GVfs/GIO virtual filesystem is
+ * involved: this is a local file:// URI handed directly to the browser. */
+gboolean rox_open_manual(const gchar *path)
+{
+	gchar *uri;
+	GError *error = NULL;
+	gboolean puppy;
+	gboolean opened = FALSE;
+
+	if (!path || !*path)
+		return FALSE;
+	uri = g_filename_to_uri(path, NULL, &error);
+	if (!uri)
+	{
+		delayed_error(_("Unable to launch %s: %s"), path,
+			error ? error->message : _("Unknown error"));
+		g_clear_error(&error);
+		return FALSE;
+	}
+
+	puppy = g_file_test("/usr/local/petget/petget", G_FILE_TEST_EXISTS);
+	if (puppy)
+	{
+		opened = browser_spawn_simple("defaultbrowser", uri);
+		if (!opened)
+			opened = browser_spawn_simple("x-www-browser", uri);
+	}
+	else
+	{
+		opened = browser_spawn_simple("x-www-browser", uri);
+		if (!opened)
+			opened = browser_spawn_simple("defaultbrowser", uri);
+	}
+
+	if (!opened)
+		opened = rox_open_browser(uri);
+	g_free(uri);
+	return opened;
+}
+
 gboolean rox_open_browser(const gchar *url)
 {
 	BrowserLaunch *launch;
@@ -363,7 +439,7 @@ void run_app(const char *path)
 
 	rox_spawn(home_dir, argv);
 
-	g_string_free(apprun, TRUE);
+	g_free(g_string_free(apprun, FALSE));
 }
 
 /* Execute this program, passing all the URIs in the list as arguments.
@@ -457,7 +533,11 @@ void run_with_data(const char *path, gpointer data, gulong length)
 			break;
 		case 0:
 			/* We are the child */
-			chdir(home_dir);
+			/* 2.12.2-82: si no se puede entrar al home, seguir desde el
+			 * directorio actual en vez de ignorar el fallo. */
+			if (chdir(home_dir) != 0)
+				g_warning("chdir('%s') failed: %s",
+					  home_dir, g_strerror(errno));
 			if (dup2(fds[0], 0) == -1)
 				g_warning("dup2() failed: %s\n",
 						g_strerror(errno));
@@ -592,11 +672,37 @@ gboolean run_diritem(const gchar *full_path,
 	}
 }
 
+static gboolean is_bundled_manual_html(const gchar *full_path)
+{
+	gchar *help_dir;
+	gchar *prefix;
+	const gchar *base;
+	gboolean match;
+
+	if (!full_path || !app_dir)
+		return FALSE;
+	help_dir = g_build_filename(app_dir, "Help", NULL);
+	prefix = g_strconcat(help_dir, G_DIR_SEPARATOR_S, NULL);
+	base = strrchr(full_path, G_DIR_SEPARATOR);
+	base = base ? base + 1 : full_path;
+	match = g_str_has_prefix(full_path, prefix) &&
+		g_str_has_prefix(base, "Manual") && g_str_has_suffix(base, ".html");
+	g_free(prefix);
+	g_free(help_dir);
+	return match;
+}
+
 /* Attempt to open this item */
 gboolean run_by_path(const gchar *full_path)
 {
 	gboolean retval;
 	DirItem	*item;
+
+	/* Manuals bundled with Rox-Filer2 deliberately bypass generic HTML MIME
+	 * handling so Puppy uses defaultbrowser and Essora/other distributions
+	 * use x-www-browser. Other HTML files keep the user's normal MIME action. */
+	if (is_bundled_manual_html(full_path))
+		return rox_open_manual(full_path);
 
 	/* XXX: Loads an image - wasteful */
 	item = diritem_new("");
@@ -906,7 +1012,7 @@ static gboolean open_file(const guchar *path, MIME_type *type)
 					}
 
 				g_ptr_array_add(expanded, g_strdup(new_arg->str));
-				g_string_free(new_arg, TRUE);
+				g_free(g_string_free(new_arg, FALSE));
 			}
 			else
 			{

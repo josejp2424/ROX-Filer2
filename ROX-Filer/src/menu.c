@@ -77,6 +77,8 @@
 #include "xdg_apps.h"
 #include "custom_actions.h"
 #include "trash.h"
+#include "smb.h"
+#include "image_mounter.h"
 
 static gboolean input_trace_enabled(void)
 {
@@ -249,12 +251,16 @@ static void choose_application_selected(gpointer data, guint action, GtkWidget *
 static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget);
 static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget);
 static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget);
+static void mount_image_selected(gpointer data, guint action, GtkWidget *widget);
+static void open_mounted_image_selected(gpointer data, guint action, GtkWidget *widget);
+static void unmount_image_selected(gpointer data, guint action, GtkWidget *widget);
 static void open_paired_windows(gpointer data, guint action, GtkWidget *widget);
 static void realign_paired_windows(gpointer data, guint action, GtkWidget *widget);
 
 static void open_parent_same(gpointer data, guint action, GtkWidget *widget);
 static void open_parent(gpointer data, guint action, GtkWidget *widget);
 static void home_directory(gpointer data, guint action, GtkWidget *widget);
+static void open_smb_share(gpointer data, guint action, GtkWidget *widget);
 static void show_bookmarks(gpointer data, guint action, GtkWidget *widget);
 static void show_log(gpointer data, guint action, GtkWidget *widget);
 static void new_window(gpointer data, guint action, GtkWidget *widget);
@@ -302,6 +308,9 @@ static GtkWidget    *filer_set_type;        /* Set type item */
 static GtkWidget    *filer_open_terminal_here; /* Open terminal in selected folder */
 static GtkWidget    *filer_run_in_terminal;    /* Run selected executable/script */
 static GtkWidget    *filer_copy_to_backgrounds; /* Copiar imagen y aplicar wallpaper */
+static GtkWidget    *filer_mount_image;         /* Mount supported image read-only */
+static GtkWidget    *filer_open_mounted_image;  /* Open image mount point */
+static GtkWidget    *filer_unmount_image;       /* Unmount image and detach loop */
 static GtkWidget    *filer_search_item;
 static GtkWidget    *filer_pair_open_item;
 static GtkWidget    *filer_pair_realign_item;
@@ -328,6 +337,9 @@ typedef struct {
 	GtkWidget *open_terminal_here;
 	GtkWidget *run_in_terminal;
 	GtkWidget *copy_to_backgrounds;
+	GtkWidget *mount_image;
+	GtkWidget *open_mounted_image;
+	GtkWidget *unmount_image;
 	GtkWidget *search;
 #if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
 	GtkWidget *xattrs;
@@ -400,6 +412,11 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 /* Agregado por josejp2424 (2026): visible sólo para imágenes compatibles y
  * situado inmediatamente debajo de Open With. */
 {">" N_("Copy to Backgrounds..."), NULL, file_op, FILE_COPY_TO_BACKGROUNDS, "<IconItem>", "preferences-desktop-wallpaper"},
+/* Rox-Filer2 2.12.2-84: native, distro-independent image mounter.  The
+ * icon names are resolved through the active system icon theme. */
+{">" N_("Mount Image"), NULL, mount_image_selected, 0, "<IconItem>", "media-mount"},
+{">" N_("Open Mounted Image"), NULL, open_mounted_image_selected, 0, "<IconItem>", "folder-open"},
+{">" N_("Unmount Image"), NULL, unmount_image_selected, 0, "<IconItem>", "media-eject"},
 {">",				NULL, NULL, 0, "<Separator>"},
 /* Agregado por josejp2424: opciones de terminal en el menú contextual. */
 {">" N_("Open Terminal Here"),	NULL, open_terminal_selected, 0, "<IconItem>", ROX_ICON_TERMINAL},
@@ -437,6 +454,7 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Parent, Same Window"), NULL, open_parent_same, 0, "<IconItem>", ROX_ICON_GO_UP},
 {">" N_("New Window"),		NULL, new_window, 0, "<IconItem>", "window-new"},
 {">" N_("Home Directory"),	"<Ctrl>Home", home_directory, 0, "<IconItem>", ROX_ICON_HOME},
+{">" N_("Connect to SMB Share..."), NULL, open_smb_share, 0, "<IconItem>", "network-server"},
 {">" N_("Show Bookmarks"),	"<Ctrl>B", show_bookmarks, 0, "<IconItem>", ROX_ICON_BOOKMARKS},
 {">" N_("Show Log"),		NULL, show_log, 0, "<IconItem>", ROX_ICON_INFO},
 {">" N_("Follow Symbolic Links"),	NULL, follow_symlinks, 0, "<IconItem>", ROX_ICON_SYMLINK},
@@ -524,6 +542,9 @@ static void file_context_capture_current(FileContextWidgets *ctx)
 	ctx->open_terminal_here = filer_open_terminal_here;
 	ctx->run_in_terminal = filer_run_in_terminal;
 	ctx->copy_to_backgrounds = filer_copy_to_backgrounds;
+	ctx->mount_image = filer_mount_image;
+	ctx->open_mounted_image = filer_open_mounted_image;
+	ctx->unmount_image = filer_unmount_image;
 	ctx->search = filer_search_item;
 #if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
 	ctx->xattrs = filer_xattrs;
@@ -552,6 +573,9 @@ static void file_context_apply(const FileContextWidgets *ctx)
 	filer_open_terminal_here = ctx->open_terminal_here;
 	filer_run_in_terminal = ctx->run_in_terminal;
 	filer_copy_to_backgrounds = ctx->copy_to_backgrounds;
+	filer_mount_image = ctx->mount_image;
+	filer_open_mounted_image = ctx->open_mounted_image;
+	filer_unmount_image = ctx->unmount_image;
 	filer_search_item = ctx->search;
 #if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
 	filer_xattrs = ctx->xattrs;
@@ -622,6 +646,9 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	ctx->open_terminal_here = file_context_lookup(factory, "Open Terminal Here");
 	ctx->run_in_terminal = file_context_lookup(factory, "Run in Terminal");
 	ctx->copy_to_backgrounds = file_context_lookup(factory, "Copy to Backgrounds...");
+	ctx->mount_image = file_context_lookup(factory, "Mount Image");
+	ctx->open_mounted_image = file_context_lookup(factory, "Open Mounted Image");
+	ctx->unmount_image = file_context_lookup(factory, "Unmount Image");
 	ctx->search = file_context_lookup(factory, "Search in This Folder...");
 #if defined(HAVE_GETXATTR) || defined(HAVE_ATTROPEN)
 	ctx->xattrs = file_context_lookup(factory, "Extended attributes...");
@@ -631,6 +658,9 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	/* Hidden-by-default entries must survive show_all(), exactly like the
 	 * persistent menu created in ensure_filer_menu(). */
 	gtk_widget_set_no_show_all(ctx->copy_to_backgrounds, TRUE);
+	gtk_widget_set_no_show_all(ctx->mount_image, TRUE);
+	gtk_widget_set_no_show_all(ctx->open_mounted_image, TRUE);
+	gtk_widget_set_no_show_all(ctx->unmount_image, TRUE);
 	gtk_widget_set_no_show_all(ctx->open_with, TRUE);
 	gtk_widget_set_no_show_all(ctx->open_terminal_here, TRUE);
 	gtk_widget_set_no_show_all(ctx->run_in_terminal, TRUE);
@@ -640,6 +670,9 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	gtk_widget_set_no_show_all(ctx->move_to_trash, TRUE);
 
 	gtk_widget_hide(ctx->copy_to_backgrounds);
+	gtk_widget_hide(ctx->mount_image);
+	gtk_widget_hide(ctx->open_mounted_image);
+	gtk_widget_hide(ctx->unmount_image);
 	gtk_widget_hide(ctx->open_with);
 	gtk_widget_hide(ctx->add_bookmark);
 	gtk_widget_hide(ctx->restore);
@@ -701,6 +734,12 @@ gboolean ensure_filer_menu(void)
 	filer_run_in_terminal = item;
 	GET_SSMENU_ITEM(item, "filer", "File", "Copy to Backgrounds...");
 	filer_copy_to_backgrounds = item;
+	GET_SSMENU_ITEM(item, "filer", "File", "Mount Image");
+	filer_mount_image = item;
+	GET_SSMENU_ITEM(item, "filer", "File", "Open Mounted Image");
+	filer_open_mounted_image = item;
+	GET_SSMENU_ITEM(item, "filer", "File", "Unmount Image");
+	filer_unmount_image = item;
 	GET_SSMENU_ITEM(item, "filer", "File", "Search in This Folder...");
 	filer_search_item = item;
 	GET_SSMENU_ITEM(filer_add_bookmark_item, "filer", "File", "Add to Bookmarks");
@@ -713,9 +752,15 @@ gboolean ensure_filer_menu(void)
 	/* Modificado por josejp2424 (2026): show_popup_menu() usa show_all();
 	 * no-show-all permite ocultar esta acción para archivos no compatibles. */
 	gtk_widget_set_no_show_all(filer_copy_to_backgrounds, TRUE);
+	gtk_widget_set_no_show_all(filer_mount_image, TRUE);
+	gtk_widget_set_no_show_all(filer_open_mounted_image, TRUE);
+	gtk_widget_set_no_show_all(filer_unmount_image, TRUE);
 	gtk_widget_set_no_show_all(filer_open_with_item, TRUE);
 	gtk_widget_hide(filer_open_with_item);
 	gtk_widget_hide(filer_copy_to_backgrounds);
+	gtk_widget_hide(filer_mount_image);
+	gtk_widget_hide(filer_open_mounted_image);
+	gtk_widget_hide(filer_unmount_image);
 	gtk_widget_set_no_show_all(filer_open_terminal_here, TRUE);
 	gtk_widget_set_no_show_all(filer_run_in_terminal, TRUE);
 	gtk_widget_set_no_show_all(filer_search_item, TRUE);
@@ -1336,6 +1381,9 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 			gtk_widget_set_sensitive(filer_run_in_terminal, FALSE);
 		}
 		gtk_widget_hide(filer_copy_to_backgrounds);
+		gtk_widget_hide(filer_mount_image);
+		gtk_widget_hide(filer_open_mounted_image);
+		gtk_widget_hide(filer_unmount_image);
 		gtk_widget_hide(filer_open_with_item);
 		gtk_widget_hide(filer_search_item);
 		gtk_widget_hide(filer_add_bookmark_item);
@@ -1379,6 +1427,25 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				file_item = filer_selected_item(filer_window);
 				if (item_is_wallpaper_image(file_item))
 					gtk_widget_show(filer_copy_to_backgrounds);
+				if (file_item && file_item->base_type != TYPE_DIRECTORY)
+				{
+					const gchar *image_path = (const gchar *) make_path(
+						filer_window->sym_path, file_item->leafname);
+					if (image_mounter_can_handle(image_path))
+					{
+						gchar *mounted_path = NULL;
+						if (image_mounter_is_mounted(image_path, &mounted_path))
+						{
+							gtk_widget_show(filer_open_mounted_image);
+							gtk_widget_show(filer_unmount_image);
+						}
+						else
+						{
+							gtk_widget_show(filer_mount_image);
+						}
+						g_free(mounted_path);
+					}
+				}
 				if (file_item && file_item->base_type == TYPE_DIRECTORY &&
 				    !in_trash)
 					gtk_widget_show(filer_add_bookmark_item);
@@ -1422,8 +1489,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				break;
 		}
 		gtk_label_set_text(GTK_LABEL(file_label), buffer->str);
-		g_string_free(buffer, TRUE);
-
+		g_free(g_string_free(buffer, FALSE));
 		menu_show_shift_action(file_shift_item, file_item,
 					n_selected == 0);
 		if (file_item)
@@ -1465,7 +1531,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 
 	updating_menu--;
 
-	INPUT_TRACE("popup chosen=%p quick=%d n_added=%d",
+	INPUT_TRACE("popup chosen=%p quick=%ld n_added=%d",
 		(void *) popup_menu, o_menu_quick.int_value, n_added);
 	show_popup_menu(popup_menu, event, -1);
 }
@@ -2374,8 +2440,7 @@ static void customise_new(gpointer data, guint action, GtkWidget *widget)
 		     : _("Your CHOICESPATH variable setting prevents "
 			 "customisations - sorry."));
 
-	g_string_free(dirs, TRUE);
-
+	g_free(g_string_free(dirs, FALSE));
 	if (save)
 		filer_opendir(save, NULL, NULL);
 }
@@ -2409,6 +2474,61 @@ static void add_file_action_selected(gpointer data, guint action, GtkWidget *wid
 		return;
 	custom_actions_add_for_paths(paths, GTK_WINDOW(window_with_focus->window));
 	destroy_glist(&paths);
+}
+
+static gchar *single_selected_path_for_image_action(void)
+{
+	GList *paths;
+	gchar *path = NULL;
+
+	if (!window_with_focus || view_count_selected(window_with_focus->view) != 1)
+		return NULL;
+	paths = filer_selected_items(window_with_focus);
+	if (paths)
+		path = g_strdup((const gchar *) paths->data);
+	destroy_glist(&paths);
+	return path;
+}
+
+static void mount_image_selected(gpointer data, guint action, GtkWidget *widget)
+{
+	gchar *path;
+	(void) data; (void) action; (void) widget;
+
+	path = single_selected_path_for_image_action();
+	if (!path) {
+		delayed_error("%s", _("Select a single image file to mount."));
+		return;
+	}
+	image_mounter_mount(path,
+		window_with_focus ? GTK_WINDOW(window_with_focus->window) : NULL,
+		window_with_focus);
+	g_free(path);
+}
+
+static void open_mounted_image_selected(gpointer data, guint action, GtkWidget *widget)
+{
+	gchar *path;
+	(void) data; (void) action; (void) widget;
+
+	path = single_selected_path_for_image_action();
+	if (!path)
+		return;
+	image_mounter_open(path, window_with_focus);
+	g_free(path);
+}
+
+static void unmount_image_selected(gpointer data, guint action, GtkWidget *widget)
+{
+	gchar *path;
+	(void) data; (void) action; (void) widget;
+
+	path = single_selected_path_for_image_action();
+	if (!path)
+		return;
+	image_mounter_unmount(path,
+		window_with_focus ? GTK_WINDOW(window_with_focus->window) : NULL);
+	g_free(path);
 }
 
 static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget)
@@ -3503,6 +3623,12 @@ static void home_directory(gpointer data, guint action, GtkWidget *widget)
 	filer_change_to(window_with_focus, home_dir, NULL);
 }
 
+static void open_smb_share(gpointer data, guint action, GtkWidget *widget)
+{
+	(void) data; (void) action; (void) widget;
+	rox_smb_open_dialog(window_with_focus);
+}
+
 static void show_bookmarks(gpointer data, guint action, GtkWidget *widget)
 {
 	g_return_if_fail(window_with_focus != NULL);
@@ -3680,7 +3806,7 @@ void menu_rox_help(gpointer data, guint action, GtkWidget *widget)
 			manual = g_strconcat(app_dir,
 						"/Help/Manual.html", NULL);
 
-		run_by_path(manual);
+		rox_open_manual(manual);
 
 		g_free(manual);
 	}

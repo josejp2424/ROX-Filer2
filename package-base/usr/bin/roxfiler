@@ -1,0 +1,39 @@
+#!/bin/sh
+# Rox-Filer2 automatic backend selector.
+# 2.12.2-82: el runtime vive en /usr/lib y el lanzador en /usr/bin.
+# /usr/local pertenece al administrador: ningun paquete debe escribir alli.
+set -eu
+
+APP=/usr/lib/rox-filer2/ROX-Filer
+
+use_wayland() {
+    export GDK_BACKEND=wayland
+    export ROX_DESKTOP_BACKEND=wayland
+    exec "$APP" "$@"
+}
+
+use_x11() {
+    export GDK_BACKEND=x11
+    export ROX_DESKTOP_BACKEND=x11
+    exec "$APP" "$@"
+}
+
+case "${GDK_BACKEND:-}" in
+    wayland) use_wayland "$@" ;;
+    x11)     use_x11 "$@" ;;
+esac
+
+case "${XDG_SESSION_TYPE:-}" in
+    wayland)
+        [ -n "${WAYLAND_DISPLAY:-}" ] && use_wayland "$@"
+        ;;
+    x11)
+        [ -n "${DISPLAY:-}" ] && use_x11 "$@"
+        ;;
+esac
+
+[ -n "${WAYLAND_DISPLAY:-}" ] && use_wayland "$@"
+[ -n "${DISPLAY:-}" ] && use_x11 "$@"
+
+# Headless commands such as --help/--version do not need a display backend.
+exec "$APP" "$@"

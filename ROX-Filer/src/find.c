@@ -240,8 +240,7 @@ static gchar *get_bracketed_string(const gchar **expression)
 		g_string_append_c(str, c);
 	}
 
-	g_string_free(str, TRUE);
-
+	g_free(g_string_free(str, FALSE));
 	return NULL;
 }
 
@@ -297,8 +296,7 @@ static gboolean test_system(FindCondition *condition, FindInfo *info)
 
 	retcode = system(to_sys->str);
 
-	g_string_free(to_sys, TRUE);
-
+	g_free(g_string_free(to_sys, FALSE));
 	return retcode == 0;
 }
 

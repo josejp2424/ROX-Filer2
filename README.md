@@ -92,6 +92,42 @@ The Wayland desktop has been tested with **Labwc/wlroots** and supports:
 
 The same Rox-Filer2 source supports both X11 and Wayland.
 
+## Classic and Modern interfaces
+
+Rox-Filer2 keeps the traditional ROX interface while also providing an
+optional **Modern** interface. Both interfaces use the same filer backend,
+file operations, MIME handling, desktop code and configuration.
+
+The interface can be selected from Rox-Filer2 options or forced for one
+launch from the command line:
+
+```sh
+rox --classic
+rox --modern
+```
+
+The Modern interface adds:
+
+- Compact folder tabs
+- A **Places** sidebar for Home and the standard XDG user directories
+- A **Devices** section for filesystems, disks and removable media
+- A **Network** section with SMB/CIFS browsing
+- Back, Forward, Up, Home and Reload controls
+- An editable location field
+- Persistent window geometry and Modern session state
+
+Folder tabs show a short folder name while the location field keeps the full
+current path.
+
+<p align="center">
+  <img src="screenshot/roxfiler2-moder2.png"
+       alt="Rox-Filer2 Modern interface">
+</p>
+
+The Modern interface is optional; users who prefer the original ROX workflow
+can continue to use Classic mode without changing the underlying file-manager
+functionality.
+
 ## New desktop model
 
 The old ROX pinboard system is no longer used as the normal desktop.
@@ -124,7 +160,10 @@ rox-wayland
 ## Main features
 
 - Fast GTK3 file manager
-- Classic ROX icon and detailed list views
+- Classic ROX interface and optional Modern interface
+- Modern tabs with Places, Devices and Network sidebar
+- Native SMB/CIFS browsing through `libsmbclient` without a GVfs dependency
+- Built-in Image Mounter for ISO, SFS, SquashFS and raw IMG images
 - X11/XLibre support
 - Native Wayland support
 - Native Wayland desktop through Layer Shell
@@ -327,6 +366,41 @@ drive-network
   <img src="screenshot/rox-particiones.png" alt="Rox-Filer2 partition browser">
 </p>
 
+## Image Mounter
+
+Rox-Filer2 includes a native **Image Mounter** integrated into the file
+context menu.
+
+Supported image formats include:
+
+```text
+.iso
+.sfs
+.squashfs
+.sqfs
+.sqsh
+.img
+```
+
+For supported files the context menu provides **Mount Image**. Mounted images
+are opened directly in Rox-Filer2; in Modern mode the mounted filesystem is
+opened in a new tab.
+
+SquashFS-based SFS images and ISO images are mounted read-only. Raw `.img`
+files are also supported: a filesystem image can be mounted directly, while
+partitioned images can expose their contained partitions for mounting.
+
+The Image Mounter does not depend on GVfs. Root sessions can use the normal
+Linux loop/mount tools directly, while non-root systems can use `udisksctl`
+when it is available.
+
+Menu icons come from the active system icon theme.
+
+<p align="center">
+  <img src="screenshot/mount_disk.png"
+       alt="Rox-Filer2 Mount Image context-menu action">
+</p>
+
 ## Trash
 
 Rox-Filer2 uses the standard Freedesktop Trash through GIO.
@@ -479,6 +553,41 @@ distribution-specific dependency package names.
 For Debian/Puppy packaging, `./build-package.sh` now uses Meson by default when
 Meson and Ninja are available. Use `./build-package.sh --legacy-build` only when
 the historical AppRun/autoconf path is specifically required.
+
+### Native Arch Linux package
+
+The source tree includes a native Arch package builder:
+
+```sh
+./build_arch.sh
+```
+
+It builds Rox-Filer2 with Meson and SMB support enabled and creates a native
+Arch Linux `.pkg.tar.zst` package in:
+
+```text
+output/
+```
+
+The Arch development dependencies must already be installed before running the
+builder.
+
+### Native Void Linux / KLV package
+
+The source tree also includes a native Void package builder:
+
+```sh
+./build_void.sh
+```
+
+It builds Rox-Filer2 with Meson and SMB support enabled, creates a native
+`.xbps` package in `output/`, and indexes that directory as a local XBPS
+repository.
+
+These native builders are separate from `build-package.sh`; they package the
+same Rox-Filer2 source against the libraries of the distribution where the
+build is performed.
+
 ## Compatibility
 
 Rox-Filer2 keeps important historical paths so existing ROX and Puppy Linux

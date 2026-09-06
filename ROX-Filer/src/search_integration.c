@@ -99,7 +99,7 @@ void search_integration_launch(FilerWindow *filer_window)
         g_ptr_array_add(argv, g_strdup("--follow-links"));
     if (!o_search_one_filesystem.int_value)
         g_ptr_array_add(argv, g_strdup("--cross-filesystems"));
-    content_limit_arg = g_strdup_printf("--max-content-mb=%d",
+    content_limit_arg = g_strdup_printf("--max-content-mb=%ld",
         CLAMP(o_search_content_limit_mb.int_value, 1, 1024));
     g_ptr_array_add(argv, content_limit_arg);
 

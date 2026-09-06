@@ -827,7 +827,8 @@ void xattrs_browser(DirItem *item, const guchar *path)
 	tree = gtk_tree_view_new_with_model(mod);
 	/* wrapper for variable passing */
 	data[0] = mod; data[1] = arr; data[2] = tree; data[3] = arr_old; data[4] = g_strdup(path);
-	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tree),TRUE);
+	/* 2.12.2-82: gtk_tree_view_set_rules_hint() esta obsoleta y no hace
+	 * nada en GTK3; el rayado lo decide el tema. */
 	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(tree)),
 			GTK_SELECTION_SINGLE);
 	/* add columns */

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rox-Filer2-Handbuch</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1c1f24; --muted: #5a6270;
+  --accent: #2f6fb0; --rule: #dde2e8; --code-bg: #f4f6f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1e23; --fg: #e6e9ee; --muted: #9aa4b2;
+          --accent: #6fa8dc; --rule: #333941; --code-bg: #23272e; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 1.2rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font-family: system-ui, "DejaVu Sans", "Noto Sans", sans-serif;
+  font-size: 16px; line-height: 1.65;
+}
+main { max-width: 46rem; margin: 0 auto; }
+header { border-bottom: 2px solid var(--accent); margin: 2rem 0 1.5rem; }
+.brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.manual-logo { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
+.brand-copy { min-width: 0; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+@media (max-width: 34rem) {
+  .manual-logo { width: 56px; height: 56px; flex-basis: 56px; }
+  h1 { font-size: 1.55rem; }
+}
+h2 {
+  font-size: 1.25rem; margin: 2.2rem 0 .6rem;
+  padding-bottom: .25rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: .7rem 0; }
+ul { margin: .6rem 0 .6rem 1.3rem; padding: 0; }
+li { margin: .3rem 0; }
+code, kbd {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+  font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: .9em;
+}
+nav.toc {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 8px; padding: .9rem 1.2rem; margin: 1.5rem 0;
+}
+nav.toc ol { margin: .3rem 0 0 1.2rem; padding: 0; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+footer {
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .88rem;
+}
+[dir="rtl"] ul, [dir="rtl"] nav.toc ol { margin: .6rem 1.3rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">
+<img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
+<div class="brand-copy">
+<h1>Rox-Filer2-Handbuch</h1>
+<p class="sub">Schneller, ressourcenschonender Dateimanager für X11 und Wayland, Fortführung von ROX-Filer. &mdash; 2.12.2-89</p>
+</div>
+</div>
+</header>
+<nav class="toc"><b>Inhalt</b><ol>
+<li><a href="#intro">Was ist Rox-Filer2</a></li>
+<li><a href="#interfaces">Oberflächen Klassisch und Modern</a></li>
+<li><a href="#window">Das Dateifenster</a></li>
+<li><a href="#desktop">ROX-Desktop</a></li>
+<li><a href="#drives">Laufwerke und Einhängen</a></li>
+<li><a href="#images">Abbilddateien (ISO, IMG, SFS, SquashFS)</a></li>
+<li><a href="#network">SMB und Windows-Freigaben</a></li>
+<li><a href="#trash">Papierkorb</a></li>
+<li><a href="#mime">Dateitypen und Öffnen mit</a></li>
+<li><a href="#actions">Eigene Aktionen und Vorlagen</a></li>
+<li><a href="#tools">Suche, Lesezeichen und gekoppelte Fenster</a></li>
+<li><a href="#options">Optionen und Konfigurationsdateien</a></li>
+<li><a href="#cmdline">Befehlszeile</a></li>
+<li><a href="#diagnostics">Diagnose</a></li>
+<li><a href="#support">Probleme melden</a></li>
+</ol></nav>
+<h2 id="intro">Was ist Rox-Filer2</h2>
+<p>Rox-Filer2 ist die Fortführung von ROX-Filer, auf GTK3 aktualisiert und erweitert um eine moderne Oberfläche, native SMB-Unterstützung, Laufwerkssymbole und einen Desktop-Modus, der sowohl unter X11 als auch unter Wayland läuft.</p>
+<p>Es erledigt eine Aufgabe in einem Prozess: es verwaltet Dateien und auf Wunsch den Desktop. Es gibt keinen Dienst im Hintergrund, keine virtuelle Dateisystemschicht und keine Abhängigkeit von einer Desktop-Umgebung. Alles, was Sie sehen, sind gewöhnliche POSIX-Pfade.</p>
+<h2 id="interfaces">Oberflächen Klassisch und Modern</h2>
+<p>Rox-Filer2 bringt zwei Oberflächenstile mit, die dieselben Bausteine für Dateien, MIME, Einhängen, Papierkorb und Desktop verwenden.</p>
+<ul><li><b>Klassisch ROX</b> behält Aufbau und Werkzeugleiste des ursprünglichen ROX-Filer bei. Wer von ROX-Filer kommt, findet alles am gewohnten Platz.</li><li><b>Modern</b> ergänzt Menüleiste, Navigationszeile, Reiter und eine Seitenleiste mit Orte, Geräte und Netzwerk.</li></ul>
+<p>Den dauerhaften Stil wählen Sie unter <b>Optionen &gt; Oberfläche</b>. Die Änderung gilt für Fenster, die Sie nach einem Neustart von Rox-Filer2 öffnen.</p>
+<p>Um einen Stil einmalig auszuprobieren, ohne die gespeicherte Einstellung zu ändern, starten Sie <code>rox --classic</code> oder <code>rox --modern</code>.</p>
+<h2 id="window">Das Dateifenster</h2>
+<p>Verzeichnisse öffnen Sie mit einem Doppelklick. Ein einfacher Klick wählt aus; Ziehen mit der linken Maustaste auf freier Fläche zieht einen Auswahlrahmen auf.</p>
+<ul><li>Die rechte Maustaste öffnet das Kontextmenü des Objekts unter dem Zeiger, auf freier Fläche das des ganzen Fensters.</li><li>Die mittlere Maustaste öffnet ein Verzeichnis in einem neuen Fenster.</li><li><kbd>Rücktaste</kbd> geht eine Ebene höher; <kbd>Strg+L</kbd> aktiviert die Pfadeingabe.</li><li>In Modern öffnet <kbd>Strg+T</kbd> einen Reiter und <kbd>Strg+W</kbd> schließt ihn. Jeder Reiter behält Pfad und Verlauf für sich.</li></ul>
+<p>Zwischen Symbolansicht und Detailansicht wechseln Sie über den Ansichtsschalter; die Symbolgröße stellen Sie mit dem Schieberegler ein.</p>
+<h2 id="desktop">ROX-Desktop</h2>
+<p>Starten Sie den Desktop mit <code>rox --desktop</code>. Es läuft immer nur eine Instanz. Sie zeichnet den Hintergrund, zeigt die Symbole Ihres Desktop-Verzeichnisses und kann Laufwerkssymbole anzeigen.</p>
+<ul><li><b>Hintergrundbild:</b> <code>rox --desktop-wallpaper</code> oder Rechtsklick auf den Desktop. Die Modi sind füllen, einpassen, strecken, zentrieren und kacheln.</li><li><b>Anwendungen:</b> <code>rox --desktop-apps</code> verwaltet die Starter auf dem Desktop.</li><li><b>Laufwerkssymbole:</b> <code>rox --desktop-drive-icon-layout</code> ordnet sie an.</li><li><b>Einstellungen:</b> <code>rox --desktop-preferences</code>.</li></ul>
+<p>Unter X11 verwendet der Desktop ein normales Fenster mit Desktop-Typhinweis. Unter Wayland nutzt er die Hintergrundebene von Layer Shell; dafür müssen <code>gtk-layer-shell</code> installiert und ein Compositor vorhanden sein, der <code>zwlr_layer_shell_v1</code> bereitstellt, etwa Labwc. Ein Backend erzwingen Sie mit <code>rox-x11 --desktop</code> oder <code>rox-wayland --desktop</code>.</p>
+<p>Damit auch der X11-Wurzelfensterhintergrund gesetzt wird und pseudotransparente Terminals sowie conky dasselbe Bild sehen, installieren Sie <code>feh</code> oder <code>xwallpaper</code>.</p>
+<h2 id="drives">Laufwerke und Einhängen</h2>
+<p>Lokale und Wechseldatenträger erscheinen in der modernen Seitenleiste unter <b>Geräte</b> und wahlweise als Desktop-Symbole. Ein Klick hängt das Laufwerk ein und öffnet es; über das Kontextmenü hängen Sie es wieder aus.</p>
+<p>Die Laufwerksdaten stammen aus <code>lsblk</code>, aus <code>/proc/mounts</code> und aus sysfs, ein Hintergrunddienst ist also nicht nötig. Das Einhängen als gewöhnlicher Benutzer erfordert <code>udisksctl</code> oder einen entsprechenden fstab-Eintrag.</p>
+<p>Hängen Sie Wechseldatenträger immer aus, bevor Sie sie abziehen. Rox-Filer2 schreibt nach dem Schließen des Fensters nicht mehr auf das Gerät, der Kernel kann aber noch ungeschriebene Daten halten.</p>
+<h2 id="images">Abbilddateien (ISO, IMG, SFS, SquashFS)</h2>
+<p>Klicken Sie mit der rechten Maustaste auf eine Abbilddatei und wählen Sie <b>Abbild einhängen</b>. Rox-Filer2 verbindet sie mit einem Loop-Gerät, hängt sie schreibgeschützt ein und öffnet das Ergebnis wie jedes andere Verzeichnis. Unterstützte Endungen sind <code>.iso</code>, <code>.img</code>, <code>.sfs</code>, <code>.squashfs</code>, <code>.sqfs</code> und <code>.sqsh</code>.</p>
+<p>Nach dem Einhängen bietet dasselbe Menü <b>Eingehängtes Abbild öffnen</b> und <b>Abbild aushängen</b>. Die Einhängepunkte liegen unter <code>/media/rox-filer2-images/</code>, ein Verzeichnis je Abbild.</p>
+<ul><li><b>Immer schreibgeschützt.</b> Loop-Gerät, Blockgerät und Einhängung sind alle schreibgeschützt, ein Abbild kann also nie versehentlich verändert werden.</li><li><b>Als root</b> (das übliche Modell von Puppy und Essora) werden <code>losetup</code> und <code>mount</code> direkt verwendet. Als gewöhnlicher Benutzer wird <code>udisksctl</code> benutzt, das installiert sein muss.</li><li><b>Rohe <code>.img</code>-Dateien</b> können eine Partitionstabelle enthalten. Werden mehrere Partitionen gefunden, fragt Rox-Filer2 nach und zeigt zu jeder die tatsächliche Nummer, das Dateisystem, die Größe und die Bezeichnung. ISO- und SquashFS-Abbilder werden immer als Ganzes eingehängt, auch wenn ein hybrides ISO eine Partitionstabelle zeigt.</li><li><b>Kein GVfs.</b> Das Abbild wird zu einer gewöhnlichen lokalen Einhängung, sodass Kopieren, Ziehen und Ablegen, MIME-Behandlung und eigene Aktionen sich genau wie sonst verhalten.</li></ul>
+<p>Das Einhängen läuft im Hintergrund: Ein kleines Fenster mit einer Aktivitätsanzeige erscheint, während das Loop-Gerät eingerichtet und die Partitionen erfasst werden; der Dateimanager bleibt bedienbar.</p>
+<p>Hängen Sie aus, bevor Sie die Abbilddatei löschen oder verschieben. Verschwindet eine Einhängung ohne Zutun von Rox-Filer2, bieten die Menüeinträge wieder <b>Abbild einhängen</b> an.</p>
+<h2 id="network">SMB und Windows-Freigaben</h2>
+<p>Öffnen Sie <b>Gehe zu &gt; Mit SMB-Freigabe verbinden</b> oder <b>Netzwerk durchsuchen</b> in der modernen Seitenleiste. Geben Sie den Server und, falls bekannt, die Freigabe an; die Listen-Schaltfläche fragt den Server, welche Freigaben er anbietet.</p>
+<p>Rox-Filer2 hängt die Freigabe mit <code>mount.cifs</code> als gewöhnlichen lokalen Mount ein, statt sie über ein virtuelles Dateisystem darzustellen. Deshalb funktionieren Kopieren, Ziehen und Ablegen, MIME-Behandlung, Papierkorb und eigene Aktionen genau wie bei lokalen Dateien.</p>
+<ul><li><code>cifs-utils</code> muss installiert sein.</li><li>Einhängen erfordert Root-Rechte. Als gewöhnlicher Benutzer versucht Rox-Filer2 <code>sudo -n</code>; eine passwortlose Regel für <code>mount.cifs</code> kommt der Vergabe von Root gleich, erteilen Sie sie also bewusst oder hängen Sie selbst ein.</li><li>Ihr Passwort wird nie in die Konfiguration geschrieben. Es läuft über eine temporäre Anmeldedatei, die nur Sie lesen können und die gelöscht wird, sobald <code>mount.cifs</code> zurückkehrt. Gespeichert werden nur Server, Freigabe, Benutzer und Domäne.</li></ul>
+<h2 id="trash">Papierkorb</h2>
+<p>Löschen über das Menü verschiebt Objekte in den XDG-Papierkorb, sodass sie wiederhergestellt werden können. Wiederherstellen können Sie über das Kontextmenü des Papierkorbverzeichnisses.</p>
+<p>Der Papierkorb funktioniert nur innerhalb desselben Dateisystems wie das Papierkorbverzeichnis. Das Löschen einer Datei auf einer anderen Partition oder einem Wechseldatenträger ist unter Umständen nicht umkehrbar; Rox-Filer2 weist Sie in diesem Fall darauf hin.</p>
+<h2 id="mime">Dateitypen und Öffnen mit</h2>
+<p>Die Dateitypen stammen aus der gemeinsamen MIME-Datenbank sowie aus erweiterten Attributen an der Datei selbst. Das Kontextmenü listet unter <b>Öffnen mit</b> die für diesen Typ registrierten Anwendungen auf.</p>
+<p>Ein dauerhaftes Programm oder ein eigenes Symbol legen Sie über die Einträge <b>Symbol festlegen</b> und <b>Aktion festlegen</b> des Objekts fest. Beides landet in Ihrer eigenen Konfiguration und verändert nie die Systemdatenbank.</p>
+<h2 id="actions">Eigene Aktionen und Vorlagen</h2>
+<p>Eigene Aktionen fügen dem Kontextmenü Ihre Befehle hinzu und erhalten die ausgewählten Pfade als Argumente. Es sind gewöhnliche Desktop-Einträge, Sie können eine also zwischen Rechnern kopieren.</p>
+<p>Vorlagen erlauben es, über das Kontextmenü eine neue leere Datei eines bestimmten Typs anzulegen. Eigene fügen Sie hinzu, indem Sie eine Datei im Verzeichnis Templates des Anwendungsverzeichnisses ablegen.</p>
+<h2 id="tools">Suche, Lesezeichen und gekoppelte Fenster</h2>
+<ul><li><b>Suche:</b> <code>rox-find</code> sucht nach Name, Größe, Typ und Inhalt und gibt die Treffer an den Dateimanager zurück.</li><li><b>Lesezeichen:</b> halten häufig genutzte Verzeichnisse einen Klick entfernt; in Modern erscheinen sie zusätzlich unter Orte.</li><li><b>Gekoppelte Fenster:</b> <code>rox --pair</code> öffnet zwei Fenster nebeneinander zum Kopieren zwischen Verzeichnissen, <code>rox --pair-realign</code> richtet sie neu aus.</li></ul>
+<h2 id="options">Optionen und Konfigurationsdateien</h2>
+<p>Öffnen Sie <b>Optionen</b> über das Menü Bearbeiten, über das Desktop-Menü oder mit <code>rox --config-rox</code>.</p>
+<p>Ihre Einstellungen liegen im XDG-Konfigurationsverzeichnis, normalerweise <code>~/.config/rox.sourceforge.net/ROX-Filer/</code>. Die Dateien sind XML, INI und einfacher Text und lassen sich sichern, bearbeiten oder zwischen Rechnern kopieren. Löschen Sie eine Datei, wird diese Gruppe von Voreinstellungen wiederhergestellt.</p>
+<h2 id="cmdline">Befehlszeile</h2>
+<ul><li><code>rox</code> &mdash; wählt automatisch das X11- oder Wayland-Backend.</li><li><code>rox-x11</code>, <code>rox-wayland</code> &mdash; erzwingen ein Backend.</li><li><code>rox VERZ</code> &mdash; öffnet ein Verzeichnis.</li><li><code>rox -d VERZ</code> &mdash; öffnet es als Verzeichnis, auch wenn es ein Anwendungsverzeichnis ist.</li><li><code>rox -D VERZ</code> &mdash; schließt dieses Verzeichnis und seine Unterverzeichnisse.</li><li><code>rox --classic</code>, <code>rox --modern</code> &mdash; vorübergehende Wahl der Oberfläche.</li><li><code>rox --desktop</code> &mdash; startet den Desktop; <code>--desktop-refresh</code> aktualisiert einen laufenden.</li><li><code>rox --help</code> &mdash; die vollständige Liste.</li></ul>
+<h2 id="diagnostics">Diagnose</h2>
+<p>Die Protokollierung ist standardmäßig aus. Starten Sie mit <code>rox --debug</code>, um ein technisches Protokoll zu schreiben, mit <code>--log-file=DATEI</code> für den Ort und <code>--log-level=STUFE</code> mit error, warning, info, debug oder trace. <code>rox --clear-logs</code> entfernt die von Rox-Filer2 automatisch verwalteten Protokolle.</p>
+<p>Legen Sie dieses Protokoll jeder Fehlermeldung bei. Es hält fest, welches Desktop-Backend gewählt wurde, welcher Oberflächenstil aktiv ist und warum ein SMB-Mount oder ein Laufwerkssuchlauf fehlgeschlagen ist.</p>
+<h2 id="support">Probleme melden</h2>
+<p>Melden Sie Fehler und Vorschläge auf der Projektseite <a href="https://github.com/josejp2424/ROX-Filer-gtk3">github.com/josejp2424/ROX-Filer-gtk3</a>.</p>
+<p>Nennen Sie dabei Ihre Version (siehe <b>Hilfe &gt; Über Rox-Filer2</b>), ob Sie X11 oder Wayland verwenden, welchen Oberflächenstil und die genauen Schritte, die das Problem reproduzieren.</p>
+<footer>Rox-Filer2 ist freie Software unter der GNU General Public License, Version 2 oder später. Ursprüngliches ROX-Filer &copy; 2005 Thomas Leonard und Mitwirkende; Fortführung Rox-Filer2 &copy; 2026 josejp2424.</footer>
+</main>
+</body>
+</html>

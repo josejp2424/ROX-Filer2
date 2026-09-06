@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+# 2.12.2-82: este script hacia "rm -rf /usr/local/apps/Rox-Filer" sin
+# comprobar nada, de modo que destruia un AppDir real instalado a mano por
+# el administrador.  El paquete ya no usa /usr/local; solo se limpian los
+# enlaces que versiones anteriores de Rox-Filer2 crearon alli, y unicamente
+# si siguen apuntando a nuestro runtime.
+case "${1:-install}" in
+  install|upgrade|abort-upgrade) ;;
+  *) exit 0 ;;
+esac
+
+for path in /usr/local/apps/Rox-Filer /usr/local/apps/ROX-Filer \
+            /usr/local/bin/roxfiler; do
+  if [ -L "$path" ]; then
+    target=$(readlink "$path" 2>/dev/null || true)
+    case "$target" in
+      /usr/lib/rox-filer2|/usr/lib/rox-filer2/*) rm -f "$path" ;;
+    esac
+  fi
+done
+rmdir /usr/local/apps 2>/dev/null || true
+
+exit 0

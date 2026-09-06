@@ -333,6 +333,49 @@ void bookmarks_add_path(const gchar *path)
  *			INTERNAL FUNCTIONS			*
  ****************************************************************/
 
+/* Return a snapshot of the current bookmark entries for alternative UI views.
+ * The canonical Bookmarks.xml remains owned and managed by the existing ROX
+ * bookmark code. The caller owns the returned array and entries. */
+void rox_bookmark_info_free(RoxBookmarkInfo *info)
+{
+	if (!info)
+		return;
+	g_free(info->path);
+	g_free(info->title);
+	g_free(info);
+}
+
+GPtrArray *bookmarks_get_entries(void)
+{
+	GPtrArray *entries;
+	xmlNode *node;
+
+	update_bookmarks();
+	entries = g_ptr_array_new_with_free_func((GDestroyNotify) rox_bookmark_info_free);
+	node = xmlDocGetRootElement(bookmarks->doc);
+	for (node = node->xmlChildrenNode; node; node = node->next)
+	{
+		xmlChar *mark;
+		xmlChar *title;
+		RoxBookmarkInfo *info;
+		if (node->type != XML_ELEMENT_NODE ||
+		    xmlStrcmp(node->name, BAD_CAST "bookmark") != 0)
+			continue;
+		mark = xmlNodeListGetString(bookmarks->doc, node->xmlChildrenNode, 1);
+		if (!mark)
+			continue;
+		title = xmlGetProp(node, BAD_CAST "title");
+		info = g_new0(RoxBookmarkInfo, 1);
+		info->path = g_strdup((const gchar *) mark);
+		info->title = title ? g_strdup((const gchar *) title) : NULL;
+		g_ptr_array_add(entries, info);
+		if (title)
+			xmlFree(title);
+		xmlFree(mark);
+	}
+	return entries;
+}
+
 /* Initialise the bookmarks document to be empty. Does not save. */
 static void bookmarks_new(void)
 {
@@ -499,34 +542,33 @@ static void edit_delete(GtkButton *button, GtkTreeView *view)
 	GtkTreeModel *model;
 	GtkListStore *list;
 	GtkTreeSelection *selection;
-	GtkTreeIter iter;
-	gboolean more, any = FALSE;
+	GList *rows;
+	GList *node;
 
+	(void) button;
 	model = gtk_tree_view_get_model(view);
 	list = GTK_LIST_STORE(model);
-
 	selection = gtk_tree_view_get_selection(view);
+	rows = gtk_tree_selection_get_selected_rows(selection, &model);
 
-	more = gtk_tree_model_get_iter_first(model, &iter);
-
-	while (more)
-	{
-		GtkTreeIter old = iter;
-
-		more = gtk_tree_model_iter_next(model, &iter);
-
-		if (gtk_tree_selection_iter_is_selected(selection, &old))
-		{
-			any = TRUE;
-			gtk_list_store_remove(list, &old);
-		}
-	}
-
-	if (!any)
+	if (!rows)
 	{
 		report_error(_("You should first select some rows to delete"));
 		return;
 	}
+
+	/* Rox-Filer2 2.12.2-49: deleting while walking forward invalidated the
+	 * iterator and could remove the selected bookmark plus every row below it.
+	 * GtkTreePath objects remain stable if rows are removed bottom-to-top. */
+	rows = g_list_reverse(rows);
+	for (node = rows; node; node = node->next)
+	{
+		GtkTreeIter iter;
+		GtkTreePath *path = node->data;
+		if (gtk_tree_model_get_iter(model, &iter, path))
+			gtk_list_store_remove(list, &iter);
+	}
+	g_list_free_full(rows, (GDestroyNotify) gtk_tree_path_free);
 }
 
 static void reorder(GtkTreeView *view, int dir)

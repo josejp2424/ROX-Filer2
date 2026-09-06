@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rox-Filer2 手册</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1c1f24; --muted: #5a6270;
+  --accent: #2f6fb0; --rule: #dde2e8; --code-bg: #f4f6f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1e23; --fg: #e6e9ee; --muted: #9aa4b2;
+          --accent: #6fa8dc; --rule: #333941; --code-bg: #23272e; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 1.2rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font-family: system-ui, "DejaVu Sans", "Noto Sans", sans-serif;
+  font-size: 16px; line-height: 1.65;
+}
+main { max-width: 46rem; margin: 0 auto; }
+header { border-bottom: 2px solid var(--accent); margin: 2rem 0 1.5rem; }
+.brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.manual-logo { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
+.brand-copy { min-width: 0; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+@media (max-width: 34rem) {
+  .manual-logo { width: 56px; height: 56px; flex-basis: 56px; }
+  h1 { font-size: 1.55rem; }
+}
+h2 {
+  font-size: 1.25rem; margin: 2.2rem 0 .6rem;
+  padding-bottom: .25rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: .7rem 0; }
+ul { margin: .6rem 0 .6rem 1.3rem; padding: 0; }
+li { margin: .3rem 0; }
+code, kbd {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+  font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: .9em;
+}
+nav.toc {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 8px; padding: .9rem 1.2rem; margin: 1.5rem 0;
+}
+nav.toc ol { margin: .3rem 0 0 1.2rem; padding: 0; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+footer {
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .88rem;
+}
+[dir="rtl"] ul, [dir="rtl"] nav.toc ol { margin: .6rem 1.3rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">
+<img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
+<div class="brand-copy">
+<h1>Rox-Filer2 手册</h1>
+<p class="sub">适用于 X11 和 Wayland 的快速轻量文件管理器，ROX-Filer 的延续。 &mdash; 2.12.2-89</p>
+</div>
+</div>
+</header>
+<nav class="toc"><b>目录</b><ol>
+<li><a href="#intro">什么是 Rox-Filer2</a></li>
+<li><a href="#interfaces">经典界面与现代界面</a></li>
+<li><a href="#window">文件管理器窗口</a></li>
+<li><a href="#desktop">ROX 桌面</a></li>
+<li><a href="#drives">驱动器与挂载</a></li>
+<li><a href="#images">磁盘映像 (ISO、IMG、SFS、SquashFS)</a></li>
+<li><a href="#network">SMB 与 Windows 共享</a></li>
+<li><a href="#trash">回收站</a></li>
+<li><a href="#mime">文件类型与「打开方式」</a></li>
+<li><a href="#actions">自定义操作与模板</a></li>
+<li><a href="#tools">搜索、书签与成对窗口</a></li>
+<li><a href="#options">选项与配置文件</a></li>
+<li><a href="#cmdline">命令行</a></li>
+<li><a href="#diagnostics">诊断</a></li>
+<li><a href="#support">报告问题</a></li>
+</ol></nav>
+<h2 id="intro">什么是 Rox-Filer2</h2>
+<p>Rox-Filer2 是 ROX-Filer 的延续，已升级到 GTK3，并增加了现代界面、原生 SMB 支持、驱动器图标，以及在 X11 和 Wayland 上都能运行的桌面模式。</p>
+<p>它在一个进程中只做一件事：管理文件，并在您需要时管理桌面。没有后台守护进程，没有虚拟文件系统层，也不依赖任何桌面环境。您看到的一切都是普通的 POSIX 路径。</p>
+<h2 id="interfaces">经典界面与现代界面</h2>
+<p>Rox-Filer2 提供两种界面风格，二者共用相同的文件、MIME、挂载、回收站和桌面后端。</p>
+<ul><li><b>经典 ROX</b> 保留 ROX-Filer 传统的布局和工具栏。若您从 ROX-Filer 迁移而来，一切位置照旧。</li><li><b>现代</b> 增加了菜单栏、导航栏、标签页，以及包含「位置」「设备」「网络」的侧边栏。</li></ul>
+<p>在<b>选项 &gt; 界面</b>中选择长期使用的风格。更改会在重启 Rox-Filer2 之后打开的窗口中生效。</p>
+<p>若只想临时试用某种风格而不改动已保存的偏好，请以 <code>rox --classic</code> 或 <code>rox --modern</code> 启动。</p>
+<h2 id="window">文件管理器窗口</h2>
+<p>双击可打开目录。单击为选中；在空白处按住左键拖动可进行框选。</p>
+<ul><li>右键打开指针下方项目的上下文菜单；在空白处则是整个窗口的菜单。</li><li>中键在新窗口中打开目录。</li><li><kbd>Backspace</kbd> 返回上一级；<kbd>Ctrl+L</kbd> 聚焦路径输入框。</li><li>在现代界面中，<kbd>Ctrl+T</kbd> 新建标签页，<kbd>Ctrl+W</kbd> 关闭。每个标签页各自保留路径与历史记录。</li></ul>
+<p>使用视图切换器在图标视图与详细列表视图之间切换，并用滑块调整图标大小。</p>
+<h2 id="desktop">ROX 桌面</h2>
+<p>使用 <code>rox --desktop</code> 启动桌面。同一时间只运行一个实例。它会绘制壁纸、显示桌面目录中的图标，并可显示驱动器图标。</p>
+<ul><li><b>壁纸：</b><code>rox --desktop-wallpaper</code>，或在桌面上右键。模式包括填充、适应、拉伸、居中和平铺。</li><li><b>应用程序：</b><code>rox --desktop-apps</code> 管理桌面上的启动器。</li><li><b>驱动器图标：</b><code>rox --desktop-drive-icon-layout</code> 用于排列。</li><li><b>首选项：</b><code>rox --desktop-preferences</code>。</li></ul>
+<p>在 X11 上，桌面使用带桌面类型提示的普通窗口。在 Wayland 上使用 Layer Shell 的背景层，这需要安装 <code>gtk-layer-shell</code>，并且合成器需公开 <code>zwlr_layer_shell_v1</code>，例如 Labwc。可用 <code>rox-x11 --desktop</code> 或 <code>rox-wayland --desktop</code> 强制指定后端。</p>
+<p>若还希望设置 X11 根窗口背景，使伪透明终端和 conky 看到同一张图像，请安装 <code>feh</code> 或 <code>xwallpaper</code>。</p>
+<h2 id="drives">驱动器与挂载</h2>
+<p>本地和可移动驱动器显示在现代界面侧边栏的<b>设备</b>下，也可显示为桌面图标。单击驱动器即可挂载并打开；通过上下文菜单卸载。</p>
+<p>驱动器信息来自 <code>lsblk</code>、<code>/proc/mounts</code> 和 sysfs，因此无需任何后台服务。以普通用户身份挂载需要 <code>udisksctl</code>，或在 fstab 中有允许挂载的条目。</p>
+<p>拔出可移动介质前请务必先卸载。关闭窗口后 Rox-Filer2 不会再向设备写入，但内核可能仍保留尚未写出的数据。</p>
+<h2 id="images">磁盘映像 (ISO、IMG、SFS、SquashFS)</h2>
+<p>右键单击映像文件并选择<b>挂载映像</b>。Rox-Filer2 会将其关联到回环设备并以只读方式挂载，然后像打开任何其他目录一样打开结果。支持的扩展名为 <code>.iso</code>、<code>.img</code>、<code>.sfs</code>、<code>.squashfs</code>、<code>.sqfs</code> 和 <code>.sqsh</code>。</p>
+<p>挂载后，同一菜单会提供<b>打开已挂载映像</b>和<b>卸载映像</b>。挂载点位于 <code>/media/rox-filer2-images/</code> 下，每个映像一个目录。</p>
+<ul><li><b>始终只读。</b>回环设备、块设备和挂载三者都设为只读，因此映像绝不会被意外修改。</li><li><b>以 root 运行时</b>（Puppy 和 Essora 的常规方式）直接使用 <code>losetup</code> 和 <code>mount</code>。以普通用户运行时使用 <code>udisksctl</code>，需要事先安装。</li><li><b>原始 <code>.img</code> 文件</b>可能包含分区表。发现多个分区时，Rox-Filer2 会询问挂载哪一个，并显示每个分区的真实编号、文件系统、大小和卷标。ISO 和 SquashFS 映像始终整体挂载，即使混合 ISO 暴露了分区表也是如此。</li><li><b>不使用 GVfs。</b>映像成为普通的本地挂载点，因此复制、拖放、MIME 处理和自定义操作的行为与其他目录完全一致。</li></ul>
+<p>挂载在后台进行：准备回环设备和扫描分区期间会显示一个带有旋转指示器的小窗口，文件管理器保持响应。</p>
+<p>删除或移动映像文件之前请先卸载。如果挂载在 Rox-Filer2 不知情的情况下消失，菜单项会重新提供<b>挂载映像</b>。</p>
+<h2 id="network">SMB 与 Windows 共享</h2>
+<p>打开<b>转到 &gt; 连接到 SMB 共享</b>，或现代界面侧边栏中的<b>浏览网络</b>。输入服务器，若知道共享名也一并输入；列表按钮会向服务器询问它提供哪些共享。</p>
+<p>Rox-Filer2 通过 <code>mount.cifs</code> 将共享挂载为普通的本地挂载点，而不是用虚拟文件系统呈现。因此复制、拖放、MIME 处理、回收站和自定义操作的行为与本地文件完全一致。</p>
+<ul><li>必须安装 <code>cifs-utils</code>。</li><li>挂载需要 root 权限。以普通用户运行时，Rox-Filer2 会尝试 <code>sudo -n</code>；为 <code>mount.cifs</code> 配置免密规则实际上等同于授予 root，请在了解后果的前提下配置，或自行手动挂载。</li><li>密码绝不会写入配置文件。它通过一个仅您可读的临时凭据文件传递，<code>mount.cifs</code> 返回后立即删除。只有服务器、共享、用户和域会被记住。</li></ul>
+<h2 id="trash">回收站</h2>
+<p>通过菜单删除会将项目移入 XDG 回收站，因此可以恢复。请在回收站目录的上下文菜单中执行恢复。</p>
+<p>回收站仅在与回收站目录相同的文件系统内有效。删除位于其他分区或可移动设备上的文件可能无法恢复，出现这种情况时 Rox-Filer2 会提示您。</p>
+<h2 id="mime">文件类型与「打开方式」</h2>
+<p>文件类型来自共享 MIME 数据库，以及文件自身设置的扩展属性。上下文菜单的<b>打开方式</b>中列出为该类型注册的应用程序。</p>
+<p>可通过项目的<b>设置图标</b>和<b>设置运行动作</b>指定固定的处理程序或自定义图标。它们保存在您自己的配置中，绝不会修改系统数据库。</p>
+<h2 id="actions">自定义操作与模板</h2>
+<p>自定义操作会把您自己的命令加入上下文菜单，并将选中的路径作为参数传入。它们是普通的 desktop 条目，可以在不同机器之间复制。</p>
+<p>模板让您可以从上下文菜单创建指定类型的新空文件。把文件放进应用程序目录下的 Templates 目录，即可添加自己的模板。</p>
+<h2 id="tools">搜索、书签与成对窗口</h2>
+<ul><li><b>搜索：</b><code>rox-find</code> 可按名称、大小、类型和内容搜索，并把结果交回文件管理器。</li><li><b>书签：</b>让常用目录一击即达；在现代界面中它们也出现在「位置」下。</li><li><b>成对窗口：</b><code>rox --pair</code> 并排打开两个窗口以便在目录之间复制，<code>rox --pair-realign</code> 可重新对齐。</li></ul>
+<h2 id="options">选项与配置文件</h2>
+<p>可从编辑菜单、桌面菜单或使用 <code>rox --config-rox</code> 打开<b>选项</b>。</p>
+<p>您的设置位于 XDG 配置目录，通常是 <code>~/.config/rox.sourceforge.net/ROX-Filer/</code>。这些文件是 XML、INI 和纯文本，可以备份、编辑或在机器之间复制。删除某个文件即可将该组设置恢复为默认值。</p>
+<h2 id="cmdline">命令行</h2>
+<ul><li><code>rox</code> &mdash; 自动选择 X11 或 Wayland 后端。</li><li><code>rox-x11</code>、<code>rox-wayland</code> &mdash; 强制指定后端。</li><li><code>rox 目录</code> &mdash; 打开目录。</li><li><code>rox -d 目录</code> &mdash; 即使它是应用程序目录，也作为目录打开。</li><li><code>rox -D 目录</code> &mdash; 关闭该目录及其子目录。</li><li><code>rox --classic</code>、<code>rox --modern</code> &mdash; 临时覆盖界面风格。</li><li><code>rox --desktop</code> &mdash; 启动桌面；<code>--desktop-refresh</code> 刷新正在运行的桌面。</li><li><code>rox --help</code> &mdash; 完整列表。</li></ul>
+<h2 id="diagnostics">诊断</h2>
+<p>日志默认关闭。使用 <code>rox --debug</code> 启动以写入技术日志，<code>--log-file=文件</code> 指定位置，<code>--log-level=级别</code> 可取 error、warning、info、debug 或 trace。<code>rox --clear-logs</code> 会删除 Rox-Filer2 自动管理的日志。</p>
+<p>报告问题时请附上该日志。它记录了选用了哪个桌面后端、当前生效的界面风格，以及 SMB 挂载或驱动器扫描失败的原因。</p>
+<h2 id="support">报告问题</h2>
+<p>请在项目页面报告错误和建议：<a href="https://github.com/josejp2424/ROX-Filer-gtk3">github.com/josejp2424/ROX-Filer-gtk3</a>。</p>
+<p>请说明您使用的版本（见<b>帮助 &gt; 关于 Rox-Filer2</b>）、使用的是 X11 还是 Wayland、界面风格，以及复现问题的确切步骤。</p>
+<footer>Rox-Filer2 是自由软件，依据 GNU 通用公共许可证第 2 版或更新版本发布。原始 ROX-Filer &copy; 2005 Thomas Leonard 及贡献者；Rox-Filer2 延续开发 &copy; 2026 josejp2424。</footer>
+</main>
+</body>
+</html>

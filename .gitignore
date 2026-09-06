@@ -8,7 +8,28 @@ ROX-Filer/Help/Manual-it.html
 ROX-Filer/Help/Manual.html
 ROX-Filer/ROX-Filer
 ROX-Filer/ROX-Filer.dbg
+rox-find/rox-find
 ROX-Filer/build/
 ROX-Filer/src/autom4te.cache/
 ROX-Filer/src/config.log
 ROX-Filer/src/configure
+
+# Meson build output
+/build/
+build-meson/
+builddir/
+meson-logs/
+meson-private/
+
+# Package/release output
+/output/
+/build-gate/
+/build-asan/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Dedicated native package builder work directories
+/build-arch/
+/build-void/

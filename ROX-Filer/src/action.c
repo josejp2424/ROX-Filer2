@@ -796,8 +796,7 @@ static void read_new_entry_text(void)
 	}
 
 	g_free(new_entry_string);
-	new_entry_string = new->str;
-	g_string_free(new, FALSE);
+	new_entry_string = g_string_free(new, FALSE);
 }
 
 static void process_flag(char flag)
@@ -1268,7 +1267,10 @@ static void do_eject(const char *path)
 		char c = '?';
 		printf_send("X%s", path);
 		/* Wait until it's safe... */
-		read(from_parent, &c, 1);
+		/* 2.12.2-82: si read() falla, 'c' quedaba sin inicializar y el
+		 * g_return_if_fail siguiente comparaba memoria basura. */
+		if (read(from_parent, &c, 1) != 1)
+			c = '\0';
 		g_return_if_fail(c == 'X');
 	}
 
@@ -1374,7 +1376,7 @@ static struct mode_change *nice_mode_compile(const char *mode_string,
 
 	if (brackets == 0)
 		retval = mode_compile(new->str, masked_ops);
-	g_string_free(new, TRUE);
+	g_free(g_string_free(new, FALSE));
 	return retval;
 }
 
@@ -1743,7 +1745,7 @@ static gboolean run_rsync_with_progress(gchar **argv, gchar **captured,
     g_string_append(command, " 2>&1");
 
     pipe = popen(command->str, "r");
-    g_string_free(command, TRUE);
+    g_free(g_string_free(command, FALSE));
     if (!pipe)
         return FALSE;
 
@@ -1761,15 +1763,14 @@ static gboolean run_rsync_with_progress(gchar **argv, gchar **captured,
     }
     if (line->len)
         rsync_progress_line(line->str, output, &last_percent);
-    g_string_free(line, TRUE);
-
+    g_free(g_string_free(line, FALSE));
     rc = pclose(pipe);
     if (status)
         *status = rc;
     if (captured)
         *captured = g_string_free(output, FALSE);
     else
-        g_string_free(output, TRUE);
+        g_free(g_string_free(output, FALSE));
     return TRUE;
 }
 
@@ -2219,7 +2220,11 @@ static void do_copy2(const char *path, const char *dest)
 			if (!exists)
 			{
 				/* (just been created then) */
-				lchown(safe_dest, info.st_uid, info.st_gid);
+				/* 2.12.2-82: preservar el propietario es best-effort;
+				 * falla sin privilegios y no debe abortar la copia. */
+				if (lchown(safe_dest, info.st_uid, info.st_gid) != 0)
+					g_debug("lchown('%s') failed: %s",
+						safe_dest, g_strerror(errno));
 				xattr_copy(safe_path, safe_dest);
 				send_check_path(safe_dest);
 			}
@@ -2272,7 +2277,9 @@ static void do_copy2(const char *path, const char *dest)
 				send_error();
 			else
 			{
-				lchown(dest_path, info.st_uid, info.st_gid);
+				if (lchown(dest_path, info.st_uid, info.st_gid) != 0)
+					g_debug("lchown('%s') failed: %s",
+						dest_path, g_strerror(errno));
 				send_check_path(dest_path);
 			}
 
@@ -2540,7 +2547,10 @@ static void do_mount(const guchar *path, gboolean mount)
 		 */
 		printf_send("X%s", path);
 		/* Wait until it's safe... */
-		read(from_parent, &c, 1);
+		/* 2.12.2-82: si read() falla, 'c' quedaba sin inicializar y el
+		 * g_return_if_fail siguiente comparaba memoria basura. */
+		if (read(from_parent, &c, 1) != 1)
+			c = '\0';
 		g_return_if_fail(c == 'X');
 	}
 
@@ -3067,7 +3077,7 @@ void action_trash(GList *paths)
 	if (errors->len)
 		report_error("%s", errors->str);
 
-	g_string_free(errors, TRUE);
+	g_free(g_string_free(errors, FALSE));
 }
 
 /* Modificado por josejp2424 (2026): conserva el motor histórico para usos
@@ -3591,8 +3601,7 @@ static gboolean remove_pinned_ok(GList *paths)
 
 	retval = confirm(message->str, ROX_ICON_DELETE, NULL);
 
-	g_string_free(message, TRUE);
-
+	g_free(g_string_free(message, FALSE));
 	return retval;
 }
 

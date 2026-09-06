@@ -56,7 +56,7 @@ static void abox_finalise(GObject *object);
 static void shade(ABox *abox);
 static void abox_set_log_visible(ABox *abox, gboolean visible);
 static GtkWidget *abox_ensure_progress(ABox *abox);
-static gboolean abox_pulse_progress(gpointer data);
+/* 2.12.2-82: declarada static y nunca definida (warning del compilador). */
 
 GType abox_get_type(void)
 {

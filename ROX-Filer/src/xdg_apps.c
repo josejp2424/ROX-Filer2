@@ -506,14 +506,13 @@ static GtkWidget *app_menu_item_new(GAppInfo *app)
     GIcon *icon = g_app_info_get_icon(app);
     GtkWidget *item;
 
-    item = gtk_image_menu_item_new_with_label(name && *name
-                                              ? name
-                                              : _("Unnamed Application"));
-    if (icon) {
-        GtkWidget *image = gtk_image_new_from_gicon(icon, GTK_ICON_SIZE_MENU);
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
-        gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(item), TRUE);
-    }
+    item = rox_menu_item_new_with_image(name && *name
+                                        ? name
+                                        : _("Unnamed Application"),
+                                        icon
+                                        ? gtk_image_new_from_gicon(icon,
+                                              GTK_ICON_SIZE_MENU)
+                                        : NULL);
     return item;
 }
 
@@ -771,15 +770,11 @@ static GtkWidget *app_menu_item_new_direct(GAppInfo *app)
     const gchar *name = g_app_info_get_display_name(app);
     gchar *label = g_strdup_printf(_("Open with %s"),
                                    name && *name ? name : _("Unnamed Application"));
-    GtkWidget *item = gtk_image_menu_item_new_with_label(label);
     GIcon *icon = g_app_info_get_icon(app);
+    GtkWidget *item = rox_menu_item_new_with_image(label,
+        icon ? gtk_image_new_from_gicon(icon, GTK_ICON_SIZE_MENU) : NULL);
 
     g_free(label);
-    if (icon) {
-        GtkWidget *image = gtk_image_new_from_gicon(icon, GTK_ICON_SIZE_MENU);
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), image);
-        gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(item), TRUE);
-    }
     return item;
 }
 
@@ -883,14 +878,12 @@ static void append_context_item(GtkWidget *menu, const gchar *label,
                                 GList *paths, GtkWindow *parent,
                                 const gchar *mime_type, const gchar *data_key)
 {
-    GtkWidget *item = gtk_image_menu_item_new_with_label(label);
+    GtkWidget *item = rox_menu_item_new_with_image(label,
+        icon_name && *icon_name
+            ? gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU)
+            : NULL);
     CustomDialogData *ctx = custom_dialog_data_new(paths, parent, mime_type);
 
-    if (icon_name && *icon_name) {
-        gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item),
-            gtk_image_new_from_icon_name(icon_name, GTK_ICON_SIZE_MENU));
-        gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(item), TRUE);
-    }
     g_signal_connect(item, "activate", callback, ctx);
     g_object_set_data_full(G_OBJECT(item), data_key, ctx,
                            custom_dialog_data_free);

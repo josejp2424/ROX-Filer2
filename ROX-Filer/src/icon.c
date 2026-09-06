@@ -402,8 +402,7 @@ gchar *icon_create_uri_list(void)
 		g_string_append(tmp, "\r\n");
 	}
 
-	retval = tmp->str;
-	g_string_free(tmp, FALSE);
+	retval = g_string_free(tmp, FALSE);
 
 	return retval;
 }
@@ -664,8 +663,7 @@ static void selection_get(GtkClipboard	*primary,
 			g_string_append_c(str, ' ');
 		}
 
-		text = str->str;
-		g_string_free(str, FALSE);
+		text = g_string_free(str, FALSE);
 	}
 
 	gtk_selection_data_set_text(selection_data, text, strlen(text));

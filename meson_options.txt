@@ -1,0 +1,6 @@
+option(
+  'smb',
+  type : 'feature',
+  value : 'auto',
+  description : 'Use libsmbclient for optional SMB share discovery/probing',
+)

@@ -415,15 +415,9 @@ int sort_by_size(const void *item1, const void *item2)
 void display_set_sort_type(FilerWindow *filer_window, SortType sort_type,
 			   GtkSortType order)
 {
-	/* Modificado por josejp2424 (2026): usar un orden único y estable.
-	 * Las carpetas se muestran primero y todos los demás archivos después,
-	 * ordenados por nombre. Se ignoran criterios históricos que podían dejar
-	 * la colección incremental desincronizada y ocultar elementos de la vista. */
-	(void) sort_type;
-	(void) order;
-	sort_type = SORT_NAME;
-	order = GTK_SORT_ASCENDING;
-
+	/* Rox-Filer2 2.12.2-49: honour the sort requested by the classic and
+	 * Modern interfaces.  The old GTK3 safety workaround forced every view
+	 * back to Name/Ascending, making Sort appear broken. */
 	if (filer_window->sort_type == sort_type &&
 	    filer_window->sort_order == order)
 		return;
@@ -465,7 +459,8 @@ void display_set_layout(FilerWindow  *filer_window,
 	 * view_autosize() here before mapping the window, producing a very wide
 	 * one-row strip and replacing the requested square default size.
 	 */
-	if (!filer_window->initial_geometry_pending &&
+	if (!filer_window->modern_mode &&
+	    !filer_window->initial_geometry_pending &&
 	    (force_resize || o_filer_auto_resize.int_value == RESIZE_ALWAYS
 	     || (o_filer_auto_resize.int_value == RESIZE_STYLE && style_changed)))
 	{

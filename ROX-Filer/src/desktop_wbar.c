@@ -233,7 +233,7 @@ static gboolean apply_root_wallpaper(const gchar *path, const gchar *mode)
         else if (!g_strcmp0(mode, "tile"))
             option = "--tile";
         argv[0] = program;
-        argv[1] = option;
+        argv[1] = (gchar *)option;
         argv[2] = (gchar *)path;
         argv[3] = NULL;
         ok = spawn_and_wait(argv);

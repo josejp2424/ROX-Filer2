@@ -227,12 +227,16 @@ static void desktop_wayland_configure_window(GtkWindow *window)
     gtk_window_set_focus_on_map(window, FALSE);
 }
 
+static void desktop_wayland_unregister_control(GtkWidget *window);
+
 static gchar *desktop_wayland_control_path(void)
 {
     const gchar *runtime = g_get_user_runtime_dir();
 
-    if (!runtime || !*runtime)
-        runtime = g_get_tmp_dir();
+    if (!runtime || !*runtime) {
+        ROX_LOG_ERROR("wayland", "XDG_RUNTIME_DIR is unavailable; desktop control socket disabled");
+        return NULL;
+    }
     return g_strdup_printf("%s/rox-filer-desktop-wayland-%lu.sock",
                            runtime, (gulong)getuid());
 }
@@ -246,12 +250,22 @@ static gboolean desktop_wayland_control_cb(GIOChannel *source,
     (void)source;
     (void)data;
 
-    if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL))
-        return TRUE;
+    if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
+        control_source = 0;
+        desktop_wayland_unregister_control(NULL);
+        return FALSE;
+    }
 
     size = recv(control_fd, buffer, sizeof(buffer) - 1, 0);
-    if (size <= 0)
+    if (size == 0)
         return TRUE;
+    if (size < 0) {
+        if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+            return TRUE;
+        control_source = 0;
+        desktop_wayland_unregister_control(NULL);
+        return FALSE;
+    }
     buffer[size] = '\0';
     if (g_str_has_prefix(buffer, ROX_WAYLAND_CONTROL_MESSAGE) &&
         control_refresh) {
@@ -296,6 +310,8 @@ static void desktop_wayland_register_control(GtkWidget *window,
 
     desktop_wayland_unregister_control(NULL);
     control_path = desktop_wayland_control_path();
+    if (!control_path)
+        return;
     control_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (control_fd < 0) {
         ROX_LOG_ERROR("wayland", "unable to create control socket: %s",

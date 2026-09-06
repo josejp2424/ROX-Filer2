@@ -1,7 +1,7 @@
 project(
   'rox-filer2',
   'c',
-  version : '2.12.2-34',
+  version : '2.12.2-89',
   meson_version : '>=0.61.0',
   default_options : [
     'c_std=gnu11',
@@ -14,13 +14,14 @@ cc = meson.get_compiler('c')
 
 # Core dependencies. Keep these aligned with the historical autoconf build.
 gtk_dep = dependency('gtk+-3.0', version : '>=3.22.0')
-gio_unix_dep = dependency('gio-unix-2.0', version : '>=2.50.0')
+gio_unix_dep = dependency('gio-unix-2.0', version : '>=2.70.0')
 libxml_dep = dependency('libxml-2.0', version : '>=2.0.0')
 sm_dep = dependency('sm', version : '>=1.0')
 ice_dep = dependency('ice')
 x11_dep = dependency('x11')
 shared_mime_info_dep = dependency('shared-mime-info', version : '>=0.14')
 pango_dep = dependency('pango', version : '>=1.1.2', required : false)
+smbclient_dep = dependency('smbclient', required : get_option('smb'))
 
 m_dep = cc.find_library('m', required : false)
 dl_dep = cc.find_library('dl', required : false)
@@ -46,6 +47,7 @@ header_checks = {
   'HAVE_WCTYPE_H' : 'wctype.h',
   'HAVE_LIBINTL_H' : 'libintl.h',
   'HAVE_SYS_INOTIFY_H' : 'sys/inotify.h',
+  'HAVE_SYS_MMAN_H' : 'sys/mman.h',
   'HAVE_ATTR_XATTR_H' : 'attr/xattr.h',
   'HAVE_SYS_XATTR_H' : 'sys/xattr.h',
 }
@@ -67,6 +69,7 @@ conf.set('HAVE_GETXATTR', cc.has_function(
   prefix : '#include <sys/types.h>\n#include <sys/xattr.h>',
 ))
 conf.set('HAVE_ATTROPEN', cc.has_function('attropen'))
+conf.set('HAVE_MMAP', cc.has_function('mmap', prefix : '#include <sys/mman.h>'))
 
 file_prog = find_program('file', required : false)
 file_b_flag = false
@@ -81,6 +84,7 @@ conf.set('FILE_B_FLAG', file_b_flag)
 off_t_size = cc.sizeof('off_t', prefix : '#include <sys/types.h>')
 conf.set('LARGE_FILE_SUPPORT', off_t_size >= 8)
 conf.set('USE_PANGO_WRAP_WORD_CHAR', pango_dep.found())
+conf.set('HAVE_LIBSMBCLIENT', smbclient_dep.found())
 
 configure_file(
   input : 'ROX-Filer/src/config.h.meson.in',
@@ -111,6 +115,7 @@ rox_sources = files(
   'ROX-Filer/src/display.c',
   'ROX-Filer/src/dnd.c',
   'ROX-Filer/src/drives.c',
+  'ROX-Filer/src/drives_monitor.c',
   'ROX-Filer/src/dropbox.c',
   'ROX-Filer/src/filer.c',
   'ROX-Filer/src/filer_pair.c',
@@ -121,8 +126,11 @@ rox_sources = files(
   'ROX-Filer/src/rox_itemfactory.c',
   'ROX-Filer/src/gui_support.c',
   'ROX-Filer/src/i18n.c',
+  'ROX-Filer/src/image_mounter.c',
   'ROX-Filer/src/icon.c',
   'ROX-Filer/src/infobox.c',
+  'ROX-Filer/src/interface_style.c',
+  'ROX-Filer/src/modern_ui.c',
   'ROX-Filer/src/log.c',
   'ROX-Filer/src/debug_log.c',
   'ROX-Filer/src/main.c',
@@ -140,6 +148,7 @@ rox_sources = files(
   'ROX-Filer/src/session.c',
   'ROX-Filer/src/support.c',
   'ROX-Filer/src/search_integration.c',
+  'ROX-Filer/src/smb.c',
   'ROX-Filer/src/toolbar.c',
   'ROX-Filer/src/trash.c',
   'ROX-Filer/src/type.c',
@@ -177,13 +186,14 @@ endif
 if intl_dep.found()
   rox_deps += [intl_dep]
 endif
+if smbclient_dep.found()
+  rox_deps += [smbclient_dep]
+endif
 
 rox_c_args = cc.get_supported_arguments(
   '-Wall',
   '-Wmissing-prototypes',
   '-Wno-pointer-sign',
-  '-Wno-error=incompatible-pointer-types',
-  '-fcommon',
   '-DHAVE_CONFIG_H=1',
 )
 
@@ -216,6 +226,7 @@ summary(
     'GTK3' : gtk_dep.version(),
     'Pango word wrapping' : pango_dep.found(),
     '64-bit file offsets' : off_t_size >= 8,
+    'SMB discovery (libsmbclient)' : smbclient_dep.found(),
   },
   section : 'Rox-Filer2 build',
   bool_yn : true,

@@ -24,6 +24,8 @@
 #include "trash.h"
 #include "desktop_wbar.h"
 #include "drives.h"
+#include "drives_monitor.h"
+#include "dnd.h"
 #include "rox_config.h"
 #include "filer.h"
 #include "i18n.h"
@@ -36,7 +38,6 @@
 #define DESKTOP_CONFIG "desktop.conf"
 #define DESKTOP_POSITIONS_CONFIG "desktop-positions.conf"
 #define SYSTEM_BACKGROUNDS_DIR "/usr/share/backgrounds"
-#define DRIVE_POLL_SECONDS 8
 #define DEFAULT_DESKTOP_ICON_SIZE 48
 #define DEFAULT_DRIVE_ICON_SIZE 48
 #define DEFAULT_DRIVE_MARGIN 12
@@ -53,6 +54,7 @@ typedef struct {
     gchar *uri;
     gchar *display_name;
     gboolean launcher;
+    gboolean is_directory;
     gboolean home;
     gboolean browser;
     gboolean console;
@@ -110,21 +112,19 @@ static GtkWidget *desktop_drive_layer;
 static GtkWidget *desktop_drive_box;
 static GList *desktop_items;
 static DesktopItem *desktop_selected_item;
+static DesktopItem *desktop_drop_hover_item;
 static GFileMonitor *desktop_monitor;
 static GFileMonitor *desktop_config_monitor;
 static GFileMonitor *trash_monitor;
-static GVolumeMonitor *volume_monitor;
 static GdkScreen *desktop_screen;
 static gulong desktop_screen_monitors_handler;
 static gulong desktop_screen_size_handler;
 static guint wallpaper_reload_source;
-static guint drive_poll_source;
 static guint geometry_reload_source;
+static guint desktop_reload_source;
 static guint environment_refresh_source;
 static guint environment_refresh_round;
 static gchar *drive_signature;
-static gboolean drive_scan_in_progress;
-static guint drive_scan_serial;
 static gchar *desktop_dir;
 static gchar *wallpaper_path;
 static GdkPixbuf *wallpaper_pixbuf;
@@ -177,6 +177,7 @@ static GdkRectangle desktop_rubberband_rect = {0, 0, 0, 0};
 
 static void desktop_reload(void);
 static gboolean desktop_reload_idle(gpointer data);
+static void desktop_schedule_reload(void);
 static void desktop_load_wallpaper_from_config(void);
 static void desktop_show_wallpaper_dialog(GtkWindow *parent);
 static void desktop_apply_drive_layout(void);
@@ -186,7 +187,6 @@ static void desktop_calculate_drive_rect(gint width, gint height,
 static void desktop_update_drive_reservation(void);
 static void desktop_reflow_items(gboolean save_positions);
 static void desktop_arrange_items(gboolean save_positions);
-static void desktop_request_drive_scan(void);
 static void desktop_force_drive_refresh(void);
 static void desktop_rebuild_drive_box_from_list(GPtrArray *drives);
 static void desktop_schedule_geometry_update(void);
@@ -202,9 +202,6 @@ static void show_desktop_item_menu(DesktopItem *item, GdkEventButton *event);
 static void show_desktop_menu(GdkEventButton *event);
 static gboolean desktop_button_motion(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 static gboolean desktop_button_release(GtkWidget *widget, GdkEventButton *event, gpointer data);
-static void desktop_drag_data_received(GtkWidget *widget, GdkDragContext *context,
-                                       gint x, gint y, GtkSelectionData *selection,
-                                       guint info, guint time, gpointer data);
 
 extern int number_of_windows;
 
@@ -532,6 +529,78 @@ static void desktop_query_geometry(void)
         desktop_workarea = desktop_geometry;
 }
 
+/* Agregado en 2.12.2-82: cache del wallpaper reescalado.
+ *
+ * Hasta 2.12.2-81 esta funcion llamaba gdk_pixbuf_scale_simple() dentro del
+ * manejador "draw", es decir en cada cuadro: cada movimiento de la goma
+ * elastica, cada hover de icono y cada redibujo parcial reescalaba el fondo
+ * completo, una vez por monitor.  Medido en 3840x2160 -> 1920x1080 eran
+ * ~28 ms por cuadro en una CPU moderna y varias veces mas en el hardware
+ * antiguo al que apunta la distribucion.
+ *
+ * Ahora el resultado se guarda en un cairo_surface_t y solo se recalcula
+ * cuando cambia el pixbuf de origen, la geometria destino o el encuadre. */
+typedef struct {
+    GdkPixbuf       *source;     /* solo para comparar identidad */
+    cairo_surface_t *surface;
+    gint             width;
+    gint             height;
+    gint             x;
+    gint             y;
+} DesktopWallpaperCacheEntry;
+
+#define DESKTOP_WALLPAPER_CACHE_MAX 8
+static DesktopWallpaperCacheEntry wallpaper_cache[DESKTOP_WALLPAPER_CACHE_MAX];
+static gint wallpaper_cache_used;
+
+static void desktop_wallpaper_cache_clear(void)
+{
+    gint i;
+
+    for (i = 0; i < wallpaper_cache_used; i++) {
+        if (wallpaper_cache[i].surface)
+            cairo_surface_destroy(wallpaper_cache[i].surface);
+        wallpaper_cache[i].surface = NULL;
+        wallpaper_cache[i].source = NULL;
+    }
+    wallpaper_cache_used = 0;
+}
+
+static cairo_surface_t *desktop_wallpaper_cached_surface(gint width, gint height)
+{
+    GdkPixbuf *scaled;
+    cairo_surface_t *surface;
+    gint i;
+
+    for (i = 0; i < wallpaper_cache_used; i++) {
+        if (wallpaper_cache[i].source == wallpaper_pixbuf &&
+            wallpaper_cache[i].width == width &&
+            wallpaper_cache[i].height == height)
+            return wallpaper_cache[i].surface;
+    }
+
+    scaled = gdk_pixbuf_scale_simple(wallpaper_pixbuf, width, height,
+                                     GDK_INTERP_BILINEAR);
+    if (!scaled)
+        return NULL;
+    surface = gdk_cairo_surface_create_from_pixbuf(scaled, 0, NULL);
+    g_object_unref(scaled);
+    if (!surface)
+        return NULL;
+
+    /* Con varios monitores hacen falta varias entradas.  Si se llena, se
+     * descarta todo: es un evento raro (cambio de resolucion o de fondo). */
+    if (wallpaper_cache_used >= DESKTOP_WALLPAPER_CACHE_MAX)
+        desktop_wallpaper_cache_clear();
+
+    wallpaper_cache[wallpaper_cache_used].source = wallpaper_pixbuf;
+    wallpaper_cache[wallpaper_cache_used].surface = surface;
+    wallpaper_cache[wallpaper_cache_used].width = width;
+    wallpaper_cache[wallpaper_cache_used].height = height;
+    wallpaper_cache_used++;
+    return surface;
+}
+
 static void desktop_draw_scaled(cairo_t *cr, const GdkRectangle *rect,
                                 gdouble scale_x, gdouble scale_y,
                                 gboolean center)
@@ -542,15 +611,17 @@ static void desktop_draw_scaled(cairo_t *cr, const GdkRectangle *rect,
     gint height = MAX(1, (gint)(image_height * scale_y + 0.5));
     gint x = center ? rect->x + (rect->width - width) / 2 : rect->x;
     gint y = center ? rect->y + (rect->height - height) / 2 : rect->y;
-    GdkPixbuf *scaled;
+    cairo_surface_t *surface;
 
-    scaled = gdk_pixbuf_scale_simple(wallpaper_pixbuf, width, height,
-                                     GDK_INTERP_BILINEAR);
-    if (!scaled)
+    surface = desktop_wallpaper_cached_surface(width, height);
+    if (!surface)
         return;
-    gdk_cairo_set_source_pixbuf(cr, scaled, x, y);
+    cairo_save(cr);
+    cairo_rectangle(cr, rect->x, rect->y, rect->width, rect->height);
+    cairo_clip(cr);
+    cairo_set_source_surface(cr, surface, x, y);
     cairo_paint(cr);
-    g_object_unref(scaled);
+    cairo_restore(cr);
 }
 
 static void desktop_draw_wallpaper_rect(cairo_t *cr, const GdkRectangle *rect)
@@ -661,15 +732,25 @@ static gboolean desktop_draw(GtkWidget *widget, cairo_t *cr, gpointer data)
     /* Modificado por josejp2424 (2026): dibujar el wallpaper por monitor.
      * Esto evita el rectángulo pequeño observado al usar una geometría fija y
      * también mantiene un encuadre correcto en configuraciones multimonitor. */
-    for (i = 0; i < count; i++) {
-        GdkMonitor *monitor = gdk_display_get_monitor(display, i);
-        GdkRectangle rect;
-        if (!monitor)
-            continue;
-        gdk_monitor_get_geometry(monitor, &rect);
-        rect.x -= desktop_geometry.x;
-        rect.y -= desktop_geometry.y;
-        desktop_draw_wallpaper_rect(cr, &rect);
+    {
+        GdkRectangle clip;
+        gboolean have_clip = gdk_cairo_get_clip_rectangle(cr, &clip);
+
+        for (i = 0; i < count; i++) {
+            GdkMonitor *monitor = gdk_display_get_monitor(display, i);
+            GdkRectangle rect;
+            GdkRectangle unused;
+            if (!monitor)
+                continue;
+            gdk_monitor_get_geometry(monitor, &rect);
+            rect.x -= desktop_geometry.x;
+            rect.y -= desktop_geometry.y;
+            /* 2.12.2-82: no repintar monitores que no estan en la region de
+             * dano; antes cada redibujo parcial tocaba todas las pantallas. */
+            if (have_clip && !gdk_rectangle_intersect(&clip, &rect, &unused))
+                continue;
+            desktop_draw_wallpaper_rect(cr, &rect);
+        }
     }
     desktop_draw_rubberband(widget, cr);
     return FALSE;
@@ -696,15 +777,22 @@ gboolean desktop_set_wallpaper(const gchar *path, gboolean save,
     if (wallpaper_pixbuf)
         g_object_unref(wallpaper_pixbuf);
     wallpaper_pixbuf = new_pixbuf;
+    desktop_wallpaper_cache_clear();
 
     g_free(wallpaper_path);
     wallpaper_path = absolute_path;
 
-    if (save && !desktop_save_wallpaper(error))
-        return FALSE;
-
+    /* 2.12.2-82: hasta -81 un fallo al guardar devolvia FALSE con el fondo ya
+     * cambiado en memoria pero sin redibujar ni avisar a wbar.  Ahora la
+     * imagen se aplica siempre y el error de persistencia se propaga aparte. */
     if (desktop_window)
         gtk_widget_queue_draw(desktop_window);
+
+    if (save && !desktop_save_wallpaper(error)) {
+        desktop_wbar_wallpaper_changed(wallpaper_path,
+                                       wallpaper_mode_name(wallpaper_mode));
+        return FALSE;
+    }
 
     /* Agregado por josejp2424 (2026): sincronizar también el fondo raíz de
      * X11 y, si wbar está activo, actualizarlo sin bloquear el hilo GTK. */
@@ -751,6 +839,7 @@ static void desktop_load_wallpaper_from_config(void)
         }
 
         g_clear_object(&wallpaper_pixbuf);
+        desktop_wallpaper_cache_clear();
         g_clear_pointer(&wallpaper_path, g_free);
         if (desktop_window)
             gtk_widget_queue_draw(desktop_window);
@@ -900,6 +989,7 @@ static void desktop_items_clear(void)
      * para no bloquear los eventos del escritorio y deben conservarse durante
      * una recarga de ~/Desktop. */
     desktop_selected_item = NULL;
+    desktop_drop_hover_item = NULL;
     for (node = desktop_items; node; node = node->next) {
         DesktopItem *item = node->data;
         if (item && item->widget)
@@ -1237,6 +1327,15 @@ static void desktop_rubberband_set_rect(gint x, gint y)
     desktop_rubberband_rect.height = ABS(y - desktop_rubberband_start_y);
 }
 
+static void desktop_rubberband_queue_rect(const GdkRectangle *rect)
+{
+    if (!desktop_window || !rect || rect->width <= 0 || rect->height <= 0)
+        return;
+    gtk_widget_queue_draw_area(desktop_window,
+        MAX(0, rect->x - 2), MAX(0, rect->y - 2),
+        rect->width + 4, rect->height + 4);
+}
+
 static void desktop_rubberband_update_selection(void)
 {
     GList *node;
@@ -1292,13 +1391,13 @@ static void desktop_rubberband_begin(GdkEventButton *event)
     }
     if (!desktop_rubberband_extend)
         desktop_clear_selection();
-    if (desktop_window)
-        gtk_widget_queue_draw(desktop_window);
+    desktop_rubberband_queue_rect(&desktop_rubberband_rect);
 }
 
 static void desktop_rubberband_end(void)
 {
     GList *node;
+    GdkRectangle old_rect = desktop_rubberband_rect;
 
     desktop_rubberband_active = FALSE;
     desktop_rubberband_rect = (GdkRectangle){0, 0, 0, 0};
@@ -1307,8 +1406,7 @@ static void desktop_rubberband_end(void)
         if (item)
             item->rubberband_initial_selected = FALSE;
     }
-    if (desktop_window)
-        gtk_widget_queue_draw(desktop_window);
+    desktop_rubberband_queue_rect(&old_rect);
 }
 
 /* Rox-Filer2 2.12.2-2:
@@ -1551,10 +1649,9 @@ static void desktop_remove_selected_items(DesktopItem *fallback)
         show_desktop_error(
             _("Unable to move one or more desktop items to the Trash"),
             errors->str);
-    g_string_free(errors, TRUE);
-
+    g_free(g_string_free(errors, FALSE));
     if (changed)
-        g_idle_add(desktop_reload_idle, NULL);
+        desktop_schedule_reload();
 }
 
 
@@ -2209,7 +2306,7 @@ static void add_desktop_files(void)
 
     dir = g_file_new_for_path(desktop_dir);
     en = g_file_enumerate_children(dir,
-        G_FILE_ATTRIBUTE_STANDARD_NAME,
+        G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
         G_FILE_QUERY_INFO_NONE, NULL, NULL);
     names = g_ptr_array_new_with_free_func(g_free);
     if (en) {
@@ -2237,7 +2334,7 @@ static void add_desktop_files(void)
         DesktopItem *item;
 
         display_info = g_file_query_info(child,
-            G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME,
+            G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
             G_FILE_QUERY_INFO_NONE, NULL, NULL);
         if (display_info && g_file_info_get_display_name(display_info))
             display_name = g_file_info_get_display_name(display_info);
@@ -2256,6 +2353,8 @@ static void add_desktop_files(void)
         item->display_name = g_strdup(
             launcher_name ? launcher_name : display_name);
         item->launcher = launcher;
+        item->is_directory = display_info &&
+            g_file_info_get_file_type(display_info) == G_FILE_TYPE_DIRECTORY;
         item->widget = desktop_item_widget_new(icon,
             item->display_name, item);
         desktop_items = g_list_append(desktop_items, item);
@@ -2301,59 +2400,19 @@ static gchar *desktop_drive_signature_from_list(GPtrArray *drives)
     return g_string_free(signature, FALSE);
 }
 
-/* Agregado por josejp2424 (2026): lsblk y la consulta de sysfs no deben
- * ejecutarse en el hilo de GTK. En algunos equipos o dispositivos lentos,
- * el sondeo síncrono bloqueaba el menú contextual del escritorio. */
-static void desktop_drive_scan_thread(GTask *task, gpointer source_object,
-                                      gpointer task_data,
-                                      GCancellable *cancellable)
+static void desktop_drives_changed(GPtrArray *drives, const GError *error,
+                                   gpointer user_data)
 {
-    GError *error = NULL;
-    GPtrArray *drives;
-    (void)source_object;
-    (void)task_data;
-    (void)cancellable;
+    gchar *current;
+    (void) user_data;
 
-    drives = rox_drives_read(&error);
+    if (!desktop_window)
+        return;
     if (!drives) {
         if (error)
-            g_task_return_error(task, error);
-        else
-            g_task_return_new_error(task, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                    "%s", _("No usable partitions found"));
+            g_warning("Unable to refresh desktop drives: %s", error->message);
         return;
     }
-    g_task_return_pointer(task, drives, (GDestroyNotify)g_ptr_array_unref);
-}
-
-static void desktop_drive_scan_done(GObject *source_object,
-                                    GAsyncResult *result,
-                                    gpointer user_data)
-{
-    GPtrArray *drives;
-    GError *error = NULL;
-    gchar *current;
-    guint serial;
-    (void)source_object;
-    (void)user_data;
-
-    serial = GPOINTER_TO_UINT(g_task_get_task_data(G_TASK(result)));
-    drives = g_task_propagate_pointer(G_TASK(result), &error);
-    if (serial != drive_scan_serial || !desktop_window) {
-        if (drives)
-            g_ptr_array_unref(drives);
-        g_clear_error(&error);
-        return;
-    }
-    drive_scan_in_progress = FALSE;
-    if (!drives) {
-        if (error) {
-            g_warning("Unable to scan desktop drives: %s", error->message);
-            g_clear_error(&error);
-        }
-        return;
-    }
-
     current = desktop_drive_signature_from_list(drives);
     if (g_strcmp0(current, drive_signature) != 0 || !drive_signature) {
         g_free(drive_signature);
@@ -2362,35 +2421,12 @@ static void desktop_drive_scan_done(GObject *source_object,
     } else {
         g_free(current);
     }
-    g_ptr_array_unref(drives);
-}
-
-static void desktop_request_drive_scan(void)
-{
-    GTask *task;
-
-    if (!desktop_window || drive_scan_in_progress)
-        return;
-    drive_scan_in_progress = TRUE;
-    drive_scan_serial++;
-    task = g_task_new(NULL, NULL, desktop_drive_scan_done, NULL);
-    g_task_set_task_data(task, GUINT_TO_POINTER(drive_scan_serial), NULL);
-    g_task_set_return_on_cancel(task, TRUE);
-    g_task_run_in_thread(task, desktop_drive_scan_thread);
-    g_object_unref(task);
 }
 
 static void desktop_force_drive_refresh(void)
 {
     g_clear_pointer(&drive_signature, g_free);
-    desktop_request_drive_scan();
-}
-
-static gboolean desktop_drive_poll(gpointer data)
-{
-    (void)data;
-    desktop_request_drive_scan();
-    return G_SOURCE_CONTINUE;
+    rox_drives_monitor_request_scan();
 }
 
 static void desktop_rebuild_icon_layer(void)
@@ -2422,9 +2458,16 @@ static void desktop_reload(void)
     desktop_force_drive_refresh();
 }
 
+static void desktop_schedule_reload(void)
+{
+    if (!desktop_reload_source)
+        desktop_reload_source = g_idle_add(desktop_reload_idle, NULL);
+}
+
 static gboolean desktop_reload_idle(gpointer data)
 {
     (void)data;
+    desktop_reload_source = 0;
     desktop_reload();
     return G_SOURCE_REMOVE;
 }
@@ -2438,49 +2481,93 @@ static void monitor_changed(GFileMonitor *m, GFile *f, GFile *other,
     desktop_rebuild_icon_layer();
 }
 
-static void volume_changed(GVolumeMonitor *m, gpointer object, gpointer data)
-{
-    (void)m; (void)object; (void)data;
-    desktop_force_drive_refresh();
-}
-
 static RoxDriveInfo *desktop_lookup_drive(const gchar *device)
 {
-    GError *error = NULL;
     RoxDriveInfo *drive;
 
-    drive = rox_drive_find_by_device(device, &error);
-    if (error) {
-        show_desktop_error(_("Unable to read the device"), error->message);
-        g_clear_error(&error);
-    }
+    drive = rox_drives_monitor_find_by_device(device);
+    if (!drive)
+        rox_drives_monitor_request_scan();
     return drive;
+}
+
+typedef struct
+{
+    gboolean open_after_mount;
+} DesktopDriveMountAsync;
+
+static void desktop_drive_mount_done(GObject *source_object, GAsyncResult *result,
+                                     gpointer user_data)
+{
+    DesktopDriveMountAsync *ctx = user_data;
+    gchar *error_text = NULL;
+    gchar *mountpoint;
+    (void)source_object;
+
+    mountpoint = rox_drive_mount_finish(result, &error_text);
+    if (!mountpoint)
+        show_desktop_error(_("The partition could not be mounted."), error_text);
+    else if (ctx->open_after_mount)
+        filer_opendir(mountpoint, NULL, NULL);
+
+    g_free(error_text);
+    g_free(mountpoint);
+    g_free(ctx);
+}
+
+typedef struct
+{
+    gboolean eject;
+} DesktopDriveActionAsync;
+
+static void desktop_drive_action_done(GObject *source_object, GAsyncResult *result,
+                                      gpointer user_data)
+{
+    DesktopDriveActionAsync *ctx = user_data;
+    gchar *error_text = NULL;
+    gboolean ok;
+    (void)source_object;
+
+    ok = ctx->eject ? rox_drive_eject_finish(result, &error_text)
+                    : rox_drive_unmount_finish(result, &error_text);
+    if (!ok)
+        show_desktop_error(ctx->eject
+            ? _("The device could not be ejected.")
+            : _("The partition could not be unmounted."), error_text);
+
+    g_free(error_text);
+    g_free(ctx);
 }
 
 static void desktop_open_drive_device(const gchar *device)
 {
     RoxDriveInfo *drive;
     gchar *mountpoint;
-    gchar *error_text = NULL;
 
     drive = desktop_lookup_drive(device);
     if (!drive)
         return;
 
-    mountpoint = rox_drive_find_mountpoint(drive->device);
-    if (!mountpoint)
-        mountpoint = rox_drive_mount(drive, &error_text);
-
-    if (!mountpoint) {
-        show_desktop_error(_("The partition could not be mounted."), error_text);
-    } else {
+    mountpoint = rox_drive_current_mountpoint(drive);
+    if (mountpoint) {
         filer_opendir(mountpoint, NULL, NULL);
+        g_free(mountpoint);
+        rox_drive_info_free(drive);
+        return;
+    }
+    if (drive->network) {
+        show_desktop_error(_("The partition could not be mounted."),
+            _("This network resource is no longer mounted."));
+        rox_drive_info_free(drive);
+        return;
     }
 
-    g_free(error_text);
-    g_free(mountpoint);
+    {
+        DesktopDriveMountAsync *ctx = g_new0(DesktopDriveMountAsync, 1);
+        ctx->open_after_mount = TRUE;
+        rox_drive_mount_async(drive, desktop_drive_mount_done, ctx);
+    }
     rox_drive_info_free(drive);
-    desktop_force_drive_refresh();
 }
 
 
@@ -2504,54 +2591,46 @@ static void desktop_drive_mount_menu(GtkMenuItem *item, gpointer data)
 {
     DesktopDriveAction *action = data;
     RoxDriveInfo *drive;
-    gchar *mountpoint;
-    gchar *error_text = NULL;
+    DesktopDriveMountAsync *ctx;
     (void)item;
 
     drive = desktop_lookup_drive(action->device);
     if (!drive)
         return;
-    mountpoint = rox_drive_mount(drive, &error_text);
-    if (!mountpoint)
-        show_desktop_error(_("The partition could not be mounted."), error_text);
-    g_free(mountpoint);
-    g_free(error_text);
+    ctx = g_new0(DesktopDriveMountAsync, 1);
+    rox_drive_mount_async(drive, desktop_drive_mount_done, ctx);
     rox_drive_info_free(drive);
-    desktop_force_drive_refresh();
 }
 
 static void desktop_drive_unmount_menu(GtkMenuItem *item, gpointer data)
 {
     DesktopDriveAction *action = data;
     RoxDriveInfo *drive;
-    gchar *error_text = NULL;
+    DesktopDriveActionAsync *ctx;
     (void)item;
 
     drive = desktop_lookup_drive(action->device);
     if (!drive)
         return;
-    if (!rox_drive_unmount(drive, &error_text))
-        show_desktop_error(_("The partition could not be unmounted."), error_text);
-    g_free(error_text);
+    ctx = g_new0(DesktopDriveActionAsync, 1);
+    rox_drive_unmount_async(drive, desktop_drive_action_done, ctx);
     rox_drive_info_free(drive);
-    desktop_force_drive_refresh();
 }
 
 static void desktop_drive_eject_menu(GtkMenuItem *item, gpointer data)
 {
     DesktopDriveAction *action = data;
     RoxDriveInfo *drive;
-    gchar *error_text = NULL;
+    DesktopDriveActionAsync *ctx;
     (void)item;
 
     drive = desktop_lookup_drive(action->device);
     if (!drive)
         return;
-    if (!rox_drive_eject(drive, &error_text))
-        show_desktop_error(_("The device could not be ejected."), error_text);
-    g_free(error_text);
+    ctx = g_new0(DesktopDriveActionAsync, 1);
+    ctx->eject = TRUE;
+    rox_drive_eject_async(drive, desktop_drive_action_done, ctx);
     rox_drive_info_free(drive);
-    desktop_force_drive_refresh();
 }
 
 static void show_drive_menu(const gchar *device, GdkEventButton *event)
@@ -2566,7 +2645,7 @@ static void show_drive_menu(const gchar *device, GdkEventButton *event)
     drive = desktop_lookup_drive(device);
     if (!drive)
         return;
-    mountpoint = rox_drive_find_mountpoint(device);
+    mountpoint = rox_drive_current_mountpoint(drive);
     mounted = mountpoint != NULL;
     g_free(mountpoint);
 
@@ -2580,19 +2659,20 @@ static void show_drive_menu(const gchar *device, GdkEventButton *event)
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     g_signal_connect(item, "activate", G_CALLBACK(desktop_drive_open_menu), action);
 
-    if (!mounted) {
-        item = gtk_menu_item_new_with_label(_("Mount"));
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-        g_signal_connect(item, "activate", G_CALLBACK(desktop_drive_mount_menu), action);
-    } else {
-        item = gtk_menu_item_new_with_label(_("Unmount"));
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-        g_signal_connect(item, "activate", G_CALLBACK(desktop_drive_unmount_menu), action);
+    if (!drive->foreign) {
+        if (!mounted) {
+            item = gtk_menu_item_new_with_label(_("Mount"));
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+            g_signal_connect(item, "activate", G_CALLBACK(desktop_drive_mount_menu), action);
+        } else {
+            item = gtk_menu_item_new_with_label(_("Unmount"));
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+            g_signal_connect(item, "activate", G_CALLBACK(desktop_drive_unmount_menu), action);
+        }
     }
 
-    /* Modificado por josejp2424 (2026): Eject sólo pertenece a unidades
-     * ópticas. Los USB muestran Mount/Unmount, no una acción óptica. */
-    if (drive->optical) {
+    /* Medios ópticos y unidades extraíbles pueden expulsarse de forma segura. */
+    if (rox_drive_can_eject(drive)) {
         item = gtk_separator_menu_item_new();
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
         item = gtk_menu_item_new_with_label(_("Eject"));
@@ -2634,27 +2714,19 @@ static void desktop_drive_quick_action(GtkButton *button, gpointer data)
 {
     DesktopDriveAction *action = data;
     RoxDriveInfo *drive;
-    gchar *error_text = NULL;
-    gboolean ok;
+    DesktopDriveActionAsync *ctx;
     (void)button;
 
     drive = desktop_lookup_drive(action->device);
     if (!drive)
         return;
-
-    if (drive->optical)
-        ok = rox_drive_eject(drive, &error_text);
+    ctx = g_new0(DesktopDriveActionAsync, 1);
+    ctx->eject = rox_drive_can_eject(drive);
+    if (ctx->eject)
+        rox_drive_eject_async(drive, desktop_drive_action_done, ctx);
     else
-        ok = rox_drive_unmount(drive, &error_text);
-
-    if (!ok)
-        show_desktop_error(drive->optical
-            ? _("The device could not be ejected.")
-            : _("The partition could not be unmounted."), error_text);
-
-    g_free(error_text);
+        rox_drive_unmount_async(drive, desktop_drive_action_done, ctx);
     rox_drive_info_free(drive);
-    desktop_force_drive_refresh();
 }
 
 static GtkWidget *desktop_drive_widget_new(const RoxDriveInfo *drive)
@@ -2706,7 +2778,7 @@ static GtkWidget *desktop_drive_widget_new(const RoxDriveInfo *drive)
     gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
 
     if (drive_show_labels) {
-        if (drive->size && *drive->size)
+        if (drive->size && *drive->size && !drive->label_is_synthetic)
             text = g_strdup_printf("%s\n%s", rox_drive_display_name(drive),
                                    drive->size);
         else
@@ -2725,11 +2797,12 @@ static GtkWidget *desktop_drive_widget_new(const RoxDriveInfo *drive)
 
     gtk_container_add(GTK_CONTAINER(overlay), button);
 
-    mountpoint = rox_drive_find_mountpoint(drive->device);
+    mountpoint = rox_drive_current_mountpoint(drive);
     mounted = mountpoint != NULL;
     g_free(mountpoint);
 
-    if (mounted && show_drive_quick_action) {
+
+    if (mounted && show_drive_quick_action && !drive->foreign) {
         quick_button = gtk_button_new();
         gtk_button_set_relief(GTK_BUTTON(quick_button), GTK_RELIEF_NONE);
         gtk_widget_set_halign(quick_button, GTK_ALIGN_END);
@@ -2748,7 +2821,7 @@ static GtkWidget *desktop_drive_widget_new(const RoxDriveInfo *drive)
                                          GTK_ICON_SIZE_MENU);
         gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
         gtk_widget_set_tooltip_text(quick_button,
-            drive->optical ? _("Eject") : _("Unmount"));
+            rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
         g_signal_connect(quick_button, "clicked",
                          G_CALLBACK(desktop_drive_quick_action), action);
         gtk_overlay_add_overlay(GTK_OVERLAY(overlay), quick_button);
@@ -3294,7 +3367,7 @@ static void desktop_new_directory(GtkMenuItem *menu_item, gpointer data)
         show_desktop_error(_("ROX Desktop error"), error->message);
         g_clear_error(&error);
     } else {
-        g_idle_add(desktop_reload_idle, NULL);
+        desktop_schedule_reload();
     }
     g_free(path);
     g_free(name);
@@ -3322,7 +3395,7 @@ static void desktop_new_file(GtkMenuItem *menu_item, gpointer data)
                            error ? error->message : NULL);
         g_clear_error(&error);
     } else {
-        g_idle_add(desktop_reload_idle, NULL);
+        desktop_schedule_reload();
     }
     g_free(path);
     g_free(name);
@@ -3595,7 +3668,7 @@ static void desktop_new_launcher(GtkMenuItem *menu_item, gpointer data)
                                    error ? error->message : NULL);
                 g_clear_error(&error);
             } else {
-                g_idle_add(desktop_reload_idle, NULL);
+                desktop_schedule_reload();
             }
         }
         g_free(icon);
@@ -4558,10 +4631,15 @@ static gboolean desktop_button_motion(GtkWidget *widget, GdkEventMotion *event,
         !(event->state & GDK_BUTTON1_MASK))
         return FALSE;
 
-    desktop_rubberband_set_rect((gint)event->x, (gint)event->y);
-    desktop_rubberband_update_selection();
-    if (desktop_window)
-        gtk_widget_queue_draw(desktop_window);
+    {
+        GdkRectangle old_rect = desktop_rubberband_rect;
+        desktop_rubberband_set_rect((gint)event->x, (gint)event->y);
+        desktop_rubberband_update_selection();
+        /* Redraw only the old/new rubber-band bounds. Selection changes
+         * already queue their individual icon widgets. */
+        desktop_rubberband_queue_rect(&old_rect);
+        desktop_rubberband_queue_rect(&desktop_rubberband_rect);
+    }
     return TRUE;
 }
 
@@ -4580,24 +4658,80 @@ static gboolean desktop_button_release(GtkWidget *widget, GdkEventButton *event,
 }
 
 
-static gchar *desktop_unique_link_path(const gchar *source_path)
+static DesktopItem *desktop_drop_item_at(gint x, gint y)
 {
-    gchar *base;
-    gchar *candidate;
-    guint n = 2;
+    GList *node;
 
-    base = g_path_get_basename(source_path);
-    candidate = g_build_filename(desktop_dir, base, NULL);
-    while (g_file_test(candidate, G_FILE_TEST_EXISTS) ||
-           g_file_test(candidate, G_FILE_TEST_IS_SYMLINK)) {
-        gchar *name;
-        g_free(candidate);
-        name = g_strdup_printf("%s (%u)", base, n++);
-        candidate = g_build_filename(desktop_dir, name, NULL);
-        g_free(name);
+    for (node = desktop_items; node; node = node->next)
+    {
+        DesktopItem *item = node->data;
+        GtkAllocation allocation;
+
+        if (!item || !item->widget || !gtk_widget_get_visible(item->widget))
+            continue;
+        gtk_widget_get_allocation(item->widget, &allocation);
+        if (x >= allocation.x && y >= allocation.y &&
+            x < allocation.x + allocation.width &&
+            y < allocation.y + allocation.height)
+            return item;
     }
-    g_free(base);
-    return candidate;
+    return NULL;
+}
+
+static void desktop_set_drop_hover_item(DesktopItem *item)
+{
+    GtkStyleContext *context;
+
+    if (desktop_drop_hover_item == item)
+        return;
+    if (desktop_drop_hover_item && desktop_drop_hover_item->widget)
+    {
+        context = gtk_widget_get_style_context(desktop_drop_hover_item->widget);
+        gtk_style_context_remove_class(context, "rox-desktop-drop-target");
+        gtk_widget_queue_draw(desktop_drop_hover_item->widget);
+    }
+    desktop_drop_hover_item = item;
+    if (desktop_drop_hover_item && desktop_drop_hover_item->widget)
+    {
+        context = gtk_widget_get_style_context(desktop_drop_hover_item->widget);
+        gtk_style_context_add_class(context, "rox-desktop-drop-target");
+        gtk_widget_queue_draw(desktop_drop_hover_item->widget);
+    }
+}
+
+static gchar *desktop_drop_path_at(gint x, gint y)
+{
+    DesktopItem *item;
+    GFile *file;
+    gchar *path;
+
+    if (!desktop_dir || !*desktop_dir)
+        return NULL;
+
+    item = desktop_drop_item_at(x, y);
+    if (!item || item->trash)
+        return g_strdup(desktop_dir);
+
+    /* Home is a real directory destination even though it is a built-in
+     * desktop icon. Browser and Console are launchers, not drop targets. */
+    if (item->home)
+        return g_strdup(g_get_home_dir());
+    if (desktop_item_is_builtin(item) || !item->is_directory || !item->uri)
+        return g_strdup(desktop_dir);
+
+    file = g_file_new_for_uri(item->uri);
+    path = g_file_get_path(file);
+    g_object_unref(file);
+    return path ? path : g_strdup(desktop_dir);
+}
+
+static void desktop_set_drop_destination(GdkDragContext *context,
+                                         gint x, gint y)
+{
+    gchar *path = desktop_drop_path_at(x, y);
+
+    g_dataset_set_data(context, "drop_dest_type", (gpointer) drop_dest_dir);
+    g_dataset_set_data_full(context, "drop_dest_path", path, g_free);
 }
 
 static void desktop_save_drop_position(const gchar *path, gint x, gint y,
@@ -4620,84 +4754,219 @@ static void desktop_save_drop_position(const gchar *path, gint x, gint y,
     g_free(temp.uri);
 }
 
-/* Rox-Filer2 2.12.2-15: classic ROX pinboard-style dropping.  Dropping a
- * local file or folder on the native desktop creates a symbolic link inside
- * ~/Desktop, so the original object is not moved or duplicated. */
+static gboolean desktop_drag_motion(GtkWidget *widget, GdkDragContext *context,
+        gint x, gint y, guint time, gpointer data)
+{
+    GdkDragAction action;
+    guint state = 0;
+
+    (void) data;
+    if (!desktop_dir || !*desktop_dir)
+        return FALSE;
+
+    {
+        DesktopItem *drop_item = desktop_drop_item_at(x, y);
+        gboolean valid_hover = drop_item &&
+            (drop_item->trash || drop_item->home ||
+             (!desktop_item_is_builtin(drop_item) && drop_item->is_directory));
+        desktop_set_drop_hover_item(valid_hover ? drop_item : NULL);
+        if (drop_item && drop_item->trash)
+        {
+            if (gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE)
+                gdk_drag_status(context, GDK_ACTION_MOVE, time);
+            else
+                gdk_drag_status(context, 0, time);
+            return TRUE;
+        }
+    }
+
+    desktop_set_drop_destination(context, x, y);
+    action = gdk_drag_context_get_suggested_action(context);
+    if (dnd_wayland_action_menu(context, widget))
+        action = GDK_ACTION_ASK;
+    else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_ASK) &&
+             o_dnd_left_menu.int_value)
+    {
+        rox_gdk_window_get_pointer(NULL, NULL, NULL, &state);
+        if (state & GDK_BUTTON1_MASK)
+            action = GDK_ACTION_ASK;
+    }
+    if (!action)
+        action = GDK_ACTION_COPY;
+    gdk_drag_status(context, action, time);
+    return TRUE;
+}
+
+static gboolean desktop_drag_drop(GtkWidget *widget, GdkDragContext *context,
+        gint x, gint y, guint time, gpointer data)
+{
+    GdkAtom target;
+
+    (void) data;
+    if (!desktop_dir || !*desktop_dir)
+        return FALSE;
+
+    {
+        DesktopItem *drop_item = desktop_drop_item_at(x, y);
+        if (drop_item && drop_item->trash)
+        {
+            if (!(gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE))
+            {
+                gtk_drag_finish(context, FALSE, FALSE, time);
+                return TRUE;
+            }
+        }
+        else
+            desktop_set_drop_destination(context, x, y);
+    }
+
+    target = gtk_drag_dest_find_target(widget, context, NULL);
+    if (target == GDK_NONE)
+    {
+        gtk_drag_finish(context, FALSE, FALSE, time);
+        return TRUE;
+    }
+
+    /* ROX completes the operation in dnd.c. Do not use
+     * GTK_DEST_DEFAULT_DROP here, otherwise GTK issues a second
+     * gtk_drag_finish() after our drag-data-received handler. */
+    gtk_drag_get_data(widget, context, target, time);
+    return TRUE;
+}
+
 static void desktop_drag_data_received(GtkWidget *widget, GdkDragContext *context,
-                                       gint x, gint y, GtkSelectionData *selection,
-                                       guint info, guint time, gpointer data)
+        gint x, gint y, GtkSelectionData *selection, guint info, guint time,
+        gpointer data)
 {
     gchar **uris;
     gchar **it;
-    GString *errors;
-    guint added = 0;
-    (void)widget; (void)info; (void)data;
+    gchar *drop_path;
+    DesktopItem *drop_item;
+    guint count = 0;
+    gboolean all_on_desktop = TRUE;
+    gboolean dropping_on_desktop;
+
+    (void) info; (void) data;
+    drop_item = desktop_drop_item_at(x, y);
+    drop_path = desktop_drop_path_at(x, y);
+    if (!drop_path)
+    {
+        gtk_drag_finish(context, FALSE, FALSE, time);
+        return;
+    }
+    dropping_on_desktop = g_strcmp0(drop_path, desktop_dir) == 0;
 
     uris = gtk_selection_data_get_uris(selection);
-    if (!uris) {
+    if (!uris)
+    {
+        g_free(drop_path);
         gtk_drag_finish(context, FALSE, FALSE, time);
         return;
     }
 
-    errors = g_string_new(NULL);
-    for (it = uris; *it; it++) {
-        GFile *source = g_file_new_for_uri(*it);
-        gchar *source_path = g_file_get_path(source);
-        gchar *source_parent = NULL;
-        gchar *dest_path = NULL;
-        gboolean already_on_desktop = FALSE;
-        GError *error = NULL;
+    if (drop_item && drop_item->trash)
+    {
+        gboolean success = TRUE;
+        GString *errors = g_string_new(NULL);
 
-        if (!source_path) {
-            if (errors->len)
-                g_string_append_c(errors, '\n');
-            g_string_append(errors, _("Only local files can be added to the desktop."));
-            g_object_unref(source);
-            continue;
+        /* Moving to Trash is meaningful only when MOVE is offered by the
+         * drag source. Never report a successful MOVE for a COPY-only drag. */
+        if (!(gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE))
+        {
+            g_free(g_string_free(errors, FALSE));
+            g_strfreev(uris);
+            g_free(drop_path);
+            desktop_set_drop_hover_item(NULL);
+            gtk_drag_finish(context, FALSE, FALSE, time);
+            return;
         }
 
-        source_parent = g_path_get_dirname(source_path);
-        already_on_desktop = g_strcmp0(source_parent, desktop_dir) == 0;
-        if (already_on_desktop) {
-            dest_path = g_strdup(source_path);
-        } else {
-            GFile *destination;
-            dest_path = desktop_unique_link_path(source_path);
-            destination = g_file_new_for_path(dest_path);
-            if (!g_file_make_symbolic_link(destination, source_path, NULL, &error)) {
+        for (it = uris; *it; it++)
+        {
+            GFile *file = g_file_new_for_uri(*it);
+            GError *error = NULL;
+            if (!rox_trash_file(file, &error))
+            {
+                gchar *name = g_file_get_parse_name(file);
+                success = FALSE;
                 if (errors->len)
                     g_string_append_c(errors, '\n');
-                g_string_append_printf(errors, "%s: %s",
-                    source_path,
-                    error ? error->message : _("Unable to create the desktop link."));
+                g_string_append_printf(errors, "%s: %s", name ? name : *it,
+                                       error ? error->message : _("Unknown error"));
+                g_free(name);
                 g_clear_error(&error);
-                g_object_unref(destination);
-                g_free(dest_path);
-                g_free(source_parent);
-                g_free(source_path);
-                g_object_unref(source);
-                continue;
             }
-            g_object_unref(destination);
+            g_object_unref(file);
         }
-
-        desktop_save_drop_position(dest_path, x, y, added);
-        added++;
-        g_free(dest_path);
-        g_free(source_parent);
-        g_free(source_path);
-        g_object_unref(source);
+        if (errors->len)
+            show_desktop_error(_("Unable to move to Trash"), errors->str);
+        g_free(g_string_free(errors, FALSE));
+        g_strfreev(uris);
+        g_free(drop_path);
+        desktop_set_drop_hover_item(NULL);
+        desktop_schedule_reload();
+        gtk_drag_finish(context, success, FALSE, time);
+        return;
     }
 
-    if (errors->len)
-        show_desktop_error(_("Unable to add one or more items to the desktop"),
-                           errors->str);
-    g_string_free(errors, TRUE);
-    g_strfreev(uris);
+    /* Preserve the useful historical case only when dropping on the desktop
+     * background.  Dropping a desktop file on a directory icon must enter
+     * that directory instead of being interpreted as icon repositioning.
+     */
+    if (!dropping_on_desktop)
+        all_on_desktop = FALSE;
 
-    if (added)
-        g_idle_add(desktop_reload_idle, NULL);
-    gtk_drag_finish(context, added > 0, FALSE, time);
+    /* Preserve the useful historical case: dragging files that are already
+     * in ~/Desktop from a filer window merely repositions their desktop icons
+     * instead of trying to copy/move the files onto themselves. */
+    if (all_on_desktop)
+    {
+        for (it = uris; *it; it++)
+        {
+            GFile *file = g_file_new_for_uri(*it);
+            gchar *path = g_file_get_path(file);
+            gchar *parent = path ? g_path_get_dirname(path) : NULL;
+            if (!path || g_strcmp0(parent, desktop_dir) != 0)
+                all_on_desktop = FALSE;
+            g_free(parent);
+            g_free(path);
+            g_object_unref(file);
+            if (!all_on_desktop)
+                break;
+        }
+    }
+
+    if (all_on_desktop)
+    {
+        for (it = uris; *it; it++)
+        {
+            GFile *file = g_file_new_for_uri(*it);
+            gchar *path = g_file_get_path(file);
+            if (path)
+                desktop_save_drop_position(path, x, y, count++);
+            g_free(path);
+            g_object_unref(file);
+        }
+        g_strfreev(uris);
+        g_free(drop_path);
+        desktop_set_drop_hover_item(NULL);
+        desktop_schedule_reload();
+        gtk_drag_finish(context, count > 0, FALSE, time);
+        return;
+    }
+
+    g_strfreev(uris);
+    desktop_set_drop_hover_item(NULL);
+    g_dataset_set_data(context, "drop_dest_type", (gpointer) drop_dest_dir);
+    g_dataset_set_data_full(context, "drop_dest_path", drop_path, g_free);
+    dnd_handle_uri_list_drop(widget, context, selection, time);
+}
+
+static void desktop_drag_leave(GtkWidget *widget, GdkDragContext *context,
+                               guint time, gpointer data)
+{
+    (void)widget; (void)context; (void)time; (void)data;
+    desktop_set_drop_hover_item(NULL);
 }
 
 static void load_settings(void)
@@ -4924,10 +5193,6 @@ static void desktop_destroyed(GtkWidget *widget, gpointer data)
     ROX_LOG_INFO("desktop", "desktop window destroyed; cleaning resources");
     if (desktop_backend && desktop_backend->unregister_control)
         desktop_backend->unregister_control(desktop_window);
-    if (drive_poll_source) {
-        g_source_remove(drive_poll_source);
-        drive_poll_source = 0;
-    }
     if (wallpaper_reload_source) {
         g_source_remove(wallpaper_reload_source);
         wallpaper_reload_source = 0;
@@ -4935,6 +5200,10 @@ static void desktop_destroyed(GtkWidget *widget, gpointer data)
     if (geometry_reload_source) {
         g_source_remove(geometry_reload_source);
         geometry_reload_source = 0;
+    }
+    if (desktop_reload_source) {
+        g_source_remove(desktop_reload_source);
+        desktop_reload_source = 0;
     }
     if (environment_refresh_source) {
         g_source_remove(environment_refresh_source);
@@ -4955,16 +5224,14 @@ static void desktop_destroyed(GtkWidget *widget, gpointer data)
     g_clear_object(&desktop_monitor);
     g_clear_object(&desktop_config_monitor);
     g_clear_object(&trash_monitor);
-    g_clear_object(&volume_monitor);
     desktop_selected_item = NULL;
     g_list_free_full(desktop_items, (GDestroyNotify)desktop_item_free);
     desktop_items = NULL;
     g_clear_pointer(&drive_signature, g_free);
-    drive_scan_serial++;
-    drive_scan_in_progress = FALSE;
     g_clear_pointer(&desktop_dir, g_free);
     g_clear_pointer(&wallpaper_path, g_free);
     g_clear_object(&wallpaper_pixbuf);
+    desktop_wallpaper_cache_clear();
     desktop_drive_box = NULL;
     desktop_drive_layer = NULL;
     desktop_overlay = NULL;
@@ -5063,18 +5330,32 @@ void desktop_start(void)
 
     {
         static const GtkTargetEntry desktop_drop_targets[] = {
-            {"text/uri-list", 0, 0}
+            {"text/uri-list", 0, TARGET_URI_LIST}
         };
-        gtk_drag_dest_set(desktop_window, GTK_DEST_DEFAULT_ALL,
-            desktop_drop_targets, G_N_ELEMENTS(desktop_drop_targets),
-            GDK_ACTION_COPY | GDK_ACTION_LINK);
+        /* Rox-Filer2 2.12.2-50: advertise the same actions as normal ROX
+         * directory drops and feed the received URI list into dnd.c. */
+        gtk_drag_dest_set(desktop_window, GTK_DEST_DEFAULT_HIGHLIGHT, desktop_drop_targets,
+            G_N_ELEMENTS(desktop_drop_targets),
+            GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE | GDK_ACTION_LINK);
+        g_signal_connect(desktop_window, "drag-motion",
+            G_CALLBACK(desktop_drag_motion), NULL);
+        g_signal_connect(desktop_window, "drag-drop",
+            G_CALLBACK(desktop_drag_drop), NULL);
         g_signal_connect(desktop_window, "drag-data-received",
             G_CALLBACK(desktop_drag_data_received), NULL);
-        gtk_drag_dest_set(desktop_icon_layer, GTK_DEST_DEFAULT_ALL,
-            desktop_drop_targets, G_N_ELEMENTS(desktop_drop_targets),
-            GDK_ACTION_COPY | GDK_ACTION_LINK);
+        g_signal_connect(desktop_window, "drag-leave",
+            G_CALLBACK(desktop_drag_leave), NULL);
+        gtk_drag_dest_set(desktop_icon_layer, GTK_DEST_DEFAULT_HIGHLIGHT, desktop_drop_targets,
+            G_N_ELEMENTS(desktop_drop_targets),
+            GDK_ACTION_COPY | GDK_ACTION_ASK | GDK_ACTION_MOVE | GDK_ACTION_LINK);
+        g_signal_connect(desktop_icon_layer, "drag-motion",
+            G_CALLBACK(desktop_drag_motion), NULL);
+        g_signal_connect(desktop_icon_layer, "drag-drop",
+            G_CALLBACK(desktop_drag_drop), NULL);
         g_signal_connect(desktop_icon_layer, "drag-data-received",
             G_CALLBACK(desktop_drag_data_received), NULL);
+        g_signal_connect(desktop_icon_layer, "drag-leave",
+            G_CALLBACK(desktop_drag_leave), NULL);
     }
 
     /* Modificado por josejp2424 (2026): las unidades y los programas usan
@@ -5091,6 +5372,7 @@ void desktop_start(void)
         ".rox-desktop-item { background-color: transparent; border-radius: 5px; padding: 3px; }"
         ".rox-desktop-label { color: #ffffff; background-color: transparent; padding: 1px 3px; text-shadow: 1px 1px 2px #000000; }"
         ".rox-desktop-item:hover, .rox-desktop-item-hover { background-color: alpha(@theme_selected_bg_color,0.35); }"
+        ".rox-desktop-drop-target { background-color: alpha(@theme_selected_bg_color,0.72); border: 1px solid @theme_selected_bg_color; }"
         ".rox-desktop-item-selected { background-color: alpha(@theme_selected_bg_color,0.58); }"
         ".rox-desktop-item-selected .rox-desktop-label { color: @theme_selected_fg_color; text-shadow: none; }"
         ".rox-desktop-drive button { background-image: none; background-color: transparent; border-color: transparent; box-shadow: none; padding: 2px; }"
@@ -5124,24 +5406,6 @@ void desktop_start(void)
                          G_CALLBACK(desktop_config_changed), NULL);
     g_object_unref(dir);
 
-    /* GVolumeMonitor acelera los cambios cuando existe un backend. El sondeo
-     * lsblk compartido sigue siendo el respaldo para Puppy sin GVfs/UDisks. */
-    volume_monitor = g_volume_monitor_get();
-    if (volume_monitor) {
-        g_signal_connect(volume_monitor, "mount-added",
-                         G_CALLBACK(volume_changed), NULL);
-        g_signal_connect(volume_monitor, "mount-removed",
-                         G_CALLBACK(volume_changed), NULL);
-        g_signal_connect(volume_monitor, "mount-changed",
-                         G_CALLBACK(volume_changed), NULL);
-        g_signal_connect(volume_monitor, "volume-added",
-                         G_CALLBACK(volume_changed), NULL);
-        g_signal_connect(volume_monitor, "volume-removed",
-                         G_CALLBACK(volume_changed), NULL);
-        g_signal_connect(volume_monitor, "volume-changed",
-                         G_CALLBACK(volume_changed), NULL);
-    }
-
     desktop_screen = gtk_window_get_screen(GTK_WINDOW(desktop_window));
     if (desktop_screen) {
         desktop_screen_monitors_handler = g_signal_connect(desktop_screen,
@@ -5151,11 +5415,11 @@ void desktop_start(void)
     }
 
     g_clear_pointer(&drive_signature, g_free);
-    drive_scan_in_progress = FALSE;
-    drive_poll_source = g_timeout_add_seconds(DRIVE_POLL_SECONDS,
-                                               desktop_drive_poll, NULL);
-
-    desktop_reload();
+    /* The subscription owns the initial drive scan. Rebuilding desktop files
+     * must not immediately enqueue a second lsblk a few milliseconds later. */
+    rox_drives_monitor_subscribe(G_OBJECT(desktop_window),
+                                 desktop_drives_changed, NULL);
+    desktop_rebuild_icon_layer();
     ROX_LOG_INFO("desktop", "desktop contents loaded items=%u",
                  g_list_length(desktop_items));
     number_of_windows++;
@@ -5524,6 +5788,15 @@ gboolean desktop_send_refresh_request(void)
     if (!backend || !backend->send_refresh_request)
         return FALSE;
     return backend->send_refresh_request(display);
+}
+
+gchar *desktop_dup_directory(void)
+{
+    if (desktop_dir && *desktop_dir)
+        return g_strdup(desktop_dir);
+
+    /* Keep the same fallback used by ROX Desktop before settings are loaded. */
+    return g_build_filename(g_get_home_dir(), "Desktop", NULL);
 }
 
 gboolean desktop_is_running(void)

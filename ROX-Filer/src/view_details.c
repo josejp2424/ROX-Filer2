@@ -643,23 +643,14 @@ static gboolean is_selected(ViewDetails *view_details, int i)
 
 static gboolean view_details_scroll(GtkWidget *widget, GdkEventScroll *event)
 {
-	GtkTreeView *tree = (GtkTreeView *) widget;
-	GtkTreePath *path = NULL;
+	GtkWidgetClass *parent = GTK_WIDGET_CLASS(parent_class);
 
-	if (!gtk_tree_view_get_path_at_pos(tree, 0, 1, &path, NULL, NULL, NULL))
-		return TRUE;	/* Empty? */
-
-	if (event->direction == GDK_SCROLL_UP)
-		gtk_tree_path_prev(path);
-	else if (event->direction == GDK_SCROLL_DOWN)
-		gtk_tree_path_next(path);
-	else
-		goto out;
-
-	gtk_tree_view_scroll_to_cell(tree, path, NULL, TRUE, 0, 0);
-out:
-	gtk_tree_path_free(path);
-	return TRUE;
+	/* Rox-Filer2 2.12.2-49: let GtkTreeView handle wheel and smooth-scroll
+	 * events.  The old one-row emulation consumed events even when it could
+	 * not find a row, which made scrolling fail on some Puppy/Wayland setups. */
+	if (parent->scroll_event)
+		return parent->scroll_event(widget, event);
+	return FALSE;
 }
 
 static gint view_details_key_press(GtkWidget *widget, GdkEventKey *event)

@@ -10,6 +10,8 @@
 const gchar *rox_trash_icon_name(void);
 gchar *rox_trash_files_dir(void);
 gchar *rox_trash_info_dir(void);
+/* Ensure the ROX/Freedesktop trash exists and return its files directory. */
+gchar *rox_trash_open_path(GError **error);
 gboolean rox_trash_is_empty(void);
 gboolean rox_trash_file(GFile *file, GError **error);
 void rox_trash_open(FilerWindow *source_window);

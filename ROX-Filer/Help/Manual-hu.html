@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hu" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rox-Filer2 kézikönyv</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1c1f24; --muted: #5a6270;
+  --accent: #2f6fb0; --rule: #dde2e8; --code-bg: #f4f6f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1e23; --fg: #e6e9ee; --muted: #9aa4b2;
+          --accent: #6fa8dc; --rule: #333941; --code-bg: #23272e; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 1.2rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font-family: system-ui, "DejaVu Sans", "Noto Sans", sans-serif;
+  font-size: 16px; line-height: 1.65;
+}
+main { max-width: 46rem; margin: 0 auto; }
+header { border-bottom: 2px solid var(--accent); margin: 2rem 0 1.5rem; }
+.brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.manual-logo { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
+.brand-copy { min-width: 0; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+@media (max-width: 34rem) {
+  .manual-logo { width: 56px; height: 56px; flex-basis: 56px; }
+  h1 { font-size: 1.55rem; }
+}
+h2 {
+  font-size: 1.25rem; margin: 2.2rem 0 .6rem;
+  padding-bottom: .25rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: .7rem 0; }
+ul { margin: .6rem 0 .6rem 1.3rem; padding: 0; }
+li { margin: .3rem 0; }
+code, kbd {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+  font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: .9em;
+}
+nav.toc {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 8px; padding: .9rem 1.2rem; margin: 1.5rem 0;
+}
+nav.toc ol { margin: .3rem 0 0 1.2rem; padding: 0; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+footer {
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .88rem;
+}
+[dir="rtl"] ul, [dir="rtl"] nav.toc ol { margin: .6rem 1.3rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">
+<img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
+<div class="brand-copy">
+<h1>Rox-Filer2 kézikönyv</h1>
+<p class="sub">Gyors és könnyű fájlkezelő X11 és Wayland rendszerhez, a ROX-Filer folytatása. &mdash; 2.12.2-89</p>
+</div>
+</div>
+</header>
+<nav class="toc"><b>Tartalom</b><ol>
+<li><a href="#intro">Mi a Rox-Filer2</a></li>
+<li><a href="#interfaces">Klasszikus és Modern felület</a></li>
+<li><a href="#window">A fájlkezelő ablak</a></li>
+<li><a href="#desktop">ROX asztal</a></li>
+<li><a href="#drives">Meghajtók és csatolás</a></li>
+<li><a href="#images">Lemezképek (ISO, IMG, SFS, SquashFS)</a></li>
+<li><a href="#network">SMB és Windows-megosztások</a></li>
+<li><a href="#trash">Kuka</a></li>
+<li><a href="#mime">Fájltípusok és a Megnyitás ezzel</a></li>
+<li><a href="#actions">Egyéni műveletek és sablonok</a></li>
+<li><a href="#tools">Keresés, könyvjelzők és páros ablakok</a></li>
+<li><a href="#options">Beállítások és konfigurációs fájlok</a></li>
+<li><a href="#cmdline">Parancssor</a></li>
+<li><a href="#diagnostics">Hibakeresés</a></li>
+<li><a href="#support">Hibák bejelentése</a></li>
+</ol></nav>
+<h2 id="intro">Mi a Rox-Filer2</h2>
+<p>A Rox-Filer2 a ROX-Filer folytatása: GTK3-ra frissítve, modern felülettel, natív SMB-támogatással, meghajtóikonokkal és olyan asztali móddal kiegészítve, amely X11 és Wayland alatt egyaránt működik.</p>
+<p>Egyetlen dolgot végez egyetlen folyamatban: fájlokat kezel, és ha kéri, az asztalt is. Nincs háttérszolgáltatás, nincs virtuális fájlrendszerréteg, és nincs függés semmilyen asztali környezettől. Minden, amit lát, közönséges POSIX útvonal.</p>
+<h2 id="interfaces">Klasszikus és Modern felület</h2>
+<p>A Rox-Filer2 két felületstílust kínál, amelyek ugyanazokat a fájl-, MIME-, csatolási, Kuka- és asztali motorokat használják.</p>
+<ul><li><b>Klasszikus ROX</b> megtartja a ROX-Filer hagyományos elrendezését és eszköztárát. Ha a ROX-Filer felől érkezik, semmi nem került máshová.</li><li><b>Modern</b> menüsorral, navigációs sorral, lapokkal és egy oldalsávval bővít, amelyben Helyek, Eszközök és Hálózat található.</li></ul>
+<p>Az állandó stílust a <b>Beállítások &gt; Felület</b> alatt választja ki. A változás azokra az ablakokra vonatkozik, amelyeket a Rox-Filer2 újraindítása után nyit meg.</p>
+<p>Ha egyszeri alkalommal szeretne kipróbálni egy stílust a mentett beállítás módosítása nélkül, indítsa a <code>rox --classic</code> vagy a <code>rox --modern</code> paranccsal.</p>
+<h2 id="window">A fájlkezelő ablak</h2>
+<p>A könyvtárakat dupla kattintással nyithatja meg. Az egyszeri kattintás kijelöl; üres területen a bal gombbal húzva gumikeretes kijelölést kap.</p>
+<ul><li>A jobb gomb a mutató alatti elem helyi menüjét nyitja meg, üres területen pedig az egész ablakét.</li><li>A középső gomb új ablakban nyit meg egy könyvtárat.</li><li>A <kbd>Backspace</kbd> egy szinttel feljebb lép; a <kbd>Ctrl+L</kbd> az útvonalmezőre ugrik.</li><li>Modern felületen a <kbd>Ctrl+T</kbd> új lapot nyit, a <kbd>Ctrl+W</kbd> bezárja. Minden lap saját útvonalat és előzményt tart.</li></ul>
+<p>Az ikonnézet és a részletes nézet között a nézetváltóval válthat, az ikonméretet pedig a csúszkával állítja.</p>
+<h2 id="desktop">ROX asztal</h2>
+<p>Az asztalt a <code>rox --desktop</code> paranccsal indítja. Egyszerre csak egy példány fut. Kirajzolja a háttérképet, megjeleníti az asztali könyvtár ikonjait, és megmutathatja a meghajtóikonokat is.</p>
+<ul><li><b>Háttérkép:</b> <code>rox --desktop-wallpaper</code>, vagy jobb kattintás az asztalon. A módok: kitöltés, illesztés, nyújtás, középre és mozaik.</li><li><b>Alkalmazások:</b> a <code>rox --desktop-apps</code> kezeli az asztali indítóikonokat.</li><li><b>Meghajtóikonok:</b> a <code>rox --desktop-drive-icon-layout</code> rendezi őket.</li><li><b>Beállítások:</b> <code>rox --desktop-preferences</code>.</li></ul>
+<p>X11 alatt az asztal egy közönséges, asztali típusjelzésű ablakot használ. Wayland alatt a Layer Shell háttérrétegét, amihez telepített <code>gtk-layer-shell</code> és olyan kompozitor kell, amely közzéteszi a <code>zwlr_layer_shell_v1</code> protokollt, például a Labwc. A háttérprogramot a <code>rox-x11 --desktop</code> vagy a <code>rox-wayland --desktop</code> paranccsal kényszerítheti.</p>
+<p>Ha az X11 gyökérablak hátterét is be szeretné állítani, hogy az álátlátszó terminálok és a conky ugyanazt a képet lássák, telepítse a <code>feh</code> vagy az <code>xwallpaper</code> programot.</p>
+<h2 id="drives">Meghajtók és csatolás</h2>
+<p>A helyi és cserélhető meghajtók a Modern oldalsávban az <b>Eszközök</b> alatt jelennek meg, és igény szerint asztali ikonként is. Kattintson egy meghajtóra a csatoláshoz és megnyitáshoz; a leválasztáshoz használja a helyi menüt.</p>
+<p>A meghajtóadatok az <code>lsblk</code> programból, a <code>/proc/mounts</code> állományból és a sysfs-ből származnak, így nincs szükség háttérszolgáltatásra. Egy meghajtó csatolásához hétköznapi felhasználóként <code>udisksctl</code> vagy ezt engedélyező fstab-bejegyzés szükséges.</p>
+<p>A cserélhető adathordozókat mindig válassza le, mielőtt kihúzza őket. A Rox-Filer2 az ablak bezárása után nem ír az eszközre, de a kernel még tarthat vissza ki nem írt adatot.</p>
+<h2 id="images">Lemezképek (ISO, IMG, SFS, SquashFS)</h2>
+<p>Kattintson jobb gombbal egy lemezképfájlra, és válassza a <b>Lemezkép csatolása</b> lehetőséget. A Rox-Filer2 hurokeszközhöz rendeli, írásvédetten csatolja, majd az eredményt úgy nyitja meg, mint bármely más könyvtárat. A támogatott kiterjesztések: <code>.iso</code>, <code>.img</code>, <code>.sfs</code>, <code>.squashfs</code>, <code>.sqfs</code> és <code>.sqsh</code>.</p>
+<p>Csatolás után ugyanaz a menü kínálja a <b>Csatolt lemezkép megnyitása</b> és a <b>Lemezkép leválasztása</b> elemeket. A csatolások a <code>/media/rox-filer2-images/</code> alatt vannak, lemezképenként egy könyvtár.</p>
+<ul><li><b>Mindig írásvédett.</b> A hurokeszköz, a blokkeszköz és a csatolás is írásvédett, így a lemezkép véletlenül sem módosulhat.</li><li><b>Rendszergazdaként</b> (a Puppy és az Essora szokásos modellje) közvetlenül a <code>losetup</code> és a <code>mount</code> parancsot használja. Hétköznapi felhasználóként az <code>udisksctl</code> parancsot, amelynek telepítve kell lennie.</li><li><b>A nyers <code>.img</code> fájlok</b> tartalmazhatnak partíciós táblát. Ha egynél többet talál, a Rox-Filer2 rákérdez, melyiket csatolja, és megmutatja minden partíció valódi számát, fájlrendszerét, méretét és címkéjét. Az ISO és SquashFS lemezképek mindig egészben csatolódnak, akkor is, ha egy hibrid ISO partíciós táblát mutat.</li><li><b>Nincs GVfs.</b> A lemezkép közönséges helyi csatolássá válik, így a másolás, a fogd és vidd, a MIME-kezelés és az egyéni műveletek ugyanúgy működnek, mint bármely más könyvtárban.</li></ul>
+<p>A csatolás a háttérben zajlik: egy kis ablak forgó jelzővel jelenik meg, amíg a hurokeszköz elkészül és a partíciók vizsgálata tart, a fájlkezelő pedig válaszképes marad.</p>
+<p>Válassza le a lemezképet, mielőtt törli vagy áthelyezi a fájlt. Ha egy csatolás a Rox-Filer2 tudta nélkül szűnik meg, a menüpontok ismét a <b>Lemezkép csatolása</b> lehetőséget kínálják.</p>
+<h2 id="network">SMB és Windows-megosztások</h2>
+<p>Nyissa meg az <b>Ugrás &gt; Kapcsolódás SMB-megosztáshoz</b> menüpontot, vagy a <b>Hálózat böngészése</b> elemet a Modern oldalsávban. Adja meg a kiszolgálót és – ha tudja – a megosztást; a listázó gomb megkérdezi a kiszolgálót, milyen megosztásokat kínál.</p>
+<p>A Rox-Filer2 a megosztást a <code>mount.cifs</code> segítségével közönséges helyi csatolásként csatolja, nem pedig virtuális fájlrendszeren keresztül mutatja. Ezért a másolás, a fogd és vidd, a MIME-kezelés, a Kuka és az egyéni műveletek pontosan úgy működnek, mint a helyi fájlokon.</p>
+<ul><li>A <code>cifs-utils</code> csomagnak telepítve kell lennie.</li><li>A csatoláshoz rendszergazdai jog kell. Hétköznapi felhasználóként a Rox-Filer2 a <code>sudo -n</code> parancsot próbálja; a <code>mount.cifs</code> jelszó nélküli engedélyezése gyakorlatilag rendszergazdai jogot ad, ezért tudatosan adja meg, vagy csatoljon kézzel.</li><li>A jelszava soha nem kerül a beállításokba. Egy ideiglenes, csak Ön által olvasható hitelesítőfájlon keresztül jut át, amelyet a program azonnal töröl, amint a <code>mount.cifs</code> visszatér. Csak a kiszolgálót, a megosztást, a felhasználót és a tartományt jegyzi meg.</li></ul>
+<h2 id="trash">Kuka</h2>
+<p>A menüből való törlés az XDG Kukába helyezi az elemeket, így azok visszaállíthatók. A visszaállítás a Kuka könyvtárának helyi menüjéből érhető el.</p>
+<p>A Kuka csak a kukakönyvtárral azonos fájlrendszeren működik. Egy másik partíción vagy cserélhető eszközön lévő fájl törlése visszafordíthatatlan lehet, és a Rox-Filer2 ilyenkor figyelmezteti.</p>
+<h2 id="mime">Fájltípusok és a Megnyitás ezzel</h2>
+<p>A fájltípusok a közös MIME-adatbázisból származnak, kiegészítve a fájlra beállított kiterjesztett attribútumokkal. A helyi menü a <b>Megnyitás ezzel</b> alatt sorolja fel az adott típushoz bejegyzett alkalmazásokat.</p>
+<p>Állandó kezelőt vagy saját ikont az elem <b>Ikon beállítása</b> és <b>Művelet beállítása</b> menüpontjaival adhat meg. Ezek a saját beállításaiba kerülnek, és soha nem módosítják a rendszer adatbázisát.</p>
+<h2 id="actions">Egyéni műveletek és sablonok</h2>
+<p>Az egyéni műveletek a saját parancsait teszik a helyi menübe, a kijelölt útvonalakat argumentumként átadva. Ezek közönséges asztalbejegyzések, így egyet gépek között is átmásolhat.</p>
+<p>A sablonokkal a helyi menüből hozhat létre új, üres fájlt egy adott típusból. Sajátot úgy vesz fel, hogy elhelyez egy fájlt az alkalmazáskönyvtár Templates mappájában.</p>
+<h2 id="tools">Keresés, könyvjelzők és páros ablakok</h2>
+<ul><li><b>Keresés:</b> a <code>rox-find</code> név, méret, típus és tartalom szerint keres, és az eredményt visszaadja a fájlkezelőnek.</li><li><b>Könyvjelzők:</b> egy kattintásnyira tartják a gyakran használt könyvtárakat; Modern felületen a Helyek alatt is megjelennek.</li><li><b>Páros ablakok:</b> a <code>rox --pair</code> két ablakot nyit egymás mellé a könyvtárak közötti másoláshoz, a <code>rox --pair-realign</code> pedig újraigazítja őket.</li></ul>
+<h2 id="options">Beállítások és konfigurációs fájlok</h2>
+<p>A <b>Beállítások</b> a Szerkesztés menüből, az asztal menüjéből vagy a <code>rox --config-rox</code> paranccsal nyitható meg.</p>
+<p>A beállításai az XDG konfigurációs könyvtárban élnek, általában a <code>~/.config/rox.sourceforge.net/ROX-Filer/</code> helyen. A fájlok XML, INI és egyszerű szöveg formátumúak, így menthetők, szerkeszthetők és gépek között másolhatók. Egy fájl törlése visszaállítja az adott beállításcsoport alapértelmezéseit.</p>
+<h2 id="cmdline">Parancssor</h2>
+<ul><li><code>rox</code> &mdash; automatikusan választ X11 vagy Wayland háttérprogramot.</li><li><code>rox-x11</code>, <code>rox-wayland</code> &mdash; adott háttérprogramot kényszerít.</li><li><code>rox KÖNYVTÁR</code> &mdash; megnyit egy könyvtárat.</li><li><code>rox -d KÖNYVTÁR</code> &mdash; könyvtárként nyitja meg akkor is, ha alkalmazáskönyvtár.</li><li><code>rox -D KÖNYVTÁR</code> &mdash; bezárja azt a könyvtárat és alkönyvtárait.</li><li><code>rox --classic</code>, <code>rox --modern</code> &mdash; ideiglenes felületválasztás.</li><li><code>rox --desktop</code> &mdash; elindítja az asztalt; a <code>--desktop-refresh</code> frissíti a futót.</li><li><code>rox --help</code> &mdash; a teljes lista.</li></ul>
+<h2 id="diagnostics">Hibakeresés</h2>
+<p>A naplózás alapértelmezetten ki van kapcsolva. Indítsa a <code>rox --debug</code> paranccsal technikai napló írásához, a <code>--log-file=FÁJL</code> kapcsolóval adja meg a helyét, a <code>--log-level=SZINT</code> értéke pedig error, warning, info, debug vagy trace lehet. A <code>rox --clear-logs</code> eltávolítja a Rox-Filer2 által automatikusan kezelt naplókat.</p>
+<p>Hibajelentéshez mellékelje ezt a naplót. Rögzíti, melyik asztali háttérprogram lett kiválasztva, melyik felületstílus aktív, és miért hiúsult meg egy SMB-csatolás vagy egy meghajtó-vizsgálat.</p>
+<h2 id="support">Hibák bejelentése</h2>
+<p>Hibákat és javaslatokat a projekt oldalán jelenthet be: <a href="https://github.com/josejp2424/ROX-Filer-gtk3">github.com/josejp2424/ROX-Filer-gtk3</a>.</p>
+<p>Kérjük, adja meg a használt változatot (lásd <b>Súgó &gt; A Rox-Filer2 névjegye</b>), hogy X11-et vagy Waylandet használ-e, melyik felületstílust, és a pontos lépéseket, amelyekkel a hiba előidézhető.</p>
+<footer>A Rox-Filer2 szabad szoftver, amelyet a GNU General Public License 2. vagy későbbi változata alatt terjesztünk. Az eredeti ROX-Filer &copy; 2005 Thomas Leonard és közreműködők; a Rox-Filer2 folytatás &copy; 2026 josejp2424.</footer>
+</main>
+</body>
+</html>

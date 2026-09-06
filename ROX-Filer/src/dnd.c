@@ -449,8 +449,7 @@ static gchar *uri_list_to_utf8(const char *uri_list)
 	if (uris)
 		g_list_free(uris);
 
-	string = new->str;
-	g_string_free(new, FALSE);
+	string = g_string_free(new, FALSE);
 
 	return string;
 }
@@ -1063,6 +1062,25 @@ static void got_uri_list(GtkWidget 		*widget,
 		gtk_drag_finish(context, TRUE, FALSE, time);    /* Success! */
 
 	destroy_glist(&uri_list);
+}
+
+void dnd_handle_uri_list_drop(GtkWidget *widget, GdkDragContext *context,
+		GtkSelectionData *selection_data, guint32 time)
+{
+	const guchar *data;
+
+	if (!selection_data)
+	{
+		gtk_drag_finish(context, FALSE, FALSE, time);
+		return;
+	}
+	data = DND_SELECTION_GET_DATA(selection_data);
+	if (!data)
+	{
+		gtk_drag_finish(context, FALSE, FALSE, time);
+		return;
+	}
+	got_uri_list(widget, context, (const char *) data, time);
 }
 
 /* Called when an item from the ACTION_ASK menu is chosen */

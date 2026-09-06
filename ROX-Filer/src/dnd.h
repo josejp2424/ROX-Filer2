@@ -57,6 +57,11 @@ void drag_data_get(GtkWidget      	*widget,
 		   guint32             	time,
 		   gpointer	       	data);
 void make_drop_target(GtkWidget *widget, GtkDestDefaults defaults);
+/* Reuse ROX's normal URI-list Copy/Move/Link handling from custom
+ * drop surfaces such as the native desktop. drop_dest_path/type must already
+ * be set on the GdkDragContext. */
+void dnd_handle_uri_list_drop(GtkWidget *widget, GdkDragContext *context,
+		GtkSelectionData *selection_data, guint32 time);
 void dnd_init(void);
 gboolean provides(GdkDragContext *context, GdkAtom target);
 /* Wayland does not reliably negotiate GDK_ACTION_ASK for ROX's classic

@@ -678,6 +678,8 @@ static char *string_value(xmlNode *arg)
 /* Returns the text of this arg as an int, or the default value if not
  * supplied or not an int.
  */
+/* 2.12.2-82: sin uso. */
+#if 0
 static int int_value(xmlNode *arg, int def)
 {
 	char *str, *end;
@@ -694,6 +696,7 @@ static int int_value(xmlNode *arg, int def)
 
 	return (end > str) ? i : def;
 }
+#endif
 
 /* Return a list of strings, one for each child node of arg.
  * g_list_free the list, and g_free each string.

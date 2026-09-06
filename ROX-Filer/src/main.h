@@ -38,6 +38,7 @@ int main(int argc, char **argv);
 void on_child_death(gint child, CallbackFn callback, gpointer data);
 void on_child_death_status(gint child, ChildStatusCallbackFn callback, gpointer data);
 void rox_child_reap_lock(void);
+gboolean rox_child_reap_trylock(void);
 void rox_child_reap_unlock(void);
 void one_less_window(void);
 

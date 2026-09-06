@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ca" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del Rox-Filer2</title>
+<style>
+:root {
+  --bg: #ffffff; --fg: #1c1f24; --muted: #5a6270;
+  --accent: #2f6fb0; --rule: #dde2e8; --code-bg: #f4f6f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1e23; --fg: #e6e9ee; --muted: #9aa4b2;
+          --accent: #6fa8dc; --rule: #333941; --code-bg: #23272e; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 1.2rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font-family: system-ui, "DejaVu Sans", "Noto Sans", sans-serif;
+  font-size: 16px; line-height: 1.65;
+}
+main { max-width: 46rem; margin: 0 auto; }
+header { border-bottom: 2px solid var(--accent); margin: 2rem 0 1.5rem; }
+.brand { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.manual-logo { width: 72px; height: 72px; flex: 0 0 72px; object-fit: contain; }
+.brand-copy { min-width: 0; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+.sub { color: var(--muted); margin: 0; font-size: .95rem; }
+@media (max-width: 34rem) {
+  .manual-logo { width: 56px; height: 56px; flex-basis: 56px; }
+  h1 { font-size: 1.55rem; }
+}
+h2 {
+  font-size: 1.25rem; margin: 2.2rem 0 .6rem;
+  padding-bottom: .25rem; border-bottom: 1px solid var(--rule);
+}
+p { margin: .7rem 0; }
+ul { margin: .6rem 0 .6rem 1.3rem; padding: 0; }
+li { margin: .3rem 0; }
+code, kbd {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 4px; padding: .08em .35em;
+  font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: .9em;
+}
+nav.toc {
+  background: var(--code-bg); border: 1px solid var(--rule);
+  border-radius: 8px; padding: .9rem 1.2rem; margin: 1.5rem 0;
+}
+nav.toc ol { margin: .3rem 0 0 1.2rem; padding: 0; }
+nav.toc a { color: var(--accent); text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+footer {
+  margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+  color: var(--muted); font-size: .88rem;
+}
+[dir="rtl"] ul, [dir="rtl"] nav.toc ol { margin: .6rem 1.3rem .6rem 0; }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brand">
+<img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
+<div class="brand-copy">
+<h1>Manual del Rox-Filer2</h1>
+<p class="sub">Gestor de fitxers ràpid i lleuger per a X11 i Wayland, continuació del ROX-Filer. &mdash; 2.12.2-89</p>
+</div>
+</div>
+</header>
+<nav class="toc"><b>Contingut</b><ol>
+<li><a href="#intro">Què és el Rox-Filer2</a></li>
+<li><a href="#interfaces">Interfícies Clàssica i Moderna</a></li>
+<li><a href="#window">La finestra del gestor</a></li>
+<li><a href="#desktop">Escriptori ROX</a></li>
+<li><a href="#drives">Unitats i muntatge</a></li>
+<li><a href="#images">Imatges de disc (ISO, IMG, SFS, SquashFS)</a></li>
+<li><a href="#network">SMB i recursos compartits de Windows</a></li>
+<li><a href="#trash">Paperera</a></li>
+<li><a href="#mime">Tipus de fitxer i Obre amb</a></li>
+<li><a href="#actions">Accions personalitzades i plantilles</a></li>
+<li><a href="#tools">Cerca, adreces d&#x27;interès i finestres aparellades</a></li>
+<li><a href="#options">Opcions i fitxers de configuració</a></li>
+<li><a href="#cmdline">Línia d&#x27;ordres</a></li>
+<li><a href="#diagnostics">Diagnòstic</a></li>
+<li><a href="#support">Informar de problemes</a></li>
+</ol></nav>
+<h2 id="intro">Què és el Rox-Filer2</h2>
+<p>El Rox-Filer2 és la continuació del ROX-Filer, actualitzada a GTK3 i ampliada amb una interfície moderna, suport SMB natiu, icones d'unitats i un mode d'escriptori que funciona tant a X11 com a Wayland.</p>
+<p>Fa una sola cosa en un sol procés: gestiona fitxers i, si voleu, l'escriptori. No hi ha cap dimoni, ni capa de sistema de fitxers virtual, ni dependència d'un entorn d'escriptori. Tot el que veieu són camins POSIX corrents.</p>
+<h2 id="interfaces">Interfícies Clàssica i Moderna</h2>
+<p>El Rox-Filer2 inclou dos estils d'interfície que comparteixen els mateixos motors de fitxers, MIME, muntatge, Paperera i Escriptori.</p>
+<ul><li><b>Clàssica ROX</b> conserva la disposició i la barra d'eines tradicionals del ROX-Filer. Si veniu del ROX-Filer, res no s'ha mogut.</li><li><b>Moderna</b> afegeix barra de menús, fila de navegació, pestanyes i una barra lateral amb Llocs, Dispositius i Xarxa.</li></ul>
+<p>Trieu l'estil permanent a <b>Opcions &gt; Interfície</b>. El canvi s'aplica a les finestres obertes després de reiniciar el Rox-Filer2.</p>
+<p>Per provar un estil una sola vegada sense canviar la preferència desada, executeu <code>rox --classic</code> o <code>rox --modern</code>.</p>
+<h2 id="window">La finestra del gestor</h2>
+<p>Obriu els directoris amb un doble clic. Un sol clic selecciona; arrossegueu amb el botó esquerre sobre espai buit per seleccionar amb goma elàstica.</p>
+<ul><li>El botó dret obre el menú contextual de l'element sota el punter, o el de tota la finestra si sou sobre espai buit.</li><li>El botó del mig obre un directori en una finestra nova.</li><li><kbd>Retrocés</kbd> puja un nivell; <kbd>Ctrl+L</kbd> enfoca l'entrada de camí.</li><li>A la Moderna, <kbd>Ctrl+T</kbd> obre una pestanya i <kbd>Ctrl+W</kbd> la tanca. Cada pestanya manté el seu camí i historial.</li></ul>
+<p>Canvieu entre la vista d'icones i la vista detallada amb el selector de vista, i ajusteu la mida de les icones amb el lliscador.</p>
+<h2 id="desktop">Escriptori ROX</h2>
+<p>Inicieu l'escriptori amb <code>rox --desktop</code>. Només s'executa una instància alhora. Dibuixa el fons de pantalla, mostra les icones del vostre directori d'escriptori i pot mostrar icones d'unitats.</p>
+<ul><li><b>Fons de pantalla:</b> <code>rox --desktop-wallpaper</code>, o clic dret a l'escriptori. Els modes són omplir, ajustar, estirar, centrar i mosaic.</li><li><b>Aplicacions:</b> <code>rox --desktop-apps</code> gestiona els llançadors de l'escriptori.</li><li><b>Icones d'unitats:</b> <code>rox --desktop-drive-icon-layout</code> les ordena.</li><li><b>Preferències:</b> <code>rox --desktop-preferences</code>.</li></ul>
+<p>A X11 l'escriptori fa servir una finestra normal amb suggeriment de tipus escriptori. A Wayland utilitza la capa de fons del Layer Shell, que requereix <code>gtk-layer-shell</code> instal·lat i un compositor que publiqui <code>zwlr_layer_shell_v1</code>, com el Labwc. Forceu un rerefons amb <code>rox-x11 --desktop</code> o <code>rox-wayland --desktop</code>.</p>
+<p>Per fixar també el fons de la finestra arrel d'X11, de manera que els terminals amb transparència falsa i el conky vegin la mateixa imatge, instal·leu <code>feh</code> o <code>xwallpaper</code>.</p>
+<h2 id="drives">Unitats i muntatge</h2>
+<p>Les unitats locals i extraïbles apareixen a la barra lateral de la Moderna sota <b>Dispositius</b> i, opcionalment, com a icones a l'escriptori. Feu clic en una unitat per muntar-la i obrir-la; feu servir el menú contextual per desmuntar-la.</p>
+<p>La informació de les unitats prové de <code>lsblk</code>, de <code>/proc/mounts</code> i de sysfs, de manera que no cal cap servei en segon pla. Muntar una unitat com a usuari normal requereix <code>udisksctl</code> o una entrada a fstab que ho permeti.</p>
+<p>Desmunteu sempre els suports extraïbles abans de desconnectar-los. El Rox-Filer2 no escriu en un dispositiu després que tanqueu la seva finestra, però el nucli pot conservar dades sense escriure.</p>
+<h2 id="images">Imatges de disc (ISO, IMG, SFS, SquashFS)</h2>
+<p>Feu clic dret sobre un fitxer d'imatge i trieu <b>Munta la imatge</b>. El Rox-Filer2 l'associa a un dispositiu de bucle i la munta en només lectura, i després obre el resultat com qualsevol altre directori. Les extensions admeses són <code>.iso</code>, <code>.img</code>, <code>.sfs</code>, <code>.squashfs</code>, <code>.sqfs</code> i <code>.sqsh</code>.</p>
+<p>Un cop muntada, el mateix menú ofereix <b>Obre la imatge muntada</b> i <b>Desmunta la imatge</b>. Els muntatges viuen sota <code>/media/rox-filer2-images/</code>, un directori per imatge.</p>
+<ul><li><b>Sempre en només lectura.</b> El dispositiu de bucle, el dispositiu de blocs i el muntatge estan tots en només lectura, de manera que una imatge no es pot modificar mai per accident.</li><li><b>Com a root</b> (el model habitual del Puppy i de l'Essora) fa servir <code>losetup</code> i <code>mount</code> directament. Com a usuari normal fa servir <code>udisksctl</code>, que ha d'estar instal·lat.</li><li><b>Els <code>.img</code> crus</b> poden contenir una taula de particions. Quan se'n troba més d'una, el Rox-Filer2 pregunta quina muntar i mostra el número real de cada partició, el seu sistema de fitxers, la mida i l'etiqueta. Les imatges ISO i SquashFS es munten sempre senceres, fins i tot quan una ISO híbrida exposa una taula de particions.</li><li><b>Sense GVfs.</b> La imatge esdevé un muntatge local corrent, així que copiar, arrossegar i deixar anar, els tipus MIME i les accions personalitzades es comporten igual que a qualsevol altre directori.</li></ul>
+<p>El muntatge es fa en segon pla: apareix una finestra petita amb un indicador giratori mentre es prepara el dispositiu de bucle i s'exploren les particions, i el gestor continua responent.</p>
+<p>Desmunteu abans d'esborrar o moure el fitxer d'imatge. Si un muntatge desapareix sense que el Rox-Filer2 ho sàpiga, les entrades del menú tornen a oferir <b>Munta la imatge</b>.</p>
+<h2 id="network">SMB i recursos compartits de Windows</h2>
+<p>Obriu <b>Vés &gt; Connecta a un recurs SMB</b>, o <b>Explora la xarxa</b> a la barra lateral de la Moderna. Escriviu el servidor i, si el coneixeu, el recurs; el botó de llista pregunta al servidor quins recursos ofereix.</p>
+<p>El Rox-Filer2 munta el recurs com un muntatge local corrent mitjançant <code>mount.cifs</code>, en lloc de presentar-lo a través d'un sistema de fitxers virtual. Per això copiar, arrossegar i deixar anar, els tipus MIME, la Paperera i les accions personalitzades funcionen exactament igual que amb fitxers locals.</p>
+<ul><li>Cal tenir instal·lat <code>cifs-utils</code>.</li><li>Muntar requereix root. Com a usuari normal, el Rox-Filer2 prova <code>sudo -n</code>; una regla sense contrasenya per a <code>mount.cifs</code> equival a concedir root, així que concediu-la conscientment o feu el muntatge vosaltres mateixos.</li><li>La vostra contrasenya no s'escriu mai a la configuració. Passa per un fitxer temporal de credencials llegible només per vosaltres, que s'esborra tan bon punt <code>mount.cifs</code> acaba. Només es recorden el servidor, el recurs, l'usuari i el domini.</li></ul>
+<h2 id="trash">Paperera</h2>
+<p>Suprimir des del menú mou els elements a la Paperera XDG, de manera que es poden restaurar. Restaureu des del menú contextual del directori de la Paperera.</p>
+<p>La Paperera només funciona dins del mateix sistema de fitxers que el directori de paperera. Suprimir un fitxer en una altra partició o en un dispositiu extraïble pot ser irreversible, i el Rox-Filer2 us ho avisa quan passa.</p>
+<h2 id="mime">Tipus de fitxer i Obre amb</h2>
+<p>Els tipus de fitxer provenen de la base de dades MIME compartida, més qualsevol atribut estès posat al fitxer mateix. El menú contextual llista les aplicacions registrades per a aquest tipus sota <b>Obre amb</b>.</p>
+<p>Fixeu un gestor permanent, o una icona pròpia, des de les entrades <b>Estableix la icona</b> i <b>Estableix l'acció</b> de l'element. Es desen a la vostra pròpia configuració i no modifiquen mai la base de dades del sistema.</p>
+<h2 id="actions">Accions personalitzades i plantilles</h2>
+<p>Les accions personalitzades afegeixen les vostres ordres al menú contextual, rebent els camins seleccionats com a arguments. Són entrades d'escriptori corrents, així que en podeu copiar una entre màquines.</p>
+<p>Les plantilles permeten crear des del menú contextual un fitxer nou i buit d'un tipus determinat. Afegiu les vostres deixant un fitxer al directori Templates del directori de l'aplicació.</p>
+<h2 id="tools">Cerca, adreces d&#x27;interès i finestres aparellades</h2>
+<ul><li><b>Cerca:</b> el <code>rox-find</code> cerca per nom, mida, tipus i contingut, i retorna els resultats al gestor.</li><li><b>Adreces d'interès:</b> mantenen a un clic els directoris d'ús freqüent; a la Moderna també apareixen a Llocs.</li><li><b>Finestres aparellades:</b> <code>rox --pair</code> obre dues finestres de costat per copiar entre directoris, i <code>rox --pair-realign</code> les torna a alinear.</li></ul>
+<h2 id="options">Opcions i fitxers de configuració</h2>
+<p>Obriu <b>Opcions</b> des del menú Edita, des del menú de l'escriptori o amb <code>rox --config-rox</code>.</p>
+<p>Els vostres paràmetres viuen al directori de configuració XDG, normalment <code>~/.config/rox.sourceforge.net/ROX-Filer/</code>. Els fitxers són XML, INI i text pla, així que els podeu desar, editar o copiar entre màquines. Suprimir un fitxer restaura aquell grup de valors predeterminats.</p>
+<h2 id="cmdline">Línia d&#x27;ordres</h2>
+<ul><li><code>rox</code> &mdash; tria automàticament el rerefons X11 o Wayland.</li><li><code>rox-x11</code>, <code>rox-wayland</code> &mdash; forcen un rerefons.</li><li><code>rox DIR</code> &mdash; obre un directori.</li><li><code>rox -d DIR</code> &mdash; l'obre com a directori encara que sigui un directori d'aplicació.</li><li><code>rox -D DIR</code> &mdash; tanca aquell directori i els seus subdirectoris.</li><li><code>rox --classic</code>, <code>rox --modern</code> &mdash; sobreescriptura temporal de la interfície.</li><li><code>rox --desktop</code> &mdash; inicia l'escriptori; <code>--desktop-refresh</code> refresca el que ja s'executa.</li><li><code>rox --help</code> &mdash; la llista completa.</li></ul>
+<h2 id="diagnostics">Diagnòstic</h2>
+<p>El registre està desactivat per defecte. Inicieu amb <code>rox --debug</code> per escriure un registre tècnic, <code>--log-file=FITXER</code> per triar on, i <code>--log-level=NIVELL</code> amb error, warning, info, debug o trace. <code>rox --clear-logs</code> esborra els registres que el Rox-Filer2 gestiona automàticament.</p>
+<p>Adjunteu aquest registre quan informeu d'un problema. Anota quin rerefons d'escriptori s'ha triat, quin estil d'interfície és actiu i per què ha fallat un muntatge SMB o una exploració d'unitats.</p>
+<h2 id="support">Informar de problemes</h2>
+<p>Informeu d'errors i suggeriments a la pàgina del projecte, <a href="https://github.com/josejp2424/ROX-Filer-gtk3">github.com/josejp2424/ROX-Filer-gtk3</a>.</p>
+<p>Indiqueu quina versió feu servir (vegeu <b>Ajuda &gt; Quant al Rox-Filer2</b>), si feu servir X11 o Wayland, quin estil d'interfície i els passos exactes que reprodueixen el problema.</p>
+<footer>El Rox-Filer2 és programari lliure distribuït sota la Llicència Pública General de GNU, versió 2 o posterior. ROX-Filer original &copy; 2005 Thomas Leonard i col·laboradors; continuació Rox-Filer2 &copy; 2026 josejp2424.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,368 @@
+rox-filer2 (2.12.2-89) unstable; urgency=medium
+
+  * Clamp menu application/action icons to a maximum of 18 px without replacing the real icon.
+  * Add separate native Arch and Void package builder scripts.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sat, 05 Sep 2026 18:45:00 -0300
+
+rox-filer2 (2.12.2-88) unstable; urgency=medium
+
+  * Fix the Modern UI compile failure caused by calling the static
+    modern_tabs_sync_current() helper before its declaration.
+  * Preserve the mounted-image new-tab navigation correction from 2.12.2-87.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sat, 05 Sep 2026 17:55:00 -0300
+
+rox-filer2 (2.12.2-87) unstable; urgency=medium
+
+  * Make Modern new-tab opens navigate the real FilerWindow to the requested path.
+  * Fix Image Mounter tabs that showed the mounted image name while the view remained in the source directory.
+  * Keep the location entry, tab path and file view synchronized with the mounted path.
+  * Cancel pending initial Modern session restore before explicit new-tab navigation.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sat, 05 Sep 2026 17:30:00 -0300
+
+rox-filer2 (2.12.2-86) unstable; urgency=medium
+
+  * Make asynchronous Image Mounter UI lifetimes safe when filer windows close.
+  * Wait for partitioned IMG device sets to stabilize before auto-selection.
+  * Keep transient image-mounter state out of persistent GLib cache fallbacks.
+  * Move failed-state mount rollback off the GTK thread and verify unmount success.
+  * Remove stale compiled ELF files from the source release and gate against recurrence.
+  * Synchronize release metadata, manuals, man pages and translation headers.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sat, 05 Sep 2026 17:15:00 -0300
+
+rox-filer2 (2.12.2-85) unstable; urgency=medium
+
+  * Fix image_mounter.h/global.h include-order compilation failure.
+  * Run image mounting and unmounting asynchronously with GTask.
+  * Validate managed mountpoints before privileged unmount/rmdir operations.
+  * Sort IMG partitions numerically and label them by real partition number.
+  * Roll back mounts when persistent image-mounter state cannot be saved.
+  * Resolve privileged helper programs from fixed system paths.
+  * Document Image Mounter in every localized manual.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sat, 05 Sep 2026 16:30:00 -0300
+
+rox-filer2 (2.12.2-84) unstable; urgency=medium
+
+  * Add native Image Mounter for ISO, SFS, SquashFS/SQFS and raw IMG files.
+  * Handle partitioned IMG files with automatic single-partition mounting and a multi-partition chooser.
+  * Use system-theme icons and complete translations for all image-mounter actions.
+  * Mount read-only through direct losetup/mount as root or udisksctl as a normal user.
+  * Open successful mounts directly in Rox-Filer2.
+  * Add shared MIME globs for image formats on older lightweight distributions.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sat, 05 Sep 2026 15:45:00 -0300
+
+rox-filer2 (2.12.2-83) unstable; urgency=medium
+
+  * Use 2.12.2-82 as the correctness/infrastructure base.
+  * Replace Modern Help > Manual with About.
+  * Open bundled manuals through defaultbrowser on Puppy and x-www-browser elsewhere.
+  * Add the Rox-Filer2 logo to every localized HTML manual.
+  * Revalidate runtime translations and localized manual coverage.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 20:45:00 -0300
+
+rox-filer2 (2.12.2-81) unstable; urgency=medium
+
+  * Move the Modern tab strip to the right content pane only.
+  * Let the Modern navigation sidebar reach the top below the toolbar.
+  * Preserve the 2.12.2-80 sidebar styling, SMB entry, compact tabs and geometry behaviour.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 12:18:00 -0300
+
+rox-filer2 (2.12.2-78) unstable; urgency=medium
+
+  * Add visual Classic/Modern chooser cards with real previews.
+  * Add temporary --classic and --modern launch switches and help/man documentation.
+  * Preserve the 800x640/user-fixed Modern geometry, tree, Samba access and path tabs.
+  * Add a permanent Classic Network toolbar button using the existing SMB connector.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 11:48:00 -0300
+
+rox-filer2 (2.12.2-77) unstable; urgency=medium
+
+  * Add a permanent Classic Network toolbar button beside Partitions.
+  * Reuse the existing SMB connector.
+  * Intermediate test used a larger Modern geometry, superseded by 2.12.2-78.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 03:08:00 -0300
+
+rox-filer2 (2.12.2-76) unstable; urgency=medium
+
+  * Keep Modern geometry under direct user control with an 800x640 first-run size.
+  * Add a lazy filesystem tree and visible SMB access to the Modern sidebar.
+  * Show real locations in Modern tab labels.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 10:57:00 -0300
+
+rox-filer2 (2.12.2-75) unstable; urgency=medium
+
+  * Keep the real AppDir in /usr/lib and migrate historical Essora paths to symlinks.
+  * Give Modern a larger initial geometry and remove its Help menu.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 02:53:00 -0300
+
+rox-filer2 (2.12.2-74) unstable; urgency=medium
+
+  * Restore the historical /usr/local/apps/Rox-Filer AppDir layout.
+  * Restore compatibility launchers without changing filer runtime logic.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Fri, 04 Sep 2026 01:55:00 -0300
+
+rox-filer2 (2.12.2-73) unstable; urgency=medium
+
+  * Fix exact lsblk -P field parsing so TYPE is not matched inside FSTYPE.
+  * Restore parent-disk inheritance and hardware-safe removable detection.
+  * Keep optical eject ordering while allowing its power-off fallback.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 10:08:00 -0300
+
+rox-filer2 (2.12.2-72) unstable; urgency=medium
+
+  * Separate visual removable heuristics from hardware-safe Eject eligibility.
+  * Cache the physical parent device during drive discovery instead of spawning
+    lsblk again during Eject.
+  * Eject optical media with eject first and power off hardware-removable USB
+    devices first.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 08:35:00 -0300
+
+rox-filer2 (2.12.2-71) unstable; urgency=medium
+
+  * Request the shared drive rescan from the async mount, unmount and eject
+    finish paths so Classic, Modern and Desktop cannot forget to refresh.
+  * Remove unused synchronous public drive-action wrappers.
+  * Offer safe Eject for removable USB media as well as optical drives.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 03:25:00 -0300
+
+rox-filer2 (2.12.2-70) unstable; urgency=medium
+
+  * Bound child-reaper lock waits and preserve the last drive snapshot when
+    helper infrastructure is temporarily unavailable.
+  * Use a five-second lsblk timeout and a 90-second ceiling for drive actions.
+  * Run mount, unmount and eject operations outside the GTK main thread.
+  * Remove the unused rox_drive_open_in_filer compatibility helper.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 01:59:00 -0300
+
+rox-filer2 (2.12.2-69) unstable; urgency=medium
+
+  * Lower the shared drive helper timeout from eight to three seconds.
+  * Run local mount and udisksctl waits outside the GTK main thread.
+  * Keep Classic, Modern and Desktop drive consumers on the shared backend.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 00:30:00 -0300
+
+rox-filer2 (2.12.2-68) unstable; urgency=medium
+
+  * Bound shared drive helper scans to eight seconds so a stuck lsblk cannot
+    leave the global Classic/Modern/Desktop monitor permanently busy.
+  * Preserve the last known-good drive snapshot on helper timeout or error.
+  * Keep the legacy SIGCHLD reaper responsive while timed workers own a child.
+  * Remove the obsolete always-false inaccessible drive snapshot state.
+  * Avoid the duplicate Desktop startup scan by letting the monitor
+    subscription own the initial refresh.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Thu, 03 Sep 2026 00:20:00 -0300
+
+rox-filer2 (2.12.2-67) unstable; urgency=medium
+
+  * Fix the drives monitor build include and marshal worker refresh requests.
+  * Make Classic, Modern and Desktop live subscribers of one drive snapshot.
+  * Poll only while a drive consumer is alive and safely fan out callbacks.
+  * Avoid remote filesystem I/O in periodic CIFS/FUSE drive enumeration.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 22:25:00 -0300
+
+rox-filer2 (2.12.2-66) unstable; urgency=medium
+
+  * Centralize drive scans, GVolumeMonitor events and polling in one module.
+  * Share one drive snapshot across Classic ROX, Modern UI and Desktop.
+  * Preserve the last valid drive state after transient scan failures.
+  * Keep the drive backend independent from X11/XLibre and Wayland backends.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 21:45:00 -0300
+
+rox-filer2 (2.12.2-65) unstable; urgency=medium
+
+  * Keep populated Modern Devices lists visible during shared refreshes.
+  * Do not rescan drives on ordinary directory navigation.
+  * Prevent stale network rows from reaching local mount or udisks paths.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 21:40:00 -0300
+
+rox-filer2 (2.12.2-64) unstable; urgency=medium
+
+  * Share one Modern Devices scan across filer windows.
+  * Check CIFS/SMB3 mount presence using only the local mount table.
+  * Remove the unused raw mountpoint API and guard network mount paths.
+  * Keep scan progress visible and report stale network mounts clearly.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 21:34:00 -0300
+
+rox-filer2 (2.12.2-63) unstable; urgency=medium
+
+  * Avoid find_mountpoint/realpath calls for network drives in GTK callbacks.
+  * Use getmntent_r() in Linux mount-table readers used across worker threads.
+  * Initialize drive visibility once and access its setting atomically.
+  * Show File System and a scanning indicator immediately in Modern Devices.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 21:18:00 -0300
+
+rox-filer2 (2.12.2-62) stable; urgency=medium
+
+  * Move Modern Devices scanning to GTask worker threads.
+  * Reuse the managed-SMB mountpoint safety predicate for cleanup.
+  * Add translated foreign/inaccessible network-resource diagnostics.
+  * Avoid network filesystem stat calls from GTK device callbacks.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 20:55:00 -0300
+
+rox-filer2 (2.12.2-61) unstable; urgency=medium
+
+  * Probe with libsmbclient only after mount.cifs fails.
+  * Fix share-list UI serialization and advanced option credential aliases.
+  * Discover foreign FUSE SMB shares without taking ownership of them.
+  * Prevent unmount/cleanup actions on network mounts managed elsewhere.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 20:43:00 -0300
+
+rox-filer2 (2.12.2-60) unstable; urgency=medium
+
+  * Keep SMB preflight advisory so old NAS devices can still reach mount.cifs.
+  * Add asynchronous share listing and remember SMB connection metadata only.
+  * Stop bookmarking temporary SMB mount points and register ROX-owned mounts.
+  * Serialize SMB mounts, raise the declared GLib/GIO floor to 2.70, and add
+    advanced mount options without storing credentials.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 20:12:30 -0300
+
+rox-filer2 (2.12.2-59) unstable; urgency=medium
+
+  * Serialize libsmbclient preflights without the non-exported thread symbol.
+  * Restrict SMB directory cleanup to ROX-Filer2-owned mount paths.
+  * Run destroyed-dialog orphan unmount cleanup outside the GTK main loop.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 20:12:00 -0300
+
+rox-filer2 (2.12.2-58) unstable; urgency=medium
+
+  * Serialize SMB worker child waits through rox_spawn_sync().
+  * Guard async SMB completion against dialogs destroyed with their parent.
+  * Initialize libsmbclient POSIX thread support before concurrent preflights.
+  * Scrub SMB job passwords and clean failed mount directory parents.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 20:00:00 -0300
+
+rox-filer2 (2.12.2-57) unstable; urgency=medium
+
+  * Fix libsmbclient context API usage so SMB-enabled builds link correctly.
+  * Run SMB validation and mount work outside the GTK main loop.
+  * Find mount helpers in system sbin paths and support non-root sudo fallback.
+  * Avoid duplicate SMB mounts and expose mounted CIFS shares in Partitions.
+  * Add SMB unmount and mount-point cleanup; harden credential handling.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 19:50:00 -0300
+
+rox-filer2 (2.12.2-56) unstable; urgency=medium
+
+  * Add experimental SMB share connection through local mount.cifs mounts.
+  * Keep the filer core POSIX-only and avoid a GVfs dependency.
+  * Make libsmbclient optional for pre-mount share validation.
+  * Translate the SMB connection UI in all maintained runtime languages.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 19:40:00 -0300
+
+rox-filer2 (2.12.2-55) unstable; urgency=medium
+
+  * Fix German catalogue metadata and ship its compiled runtime catalogue.
+  * Keep Debian changelog maintainer identity and timestamps consistent.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 01:00:00 -0300
+
+rox-filer2 (2.12.2-54) unstable; urgency=medium
+
+  * Polish ROX Desktop drop targets and Trash error handling.
+  * Add German to the complete maintained runtime catalogues.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 00:45:00 -0300
+
+rox-filer2 (2.12.2-53) unstable; urgency=medium
+
+  * Avoid duplicated size text on synthesized desktop drive labels.
+  * Make Trash a real desktop drop target through the existing trash backend.
+  * Highlight active folder and Trash drop targets and cache directory type.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Wed, 02 Sep 2026 00:30:00 -0300
+
+rox-filer2 (2.12.2-52) unstable; urgency=medium
+
+  * Make normal directory icons on the ROX desktop real DnD destinations.
+  * Keep empty-space drops targeting the desktop and reuse the existing ROX
+    Copy, Move and Link backend for folder-target drops.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 23:58:00 -0300
+
+rox-filer2 (2.12.2-51) unstable; urgency=medium
+
+  * Wrap the Debian changelog text to satisfy lintian line-length checks.
+  * Keep the 2.12.2-50 runtime unchanged.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 23:45:00 -0300
+
+rox-filer2 (2.12.2-50) unstable; urgency=medium
+
+  * Prevent duplicate DnD completion when dropping onto the ROX desktop.
+  * Show the Modern sidebar contents correctly on the first visible startup.
+  * Give Modern device names the full row width and move mount state to a
+    tooltip.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 23:20:00 -0300
+
+rox-filer2 (2.12.2-49) unstable; urgency=medium
+
+  * Reuse the normal ROX Copy, Move and Link DnD backend for desktop drops.
+  * Fix bookmark deletion, sorting and List view wheel scrolling.
+  * Add an opt-in, warned display of boot/system partitions while keeping them
+    hidden by default.
+  * Reduce full-desktop redraws during rubber-band selection.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 21:40:00 -0300
+
+rox-filer2 (2.12.2-48) unstable; urgency=medium
+
+  * Fix the Modern sidebar toggle so all sidebar children are shown again.
+  * Let Modern device labels consume the available sidebar width before
+    ellipsizing.
+  * Start Modern windows with focus in the file view instead of selecting the
+    complete path entry.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 19:50:00 -0300
+
+rox-filer2 (2.12.2-47) unstable; urgency=medium
+
+  * Replace the raw GPL copy in the binary package with a machine-readable
+    DEP-5 copyright file that records upstream and current authorship.
+  * Ship a valid Debian changelog instead of compressing the upstream
+    CHANGELOG under the Debian changelog name.
+  * Keep the Python file template non-executable in the source tree as well as
+    in the staged package.
+  * No file-manager runtime behaviour changed in this release.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 14:20:00 -0300
+
+rox-filer2 (2.12.2-46) unstable; urgency=medium
+
+  * Use ngettext for restored-item plural handling and validate maintained
+    translation catalogues during the release gate.
+  * Add Debian documentation, man pages, stripping and mandatory lintian
+    validation to the release process.
+  * Keep Debian packaging under /usr and generate shared-library dependencies
+    from the built binaries.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Tue, 01 Sep 2026 13:20:00 -0300

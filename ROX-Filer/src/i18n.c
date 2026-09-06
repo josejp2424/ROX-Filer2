@@ -61,6 +61,7 @@ void i18n_init(void)
 	gchar *path = g_strdup_printf("%s/Messages", app_dir);
 	bindtextdomain("ROX-Filer", path);
 	bind_textdomain_codeset("ROX-Filer", "UTF-8");
+	textdomain("ROX-Filer");
 	g_free(path);
 #endif
 

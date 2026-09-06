@@ -636,7 +636,7 @@ static void save_thumbnail(const char *pathname, GdkPixbuf *full)
 		g_free(final);
 	}
 
-	g_string_free(to, TRUE);
+	g_free(g_string_free(to, FALSE));
 	g_free(swidth);
 	g_free(sheight);
 	g_free(ssize);
@@ -666,8 +666,7 @@ static gchar *thumbnail_path(const char *path)
 	g_free(md5);
 	g_free(uri);
 
-	ans=to->str;
-	g_string_free(to, FALSE);
+	ans = g_string_free(to, FALSE);
 
 	return ans;
 }
@@ -1308,7 +1307,7 @@ static void purge_disk_cache(GtkWidget *button, gpointer data)
 	else if (removed == 0)
 		info_message(_("There are no thumbnails to delete"));
 
-	g_string_free(errors, TRUE);
+	g_free(g_string_free(errors, FALSE));
 	g_free(legacy_path);
 	g_free(path);
 }

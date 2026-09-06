@@ -43,7 +43,6 @@ case "$DISPLAY_VERSION" in
         ;;
 esac
 SKIP_COMPILE=0
-LEGACY_BUILD=0
 ARCH_PACKAGE_MODE=auto
 MESON_BUILD_DIR="${ROX_MESON_BUILD_DIR:-$PROJECT_ROOT/build}"
 ROX_BINARY=""
@@ -51,16 +50,15 @@ ROX_FIND_BINARY=""
 
 usage() {
     cat <<USAGE
-Usage: $0 [--skip-compile] [--legacy-build] [--arch-package] [--no-arch-package] [--clean]
+Usage: $0 [--skip-compile] [--arch-package] [--no-arch-package] [--clean]
 
   --skip-compile    Package an existing Meson or legacy Rox-Filer2 build.
-  --legacy-build    Use the historical AppRun/autoconf build instead of Meson.
   --arch-package    Force generation of an Arch Linux package with makepkg.
   --no-arch-package Disable automatic Arch Linux package generation.
   --clean           Remove generated package output and build directories.
 
-Without options, the script prefers Meson, falling back to the historical
-AppRun/autoconf build only when Meson is unavailable. It then creates:
+Meson + Ninja are required for release builds. The historical AppRun/autoconf
+build remains available for developers but is validated separately. It then creates:
   - a Debian .deb package when dpkg-deb is available;
   - the complete Debian package directory;
   - a portable root filesystem directory and tar.gz archive;
@@ -71,13 +69,15 @@ USAGE
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --skip-compile) SKIP_COMPILE=1 ;;
-        --legacy-build) LEGACY_BUILD=1 ;;
         --arch-package) ARCH_PACKAGE_MODE=force ;;
         --no-arch-package) ARCH_PACKAGE_MODE=off ;;
         --clean)
             rm -rf "$OUTPUT_DIR" "$APP_DIR/build" "$MESON_BUILD_DIR"
-            rm -f "$PROJECT_ROOT/rox-find/rox-find"
-            echo "Cleaned generated output."
+            rm -f \
+                "$APP_DIR/ROX-Filer" \
+                "$APP_DIR/ROX-Filer.dbg" \
+                "$PROJECT_ROOT/rox-find/rox-find"
+            echo "Cleaned generated output and in-tree binaries."
             exit 0
             ;;
         -h|--help) usage; exit 0 ;;
@@ -87,32 +87,39 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$SKIP_COMPILE" -eq 0 ]; then
-    if [ "$LEGACY_BUILD" -eq 0 ] && command -v meson >/dev/null 2>&1 && command -v ninja >/dev/null 2>&1; then
-        echo "Building Rox-Filer2 with Meson..." >&2
-        if [ -f "$MESON_BUILD_DIR/build.ninja" ]; then
-            meson setup --reconfigure --buildtype=release "$MESON_BUILD_DIR" "$PROJECT_ROOT"
-        else
-            meson setup --buildtype=release "$MESON_BUILD_DIR" "$PROJECT_ROOT"
-        fi
-        meson compile -C "$MESON_BUILD_DIR"
-        ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
-        ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
-    else
-        if [ "$LEGACY_BUILD" -eq 0 ]; then
-            echo "WARNING: Meson/Ninja unavailable; falling back to AppRun/autoconf." >&2
-        fi
-        "$APP_DIR/AppRun" --compile-only
-        ROX_BINARY="$APP_DIR/ROX-Filer"
-        ROX_FIND_BINARY="$PROJECT_ROOT/rox-find/rox-find"
-    fi
+    command -v msgfmt >/dev/null 2>&1 || { echo "ERROR: msgfmt/gettext is required." >&2; exit 1; }
+    command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is required for the PO format gate." >&2; exit 1; }
+    PO_FILES=""
+    for lang in ar ca de es fr hu it ja pt ru zh; do
+        po_file="$APP_DIR/src/po/$lang.po"
+        msgfmt -c "$po_file" -o /dev/null
+        PO_FILES="$PO_FILES $po_file"
+    done
+    # Validate every catalogue before touching the bundled runtime Messages.
+    # shellcheck disable=SC2086
+    python3 "$PROJECT_ROOT/check-po-formats.py" $PO_FILES
+    rm -rf "$APP_DIR/Messages"
+    mkdir -p "$APP_DIR/Messages"
+    for lang in ar ca de es fr hu it ja pt ru zh; do
+        (cd "$APP_DIR/src/po" && ./make-mo "$lang")
+    done
+    command -v meson >/dev/null 2>&1 || { echo "ERROR: Meson is required." >&2; exit 1; }
+    command -v ninja >/dev/null 2>&1 || { echo "ERROR: Ninja is required." >&2; exit 1; }
+    echo "Building Rox-Filer2 with Meson..." >&2
+    rm -rf "$MESON_BUILD_DIR"
+    # 2.12.2-82: hasta -81 se dejaba -Dsmb en "auto", de modo que el mismo
+    # arbol producia un .deb con o sin dependencia dura de libsmbclient0
+    # segun lo que tuviera instalado la maquina de compilacion.  Ahora la
+    # decision es explicita y reproducible.  Use ROX_SMB=disabled para
+    # generar un paquete sin Samba.
+    meson setup --buildtype=release "-Dsmb=${ROX_SMB:-enabled}" \
+        "$MESON_BUILD_DIR" "$PROJECT_ROOT"
+    meson compile -C "$MESON_BUILD_DIR"
+    ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
+    ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
 else
-    if [ "$LEGACY_BUILD" -eq 0 ] && [ -x "$MESON_BUILD_DIR/ROX-Filer" ] && [ -x "$MESON_BUILD_DIR/rox-find" ]; then
-        ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
-        ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
-    else
-        ROX_BINARY="$APP_DIR/ROX-Filer"
-        ROX_FIND_BINARY="$PROJECT_ROOT/rox-find/rox-find"
-    fi
+    ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
+    ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
 fi
 
 if [ ! -x "$ROX_BINARY" ]; then
@@ -125,7 +132,7 @@ if [ ! -x "$ROX_FIND_BINARY" ]; then
     exit 1
 fi
 
-if [ ! -d "$PACKAGE_BASE/usr/local/apps/Rox-Filer/ROX" ]; then
+if [ ! -d "$PROJECT_ROOT/package-assets/ROX" ]; then
     echo "ERROR: supplied ROX package directory is missing." >&2
     exit 1
 fi
@@ -161,29 +168,26 @@ chmod 0755 "$OUTPUT_DIR" "$PACKAGE_DIR"
 cp -a "$PACKAGE_BASE/." "$PACKAGE_DIR/"
 find "$PACKAGE_DIR" -type d -exec chmod u-s,g-s {} +
 
-# Build the installed ROX application from the freshly compiled source tree.
-# The user's supplied ROX directory is preserved exactly.
-SUPPLIED_ROX_TMP="$OUTPUT_DIR/.supplied-ROX.$$"
-rm -rf "$SUPPLIED_ROX_TMP"
-cp -a "$PACKAGE_BASE/usr/local/apps/Rox-Filer/ROX" "$SUPPLIED_ROX_TMP"
+# El AppDir empaquetado vive en /usr/lib/rox-filer2 y es propiedad de dpkg.
+APP_INSTALL_DIR="$PACKAGE_DIR/usr/lib/rox-filer2"
+rm -rf "$APP_INSTALL_DIR"
+mkdir -p "$APP_INSTALL_DIR"
+cp -a "$APP_DIR/." "$APP_INSTALL_DIR/"
+install -m0755 "$ROX_BINARY" "$APP_INSTALL_DIR/ROX-Filer"
+rm -f "$APP_INSTALL_DIR/ROX-Filer.dbg"
+rm -rf "$APP_INSTALL_DIR/ROX"
+cp -a "$PROJECT_ROOT/package-assets/ROX" "$APP_INSTALL_DIR/ROX"
 
-rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer" "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
-mkdir -p "$PACKAGE_DIR/usr/local/apps/Rox-Filer"
-cp -a "$APP_DIR/." "$PACKAGE_DIR/usr/local/apps/Rox-Filer/"
-# Always install the binary produced by the selected build system. This keeps
-# Debian/Puppy packaging on the exact same Meson-built executable used by
-# Arch/Fedora/Slackware users when Meson is available.
-install -m0755 "$ROX_BINARY" "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer"
-rm -f "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer.dbg"
-rm -rf "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
-cp -a "$SUPPLIED_ROX_TMP" "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX"
-rm -rf "$SUPPLIED_ROX_TMP"
-ln -s Rox-Filer "$PACKAGE_DIR/usr/local/apps/ROX-Filer"
+# This is a user file template, not a packaged executable. Preserve the useful
+# Python shebang in newly-created files without creating a runtime dependency.
+if [ -f "$APP_INSTALL_DIR/Templates/python3.py" ]; then
+    chmod 0644 "$APP_INSTALL_DIR/Templates/python3.py"
+fi
 
 # Runtime packages must not contain compiler output or C source files.
 rm -rf \
-    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/build" \
-    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/src"
+    "$APP_INSTALL_DIR/build" \
+    "$APP_INSTALL_DIR/src"
 
 # Install the official Rox-Filer2 application icon set supplied in
 # data/icons/hicolor.  Desktop files use Icon=rox-filer2 so GTK/icon themes
@@ -211,8 +215,14 @@ install -Dm0644 "$ROX_SCALABLE_ICON" \
 # ROX AppDir fallback used when the icon theme is unavailable.
 install -Dm0644 \
     "$ROX_ICON_ROOT/256x256/apps/rox-filer2.png" \
-    "$PACKAGE_DIR/usr/local/apps/Rox-Filer/ROX-Filer.png"
-ln -sfn ROX-Filer.png "$PACKAGE_DIR/usr/local/apps/Rox-Filer/.DirIcon"
+    "$APP_INSTALL_DIR/ROX-Filer.png"
+ln -sfn ROX-Filer.png "$APP_INSTALL_DIR/.DirIcon"
+
+# 2.12.2-82: hasta -81 el paquete instalaba enlaces en /usr/local/apps y el
+# lanzador en /usr/local/bin.  /usr/local esta reservado al administrador
+# local: lintian lo marcaba con cinco errores y el preinst llegaba a hacer
+# "rm -rf" sobre AppDirs reales que el usuario pudiera tener alli.  El
+# paquete ya no toca /usr/local en absoluto.
 
 # Legacy pixmaps fallbacks used by lightweight Puppy setups and old launchers.
 for legacy_name in rox-filer2.svg ROX-Filer.svg Rox-Filer2.svg; do
@@ -220,9 +230,27 @@ for legacy_name in rox-filer2.svg ROX-Filer.svg Rox-Filer2.svg; do
         "$PACKAGE_DIR/usr/share/pixmaps/$legacy_name"
 done
 
+# Install Puppy/ROX MIME SVG icons as ordinary dpkg-owned payload. SVG files
+# belong only in hicolor/scalable, never in fixed-size directories.
+for mime_icon in application-pet.svg application-x-sfs.svg application-x-squashfs-image.svg; do
+    install -Dm0644 "$PROJECT_ROOT/package-assets/ROX/MIME/$mime_icon" \
+        "$PACKAGE_DIR/usr/share/icons/hicolor/scalable/mimetypes/$mime_icon"
+done
+
+# 2.12.2-84: extend the shared MIME database so older Puppy and lightweight
+# distributions recognise .sfs/.squashfs/.sqfs as SquashFS images. ISO and
+# raw IMG globs are repeated intentionally for old shared-mime-info releases.
+install -Dm0644 "$PROJECT_ROOT/data/mime/rox-filer2-image-mounter.xml" \
+    "$PACKAGE_DIR/usr/share/mime/packages/rox-filer2-image-mounter.xml"
+
 # Install the native ROX File Search companion application.
 install -Dm0755 "$ROX_FIND_BINARY" \
     "$PACKAGE_DIR/usr/bin/rox-find"
+
+# Debian binary packages ship stripped runtime binaries. Keep this explicit so
+# Meson and legacy-built inputs are normalized to the same package policy.
+command -v strip >/dev/null 2>&1 || { echo "ERROR: strip/binutils is required." >&2; exit 1; }
+strip --strip-unneeded "$APP_INSTALL_DIR/ROX-Filer" "$PACKAGE_DIR/usr/bin/rox-find"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.desktop" \
     "$PACKAGE_DIR/usr/share/applications/rox-find.desktop"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.svg" \
@@ -241,17 +269,59 @@ fi
 mkdir -p "$PACKAGE_DIR/DEBIAN"
 chmod u-s,g-s "$PACKAGE_DIR/DEBIAN"
 chmod 0755 "$PACKAGE_DIR/DEBIAN"
+cp -a "$PROJECT_ROOT/DEBIAN/preinst" "$PACKAGE_DIR/DEBIAN/preinst"
 cp -a "$PROJECT_ROOT/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postinst"
 cp -a "$PROJECT_ROOT/DEBIAN/postrm" "$PACKAGE_DIR/DEBIAN/postrm"
-chmod 0755 "$PACKAGE_DIR/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postrm"
+chmod 0755 "$PACKAGE_DIR/DEBIAN/preinst" "$PACKAGE_DIR/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postrm"
 find "$PACKAGE_DIR/usr/share/applications" -type f -name '*.desktop' -exec chmod 0644 {} + 2>/dev/null || true
 find "$PACKAGE_DIR/usr/share/pixmaps" -type f -exec chmod 0644 {} + 2>/dev/null || true
 
+# Debian Policy documentation: license/copyright and changelog are part of the
+# package payload and therefore tracked by dpkg.
+install -Dm0644 "$PROJECT_ROOT/data/debian/copyright" \
+    "$PACKAGE_DIR/usr/share/doc/$PACKAGE_NAME/copyright"
+install -Dm0644 "$PROJECT_ROOT/data/debian/changelog.Debian" \
+    "$PACKAGE_DIR/usr/share/doc/$PACKAGE_NAME/changelog.Debian"
+gzip -n -9 "$PACKAGE_DIR/usr/share/doc/$PACKAGE_NAME/changelog.Debian"
+
+# Manual pages for every installed command name. Wrapper aliases share the
+# main Rox-Filer2 page; rox-find has its own page.
+install -Dm0644 "$PROJECT_ROOT/data/man/rox.1" \
+    "$PACKAGE_DIR/usr/share/man/man1/rox.1"
+install -Dm0644 "$PROJECT_ROOT/data/man/rox-find.1" \
+    "$PACKAGE_DIR/usr/share/man/man1/rox-find.1"
+gzip -n -9 "$PACKAGE_DIR/usr/share/man/man1/rox.1" \
+    "$PACKAGE_DIR/usr/share/man/man1/rox-find.1"
+for alias in roxfiler Rox-Filer2 ROX-Filer rox-wayland rox-x11; do
+    ln -sfn rox.1.gz "$PACKAGE_DIR/usr/share/man/man1/$alias.1.gz"
+done
+
 INSTALLED_SIZE=$(du -sk "$PACKAGE_DIR/usr" | awk '{print $1}')
+if ! command -v dpkg-shlibdeps >/dev/null 2>&1; then
+    echo "ERROR: dpkg-shlibdeps is required for Debian dependency generation." >&2
+    exit 1
+fi
+TMP_DEBIAN_DIR="$PROJECT_ROOT/debian"
+mkdir -p "$TMP_DEBIAN_DIR"
+cat > "$TMP_DEBIAN_DIR/control" <<EOF
+Source: rox-filer2
+Section: utils
+Priority: optional
+Maintainer: josejp2424 <puppylinuxjosejp2424@gmail.com>
+Standards-Version: 4.6.2
+
+Package: rox-filer2
+Architecture: any
+Description: Rox-Filer2
+EOF
+SHLIBS_DEPENDS=$(cd "$PROJECT_ROOT" && dpkg-shlibdeps -O "$APP_INSTALL_DIR/ROX-Filer" "$PACKAGE_DIR/usr/bin/rox-find" | sed -n 's/^shlibs:Depends=//p')
+rm -rf "$TMP_DEBIAN_DIR"
+[ -n "$SHLIBS_DEPENDS" ] || { echo "ERROR: dpkg-shlibdeps returned no dependencies." >&2; exit 1; }
 sed \
     -e "s/@VERSION@/$DEB_VERSION/g" \
     -e "s/@ARCH@/$ARCH/g" \
     -e "s/@INSTALLED_SIZE@/$INSTALLED_SIZE/g" \
+    -e "s/@SHLIBS_DEPENDS@/$SHLIBS_DEPENDS/g" \
     "$PACKAGE_BASE/DEBIAN/control.in" > "$PACKAGE_DIR/DEBIAN/control"
 chmod 0644 "$PACKAGE_DIR/DEBIAN/control"
 rm -f "$PACKAGE_DIR/DEBIAN/control.in"
@@ -384,18 +454,6 @@ sha256sums=('$ARCH_SOURCE_SHA256')
 package() {
     cp -a "\$srcdir/$ARCH_PORTABLE_BASENAME/usr" "\$pkgdir/"
 
-    # Debian's maintainer script installs these bundled Puppy MIME icons.
-    # Add them directly to the Arch package so both package formats expose
-    # the same runtime icon set without relying on a Debian postinst.
-    local icon size source_dir
-    source_dir="\$pkgdir/usr/local/apps/Rox-Filer/ROX/MIME"
-    for size in 48x48 24x24 scalable 16x16; do
-        install -d "\$pkgdir/usr/share/icons/hicolor/\$size/mimetypes"
-        for icon in application-pet.svg application-x-sfs.svg application-x-squashfs-image.svg; do
-            install -m0644 "\$source_dir/\$icon" \
-                "\$pkgdir/usr/share/icons/hicolor/\$size/mimetypes/\$icon"
-        done
-    done
 }
 ARCHPKG
 

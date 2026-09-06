@@ -27,6 +27,9 @@
 #include "config.h"
 
 #include <string.h>
+#if defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H)
+#include <sys/statvfs.h>
+#endif
 
 #include "global.h"
 
@@ -37,7 +40,9 @@
 #include "menu.h"
 #include "dnd.h"
 #include "drives.h"
+#include "smb.h"
 #include "filer.h"
+#include "modern_ui.h"
 #include "display.h"
 #include "pixmaps.h"
 #include "bind.h"
@@ -116,6 +121,7 @@ static void toolbar_new_show_menu(GtkMenuToolButton *button,
 static void toolbar_search_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_preferences_clicked(GtkWidget *widget, FilerWindow *filer_window);
+static void toolbar_network_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
 				FilerWindow *filer_window);
 static Tool *toolbar_find_tool(const gchar *name);
@@ -312,6 +318,23 @@ void toolbar_update_info(FilerWindow *filer_window)
 			label = g_strdup_printf(_("No items%s"),
 					s ? s : "");
 		g_free(s);
+
+#if defined(HAVE_STATVFS) && defined(HAVE_SYS_STATVFS_H)
+		/* The Modern reference status bar shows the filesystem free space next
+		 * to the item count. Classic keeps its original compact status text. */
+		if (filer_window->modern_mode && filer_window->sym_path)
+		{
+			struct statvfs st;
+			if (statvfs(filer_window->sym_path, &st) == 0)
+			{
+				double free_bytes = (double) st.f_bavail * (double) st.f_frsize;
+				gchar *old_label = label;
+				label = g_strdup_printf("%s   |   %s: %s", old_label,
+					_("Free space"), format_double_size(free_bytes));
+				g_free(old_label);
+			}
+		}
+#endif
 	}
 	else
 	{
@@ -343,6 +366,15 @@ void toolbar_update_info(FilerWindow *filer_window)
 void toolbar_update_toolbar(FilerWindow *filer_window)
 {
 	g_return_if_fail(filer_window != NULL);
+
+	/* Modern has a separate window chrome; toolbar option changes must never
+	 * inject the Classic toolbar into a Modern window. */
+	if (filer_window->modern_mode)
+	{
+		toolbar_update_info(filer_window);
+		modern_ui_update_navigation(filer_window);
+		return;
+	}
 
 	if (filer_window->toolbar)
 	{
@@ -379,6 +411,7 @@ void toolbar_update_navigation(FilerWindow *filer_window)
 	if (filer_window->toolbar_forward)
 		gtk_widget_set_sensitive(filer_window->toolbar_forward,
 			filer_history_can_forward(filer_window));
+	modern_ui_update_navigation(filer_window);
 }
 
 /****************************************************************
@@ -766,6 +799,13 @@ static GPtrArray *toolbar_ordered_tools(void)
 	return ordered;
 }
 
+static void toolbar_network_clicked(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	if (filer_window)
+		rox_smb_open_dialog(filer_window);
+}
+
 /* If filer_window is NULL, the toolbar is for the options window */
 static GtkWidget *create_toolbar(FilerWindow *filer_window)
 {
@@ -794,23 +834,33 @@ static GtkWidget *create_toolbar(FilerWindow *filer_window)
 
 	width=0;
 
-	/* Partitions is permanent and always occupies the first toolbar position.
-	 * It is represented as a fixed row in Options, but it cannot be hidden or
-	 * reordered.  All regular tools follow in the user's chosen order. */
+	/* Partitions and Network are permanent integration actions at the far left.
+	 * They cannot be hidden or reordered; regular tools follow in the user's
+	 * chosen order. */
 	if (filer_window)
 	{
 		GtkToolItem *drive_item = drives_toolbar_button_new(filer_window);
+		GtkWidget *network_image = image_new_icon("network-server", GTK_ICON_SIZE_LARGE_TOOLBAR);
+		GtkToolItem *network_item = gtk_tool_button_new(network_image, _("Network"));
 		GtkToolItem *separator = gtk_separator_tool_item_new();
-		GtkRequisition drive_req;
+		GtkRequisition req;
 
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), drive_item, -1);
 		toolbar_compact_tool_item(drive_item);
-		gtk_separator_tool_item_set_draw(
-			GTK_SEPARATOR_TOOL_ITEM(separator), TRUE);
+		gtk_widget_get_preferred_size(GTK_WIDGET(drive_item), NULL, &req);
+		width += req.width;
+
+		gtk_tool_item_set_is_important(network_item, TRUE);
+		gtk_tool_item_set_homogeneous(network_item, FALSE);
+		gtk_tool_item_set_tooltip_text(network_item, _("Connect to SMB Share..."));
+		g_signal_connect(network_item, "clicked", G_CALLBACK(toolbar_network_clicked), filer_window);
+		gtk_toolbar_insert(GTK_TOOLBAR(bar), network_item, -1);
+		toolbar_compact_tool_item(network_item);
+		gtk_widget_get_preferred_size(GTK_WIDGET(network_item), NULL, &req);
+		width += req.width;
+
+		gtk_separator_tool_item_set_draw(GTK_SEPARATOR_TOOL_ITEM(separator), TRUE);
 		gtk_toolbar_insert(GTK_TOOLBAR(bar), separator, -1);
-		gtk_widget_get_preferred_size(GTK_WIDGET(drive_item), NULL,
-			&drive_req);
-		width += drive_req.width;
 	}
 
 	ordered_tools = toolbar_ordered_tools();

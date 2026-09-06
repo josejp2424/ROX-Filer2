@@ -1,59 +1,13 @@
 #!/bin/sh
 set -e
-
-SOURCE_DIR="/usr/local/apps/Rox-Filer/ROX/MIME"
-HICOLOR_DIR="/usr/share/icons/hicolor"
-
-ICONS="
-application-pet.svg
-application-x-sfs.svg
-application-x-squashfs-image.svg
-"
-
-SIZES="
-48x48
-24x24
-scalable
-16x16
-"
-
 case "${1:-configure}" in
-    configure|abort-upgrade|abort-remove|abort-deconfigure)
-        ;;
-    *)
-        exit 0
-        ;;
+  configure|abort-upgrade|abort-remove|abort-deconfigure) ;;
+  *) exit 0 ;;
 esac
 
-# Some Puppy/Devuan installations do not create the mimetypes directories.
-for size in $SIZES; do
-    mkdir -p "$HICOLOR_DIR/$size/mimetypes"
-done
-
-# Copy the bundled SVG MIME icons to every requested hicolor directory.
-for icon in $ICONS; do
-    source_file="$SOURCE_DIR/$icon"
-
-    if [ ! -f "$source_file" ]; then
-        echo "Rox-Filer2 postinst: required icon not found: $source_file" >&2
-        exit 1
-    fi
-
-    for size in $SIZES; do
-        install -m 0644 \
-            "$source_file" \
-            "$HICOLOR_DIR/$size/mimetypes/$icon"
-    done
-done
-
-# Refresh the icon cache when the tool is available.
-if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-    gtk-update-icon-cache -f -t "$HICOLOR_DIR" >/dev/null 2>&1 || true
-fi
-
-# Refresh menu launchers after installing the automatic X11/Wayland selector.
-if command -v update-desktop-database >/dev/null 2>&1; then
-    update-desktop-database /usr/share/applications >/dev/null 2>&1 || true
-fi
-
+# 2.12.2-82: sin enlaces en /usr/local.  El lanzador es /usr/bin/roxfiler y
+# rox, ROX-Filer y Rox-Filer2 son alias suyos, todos propiedad de dpkg.
+command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database /usr/share/applications >/dev/null 2>&1 || true
+command -v update-mime-database >/dev/null 2>&1 && update-mime-database /usr/share/mime >/dev/null 2>&1 || true
 exit 0

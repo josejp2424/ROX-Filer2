@@ -283,7 +283,7 @@ static void update_model(GtkListStore *list, regex_t *replace, const char *with)
 				gtk_list_store_set(list, &iter, 1, new->str, -1);
 			}
 
-			g_string_free(new, TRUE);
+			g_free(g_string_free(new, FALSE));
 		}
 		g_free(old);
 
@@ -547,7 +547,7 @@ static void test_subst(const char *string, const char *pattern, const char *with
 		//g_print("Got: %s\n", new->str);
 		g_return_if_fail(expected != NULL);
 		g_return_if_fail(strcmp(new->str, expected) == 0);
-		g_string_free(new, TRUE);
+		g_free(g_string_free(new, FALSE));
 	}
 
 	regfree(&compiled);

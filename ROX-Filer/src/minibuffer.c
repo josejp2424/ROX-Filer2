@@ -813,7 +813,7 @@ static void shell_tab(FilerWindow *filer_window)
 		globfree(&matches);
 	}
 
-	g_string_free(leaf, TRUE);
+	g_free(g_string_free(leaf, FALSE));
 }
 
 static void run_child(gpointer unused)

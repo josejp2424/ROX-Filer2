@@ -87,6 +87,7 @@
 #include "search_integration.h"
 #include "xdg_apps.h"
 #include "custom_actions.h"
+#include "interface_style.h"
 
 int number_of_windows = 0;	/* Quit when this reaches 0 again... */
 int to_wakeup_pipe = -1;	/* Write here to get noticed */
@@ -185,6 +186,8 @@ static struct option long_opts[] =
 	{"config-rox", 0, NULL, 1007},
 	{"desktop-drive-icon-layout", 0, NULL, 1008},
 	{"desktop-drive_icon_layout", 0, NULL, 1008},
+	{"classic", 0, NULL, 1009},
+	{"modern", 0, NULL, 1010},
 	{"debug", 0, NULL, 1200},
 	{"log-file", 1, NULL, 1201},
 	{"log-level", 1, NULL, 1202},
@@ -238,10 +241,12 @@ static GHashTable *death_status_callbacks = NULL;
  * child_died_callback(), producing GLib ECHILD warnings. */
 static GMutex child_reap_mutex;
 static gboolean child_died_flag = FALSE;
+static guint child_reap_retry_source = 0;
 
 Option o_dnd_no_hostnames;
 
 /* Static prototypes */
+static void child_died_callback(void);
 static void show_features(void);
 static void print_help_text(void);
 static void soap_add(xmlNodePtr body,
@@ -461,6 +466,7 @@ int main(int argc, char **argv)
 	 */
 	choices_init();
 	options_init();
+	interface_style_init();
 	i18n_init();
 	xattr_init();
 
@@ -480,7 +486,11 @@ int main(int argc, char **argv)
 	else if (ngroups > 0)
 	{
 		supplemental_groups = g_malloc(sizeof(gid_t) * ngroups);
-		getgroups(ngroups, supplemental_groups);
+		if (getgroups(ngroups, supplemental_groups) < 0) {
+			g_free(supplemental_groups);
+			supplemental_groups = NULL;
+			ngroups = 0;
+		}
 	}
 
 	if (argc == 2 &&
@@ -588,6 +598,17 @@ int main(int argc, char **argv)
 				break;
 			case 1008:
 				desktop_tool = DESKTOP_TOOL_DRIVE_ICON_LAYOUT;
+				new_copy = TRUE;
+				break;
+			case 1009:
+				/* Temporary interface preview: do not alter the saved Option.
+				 * A separate filer process guarantees the requested style even
+				 * when another Rox-Filer2 instance is already servicing RPCs. */
+				interface_style_set_command_override(ROX_INTERFACE_CLASSIC);
+				new_copy = TRUE;
+				break;
+			case 1010:
+				interface_style_set_command_override(ROX_INTERFACE_MODERN);
 				new_copy = TRUE;
 				break;
 			case 1200: /* --debug: configured before gtk_init */
@@ -904,7 +925,10 @@ int main(int argc, char **argv)
 	 * we send a char down this pipe, which causes the main loop to
 	 * deal with the event next time we're idle.
 	 */
-	pipe(wakeup_pipe);
+	if (pipe(wakeup_pipe) != 0) {
+		g_printerr("Rox-Filer2: unable to create child wakeup pipe: %s\n", g_strerror(errno));
+		return EXIT_FAILURE;
+	}
 	close_on_exec(wakeup_pipe[0], TRUE);
 	close_on_exec(wakeup_pipe[1], TRUE);
 	rox_input_add_full(wakeup_pipe[0], ROX_INPUT_READ, wake_up_cb,
@@ -1008,6 +1032,11 @@ void rox_child_reap_lock(void)
 	g_mutex_lock(&child_reap_mutex);
 }
 
+gboolean rox_child_reap_trylock(void)
+{
+	return g_mutex_trylock(&child_reap_mutex);
+}
+
 void rox_child_reap_unlock(void)
 {
 	g_mutex_unlock(&child_reap_mutex);
@@ -1073,7 +1102,14 @@ static void print_help_text(void)
 
 	prefix = g_strndup(formatted, (line_end + 1) - formatted);
 	g_print("%s", prefix);
-	g_print("\n%s\n", _("Launchers:"));
+	g_print("\n%s\n", _("Interface:"));
+	g_print("      --classic\t\t%s\n",
+		_("open this invocation with the Classic ROX interface"));
+	g_print("      --modern\t\t%s\n",
+		_("open this invocation with the Modern interface"));
+	g_print("      --classic / --modern\t%s\n\n",
+		_("do not change the interface saved in Options"));
+	g_print("%s\n", _("Launchers:"));
 	g_print("      rox\t\t%s\n", _("automatically select X11 or Wayland"));
 	g_print("      rox-x11\t\t%s\n", _("force the X11 backend"));
 	g_print("      rox-wayland\t%s\n\n", _("force the native Wayland backend"));
@@ -1190,7 +1226,19 @@ static void soap_reply(xmlDocPtr reply, gboolean rpc_mode)
 static void child_died(int signum)
 {
 	child_died_flag = TRUE;
-	write(to_wakeup_pipe, "\0", 1);	/* Wake up! */
+	if (to_wakeup_pipe >= 0) {
+		ssize_t ignored = write(to_wakeup_pipe, "\0", 1);
+		(void)ignored; /* non-blocking wakeup is best effort */
+	}
+}
+
+static gboolean child_reap_retry_cb(gpointer data)
+{
+	(void) data;
+	child_reap_retry_source = 0;
+	if (child_died_flag)
+		child_died_callback();
+	return G_SOURCE_REMOVE;
 }
 
 static void child_died_callback(void)
@@ -1211,7 +1259,17 @@ static void child_died_callback(void)
 		gpointer callback_data = NULL;
 		gpointer status_callback_data = NULL;
 
-		rox_child_reap_lock();
+		/* A worker may be synchronously waiting for one specific child. Do not
+		 * block the GTK main loop behind that wait; retry the legacy reap a
+		 * little later instead. */
+		if (!rox_child_reap_trylock())
+		{
+			child_died_flag = TRUE;
+			if (!child_reap_retry_source)
+				child_reap_retry_source = g_timeout_add(50,
+					child_reap_retry_cb, NULL);
+			return;
+		}
 		child = waitpid(-1, &status, WNOHANG);
 		if (child > 0)
 		{
@@ -1253,7 +1311,10 @@ static void wake_up_cb(gpointer data, gint source, RoxInputCondition condition)
 {
 	char buf[BUFLEN];
 
-	read(source, buf, BUFLEN);
+	/* 2.12.2-82: solo se vacia el pipe de despertar; el contenido no
+	 * importa, pero el retorno no debe descartarse en silencio. */
+	if (read(source, buf, BUFLEN) < 0 && errno != EAGAIN && errno != EINTR)
+		g_debug("signal pipe read failed: %s", g_strerror(errno));
 
 	if (child_died_flag)
 		child_died_callback();
