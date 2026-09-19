@@ -11,7 +11,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-89\n"
+"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -4422,8 +4422,8 @@ msgstr ""
 "%s"
 
 #: smb.c:809
-msgid "This build has no libsmbclient support."
-msgstr "Эта сборка не поддерживает libsmbclient."
+msgid "libsmbclient is not available on this system."
+msgstr "libsmbclient недоступна в этой системе."
 
 #: smb.c:832
 #, c-format
@@ -5633,6 +5633,14 @@ msgstr "Начинать перемещение без дополнительн�
 #: tips:143 Options.xml.h:137
 msgid "Start link operations without an extra confirmation"
 msgstr "Начинать создание ссылок без дополнительного подтверждения"
+
+#: Options.xml.h:138
+msgid "Confirm before moving files to Trash"
+msgstr "Подтверждать перед перемещением файлов в корзину"
+
+#: Options.xml.h:139
+msgid "Confirm before permanently deleting files"
+msgstr "Подтверждать перед безвозвратным удалением файлов"
 
 #: tips:144 Options.xml.h:138
 msgid "Start permanent deletion without an extra confirmation"
@@ -7807,3 +7815,196 @@ msgstr "Не удалось открыть ресурс SMB «%s»: %s"
 
 msgid "This network resource is currently inaccessible."
 msgstr "Этот сетевой ресурс сейчас недоступен."
+
+#: drives.c modern_ui.c
+msgid "Mounted Images"
+msgstr "Подключённые образы"
+
+#: drives.c modern_ui.c
+msgid "Portable Devices"
+msgstr "Портативные устройства"
+
+#: drives.c
+msgid "MTP device"
+msgstr "Устройство MTP"
+
+#: drives.c
+msgid "iPhone / iPad"
+msgstr "iPhone / iPad"
+
+#: samba_share.c menu.c
+msgid "Command failed."
+msgstr "Не удалось выполнить команду."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Command failed with exit status %d."
+msgstr "Команда завершилась с кодом %d."
+
+
+#: samba_share.c menu.c
+msgid "The 'net' command was not found. Install Samba's command-line tools."
+msgstr "Команда «net» не найдена. Установите инструменты командной строки Samba."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Unable to read Samba usershares: %s"
+msgstr "Не удалось прочитать пользовательские ресурсы Samba: %s"
+
+
+#: samba_share.c menu.c
+msgid "Invalid output from Samba."
+msgstr "Недопустимый вывод Samba."
+
+
+#: samba_share.c menu.c
+msgid "Unable to update the Samba share."
+msgstr "Не удалось обновить общий ресурс Samba."
+
+
+#: samba_share.c menu.c
+msgid "Rox-Filer2 needs to add filesystem permissions to this folder before it can be shared. Continue?"
+msgstr "Rox-Filer2 должен добавить права файловой системы для этой папки, прежде чем её можно будет открыть для общего доступа. Продолжить?"
+
+
+#: samba_share.c menu.c
+msgid "These permissions are not removed automatically when you stop sharing the folder."
+msgstr "Эти права не удаляются автоматически после прекращения общего доступа к папке."
+
+
+#: samba_share.c menu.c
+msgid "Unable to change folder permissions."
+msgstr "Не удалось изменить права папки."
+
+
+#: samba_share.c menu.c
+msgid "Samba usershare support is not available."
+msgstr "Поддержка пользовательских ресурсов Samba недоступна."
+
+
+#: samba_share.c menu.c
+msgid "You are not the owner of this folder."
+msgstr "Вы не являетесь владельцем этой папки."
+
+
+#: samba_share.c menu.c
+msgid "Folder Sharing"
+msgstr "Общий доступ к папке"
+
+
+#: samba_share.c menu.c
+msgid "Share this folder"
+msgstr "Разрешить общий доступ к этой папке"
+
+
+#: samba_share.c menu.c
+msgid "Share name:"
+msgstr "Имя ресурса:"
+
+
+#: samba_share.c menu.c
+msgid "Comment:"
+msgstr "Комментарий:"
+
+
+#: samba_share.c menu.c
+msgid "Allow others to create and delete files in this folder"
+msgstr "Разрешить другим создавать и удалять файлы в этой папке"
+
+
+#: samba_share.c menu.c
+msgid "Guest access"
+msgstr "Гостевой доступ"
+
+
+#: samba_share.c menu.c
+msgid "Guest access is disabled by the Samba configuration."
+msgstr "Гостевой доступ отключён конфигурацией Samba."
+
+
+#: samba_share.c menu.c
+msgid "Share name cannot be empty."
+msgstr "Имя общего ресурса не может быть пустым."
+
+
+#: samba_share.c menu.c
+msgid "Share name contains an invalid character."
+msgstr "Имя общего ресурса содержит недопустимый символ."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Another share already uses the name '%s'."
+msgstr "Другой общий ресурс уже использует имя «%s»."
+
+
+#: samba_share.c menu.c
+msgid "Share Folder..."
+msgstr "Открыть общий доступ к папке..."
+
+
+#: Options.xml.h
+msgid "New Rox-Filer2 instances:"
+msgstr "Новые экземпляры Rox-Filer2:"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Samba"
+msgstr "Samba"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders..."
+msgstr "Общие папки..."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders"
+msgstr "Общие папки"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Guest"
+msgstr "Гость"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "_Edit"
+msgstr "_Изменить"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop Sharing"
+msgstr "Прекратить общий доступ"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop sharing '%s'?"
+msgstr "Прекратить общий доступ к «%s»?"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "No folders are currently shared."
+msgstr "Сейчас нет общих папок."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Comment contains an invalid character."
+msgstr "Комментарий содержит недопустимый символ."
+
+#: Options.xml.h
+msgid "Drives"
+msgstr "Накопители"
+
+#: Options.xml.h
+msgid "Automatic mounting"
+msgstr "Автоматическое монтирование"
+
+#: Options.xml.h
+msgid "Mount local drives automatically at startup"
+msgstr "Автоматически монтировать локальные накопители при запуске"
+
+#: Options.xml.h
+msgid "Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically."
+msgstr "Автоматически монтирует доступные разделы локальных дисков при запуске Rox-Filer2. Сетевые ресурсы, телефоны, камеры, подключённые образы, оптические носители, зашифрованные контейнеры и системные разделы автоматически не монтируются."
+
+#: Options.xml.h
+msgid "Include removable drives"
+msgstr "Включать съёмные накопители"
+
+#: Options.xml.h
+msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
+msgstr "Также включает съёмные USB-, SD- и аналогичные накопители, если включено автоматическое монтирование при запуске."

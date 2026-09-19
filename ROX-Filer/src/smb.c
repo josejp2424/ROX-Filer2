@@ -18,12 +18,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef HAVE_DLFCN_H
+#include <dlfcn.h>
+#endif
+
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
 
-#ifdef HAVE_LIBSMBCLIENT
-#include <libsmbclient.h>
-#endif
 
 #include "global.h"
 #include "filer.h"
@@ -331,7 +332,47 @@ static gboolean smb_write_credentials(const gchar *user, const gchar *domain,
     return TRUE;
 }
 
-#ifdef HAVE_LIBSMBCLIENT
+/*
+ * libsmbclient is a runtime enhancement, not a hard loader dependency.
+ *
+ * Keep the small public ABI surface used here locally and resolve it with
+ * dlopen()/dlsym().  This is intentional: a Rox-Filer2 binary built on a
+ * machine with Samba installed must still start normally on a machine where
+ * libsmbclient.so.0 is absent.  mount.cifs remains independent and can still
+ * mount a share without the browsing/diagnostic helper.
+ */
+typedef struct _SMBCCTX SMBCCTX;
+typedef struct _SMBCFILE SMBCFILE;
+
+struct smbc_dirent {
+    unsigned int smbc_type;
+    unsigned int dirlen;
+    unsigned int commentlen;
+    char *comment;
+    unsigned int namelen;
+    char name[1];
+};
+
+#define SMBC_FILE_SHARE 3
+
+typedef void (*SmbcAuthFn)(SMBCCTX *ctx, const char *server,
+        const char *share, char *workgroup, int wglen,
+        char *username, int unlen, char *password, int pwlen);
+typedef SMBCFILE *(*SmbcOpendirFn)(SMBCCTX *ctx, const char *url);
+typedef int (*SmbcClosedirFn)(SMBCCTX *ctx, SMBCFILE *dir);
+typedef struct smbc_dirent *(*SmbcReaddirFn)(SMBCCTX *ctx, SMBCFILE *dir);
+
+typedef struct {
+    void *handle;
+    SMBCCTX *(*new_context)(void);
+    SMBCCTX *(*init_context)(SMBCCTX *ctx);
+    int (*free_context)(SMBCCTX *ctx, int shutdown_ctx);
+    void (*set_auth)(SMBCCTX *ctx, SmbcAuthFn fn);
+    SmbcOpendirFn (*get_opendir)(SMBCCTX *ctx);
+    SmbcClosedirFn (*get_closedir)(SMBCCTX *ctx);
+    SmbcReaddirFn (*get_readdir)(SMBCCTX *ctx);
+} SmbClientApi;
+
 typedef struct {
     const gchar *user;
     const gchar *domain;
@@ -339,6 +380,9 @@ typedef struct {
 } SmbAuth;
 
 static GPrivate smb_auth_private = G_PRIVATE_INIT(NULL);
+static GMutex smbclient_mutex;
+static gsize smbclient_api_once = 0;
+static SmbClientApi smbclient_api;
 
 static void smb_auth_cb(SMBCCTX *ctx, const char *server, const char *share,
         char *workgroup, int wglen, char *username, int unlen,
@@ -354,42 +398,102 @@ static void smb_auth_cb(SMBCCTX *ctx, const char *server, const char *share,
     g_strlcpy(password, auth->password ? auth->password : "", pwlen);
 }
 
-static GMutex smbclient_mutex;
+static SmbClientApi *smbclient_api_get(void)
+{
+    if (g_once_init_enter(&smbclient_api_once)) {
+#ifdef HAVE_DLFCN_H
+        static const gchar *candidates[] = {
+            "libsmbclient.so.0",
+            "libsmbclient.so",
+            NULL
+        };
+        void *handle = NULL;
+        gint i;
+
+        memset(&smbclient_api, 0, sizeof(smbclient_api));
+        for (i = 0; candidates[i] && !handle; i++)
+            handle = dlopen(candidates[i], RTLD_LAZY | RTLD_LOCAL);
+
+        if (handle) {
+            smbclient_api.new_context = (SMBCCTX *(*)(void))
+                    dlsym(handle, "smbc_new_context");
+            smbclient_api.init_context = (SMBCCTX *(*)(SMBCCTX *))
+                    dlsym(handle, "smbc_init_context");
+            smbclient_api.free_context = (int (*)(SMBCCTX *, int))
+                    dlsym(handle, "smbc_free_context");
+            smbclient_api.set_auth = (void (*)(SMBCCTX *, SmbcAuthFn))
+                    dlsym(handle, "smbc_setFunctionAuthDataWithContext");
+            smbclient_api.get_opendir = (SmbcOpendirFn (*)(SMBCCTX *))
+                    dlsym(handle, "smbc_getFunctionOpendir");
+            smbclient_api.get_closedir = (SmbcClosedirFn (*)(SMBCCTX *))
+                    dlsym(handle, "smbc_getFunctionClosedir");
+            smbclient_api.get_readdir = (SmbcReaddirFn (*)(SMBCCTX *))
+                    dlsym(handle, "smbc_getFunctionReaddir");
+
+            if (!smbclient_api.new_context || !smbclient_api.init_context ||
+                    !smbclient_api.free_context || !smbclient_api.set_auth ||
+                    !smbclient_api.get_opendir || !smbclient_api.get_closedir ||
+                    !smbclient_api.get_readdir) {
+                dlclose(handle);
+                memset(&smbclient_api, 0, sizeof(smbclient_api));
+            } else {
+                /* Keep the library loaded for the lifetime of Rox-Filer2. */
+                smbclient_api.handle = handle;
+            }
+        }
+#endif
+        g_once_init_leave(&smbclient_api_once, 1);
+    }
+
+    return smbclient_api.handle ? &smbclient_api : NULL;
+}
 
 static gboolean smb_preflight(const gchar *url, const gchar *user,
         const gchar *domain, const gchar *password, gchar **error_text)
 {
+    SmbClientApi *api = smbclient_api_get();
     SMBCCTX *ctx = NULL;
     SMBCFILE *dh = NULL;
-    smbc_opendir_fn opendir_fn;
-    smbc_closedir_fn closedir_fn;
+    SmbcOpendirFn opendir_fn = NULL;
+    SmbcClosedirFn closedir_fn = NULL;
     SmbAuth auth = { user, domain, password };
     gboolean ok = FALSE;
 
-    /* libsmbclient does not export smbc_thread_posix() in supported Samba
-     * ABIs. Serialize preflights instead; this is sufficient because the
-     * connector never needs concurrent directory probes. */
+    if (error_text)
+        *error_text = NULL;
+    if (!api) {
+        if (error_text)
+            *error_text = g_strdup(_("libsmbclient is not available on this system."));
+        return FALSE;
+    }
+
+    /* Serialize libsmbclient contexts; the connector never needs concurrent
+     * directory probes and some Samba versions share process-global state. */
     g_mutex_lock(&smbclient_mutex);
-    ctx = smbc_new_context();
+    ctx = api->new_context();
     if (!ctx) {
-        *error_text = g_strdup("libsmbclient: smbc_new_context failed");
+        if (error_text)
+            *error_text = g_strdup("libsmbclient: smbc_new_context failed");
         goto out;
     }
     g_private_set(&smb_auth_private, &auth);
-    smbc_setFunctionAuthDataWithContext(ctx, smb_auth_cb);
-    if (!smbc_init_context(ctx)) {
-        *error_text = g_strdup("libsmbclient: smbc_init_context failed");
+    api->set_auth(ctx, smb_auth_cb);
+    if (!api->init_context(ctx)) {
+        if (error_text)
+            *error_text = g_strdup("libsmbclient: smbc_init_context failed");
         goto out;
     }
-    opendir_fn = smbc_getFunctionOpendir(ctx);
-    closedir_fn = smbc_getFunctionClosedir(ctx);
+    opendir_fn = api->get_opendir(ctx);
+    closedir_fn = api->get_closedir(ctx);
     if (!opendir_fn || !closedir_fn) {
-        *error_text = g_strdup("libsmbclient: directory API unavailable");
+        if (error_text)
+            *error_text = g_strdup("libsmbclient: directory API unavailable");
         goto out;
     }
     dh = opendir_fn(ctx, url);
     if (!dh) {
-        *error_text = g_strdup_printf("libsmbclient: %s", g_strerror(errno));
+        if (error_text)
+            *error_text = g_strdup_printf("libsmbclient: %s", g_strerror(errno));
         goto out;
     }
     closedir_fn(ctx, dh);
@@ -399,19 +503,21 @@ static gboolean smb_preflight(const gchar *url, const gchar *user,
 out:
     g_private_set(&smb_auth_private, NULL);
     if (ctx)
-        smbc_free_context(ctx, 1);
+        api->free_context(ctx, 1);
     g_mutex_unlock(&smbclient_mutex);
     return ok;
 }
+
 static gboolean smb_list_shares(const gchar *server, const gchar *user,
         const gchar *domain, const gchar *password, GPtrArray **shares_out,
         gchar **error_text)
 {
+    SmbClientApi *api = smbclient_api_get();
     SMBCCTX *ctx = NULL;
     SMBCFILE *dh = NULL;
-    smbc_opendir_fn opendir_fn;
-    smbc_closedir_fn closedir_fn;
-    smbc_readdir_fn readdir_fn;
+    SmbcOpendirFn opendir_fn = NULL;
+    SmbcClosedirFn closedir_fn = NULL;
+    SmbcReaddirFn readdir_fn = NULL;
     struct smbc_dirent *entry;
     gchar *url;
     SmbAuth auth = { user, domain, password };
@@ -420,16 +526,21 @@ static gboolean smb_list_shares(const gchar *server, const gchar *user,
 
     *shares_out = NULL;
     *error_text = NULL;
+    if (!api) {
+        *error_text = g_strdup(_("libsmbclient is not available on this system."));
+        return FALSE;
+    }
+
     url = g_strdup_printf("smb://%s/", server);
     g_mutex_lock(&smbclient_mutex);
-    ctx = smbc_new_context();
+    ctx = api->new_context();
     if (!ctx) { *error_text = g_strdup("libsmbclient: smbc_new_context failed"); goto out; }
     g_private_set(&smb_auth_private, &auth);
-    smbc_setFunctionAuthDataWithContext(ctx, smb_auth_cb);
-    if (!smbc_init_context(ctx)) { *error_text = g_strdup("libsmbclient: smbc_init_context failed"); goto out; }
-    opendir_fn = smbc_getFunctionOpendir(ctx);
-    closedir_fn = smbc_getFunctionClosedir(ctx);
-    readdir_fn = smbc_getFunctionReaddir(ctx);
+    api->set_auth(ctx, smb_auth_cb);
+    if (!api->init_context(ctx)) { *error_text = g_strdup("libsmbclient: smbc_init_context failed"); goto out; }
+    opendir_fn = api->get_opendir(ctx);
+    closedir_fn = api->get_closedir(ctx);
+    readdir_fn = api->get_readdir(ctx);
     if (!opendir_fn || !closedir_fn || !readdir_fn) {
         *error_text = g_strdup("libsmbclient: directory API unavailable"); goto out;
     }
@@ -448,23 +559,24 @@ static gboolean smb_list_shares(const gchar *server, const gchar *user,
     shares = NULL;
     ok = TRUE;
 out:
-    if (dh && closedir_fn) closedir_fn(ctx, dh);
-    if (shares) g_ptr_array_unref(shares);
+    if (dh && closedir_fn)
+        closedir_fn(ctx, dh);
+    if (shares)
+        g_ptr_array_unref(shares);
     g_private_set(&smb_auth_private, NULL);
-    if (ctx) smbc_free_context(ctx, 1);
+    if (ctx)
+        api->free_context(ctx, 1);
     g_mutex_unlock(&smbclient_mutex);
     g_free(url);
     return ok;
 }
-#endif
 
 gboolean rox_smb_compiled_with_libsmbclient(void)
 {
-#ifdef HAVE_LIBSMBCLIENT
-    return TRUE;
-#else
-    return FALSE;
-#endif
+    /* Historical API name retained for source compatibility.  It now means
+     * "runtime libsmbclient is available" because the binary no longer has a
+     * hard DT_NEEDED dependency on libsmbclient.so.0. */
+    return smbclient_api_get() != NULL;
 }
 
 static gboolean smb_spawn_mount(gchar *mount_cifs, gchar *remote,
@@ -574,14 +686,12 @@ static gboolean smb_mount(const gchar *server, const gchar *share,
     ok = smb_spawn_mount(mount_cifs, remote, mountpoint, options,
             &stderr_text, &status, &error);
     if (!ok) {
-#ifdef HAVE_LIBSMBCLIENT
         gchar *url = g_strdup_printf("smb://%s/%s", server, share);
         /* Probe only after mount.cifs fails.  Successful mounts pay no
          * second network round-trip, while failures still get an independent
          * libsmbclient diagnostic. */
         smb_preflight(url, user, domain, password, &preflight_error);
         g_free(url);
-#endif
         if (error) {
             *error_text = preflight_error
                 ? g_strdup_printf("%s\n%s: %s", error->message,
@@ -802,12 +912,8 @@ static void smb_list_worker(GTask *task, gpointer source_object,
     SmbJob *job = task_data;
     gboolean ok = FALSE;
     (void) source_object; (void) cancellable;
-#ifdef HAVE_LIBSMBCLIENT
     ok = smb_list_shares(job->server, job->user, job->domain, job->password,
             &job->shares, &job->error_text);
-#else
-    job->error_text = g_strdup(_("This build has no libsmbclient support."));
-#endif
     g_task_return_boolean(task, ok);
 }
 

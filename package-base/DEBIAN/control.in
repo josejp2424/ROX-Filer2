@@ -6,7 +6,7 @@ Architecture: @ARCH@
 Maintainer: josejp2424 <puppylinuxjosejp2424@gmail.com>
 Installed-Size: @INSTALLED_SIZE@
 Depends: @SHLIBS_DEPENDS@, shared-mime-info
-Recommends: libgtk-layer-shell0, cifs-utils, feh | xwallpaper
+Recommends: pkexec, libgtk-layer-shell0, libsmbclient0, cifs-utils, samba-common-bin, samba, fuse3 | fuse, jmtpfs, libmtp9t64 | libmtp9, gphoto2, gphotofs, libgphoto2-6t64 | libgphoto2-6, ifuse, usbmuxd, libimobiledevice-utils, libimobiledevice-1.0-6, feh | xwallpaper
 Suggests: udisks2
 Provides: rox-filer, file-manager
 Conflicts: rox-filer

@@ -169,6 +169,9 @@ static gboolean o_ignore = FALSE;
 
 static Option o_action_copy, o_action_move, o_action_link;
 static Option o_action_delete, o_action_mount;
+/* Rox-Filer2 2.12.2-91: separate user-facing safety preferences for
+ * Trash and permanent deletion. They are shared by Classic and Modern. */
+static Option o_confirm_trash, o_confirm_delete_permanently;
 static Option o_action_force, o_action_brief, o_action_recurse;
 static Option o_action_merge, o_action_newer, o_action_ignore;
 
@@ -3034,7 +3037,11 @@ void action_trash(GList *paths)
 	GString *errors;
 	guint moved = 0;
 
-	if (!paths || !remove_pinned_ok(paths) || !confirm_trash_paths(paths))
+	if (!paths || !remove_pinned_ok(paths))
+		return;
+
+	/* 2.12.2-91: confirmation is optional and controlled from Options. */
+	if (o_confirm_trash.int_value && !confirm_trash_paths(paths))
 		return;
 
 	/* Modificado por josejp2424 (2026): la papelera no debe ejecutarse en el
@@ -3132,7 +3139,11 @@ void action_delete_permanently(GList *paths)
 	GUIside *gui_side;
 	GtkWidget *abox;
 
-	if (!paths || !remove_pinned_ok(paths) ||
+	if (!paths || !remove_pinned_ok(paths))
+		return;
+
+	/* 2.12.2-91: keep permanent-delete confirmation independent from Trash. */
+	if (o_confirm_delete_permanently.int_value &&
 	    !confirm_permanent_delete_paths(paths))
 		return;
 
@@ -3507,6 +3518,11 @@ void action_init(void)
 	option_add_int(&o_action_link, "action_link", 1);
 	option_add_int(&o_action_delete, "action_delete", 0);
 	option_add_int(&o_action_mount, "action_mount", 1);
+
+	/* Safe defaults: both destructive-action confirmations start enabled. */
+	option_add_int(&o_confirm_trash, "confirm_trash", 1);
+	option_add_int(&o_confirm_delete_permanently,
+			  "confirm_delete_permanently", 1);
 
 	option_add_int(&o_action_force, "action_force", FALSE);
 	option_add_int(&o_action_brief, "action_brief", FALSE);

@@ -101,26 +101,33 @@ AC_DEFINE(ROX_USING_GTK3, 1, [Build against GTK3])
 ROX_REQUIRE(libxml-2.0, 2.0.0)
 ROX_REQUIRE(shared-mime-info, 0.14)
 
-dnl Rox-Filer2: optional libsmbclient. SMB remains a local-mount feature.
+dnl Rox-Filer2: optional libsmbclient loaded at runtime.  Do not link the
+dnl filer directly against libsmbclient: the same binary must start even when
+dnl libsmbclient.so.0 is not installed.
 AC_ARG_ENABLE([smb],
   [AS_HELP_STRING([--enable-smb@<:@=auto/yes/no@:>@],
-    [use libsmbclient for optional SMB share discovery/probing @<:@default=auto@:>@])],
+    [enable runtime auto-loading of optional libsmbclient SMB helpers @<:@default=auto@:>@])],
   [], [enable_smb=auto])
-SMBCLIENT_PKG=
-AC_MSG_CHECKING(for optional libsmbclient)
+AC_MSG_CHECKING(for runtime libsmbclient loader support)
 if test "x$enable_smb" = xno ; then
   AC_MSG_RESULT(disabled)
-elif "$PKG_CONFIG" --exists smbclient ; then
-  SMBCLIENT_PKG=smbclient
-  AC_DEFINE(HAVE_LIBSMBCLIENT, 1, [Build optional SMB validation with libsmbclient])
-  AC_MSG_RESULT(yes)
-elif test "x$enable_smb" = xyes ; then
-  AC_MSG_RESULT(no)
-  AC_MSG_ERROR([--enable-smb=yes requested but libsmbclient development files are missing])
 else
-  AC_MSG_RESULT(no; SMB mount dialog remains available through mount.cifs)
+  AC_CHECK_HEADER([dlfcn.h], [rox_have_dlfcn=yes], [rox_have_dlfcn=no])
+  if test "x$rox_have_dlfcn" = xyes ; then
+    AC_SEARCH_LIBS([dlopen], [dl], [rox_have_dlopen=yes], [rox_have_dlopen=no])
+  else
+    rox_have_dlopen=no
+  fi
+  if test "x$rox_have_dlopen" = xyes ; then
+    AC_DEFINE(HAVE_DLFCN_H, 1, [Runtime-load optional libsmbclient with dlopen])
+    AC_MSG_RESULT(yes; libsmbclient will be detected at runtime)
+  elif test "x$enable_smb" = xyes ; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([--enable-smb=yes requested but dlopen/dlfcn.h is unavailable])
+  else
+    AC_MSG_RESULT(no; SMB mount dialog remains available through mount.cifs)
+  fi
 fi
-AC_SUBST(SMBCLIENT_PKG)
 
 GTK_VERSION=`"$PKG_CONFIG" --modversion gtk+-3.0`
 AC_DEFINE_UNQUOTED(GTK_VERSION, "$GTK_VERSION")

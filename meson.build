@@ -1,7 +1,7 @@
 project(
   'rox-filer2',
   'c',
-  version : '2.12.2-89',
+  version : '2.13.0-8',
   meson_version : '>=0.61.0',
   default_options : [
     'c_std=gnu11',
@@ -21,11 +21,62 @@ ice_dep = dependency('ice')
 x11_dep = dependency('x11')
 shared_mime_info_dep = dependency('shared-mime-info', version : '>=0.14')
 pango_dep = dependency('pango', version : '>=1.1.2', required : false)
-smbclient_dep = dependency('smbclient', required : get_option('smb'))
+
+# 2.12.2-95: build-time capability probes only. Portable-device support uses
+# runtime helpers, so missing development packages never prevent compilation
+# or startup.
+portable_opt = get_option('portable_devices')
+libmtp_probe = dependency('libmtp', required : false)
+libgphoto_probe = dependency('libgphoto2', required : false)
+
+# 2.12.2-97: Rox-Filer2 does not link libimobiledevice.  Using Meson's
+# dependency() here was too strict because it validates a complete linkable
+# development dependency graph, while the runtime implementation only needs
+# idevice_id + ifuse.  Probe the pkg-config metadata exactly as users do and
+# report the real runtime helpers separately.  This also makes a successful
+# `pkg-config --modversion libimobiledevice-1.0` show as YES in the summary.
+pkgconfig_prog = find_program('pkg-config', required : false)
+libimobiledevice_pc_found = false
+libimobiledevice_pc_version = ''
+if pkgconfig_prog.found()
+  libimobiledevice_pc_result = run_command(
+    pkgconfig_prog, '--modversion', 'libimobiledevice-1.0', check : false
+  )
+  if libimobiledevice_pc_result.returncode() == 0
+    libimobiledevice_pc_found = true
+    libimobiledevice_pc_version = libimobiledevice_pc_result.stdout().strip()
+  endif
+endif
+libimobiledevice_pc_summary = 'NO'
+if libimobiledevice_pc_found
+  libimobiledevice_pc_summary = 'YES ' + libimobiledevice_pc_version
+endif
+idevice_id_prog = find_program('idevice_id', required : false)
+ifuse_prog = find_program('ifuse', required : false)
+portable_runtime = not portable_opt.disabled()
 
 m_dep = cc.find_library('m', required : false)
 dl_dep = cc.find_library('dl', required : false)
 intl_dep = cc.find_library('intl', required : false)
+
+smb_opt = get_option('smb')
+have_dlfcn = cc.has_header('dlfcn.h')
+dl_test_deps = []
+if dl_dep.found()
+  dl_test_deps += [dl_dep]
+endif
+have_dlopen = false
+if have_dlfcn
+  have_dlopen = cc.has_function(
+    'dlopen',
+    prefix : '#include <dlfcn.h>',
+    dependencies : dl_test_deps,
+  )
+endif
+if smb_opt.enabled() and not (have_dlfcn and have_dlopen)
+  error('SMB runtime loading was requested but dlopen/dlfcn.h is unavailable')
+endif
+smb_runtime_loader = not smb_opt.disabled() and have_dlfcn and have_dlopen
 
 conf = configuration_data()
 conf.set_quoted('PROJECT', 'ROX-Filer')
@@ -84,7 +135,8 @@ conf.set('FILE_B_FLAG', file_b_flag)
 off_t_size = cc.sizeof('off_t', prefix : '#include <sys/types.h>')
 conf.set('LARGE_FILE_SUPPORT', off_t_size >= 8)
 conf.set('USE_PANGO_WRAP_WORD_CHAR', pango_dep.found())
-conf.set('HAVE_LIBSMBCLIENT', smbclient_dep.found())
+conf.set('HAVE_DLFCN_H', smb_runtime_loader)
+conf.set('ROX_PORTABLE_DEVICES', portable_runtime)
 
 configure_file(
   input : 'ROX-Filer/src/config.h.meson.in',
@@ -149,6 +201,7 @@ rox_sources = files(
   'ROX-Filer/src/support.c',
   'ROX-Filer/src/search_integration.c',
   'ROX-Filer/src/smb.c',
+  'ROX-Filer/src/samba_share.c',
   'ROX-Filer/src/toolbar.c',
   'ROX-Filer/src/trash.c',
   'ROX-Filer/src/type.c',
@@ -186,9 +239,6 @@ endif
 if intl_dep.found()
   rox_deps += [intl_dep]
 endif
-if smbclient_dep.found()
-  rox_deps += [smbclient_dep]
-endif
 
 rox_c_args = cc.get_supported_arguments(
   '-Wall',
@@ -219,14 +269,30 @@ rox_find = executable(
   install : false,
 )
 
+rox_mount_helper = executable(
+  'rox-mount-helper',
+  'ROX-Filer/src/rox_mount_helper.c',
+  c_args : cc.get_supported_arguments(
+    '-Wall', '-Wextra', '-Wformat=2', '-Wshadow', '-Wpointer-arith'
+  ),
+  install : false,
+)
+
 summary(
   {
     'ROX-Filer binary' : join_paths(meson.project_build_root(), 'ROX-Filer'),
     'rox-find binary' : join_paths(meson.project_build_root(), 'rox-find'),
+    'mount helper' : join_paths(meson.project_build_root(), 'rox-mount-helper'),
     'GTK3' : gtk_dep.version(),
     'Pango word wrapping' : pango_dep.found(),
     '64-bit file offsets' : off_t_size >= 8,
-    'SMB discovery (libsmbclient)' : smbclient_dep.found(),
+    'SMB runtime auto-loader' : smb_runtime_loader,
+    'Portable-device runtime support' : portable_runtime,
+    'libmtp build probe' : libmtp_probe.found(),
+    'libgphoto2 build probe' : libgphoto_probe.found(),
+    'libimobiledevice pkg-config' : libimobiledevice_pc_summary,
+    'idevice_id runtime helper' : idevice_id_prog.found(),
+    'ifuse runtime helper' : ifuse_prog.found(),
   },
   section : 'Rox-Filer2 build',
   bool_yn : true,

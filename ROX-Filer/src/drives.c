@@ -3,7 +3,7 @@
  *
  * Agregado por josejp2424 (2026): detección de particiones inspirada en la
  * integración de unidades de EssoraWM, con montaje directo para Puppy/root,
- * alternativa mediante udisksctl para usuarios normales y apertura de la
+ * autorización mediante pkexec para usuarios normales y apertura de la
  * partición dentro de la ventana actual de ROX-Filer.
  *
  * Copyright (C) 2026 josejp2424
@@ -27,10 +27,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <gtk/gtk.h>
+#include <glib/gstdio.h>
 
 #include "global.h"
 #include "support.h"
@@ -40,8 +42,10 @@
 #include "gui_support.h"
 #include "main.h"
 #include "mount.h"
+#include "options.h"
 #include "rox_config.h"
 #include "smb.h"
+#include "image_mounter.h"
 
 #define DRIVE_ICON_INTERNAL  "drive-harddisk"
 #define DRIVES_CONFIG "drives.ini"
@@ -50,11 +54,21 @@
  * pendrive puede llevar decenas de segundos. El techo existe solo para que
  * el mutex de reap no quede tomado indefinidamente. */
 #define DRIVE_ACTION_TIMEOUT_SECONDS 90
+#define DRIVE_AUTH_TIMEOUT_SECONDS 300
+#define ROX_MOUNT_HELPER_PATH "/usr/lib/rox-filer2/rox-mount-helper"
 /* Espera maxima por el mutex de reap antes de abandonar el intento. */
 #define DRIVE_REAP_LOCK_WAIT_SECONDS 2
+#define PORTABLE_DISCOVERY_TIMEOUT_SECONDS 4
 
 static gsize drive_visibility_once = 0;
 static gint show_system_partitions = FALSE;
+
+/* 2.13.0-8: startup automount is a normal ROX preference, persisted in the
+ * same XDG Options file as the rest of the filer settings. */
+static Option o_drives_mount_all_startup;
+static Option o_drives_mount_removable_startup;
+static gboolean startup_automount_scheduled = FALSE;
+static gint startup_automount_lock_fd = -1;
 
 typedef RoxDriveInfo DriveInfo;
 
@@ -126,6 +140,7 @@ static gchar *command_first_line(gchar **argv);
 static DriveInfo *drive_info_from_device(const gchar *device);
 static void append_puppy_runtime_drives(GPtrArray *drives);
 static void append_sysfs_partitions(GPtrArray *drives);
+static void append_portable_devices(GPtrArray *drives);
 static gboolean technical_text_match(const gchar *value);
 static gboolean name_looks_removable(const gchar *value);
 static void drive_enrich_from_sysfs(DriveInfo *drive);
@@ -137,6 +152,7 @@ static gchar *mount_drive(const DriveInfo *drive, gchar **error_text);
 static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text);
 static gboolean eject_drive(const DriveInfo *drive, gchar **error_text);
 static void drive_menu_action_free(gpointer data);
+static void drive_grid_quick_action(GtkButton *button, gpointer data);
 static void drive_grid_activate(GtkButton *button, gpointer data);
 static gboolean drive_grid_button_press(GtkWidget *button,
 		GdkEventButton *event, gpointer data);
@@ -147,6 +163,8 @@ static void drives_popover_fill(DrivePopoverLive *live, GPtrArray *drives,
 		const GError *error);
 static void drives_popover_monitor_changed(GPtrArray *drives, const GError *error,
 		gpointer user_data);
+static gboolean drive_auto_mount_candidate(const DriveInfo *drive,
+		gboolean include_removable);
 
 static gint hex_value(gchar value)
 {
@@ -476,6 +494,15 @@ static gboolean technical_text_match(const gchar *value)
 	return result;
 }
 
+static gboolean partition_type_is_system(const gchar *parttype)
+{
+	return parttype &&
+		(!g_ascii_strcasecmp(parttype, "c12a7328-f81f-11d2-ba4b-00a0c93ec93b") ||
+		 !g_ascii_strcasecmp(parttype, "ef00") ||
+		 !g_ascii_strcasecmp(parttype, "21686148-6449-6e6f-744e-656564454649") ||
+		 !g_ascii_strcasecmp(parttype, "ef02"));
+}
+
 static gboolean drive_is_useful(const DriveInfo *drive, const gchar *type,
 		const gchar *partlabel, const gchar *parttype)
 {
@@ -508,13 +535,7 @@ static gboolean drive_is_useful(const DriveInfo *drive, const gchar *type,
 	drive_visibility_load();
 	if (!g_atomic_int_get(&show_system_partitions))
 	{
-		if (parttype &&
-		    (!g_ascii_strcasecmp(parttype,
-			"c12a7328-f81f-11d2-ba4b-00a0c93ec93b") ||
-		     !g_ascii_strcasecmp(parttype, "ef00") ||
-		     !g_ascii_strcasecmp(parttype,
-			"21686148-6449-6e6f-744e-656564454649") ||
-		     !g_ascii_strcasecmp(parttype, "ef02")))
+		if (partition_type_is_system(parttype))
 			return FALSE;
 		if (system_partition_text_match(drive->label) ||
 		    system_partition_text_match(drive->mountpoint) ||
@@ -834,6 +855,9 @@ static DriveInfo *drive_info_from_device(const gchar *device)
 	gchar *argv_label[] = {(gchar *) "blkid", (gchar *) "-o",
 		(gchar *) "value", (gchar *) "-s", (gchar *) "LABEL",
 		(gchar *) device, NULL};
+	gchar *argv_parttype[] = {(gchar *) "blkid", (gchar *) "-o",
+		(gchar *) "value", (gchar *) "-s", (gchar *) "PART_ENTRY_TYPE",
+		(gchar *) device, NULL};
 	gchar *argv_size[] = {(gchar *) "lsblk", (gchar *) "-dn",
 		(gchar *) "-o", (gchar *) "SIZE", (gchar *) device, NULL};
 
@@ -847,6 +871,12 @@ static DriveInfo *drive_info_from_device(const gchar *device)
 	drive->mountpoint = find_mountpoint(device);
 	drive->fstype = command_first_line(argv_type);
 	drive->label = command_first_line(argv_label);
+	{
+		gchar *parttype = command_first_line(argv_parttype);
+		drive->system_partition = partition_type_is_system(parttype) ||
+			system_partition_text_match(drive->label);
+		g_free(parttype);
+	}
 	drive->size = command_first_line(argv_size);
 	drive->type = g_str_has_prefix(base, "sr") ? g_strdup("rom") : g_strdup("part");
 	drive->optical = g_str_has_prefix(base, "sr") ||
@@ -1040,6 +1070,461 @@ static void append_network_mounts(GPtrArray *drives)
 	endmntent(mounts);
 }
 
+
+/* 2.12.2-95: portable devices are intentionally runtime-optional.  The drive
+ * model sees both already-mounted non-block filesystems under /media and, when
+ * helper programs are available, unmounted MTP/PTP/iOS devices.  No GVfs is
+ * required and none of these helpers is needed for Rox-Filer2 to start. */
+static gboolean portable_mountpoint_present(const gchar *mountpoint)
+{
+	FILE *mounts;
+	struct mntent entry_buf;
+	struct mntent *entry;
+	char mntbuf[4096];
+	gboolean present = FALSE;
+
+	if (!mountpoint || !*mountpoint)
+		return FALSE;
+	mounts = setmntent("/proc/self/mounts", "r");
+	if (!mounts)
+		return FALSE;
+	while ((entry = getmntent_r(mounts, &entry_buf, mntbuf, sizeof(mntbuf))) != NULL)
+	{
+		if (g_strcmp0(entry->mnt_dir, mountpoint) == 0)
+		{
+			present = TRUE;
+			break;
+		}
+	}
+	endmntent(mounts);
+	return present;
+}
+
+static gboolean portable_transport_present(GPtrArray *drives, const gchar *transport)
+{
+	guint i;
+	if (!drives || !transport)
+		return FALSE;
+	for (i = 0; i < drives->len; i++)
+	{
+		DriveInfo *drive = g_ptr_array_index(drives, i);
+		if (drive->portable && g_strcmp0(drive->transport, transport) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static void portable_add(GPtrArray *drives, const gchar *device,
+		const gchar *label, const gchar *fstype, const gchar *transport,
+		const gchar *mountpoint)
+{
+	DriveInfo *drive;
+
+	if (!drives || !device || !*device)
+		return;
+	if (mountpoint && drive_array_has_mountpoint(drives, mountpoint))
+		return;
+	if (!mountpoint && drive_array_has_device(drives, device))
+		return;
+
+	drive = g_new0(DriveInfo, 1);
+	drive->name = g_strdup(label && *label ? label : device);
+	drive->device = g_strdup(device);
+	drive->label = g_strdup(label && *label ? label : device);
+	drive->fstype = g_strdup(fstype && *fstype ? fstype : "fuse");
+	drive->mountpoint = mountpoint ? g_strdup(mountpoint) : NULL;
+	drive->type = g_strdup("portable");
+	drive->transport = g_strdup(transport && *transport ? transport : "media");
+	drive->portable = TRUE;
+	drive->removable = TRUE;
+	g_ptr_array_add(drives, drive);
+}
+
+static const gchar *portable_transport_for_mount(const gchar *fstype,
+		const gchar *fsname)
+{
+	if ((fstype && (strstr(fstype, "mtp") || strstr(fstype, "simple-mtpfs") ||
+	               strstr(fstype, "jmtpfs"))) ||
+	    (fsname && (strstr(fsname, "mtp") || strstr(fsname, "jmtpfs"))))
+		return "mtp";
+	if ((fstype && strstr(fstype, "ifuse")) || (fsname && strstr(fsname, "ifuse")))
+		return "ios";
+	if ((fstype && strstr(fstype, "gphotofs")) || (fsname && strstr(fsname, "gphotofs")))
+		return "ptp";
+	return "media";
+}
+
+static gboolean portable_path_under_media(const gchar *path)
+{
+	return path && g_str_has_prefix(path, "/media/") && path[7] != '\0';
+}
+
+static gboolean portable_known_mount_type(const gchar *fstype, const gchar *fsname)
+{
+	return (fstype && (strstr(fstype, "mtp") || strstr(fstype, "jmtpfs") ||
+		strstr(fstype, "simple-mtpfs") || strstr(fstype, "ifuse") ||
+		strstr(fstype, "gphotofs"))) ||
+		(fsname && (strstr(fsname, "mtp") || strstr(fsname, "jmtpfs") ||
+		strstr(fsname, "simple-mtpfs") || strstr(fsname, "ifuse") ||
+		strstr(fsname, "gphotofs")));
+}
+
+static void append_portable_mounted_paths(GPtrArray *drives)
+{
+	FILE *mounts;
+	struct mntent entry_buf;
+	struct mntent *entry;
+	char mntbuf[4096];
+
+	mounts = setmntent("/proc/self/mounts", "r");
+	if (!mounts)
+		return;
+	while ((entry = getmntent_r(mounts, &entry_buf, mntbuf, sizeof(mntbuf))) != NULL)
+	{
+		gchar *base;
+		const gchar *transport;
+
+		/* Block devices are already represented by lsblk/sysfs.  Network and
+		 * managed image mounts have their own richer model.  Everything else
+		 * mounted below /media is still useful and must be easy to unmount. */
+		if ((!portable_path_under_media(entry->mnt_dir) &&
+		     !portable_known_mount_type(entry->mnt_type, entry->mnt_fsname)) ||
+		    g_str_has_prefix(entry->mnt_fsname, "/dev/") ||
+		    g_strcmp0(entry->mnt_type, "cifs") == 0 ||
+		    g_strcmp0(entry->mnt_type, "smb3") == 0 ||
+		    drive_array_has_mountpoint(drives, entry->mnt_dir))
+			continue;
+
+		base = g_path_get_basename(entry->mnt_dir);
+		transport = portable_transport_for_mount(entry->mnt_type, entry->mnt_fsname);
+		portable_add(drives,
+			entry->mnt_fsname && *entry->mnt_fsname ? entry->mnt_fsname : entry->mnt_dir,
+			base, entry->mnt_type, transport, entry->mnt_dir);
+		g_free(base);
+	}
+	endmntent(mounts);
+}
+
+
+static gboolean usb_sysfs_has_value(const gchar *filename, const gchar *wanted)
+{
+	GDir *dir;
+	const gchar *name;
+	gboolean found = FALSE;
+
+	dir = g_dir_open("/sys/bus/usb/devices", 0, NULL);
+	if (!dir)
+		return FALSE;
+	while ((name = g_dir_read_name(dir)) != NULL)
+	{
+		gchar *path = g_build_filename("/sys/bus/usb/devices", name, filename, NULL);
+		gchar *text = NULL;
+		if (g_file_get_contents(path, &text, NULL, NULL))
+		{
+			g_strstrip(text);
+			if (g_ascii_strcasecmp(text, wanted) == 0)
+				found = TRUE;
+		}
+		g_free(text);
+		g_free(path);
+		if (found)
+			break;
+	}
+	g_dir_close(dir);
+	return found;
+}
+
+static gboolean usb_has_mtp_or_ptp_candidate(void)
+{
+	/* USB Still Image class 06 is used by PTP and by the common MTP USB
+	 * transport.  Avoid waking every helper during the 45-second safety poll
+	 * when no such device is connected. */
+	return usb_sysfs_has_value("bInterfaceClass", "06");
+}
+
+static gboolean usb_has_apple_candidate(void)
+{
+	return usb_sysfs_has_value("idVendor", "05ac");
+}
+
+static void append_simple_mtp_devices(GPtrArray *drives)
+{
+	gchar *program = g_find_program_in_path("simple-mtpfs");
+	gchar *out = NULL;
+	gchar *err = NULL;
+	gint status = 0;
+	gchar *argv[3];
+	gchar **lines;
+	gint i;
+
+	if (!usb_has_mtp_or_ptp_candidate() || !program ||
+	    portable_transport_present(drives, "mtp"))
+	{
+		g_free(program);
+		return;
+	}
+	argv[0] = program;
+	argv[1] = (gchar *) "--list-devices";
+	argv[2] = NULL;
+	if (!spawn_capture_timeout(argv, PORTABLE_DISCOVERY_TIMEOUT_SECONDS,
+		&out, &err, &status, NULL) || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	{
+		g_free(program); g_free(out); g_free(err);
+		return;
+	}
+	lines = g_strsplit(out ? out : "", "\n", -1);
+	for (i = 0; lines[i]; i++)
+	{
+		gchar *colon = strchr(lines[i], ':');
+		gchar *end = NULL;
+		long index;
+		gchar *device;
+		gchar *label;
+		if (!colon)
+			continue;
+		*colon = '\0';
+		index = strtol(g_strstrip(lines[i]), &end, 10);
+		if (!end || *end != '\0' || index < 0)
+			continue;
+		label = g_strstrip(colon + 1);
+		if (!*label)
+			label = (gchar *) _("MTP device");
+		device = g_strdup_printf("mtp:simple:%ld", index);
+		portable_add(drives, device, label, "mtp", "mtp", NULL);
+		g_free(device);
+	}
+	g_strfreev(lines);
+	g_free(program); g_free(out); g_free(err);
+}
+
+static void append_jmtpfs_device(GPtrArray *drives)
+{
+	gchar *program;
+	gchar *out = NULL;
+	gchar *err = NULL;
+	gint status = 0;
+	gchar *argv[3];
+	gchar **lines;
+	gint i;
+
+	if (!usb_has_mtp_or_ptp_candidate() || portable_transport_present(drives, "mtp"))
+		return;
+	program = g_find_program_in_path("jmtpfs");
+	if (!program)
+		return;
+	argv[0] = program;
+	argv[1] = (gchar *) "-l";
+	argv[2] = NULL;
+	if (!spawn_capture_timeout(argv, PORTABLE_DISCOVERY_TIMEOUT_SECONDS,
+		&out, &err, &status, NULL) || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	{
+		g_free(program); g_free(out); g_free(err);
+		return;
+	}
+	lines = g_strsplit(out ? out : "", "\n", -1);
+	for (i = 0; lines[i]; i++)
+	{
+		gchar *line = g_strstrip(lines[i]);
+		gchar *is_a;
+		gchar *label;
+		if (!g_str_has_prefix(line, "Device "))
+			continue;
+		is_a = strstr(line, " is a ");
+		label = is_a ? g_strstrip(is_a + 6) : line;
+		if (*label && label[strlen(label) - 1] == '.')
+			label[strlen(label) - 1] = '\0';
+		portable_add(drives, "mtp:jmtpfs:first",
+			*label ? label : _("MTP device"), "mtp", "mtp", NULL);
+		/* jmtpfs can select by USB bus/device rather than list index.  Until
+		 * Rox has that mapping, expose the first device exactly as jmtpfs does. */
+		break;
+	}
+	g_strfreev(lines);
+	g_free(program); g_free(out); g_free(err);
+}
+
+static void append_ios_devices(GPtrArray *drives)
+{
+	gchar *id_program;
+	gchar *ifuse_program;
+	gchar *out = NULL;
+	gchar *err = NULL;
+	gint status = 0;
+	gchar *argv[3];
+	gchar **lines;
+	gint i;
+
+	if (!usb_has_apple_candidate() || portable_transport_present(drives, "ios"))
+		return;
+	id_program = g_find_program_in_path("idevice_id");
+	ifuse_program = g_find_program_in_path("ifuse");
+	if (!id_program || !ifuse_program)
+	{
+		g_free(id_program); g_free(ifuse_program);
+		return;
+	}
+	argv[0] = id_program;
+	argv[1] = (gchar *) "-l";
+	argv[2] = NULL;
+	if (!spawn_capture_timeout(argv, PORTABLE_DISCOVERY_TIMEOUT_SECONDS,
+		&out, &err, &status, NULL) || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	{
+		g_free(id_program); g_free(ifuse_program); g_free(out); g_free(err);
+		return;
+	}
+	lines = g_strsplit(out ? out : "", "\n", -1);
+	for (i = 0; lines[i]; i++)
+	{
+		gchar *udid = g_strstrip(lines[i]);
+		gchar *device;
+		gchar *label = NULL;
+		gchar *info_program;
+		if (!*udid)
+			continue;
+		info_program = g_find_program_in_path("ideviceinfo");
+		if (info_program)
+		{
+			gchar *name_out = NULL;
+			gchar *name_err = NULL;
+			gint name_status = 0;
+			gchar *name_argv[] = {info_program, (gchar *) "-u", udid,
+				(gchar *) "-k", (gchar *) "DeviceName", NULL};
+			if (spawn_capture_timeout(name_argv, 2, &name_out, &name_err,
+				&name_status, NULL) && WIFEXITED(name_status) && WEXITSTATUS(name_status) == 0)
+			{
+				g_strstrip(name_out);
+				if (*name_out)
+					label = g_strdup(name_out);
+			}
+			g_free(name_out); g_free(name_err); g_free(info_program);
+		}
+		if (!label)
+			label = g_strdup(_("iPhone / iPad"));
+		device = g_strdup_printf("ios:%s", udid);
+		portable_add(drives, device, label, "ifuse", "ios", NULL);
+		g_free(device); g_free(label);
+	}
+	g_strfreev(lines);
+	g_free(id_program); g_free(ifuse_program); g_free(out); g_free(err);
+}
+
+static void append_ptp_device(GPtrArray *drives)
+{
+	gchar *gphoto;
+	gchar *gphotofs;
+	gchar *out = NULL;
+	gchar *err = NULL;
+	gint status = 0;
+	gchar *argv[3];
+	gchar **lines;
+	gint i;
+
+	if (!usb_has_mtp_or_ptp_candidate() || portable_transport_present(drives, "ptp"))
+		return;
+	gphoto = g_find_program_in_path("gphoto2");
+	gphotofs = g_find_program_in_path("gphotofs");
+	if (!gphoto || !gphotofs)
+	{
+		g_free(gphoto); g_free(gphotofs);
+		return;
+	}
+	argv[0] = gphoto;
+	argv[1] = (gchar *) "--auto-detect";
+	argv[2] = NULL;
+	if (!spawn_capture_timeout(argv, PORTABLE_DISCOVERY_TIMEOUT_SECONDS,
+		&out, &err, &status, NULL) || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	{
+		g_free(gphoto); g_free(gphotofs); g_free(out); g_free(err);
+		return;
+	}
+	lines = g_strsplit(out ? out : "", "\n", -1);
+	for (i = 0; lines[i]; i++)
+	{
+		gchar *line = g_strstrip(lines[i]);
+		gchar *usb = strstr(line, "usb:");
+		gchar *label;
+		if (!usb || line == usb)
+			continue;
+		label = g_strndup(line, (gsize) (usb - line));
+		g_strstrip(label);
+		if (*label)
+		{
+			portable_add(drives, "ptp:gphoto:first", label,
+				"gphotofs", "ptp", NULL);
+			g_free(label);
+			break;
+		}
+		g_free(label);
+	}
+	g_strfreev(lines);
+	g_free(gphoto); g_free(gphotofs); g_free(out); g_free(err);
+}
+
+static void append_portable_devices(GPtrArray *drives)
+{
+#ifdef ROX_PORTABLE_DEVICES
+	if (!drives)
+		return;
+	append_portable_mounted_paths(drives);
+	append_simple_mtp_devices(drives);
+	append_jmtpfs_device(drives);
+	append_ios_devices(drives);
+	append_ptp_device(drives);
+#else
+	(void) drives;
+#endif
+}
+
+
+static void append_managed_image_mounts(GPtrArray *drives)
+{
+	GPtrArray *mounts;
+	guint i;
+
+	if (!drives)
+		return;
+
+	mounts = image_mounter_list_managed_mounts();
+	if (!mounts)
+		return;
+
+	for (i = 0; i < mounts->len; i++)
+	{
+		ImageMounterManagedMount *managed = g_ptr_array_index(mounts, i);
+		DriveInfo *drive;
+		gchar *base;
+		GStatBuf st;
+
+		if (!managed || !managed->image || !managed->blockdev ||
+		    !managed->mountpoint || drive_array_has_device(drives, managed->blockdev))
+			continue;
+
+		drive = g_new0(DriveInfo, 1);
+		base = g_path_get_basename(managed->image);
+		drive->name = g_strdup(base);
+		drive->label = g_strdup(base);
+		drive->device = g_strdup(managed->blockdev);
+		drive->mountpoint = g_strdup(managed->mountpoint);
+		drive->type = g_strdup("image");
+		drive->transport = g_strdup("loop");
+		drive->parent_device = g_strdup(managed->loopdev);
+		drive->backing_file = g_strdup(managed->image);
+		drive->managed_image = TRUE;
+		drive->label_is_synthetic = FALSE;
+
+		if (g_stat(managed->image, &st) == 0 && S_ISREG(st.st_mode))
+			drive->size = g_format_size((guint64) st.st_size);
+
+		/* The entry exists only because Image Mounter owns a live state file.
+		 * Never scan /dev/loop* globally: Puppy uses loop devices internally
+		 * for SFS files and layered filesystems. */
+		g_ptr_array_add(drives, drive);
+		g_free(base);
+	}
+
+	g_ptr_array_unref(mounts);
+}
+
 void rox_drive_info_free(gpointer data)
 {
 	DriveInfo *drive = data;
@@ -1055,6 +1540,7 @@ void rox_drive_info_free(gpointer data)
 	g_free(drive->transport);
 	g_free(drive->model);
 	g_free(drive->parent_device);
+	g_free(drive->backing_file);
 	g_free(drive);
 }
 
@@ -1125,7 +1611,9 @@ static GPtrArray *read_drive_list(GError **error)
 			g_free(stderr_text);
 			append_puppy_runtime_drives(drives);
 			append_sysfs_partitions(drives);
+			append_managed_image_mounts(drives);
 			append_network_mounts(drives);
+			append_portable_devices(drives);
 			return drives;
 		}
 	}
@@ -1138,7 +1626,9 @@ static GPtrArray *read_drive_list(GError **error)
 		g_free(stderr_text);
 		append_puppy_runtime_drives(drives);
 		append_sysfs_partitions(drives);
+		append_managed_image_mounts(drives);
 		append_network_mounts(drives);
+		append_portable_devices(drives);
 		if (drives->len == 0)
 			g_set_error(error, G_SPAWN_ERROR, G_SPAWN_ERROR_FAILED,
 				"%s", _("No usable partitions found"));
@@ -1246,6 +1736,9 @@ static GPtrArray *read_drive_list(GError **error)
 		rota = parse_lsblk_value(lines[i], "ROTA");
 		partlabel = parse_lsblk_value(lines[i], "PARTLABEL");
 		parttype = parse_lsblk_value(lines[i], "PARTTYPE");
+		drive->system_partition = partition_type_is_system(parttype) ||
+			system_partition_text_match(drive->label) ||
+			system_partition_text_match(partlabel);
 
 		if (pkname && *pkname)
 		{
@@ -1338,7 +1831,9 @@ static GPtrArray *read_drive_list(GError **error)
 	/* Los montajes CIFS ya existentes sí se agregan: son recursos de red
 	 * explícitamente conectados por el usuario y deben poder abrirse y
 	 * desmontarse desde la misma barra de unidades. */
+	append_managed_image_mounts(drives);
 	append_network_mounts(drives);
+	append_portable_devices(drives);
 	return drives;
 }
 
@@ -1427,10 +1922,14 @@ static gchar *drive_current_mountpoint(const DriveInfo *drive)
 		return NULL;
 	if (drive->network)
 		return network_mountpoint_present(drive) ? g_strdup(drive->mountpoint) : NULL;
+	if (drive->portable)
+		return drive->mountpoint && portable_mountpoint_present(drive->mountpoint) ?
+			g_strdup(drive->mountpoint) : NULL;
 	return find_mountpoint(drive->device);
 }
 
-static gboolean spawn_wait(gchar **argv, gchar **error_text)
+static gboolean spawn_wait_timeout(gchar **argv, guint timeout_seconds,
+		gchar **error_text)
 {
 	gchar *stderr_text = NULL;
 	gint status = 0;
@@ -1440,9 +1939,7 @@ static gboolean spawn_wait(gchar **argv, gchar **error_text)
 	if (error_text)
 		*error_text = NULL;
 
-	/* Con techo: el mutex de reap se sostiene mientras el hijo vive, asi que un
-	 * mount colgado no puede congelar el monitor de unidades para siempre. */
-	ok = spawn_capture_timeout(argv, DRIVE_ACTION_TIMEOUT_SECONDS,
+	ok = spawn_capture_timeout(argv, timeout_seconds,
 		NULL, &stderr_text, &status, &error);
 	if (!ok)
 	{
@@ -1462,12 +1959,314 @@ static gboolean spawn_wait(gchar **argv, gchar **error_text)
 	return ok;
 }
 
-/* Agregado por josejp2424: Puppy/root monta directamente en /mnt/<dispositivo>;
- * otros usuarios utilizan udisksctl cuando está disponible. */
+static gboolean spawn_wait(gchar **argv, gchar **error_text)
+{
+	/* Con techo: el mutex de reap se sostiene mientras el hijo vive, asi que un
+	 * mount colgado no puede congelar el monitor de unidades para siempre. */
+	return spawn_wait_timeout(argv, DRIVE_ACTION_TIMEOUT_SECONDS, error_text);
+}
+
+static const gchar *const drive_system_dirs[] = {
+	"/usr/bin", "/bin", "/usr/sbin", "/sbin", "/usr/local/bin",
+	"/usr/local/sbin", NULL
+};
+
+static gchar *drive_system_program(const gchar *name)
+{
+	guint i;
+
+	if (!name || !*name || strchr(name, '/'))
+		return NULL;
+	for (i = 0; drive_system_dirs[i]; i++)
+	{
+		gchar *candidate = g_build_filename(drive_system_dirs[i], name, NULL);
+		if (g_file_test(candidate, G_FILE_TEST_IS_EXECUTABLE))
+			return candidate;
+		g_free(candidate);
+	}
+	return NULL;
+}
+
+
+/* 2.12.2-95: create FUSE mountpoints without assuming Puppy/root.  Normal
+ * users prefer /media/$USER when it is writable; otherwise use XDG_RUNTIME_DIR
+ * so the portable-device feature remains usable on distributions that reserve
+ * /media for privileged automounters. */
+static gchar *portable_mount_root(void)
+{
+	gchar *root;
+
+	if (geteuid() == 0)
+	{
+		(void) g_mkdir_with_parents("/media", 0755);
+		return g_strdup("/media");
+	}
+
+	root = g_build_filename("/media", g_get_user_name(), NULL);
+	if ((g_file_test(root, G_FILE_TEST_IS_DIR) ||
+	     g_mkdir_with_parents(root, 0755) == 0) && access(root, W_OK | X_OK) == 0)
+		return root;
+	g_free(root);
+
+	if (g_get_user_runtime_dir() && *g_get_user_runtime_dir())
+		root = g_build_filename(g_get_user_runtime_dir(), "rox-filer2-media", NULL);
+	else
+		root = g_strdup_printf("/tmp/rox-filer2-%u-media", (guint) geteuid());
+	if (g_mkdir_with_parents(root, 0700) != 0)
+	{
+		g_free(root);
+		return NULL;
+	}
+	return root;
+}
+
+static gchar *portable_safe_component(const gchar *text)
+{
+	const gchar *src = text && *text ? text : "portable-device";
+	GString *safe = g_string_sized_new(strlen(src));
+	gboolean underscore = FALSE;
+
+	for (; *src; src++)
+	{
+		gchar c = *src;
+		if (!(g_ascii_isalnum((guchar) c) || c == '-' || c == '_' || c == '.'))
+			c = '_';
+		if (c == '_' && underscore)
+			continue;
+		underscore = c == '_';
+		g_string_append_c(safe, c);
+	}
+	if (safe->len == 0)
+		g_string_assign(safe, "portable-device");
+	return g_string_free(safe, FALSE);
+}
+
+static gchar *portable_mount_target(const DriveInfo *drive)
+{
+	gchar *root = portable_mount_root();
+	gchar *safe;
+	gchar *leaf;
+	gchar *target;
+	guint hash;
+
+	if (!root)
+		return NULL;
+	safe = portable_safe_component(rox_drive_display_name(drive));
+	hash = g_str_hash(drive && drive->device ? drive->device : safe) & 0xffff;
+	leaf = g_strdup_printf("%s-%04x", safe, hash);
+	target = g_build_filename(root, leaf, NULL);
+	g_free(root); g_free(safe); g_free(leaf);
+	return target;
+}
+
+static gchar *portable_mount_drive(const DriveInfo *drive, gchar **error_text)
+{
+	gchar *target;
+	gchar *program = NULL;
+	gchar *local_error = NULL;
+	gboolean ok = FALSE;
+	gint i;
+
+	if (error_text)
+		*error_text = NULL;
+	if (!drive || !drive->portable || !drive->device)
+		return NULL;
+	if (drive->mountpoint && portable_mountpoint_present(drive->mountpoint))
+		return g_strdup(drive->mountpoint);
+
+	target = portable_mount_target(drive);
+	if (!target || g_mkdir_with_parents(target, 0755) != 0)
+	{
+		if (error_text)
+			*error_text = g_strdup_printf(_("Could not mount '%s'."), drive->device);
+		g_free(target);
+		return NULL;
+	}
+
+	if (g_str_has_prefix(drive->device, "mtp:simple:"))
+	{
+		const gchar *index = drive->device + strlen("mtp:simple:");
+		program = g_find_program_in_path("simple-mtpfs");
+		if (program)
+		{
+			gchar *argv[] = {program, (gchar *) "--device", (gchar *) index, target, NULL};
+			ok = spawn_wait(argv, &local_error);
+		}
+	}
+	else if (g_str_has_prefix(drive->device, "mtp:jmtpfs:"))
+	{
+		program = g_find_program_in_path("jmtpfs");
+		if (program)
+		{
+			gchar *argv[] = {program, target, NULL};
+			ok = spawn_wait(argv, &local_error);
+		}
+	}
+	else if (g_str_has_prefix(drive->device, "ios:"))
+	{
+		const gchar *udid = drive->device + strlen("ios:");
+		program = g_find_program_in_path("ifuse");
+		if (program)
+		{
+			gchar *argv[] = {program, target, (gchar *) "--udid", (gchar *) udid, NULL};
+			ok = spawn_wait(argv, &local_error);
+		}
+	}
+	else if (g_str_has_prefix(drive->device, "ptp:gphoto:"))
+	{
+		program = g_find_program_in_path("gphotofs");
+		if (program)
+		{
+			gchar *argv[] = {program, target, NULL};
+			ok = spawn_wait(argv, &local_error);
+		}
+	}
+
+	if (!program && !local_error)
+	{
+		const gchar *needed = g_str_has_prefix(drive->device, "ios:") ? "ifuse" :
+			g_str_has_prefix(drive->device, "ptp:") ? "gphotofs" :
+			g_str_has_prefix(drive->device, "mtp:simple:") ? "simple-mtpfs" : "jmtpfs";
+		local_error = g_strdup_printf(_("Required program '%s' was not found."), needed);
+	}
+	g_free(program);
+
+	if (ok)
+	{
+		for (i = 0; i < 30 && !portable_mountpoint_present(target); i++)
+			g_usleep(100000);
+		if (portable_mountpoint_present(target))
+		{
+			g_free(local_error);
+			return target;
+		}
+		g_free(local_error);
+		local_error = g_strdup_printf(_("Could not mount '%s'."), drive->device);
+	}
+
+	(void) g_rmdir(target);
+	if (error_text)
+		*error_text = local_error ? local_error :
+			g_strdup_printf(_("Could not mount '%s'."), drive->device);
+	else
+		g_free(local_error);
+	g_free(target);
+	return NULL;
+}
+
+static gboolean portable_unmount_drive(const DriveInfo *drive, gchar **error_text)
+{
+	gchar *mountpoint;
+	gchar *program;
+	gchar *local_error = NULL;
+	gboolean ok = FALSE;
+	gboolean ours;
+
+	if (error_text)
+		*error_text = NULL;
+	if (!drive || !drive->portable)
+		return FALSE;
+	mountpoint = drive_current_mountpoint(drive);
+	if (!mountpoint)
+		return TRUE;
+	ours = drive->device && (g_str_has_prefix(drive->device, "mtp:") ||
+		g_str_has_prefix(drive->device, "ios:") ||
+		g_str_has_prefix(drive->device, "ptp:"));
+
+	program = g_find_program_in_path("fusermount3");
+	if (program)
+	{
+		gchar *argv[] = {program, (gchar *) "-u", mountpoint, NULL};
+		ok = spawn_wait(argv, &local_error);
+		g_free(program);
+	}
+	if (!ok)
+	{
+		g_free(local_error);
+		local_error = NULL;
+		program = g_find_program_in_path("fusermount");
+		if (program)
+		{
+			gchar *argv[] = {program, (gchar *) "-u", mountpoint, NULL};
+			ok = spawn_wait(argv, &local_error);
+			g_free(program);
+		}
+	}
+	if (!ok)
+	{
+		program = drive_system_program("umount");
+		if (program)
+		{
+			gchar *argv[] = {program, mountpoint, NULL};
+			g_free(local_error);
+			local_error = NULL;
+			ok = spawn_wait(argv, &local_error);
+			g_free(program);
+		}
+	}
+
+	if (ok)
+	{
+		if (ours)
+			(void) g_rmdir(mountpoint);
+		g_free(mountpoint);
+		g_free(local_error);
+		return TRUE;
+	}
+	if (error_text)
+		*error_text = local_error ? local_error :
+			g_strdup_printf(_("Could not unmount '%s'."), drive->device);
+	else
+		g_free(local_error);
+	g_free(mountpoint);
+	return FALSE;
+}
+
+/* Normal-user drive actions use one fixed, package-owned helper through
+ * pkexec.  No shell command and no arbitrary executable path is accepted. */
+static gboolean drive_pkexec_action(const gchar *operation, const gchar *device,
+		gchar **error_text)
+{
+	gchar *pkexec;
+	gchar *argv[5];
+	gboolean ok;
+
+	if (error_text)
+		*error_text = NULL;
+	pkexec = drive_system_program("pkexec");
+	if (!pkexec)
+	{
+		if (error_text)
+			*error_text = g_strdup_printf(_("Required program '%s' was not found."),
+				"pkexec");
+		return FALSE;
+	}
+	if (!g_file_test(ROX_MOUNT_HELPER_PATH, G_FILE_TEST_IS_EXECUTABLE))
+	{
+		if (error_text)
+			*error_text = g_strdup_printf(_("Required program '%s' was not found."),
+				ROX_MOUNT_HELPER_PATH);
+		g_free(pkexec);
+		return FALSE;
+	}
+
+	argv[0] = pkexec;
+	argv[1] = (gchar *) ROX_MOUNT_HELPER_PATH;
+	argv[2] = (gchar *) operation;
+	argv[3] = (gchar *) device;
+	argv[4] = NULL;
+	/* Give the user enough time to answer the graphical polkit prompt. */
+	ok = spawn_wait_timeout(argv, DRIVE_AUTH_TIMEOUT_SECONDS, error_text);
+	g_free(pkexec);
+	return ok;
+}
+
+/* Puppy/root mounts directly.  Normal-user sessions use pkexec and the
+ * package-owned rox-mount-helper; udisksctl is no longer the authorization
+ * path for mounting partitions. */
 static gchar *mount_drive(const DriveInfo *drive, gchar **error_text)
 {
 	gchar *mountpoint;
-	gchar *udisksctl;
 	gchar *local_error = NULL;
 
 	if (error_text)
@@ -1479,14 +2278,20 @@ static gchar *mount_drive(const DriveInfo *drive, gchar **error_text)
 	if (mountpoint)
 		return mountpoint;
 
-	/* Network entries are discovered mounts, never block devices to be
-	 * mounted by the generic local-device path.  A stale snapshot can still
-	 * carry drive->mountpoint after the share was removed externally, so the
-	 * guard must test the current result above, not the cached string. */
+	if (drive->portable)
+		return portable_mount_drive(drive, error_text);
+
 	if (drive->network)
 	{
 		if (error_text)
 			*error_text = g_strdup(_("This network resource is no longer mounted."));
+		return NULL;
+	}
+
+	if (drive->managed_image)
+	{
+		if (error_text)
+			*error_text = g_strdup(_("The mounted image is no longer available."));
 		return NULL;
 	}
 
@@ -1495,7 +2300,7 @@ static gchar *mount_drive(const DriveInfo *drive, gchar **error_text)
 		gchar *base = g_path_get_basename(drive->device);
 		gchar *target = g_build_filename("/mnt", base, NULL);
 		gboolean existed = g_file_test(target, G_FILE_TEST_IS_DIR);
-		gchar *mount_prog = g_find_program_in_path("mount");
+		gchar *mount_prog = drive_system_program("mount");
 		gchar *argv[] = {mount_prog, drive->device, target, NULL};
 
 		g_free(base);
@@ -1513,27 +2318,13 @@ static gchar *mount_drive(const DriveInfo *drive, gchar **error_text)
 		g_free(mount_prog);
 		g_free(target);
 	}
-
-	udisksctl = g_find_program_in_path("udisksctl");
-	if (udisksctl)
+	else if (drive_pkexec_action("mount-device", drive->device, &local_error))
 	{
-		gchar *argv[] = {udisksctl, (gchar *) "mount", (gchar *) "-b",
-			drive->device, NULL};
+		gchar *detected = find_mountpoint(drive->device);
 		g_free(local_error);
-		local_error = NULL;
-		if (spawn_wait(argv, &local_error))
-		{
-			gchar *detected;
-			g_free(local_error);
-			detected = find_mountpoint(drive->device);
-			if (detected) {
-				g_free(udisksctl);
-				return detected;
-			}
-			local_error = g_strdup_printf(_("Could not mount '%s'."), drive->device);
-		}
-
-		g_free(udisksctl);
+		if (detected)
+			return detected;
+		local_error = g_strdup_printf(_("Could not mount '%s'."), drive->device);
 	}
 
 	if (error_text)
@@ -1624,13 +2415,11 @@ gchar *rox_drive_mount_finish(GAsyncResult *result, gchar **error_text)
 	return mountpoint;
 }
 
-/* Agregado por josejp2424 (2026): desmontaje integrado. Puppy ejecuta
- * umount directamente como root; los usuarios normales utilizan udisksctl
- * cuando está disponible. */
+/* Integrated unmounting.  Root/Puppy executes umount directly; a normal
+ * user authenticates with pkexec and the fixed Rox-Filer2 helper. */
 static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text)
 {
 	gchar *mountpoint;
-	gchar *udisksctl;
 	gchar *local_error = NULL;
 	gboolean ok = FALSE;
 
@@ -1638,6 +2427,18 @@ static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text)
 		*error_text = NULL;
 	if (!drive || !drive->device)
 		return FALSE;
+	if (drive->managed_image)
+	{
+		if (!drive->backing_file || !*drive->backing_file)
+		{
+			if (error_text)
+				*error_text = g_strdup(_("The mounted image is no longer available."));
+			return FALSE;
+		}
+		return image_mounter_unmount_managed_sync(drive->backing_file, error_text);
+	}
+	if (drive->portable)
+		return portable_unmount_drive(drive, error_text);
 	if (drive->foreign)
 	{
 		if (error_text)
@@ -1668,7 +2469,7 @@ static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text)
 
 	if (geteuid() == 0)
 	{
-		gchar *umount_prog = g_find_program_in_path("umount");
+		gchar *umount_prog = drive_system_program("umount");
 		gchar *argv[] = {umount_prog, mountpoint, NULL};
 		if (umount_prog)
 			ok = spawn_wait(argv, &local_error);
@@ -1676,19 +2477,9 @@ static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text)
 			local_error = g_strdup_printf(_("Could not unmount '%s'."), drive->device);
 		g_free(umount_prog);
 	}
-
-	if (!ok)
+	else
 	{
-		udisksctl = g_find_program_in_path("udisksctl");
-		if (udisksctl)
-		{
-			gchar *argv[] = {udisksctl, (gchar *) "unmount",
-				(gchar *) "-b", drive->device, NULL};
-			g_free(local_error);
-			local_error = NULL;
-			ok = spawn_wait(argv, &local_error);
-			g_free(udisksctl);
-		}
+		ok = drive_pkexec_action("unmount-device", drive->device, &local_error);
 	}
 
 	g_free(mountpoint);
@@ -1706,8 +2497,9 @@ static gboolean unmount_drive(const DriveInfo *drive, gchar **error_text)
 	return FALSE;
 }
 
-/* Agregado por josejp2424 (2026): expulsión segura para medios extraíbles.
- * Primero desmonta el volumen y luego usa udisksctl o eject como respaldo. */
+
+/* Safe eject.  Normal-user sessions authorize the hardware operation through
+ * pkexec as well; root sessions retain direct system-tool behaviour. */
 static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 {
 	gchar *device;
@@ -1737,13 +2529,15 @@ static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 	g_free(local_error);
 	local_error = NULL;
 
-	device = g_strdup(drive->parent_device);
-
-	/* Optical media should open the tray first. USB/removable hardware should
-	 * be powered off first. Never let fuzzy UI heuristics choose power-off. */
-	if (drive->optical)
+	device = g_strdup(drive->parent_device ? drive->parent_device : drive->device);
+	if (geteuid() != 0)
 	{
-		program = g_find_program_in_path("eject");
+		ok = drive_pkexec_action(drive->optical ? "eject-optical" : "power-off",
+			device, &local_error);
+	}
+	else if (drive->optical)
+	{
+		program = drive_system_program("eject");
 		if (program)
 		{
 			gchar *argv[] = {program, device, NULL};
@@ -1753,7 +2547,7 @@ static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 	}
 	else if (drive->hardware_removable)
 	{
-		program = g_find_program_in_path("udisksctl");
+		program = drive_system_program("udisksctl");
 		if (program)
 		{
 			gchar *argv[] = {program, (gchar *) "power-off", (gchar *) "-b",
@@ -1763,9 +2557,9 @@ static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 		}
 	}
 
-	if (!ok && drive->optical)
+	if (geteuid() == 0 && !ok && drive->optical)
 	{
-		program = g_find_program_in_path("udisksctl");
+		program = drive_system_program("udisksctl");
 		if (program)
 		{
 			gchar *argv[] = {program, (gchar *) "power-off", (gchar *) "-b",
@@ -1776,9 +2570,9 @@ static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 			g_free(program);
 		}
 	}
-	else if (!ok && drive->hardware_removable)
+	else if (geteuid() == 0 && !ok && drive->hardware_removable)
 	{
-		program = g_find_program_in_path("eject");
+		program = drive_system_program("eject");
 		if (program)
 		{
 			gchar *argv[] = {program, device, NULL};
@@ -1805,6 +2599,7 @@ static gboolean eject_drive(const DriveInfo *drive, gchar **error_text)
 	return FALSE;
 }
 
+
 static void drive_menu_action_free(gpointer data)
 {
 	DriveMenuAction *action = data;
@@ -1830,12 +2625,16 @@ static DriveInfo *drive_info_copy(const DriveInfo *source)
 	copy->transport = g_strdup(source->transport);
 	copy->model = g_strdup(source->model);
 	copy->parent_device = g_strdup(source->parent_device);
+	copy->backing_file = g_strdup(source->backing_file);
+	copy->managed_image = source->managed_image;
 	copy->removable = source->removable;
 	copy->hardware_removable = source->hardware_removable;
 	copy->optical = source->optical;
 	copy->network = source->network;
+	copy->portable = source->portable;
 	copy->foreign = source->foreign;
 	copy->solid_state = source->solid_state;
+	copy->system_partition = source->system_partition;
 	copy->label_is_synthetic = source->label_is_synthetic;
 	return copy;
 }
@@ -2006,6 +2805,27 @@ static void drive_menu_eject(GtkMenuItem *item, gpointer data)
 	rox_drive_eject_async(action->drive, drive_action_ui_done, ui);
 }
 
+/* 2.13.0-7: quick mounted-state action for the Classic partitions
+ * popover.  It mirrors the small eject/unmount arrow used by desktop drive
+ * icons: mounted volumes show the arrow; unmounted volumes do not. */
+static void drive_grid_quick_action(GtkButton *button, gpointer data)
+{
+	DriveMenuAction *action = data;
+	DriveActionUi *ui;
+
+	(void) button;
+	if (!action || !action->drive)
+		return;
+
+	ui = g_new0(DriveActionUi, 1);
+	ui->popover = drive_action_ref_popover(action);
+	ui->eject = rox_drive_can_eject(action->drive);
+	if (ui->eject)
+		rox_drive_eject_async(action->drive, drive_action_ui_done, ui);
+	else
+		rox_drive_unmount_async(action->drive, drive_action_ui_done, ui);
+}
+
 /* Agregado por josejp2424 (2026): menú contextual pequeño, acorde a la
  * interfaz tradicional de ROX. El clic izquierdo conserva montar/abrir. */
 static gboolean drive_grid_button_press(GtkWidget *button,
@@ -2129,8 +2949,11 @@ typedef enum
 	ROX_DRIVE_ICON_USB,
 	ROX_DRIVE_ICON_SD,
 	ROX_DRIVE_ICON_OPTICAL,
+	ROX_DRIVE_ICON_IMAGE,
 	ROX_DRIVE_ICON_FLOPPY,
-	ROX_DRIVE_ICON_NETWORK
+	ROX_DRIVE_ICON_NETWORK,
+	ROX_DRIVE_ICON_PORTABLE,
+	ROX_DRIVE_ICON_CAMERA
 } RoxDriveIconKind;
 
 static RoxDriveIconKind drive_icon_kind(const RoxDriveInfo *drive)
@@ -2142,6 +2965,11 @@ static RoxDriveIconKind drive_icon_kind(const RoxDriveInfo *drive)
 		return ROX_DRIVE_ICON_INTERNAL;
 	if (drive->network)
 		return ROX_DRIVE_ICON_NETWORK;
+	if (drive->managed_image)
+		return ROX_DRIVE_ICON_IMAGE;
+	if (drive->portable)
+		return g_strcmp0(drive->transport, "ptp") == 0 ?
+			ROX_DRIVE_ICON_CAMERA : ROX_DRIVE_ICON_PORTABLE;
 	if (drive->optical ||
 	    (drive->type && !g_ascii_strcasecmp(drive->type, "rom")) ||
 	    (drive->name && g_str_has_prefix(drive->name, "sr")) ||
@@ -2192,11 +3020,22 @@ static const gchar *const *drive_icon_names_for_kind(RoxDriveIconKind kind)
 		"drive-harddisk-solidstate", "drive-harddisk-system",
 		"drive-harddisk", NULL
 	};
+	static const gchar *image[] = {
+		"media-optical", "drive-removable-media", "drive-harddisk", NULL
+	};
 	static const gchar *floppy[] = {
 		"media-floppy", "drive-floppy", NULL
 	};
 	static const gchar *network[] = {
 		"drive-network", "network-server", "folder-remote", NULL
+	};
+	static const gchar *portable[] = {
+		"phone", "multimedia-player", "smartphone",
+		"drive-removable-media", NULL
+	};
+	static const gchar *camera[] = {
+		"camera-photo", "camera", "image-x-generic",
+		"drive-removable-media", NULL
 	};
 	static const gchar *internal[] = {
 		"drive-harddisk", "drive-harddisk-system", NULL
@@ -2205,11 +3044,14 @@ static const gchar *const *drive_icon_names_for_kind(RoxDriveIconKind kind)
 	switch (kind)
 	{
 		case ROX_DRIVE_ICON_OPTICAL: return optical;
+		case ROX_DRIVE_ICON_IMAGE: return image;
 		case ROX_DRIVE_ICON_USB: return usb;
 		case ROX_DRIVE_ICON_SD: return sd;
 		case ROX_DRIVE_ICON_SSD: return ssd;
 		case ROX_DRIVE_ICON_FLOPPY: return floppy;
 		case ROX_DRIVE_ICON_NETWORK: return network;
+		case ROX_DRIVE_ICON_PORTABLE: return portable;
+		case ROX_DRIVE_ICON_CAMERA: return camera;
 		case ROX_DRIVE_ICON_INTERNAL:
 		default: return internal;
 	}
@@ -2416,12 +3258,87 @@ static void drive_visibility_toggled(GtkToggleButton *toggle_button, gpointer da
 	}
 }
 
+static void drives_popover_attach_drive(DrivePopoverLive *live,
+		DriveInfo *drive, guint position, guint row_offset)
+{
+	DriveMenuAction *action;
+	GtkWidget *cell;
+	GtkWidget *drive_button;
+	GtkWidget *quick_button;
+	GtkWidget *quick_image;
+	gchar *mountpoint;
+	gboolean mounted;
+
+	if (!live || !drive)
+		return;
+
+	action = g_new0(DriveMenuAction, 1);
+	cell = gtk_overlay_new();
+	drive_button = drive_grid_button_new(drive);
+	action->filer_window = live->filer_window;
+	action->drive = drive_info_copy(drive);
+	action->popover = live->popover;
+	g_signal_connect(drive_button, "clicked",
+		G_CALLBACK(drive_grid_activate), action);
+	gtk_widget_add_events(drive_button, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(drive_button, "button-press-event",
+		G_CALLBACK(drive_grid_button_press), action);
+	gtk_widget_set_tooltip_text(drive_button,
+		_("Left click: open or mount\nRight click: drive actions"));
+	gtk_container_add(GTK_CONTAINER(cell), drive_button);
+
+	/* Match the desktop drive icons: the arrow is also the mounted-state
+	 * indicator.  Foreign mounts stay read-only from ROX because another
+	 * application owns their lifecycle. */
+	mountpoint = drive_current_mountpoint(drive);
+	mounted = mountpoint != NULL;
+	g_free(mountpoint);
+	if (mounted && !drive->foreign)
+	{
+		quick_button = gtk_button_new();
+		gtk_button_set_relief(GTK_BUTTON(quick_button), GTK_RELIEF_NONE);
+		gtk_widget_set_halign(quick_button, GTK_ALIGN_END);
+		gtk_widget_set_valign(quick_button, GTK_ALIGN_START);
+		gtk_widget_set_margin_top(quick_button, 2);
+		gtk_widget_set_margin_end(quick_button, 2);
+		gtk_widget_set_size_request(quick_button, 24, 24);
+		gtk_style_context_add_class(gtk_widget_get_style_context(quick_button),
+			"rox-drive-quick");
+		quick_image = gtk_image_new_from_icon_name("media-eject-symbolic",
+			GTK_ICON_SIZE_MENU);
+		if (!gtk_icon_theme_has_icon(gtk_icon_theme_get_default(),
+			"media-eject-symbolic"))
+			gtk_image_set_from_icon_name(GTK_IMAGE(quick_image), "media-eject",
+				GTK_ICON_SIZE_MENU);
+		gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
+		gtk_widget_set_tooltip_text(quick_button,
+			rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
+		g_signal_connect(quick_button, "clicked",
+			G_CALLBACK(drive_grid_quick_action), action);
+		gtk_overlay_add_overlay(GTK_OVERLAY(cell), quick_button);
+		gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(cell), quick_button, FALSE);
+	}
+
+	g_object_set_data_full(G_OBJECT(cell), "rox-drive-action",
+		action, drive_menu_action_free);
+	gtk_grid_attach(GTK_GRID(live->grid), cell,
+		(gint) (position % 4), (gint) (row_offset + position / 4), 1, 1);
+}
+
 static void drives_popover_fill(DrivePopoverLive *live, GPtrArray *drives,
 		const GError *error)
 {
 	GList *children, *node;
 	guint i;
-	guint rows;
+	guint normal_count = 0;
+	guint portable_count = 0;
+	guint image_count = 0;
+	guint normal_pos = 0;
+	guint portable_pos = 0;
+	guint image_pos = 0;
+	guint normal_rows = 0;
+	guint portable_rows = 0;
+	guint rows = 1;
 	gint content_height;
 
 	if (!live || !GTK_IS_WIDGET(live->grid) || !GTK_IS_WIDGET(live->popover))
@@ -2453,28 +3370,77 @@ static void drives_popover_fill(DrivePopoverLive *live, GPtrArray *drives,
 		for (i = 0; i < drives->len; i++)
 		{
 			DriveInfo *drive = g_ptr_array_index(drives, i);
-			DriveMenuAction *action = g_new0(DriveMenuAction, 1);
-			GtkWidget *drive_button = drive_grid_button_new(drive);
+			if (drive->managed_image)
+				image_count++;
+			else if (drive->portable)
+				portable_count++;
+			else
+				normal_count++;
+		}
 
-			action->filer_window = live->filer_window;
-			action->drive = drive_info_copy(drive);
-			action->popover = live->popover;
-			g_signal_connect(drive_button, "clicked",
-				G_CALLBACK(drive_grid_activate), action);
-			gtk_widget_add_events(drive_button, GDK_BUTTON_PRESS_MASK);
-			g_signal_connect(drive_button, "button-press-event",
-				G_CALLBACK(drive_grid_button_press), action);
-			gtk_widget_set_tooltip_text(drive_button,
-				_("Left click: open or mount\nRight click: drive actions"));
-			g_object_set_data_full(G_OBJECT(drive_button), "rox-drive-action",
-				action, drive_menu_action_free);
-			gtk_grid_attach(GTK_GRID(live->grid), drive_button,
-				(gint) (i % 4), (gint) (i / 4), 1, 1);
+		for (i = 0; i < drives->len; i++)
+		{
+			DriveInfo *drive = g_ptr_array_index(drives, i);
+			if (drive->managed_image || drive->portable)
+				continue;
+			drives_popover_attach_drive(live, drive, normal_pos++, 0);
+		}
+
+		normal_rows = (normal_count + 3) / 4;
+		rows = MAX(1, normal_rows);
+
+		if (portable_count > 0)
+		{
+			GtkWidget *heading = gtk_label_new(NULL);
+			gchar *markup = g_markup_printf_escaped("<b>%s</b>",
+				_("Portable Devices"));
+			gtk_label_set_markup(GTK_LABEL(heading), markup);
+			gtk_label_set_xalign(GTK_LABEL(heading), 0.0);
+			gtk_widget_set_margin_top(heading, normal_count ? 8 : 0);
+			gtk_widget_set_margin_bottom(heading, 2);
+			gtk_grid_attach(GTK_GRID(live->grid), heading,
+				0, (gint) normal_rows, 4, 1);
+			g_free(markup);
+
+			for (i = 0; i < drives->len; i++)
+			{
+				DriveInfo *drive = g_ptr_array_index(drives, i);
+				if (!drive->portable)
+					continue;
+				drives_popover_attach_drive(live, drive, portable_pos++,
+					normal_rows + 1);
+			}
+			portable_rows = (portable_count + 3) / 4;
+			rows = normal_rows + 1 + portable_rows;
+		}
+
+		if (image_count > 0)
+		{
+			GtkWidget *heading = gtk_label_new(NULL);
+			gchar *markup = g_markup_printf_escaped("<b>%s</b>",
+				_("Mounted Images"));
+			gtk_label_set_markup(GTK_LABEL(heading), markup);
+			gtk_label_set_xalign(GTK_LABEL(heading), 0.0);
+			gtk_widget_set_margin_top(heading, (normal_count || portable_count) ? 8 : 0);
+			gtk_widget_set_margin_bottom(heading, 2);
+			gtk_grid_attach(GTK_GRID(live->grid), heading,
+				0, (gint) (normal_rows + (portable_count ? 1 + portable_rows : 0)), 4, 1);
+			g_free(markup);
+
+			for (i = 0; i < drives->len; i++)
+			{
+				DriveInfo *drive = g_ptr_array_index(drives, i);
+				if (!drive->managed_image)
+					continue;
+				drives_popover_attach_drive(live, drive, image_pos++,
+					normal_rows + (portable_count ? 1 + portable_rows : 0) + 1);
+			}
+			rows = normal_rows + (portable_count ? 1 + portable_rows : 0) +
+				1 + (image_count + 3) / 4;
 		}
 	}
 
-	rows = drives && drives->len > 0 ? (drives->len + 3) / 4 : 1;
-	content_height = MIN(360, MAX(120, (gint) rows * 104 + 8));
+	content_height = MIN(430, MAX(120, (gint) rows * 104 + 8));
 	gtk_widget_set_size_request(live->scrolled, 584, content_height);
 	gtk_widget_show_all(live->grid);
 }
@@ -2662,6 +3628,249 @@ static gboolean drive_async_finish(GAsyncResult *result, gchar **error_text)
 		*error_text = g_steal_pointer(&action_result->error_text);
 	drive_async_result_free(action_result);
 	return ok;
+}
+
+/* 2.13.0-8: PMADAS inspired the user-facing behaviour, but all probing and
+ * mounting use ROX-Filer2's existing drive backend.  No Startup script,
+ * probepart database or second configuration file is introduced. */
+static gboolean startup_auto_mount_lock_acquire(void)
+{
+	const gchar *runtime = g_getenv("XDG_RUNTIME_DIR");
+	gchar *path;
+
+	if (startup_automount_lock_fd >= 0)
+		return TRUE;
+	if (!runtime || !*runtime || !g_file_test(runtime, G_FILE_TEST_IS_DIR))
+		runtime = g_get_tmp_dir();
+	path = g_strdup_printf("%s/rox-filer2-automount-%lu.lock", runtime,
+		(unsigned long) geteuid());
+	startup_automount_lock_fd = g_open(path, O_CREAT | O_RDWR, 0600);
+	g_free(path);
+	if (startup_automount_lock_fd < 0)
+		return FALSE;
+	if (flock(startup_automount_lock_fd, LOCK_EX | LOCK_NB) != 0)
+	{
+		close(startup_automount_lock_fd);
+		startup_automount_lock_fd = -1;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static void startup_auto_mount_lock_release(void)
+{
+	if (startup_automount_lock_fd < 0)
+		return;
+	(void) flock(startup_automount_lock_fd, LOCK_UN);
+	close(startup_automount_lock_fd);
+	startup_automount_lock_fd = -1;
+}
+
+typedef struct
+{
+	GPtrArray *queue;
+	guint index;
+} StartupAutoMount;
+
+static void startup_auto_mount_free(StartupAutoMount *state)
+{
+	if (!state)
+		return;
+	if (state->queue)
+		g_ptr_array_unref(state->queue);
+	g_free(state);
+	startup_auto_mount_lock_release();
+}
+
+static gboolean drive_auto_mount_candidate(const DriveInfo *drive,
+		gboolean include_removable)
+{
+	gchar *mounted;
+	gboolean ok;
+
+	if (!drive || !drive->device || !g_str_has_prefix(drive->device, "/dev/"))
+		return FALSE;
+	/* MTP/PTP/iOS, network resources and mounted images keep their own
+	 * explicit lifecycle and are never part of disk automount. */
+	if (drive->portable || drive->network || drive->managed_image || drive->foreign)
+		return FALSE;
+	if (drive->system_partition)
+		return FALSE;
+	/* Avoid waking optical drives merely because ROX started. */
+	if (drive->optical)
+		return FALSE;
+	if (!include_removable && (drive->removable || drive->hardware_removable))
+		return FALSE;
+	if (!drive->fstype || !*drive->fstype)
+		return FALSE;
+	/* Never automount boot/technical/encrypted-container filesystems.  The
+	 * normal list already hides EFI by default; the textual guard remains so
+	 * making system partitions visible cannot turn them into automount targets. */
+	if (!g_ascii_strcasecmp(drive->fstype, "swap") ||
+	    !g_ascii_strcasecmp(drive->fstype, "squashfs") ||
+	    !g_ascii_strcasecmp(drive->fstype, "overlay") ||
+	    !g_ascii_strcasecmp(drive->fstype, "aufs") ||
+	    !g_ascii_strcasecmp(drive->fstype, "crypto_LUKS") ||
+	    !g_ascii_strcasecmp(drive->fstype, "iso9660") ||
+	    !g_ascii_strcasecmp(drive->fstype, "udf"))
+		return FALSE;
+	if (system_partition_text_match(drive->label) ||
+	    technical_text_match(drive->label))
+		return FALSE;
+
+	mounted = drive_current_mountpoint(drive);
+	ok = mounted == NULL;
+	g_free(mounted);
+	return ok;
+}
+
+static void startup_auto_mount_next(StartupAutoMount *state);
+
+static void startup_auto_mount_done(GObject *source_object, GAsyncResult *result,
+		gpointer user_data)
+{
+	StartupAutoMount *state = user_data;
+	gchar *error_text = NULL;
+	gchar *mountpoint;
+	RoxDriveInfo *drive;
+	(void) source_object;
+
+	if (!state || !state->queue || state->index == 0 ||
+	    state->index > state->queue->len)
+	{
+		startup_auto_mount_free(state);
+		return;
+	}
+	drive = g_ptr_array_index(state->queue, state->index - 1);
+	mountpoint = rox_drive_mount_finish(result, &error_text);
+	if (!mountpoint)
+		g_warning("Automatic mount of %s failed: %s",
+			drive && drive->device ? drive->device : "drive",
+			error_text ? error_text : "unknown error");
+	g_free(mountpoint);
+	g_free(error_text);
+	startup_auto_mount_next(state);
+}
+
+static void startup_auto_mount_next(StartupAutoMount *state)
+{
+	RoxDriveInfo *drive;
+
+	if (!state || !state->queue || state->index >= state->queue->len)
+	{
+		startup_auto_mount_free(state);
+		rox_drives_monitor_request_scan();
+		return;
+	}
+	drive = g_ptr_array_index(state->queue, state->index++);
+	rox_drive_mount_async(drive, startup_auto_mount_done, state);
+}
+
+static void startup_auto_mount_scan_thread(GTask *task, gpointer source_object,
+		gpointer task_data, GCancellable *cancellable)
+{
+	GError *error = NULL;
+	GPtrArray *drives;
+	(void) source_object;
+	(void) task_data;
+	(void) cancellable;
+
+	drives = rox_drives_read(&error);
+	if (!drives)
+	{
+		if (error)
+			g_task_return_error(task, error);
+		else
+			g_task_return_new_error(task, G_IO_ERROR, G_IO_ERROR_FAILED,
+				"Unable to scan drives for startup automount");
+		return;
+	}
+	g_task_return_pointer(task, drives, (GDestroyNotify) g_ptr_array_unref);
+}
+
+static void startup_auto_mount_scan_done(GObject *source_object,
+		GAsyncResult *result, gpointer user_data)
+{
+	GPtrArray *drives;
+	StartupAutoMount *state;
+	GError *error = NULL;
+	gboolean include_removable;
+	guint i;
+	(void) source_object;
+	(void) user_data;
+
+	drives = g_task_propagate_pointer(G_TASK(result), &error);
+	if (!drives)
+	{
+		if (error)
+		{
+			g_warning("Unable to scan drives for startup automount: %s", error->message);
+			g_clear_error(&error);
+		}
+		startup_auto_mount_lock_release();
+		return;
+	}
+	if (!o_drives_mount_all_startup.int_value)
+	{
+		g_ptr_array_unref(drives);
+		startup_auto_mount_lock_release();
+		return;
+	}
+
+	include_removable = o_drives_mount_removable_startup.int_value != 0;
+	state = g_new0(StartupAutoMount, 1);
+	state->queue = g_ptr_array_new_with_free_func(rox_drive_info_free);
+	for (i = 0; i < drives->len; i++)
+	{
+		RoxDriveInfo *drive = g_ptr_array_index(drives, i);
+		if (drive_auto_mount_candidate(drive, include_removable))
+			g_ptr_array_add(state->queue, rox_drive_info_copy(drive));
+	}
+	g_ptr_array_unref(drives);
+
+	if (state->queue->len == 0)
+	{
+		startup_auto_mount_free(state);
+		return;
+	}
+	/* Serial mounting avoids simultaneous pkexec dialogs in normal-user
+	 * sessions and keeps startup behaviour predictable. */
+	startup_auto_mount_next(state);
+}
+
+static gboolean startup_auto_mount_begin(gpointer data)
+{
+	GTask *task;
+	(void) data;
+
+	if (!o_drives_mount_all_startup.int_value)
+		return G_SOURCE_REMOVE;
+	/* Desktop and a normal filer may be started together.  Only one process
+	 * performs startup automount; the lock is runtime-only and not a setting. */
+	if (!startup_auto_mount_lock_acquire())
+		return G_SOURCE_REMOVE;
+	task = g_task_new(NULL, NULL, startup_auto_mount_scan_done, NULL);
+	g_task_run_in_thread(task, startup_auto_mount_scan_thread);
+	g_object_unref(task);
+	return G_SOURCE_REMOVE;
+}
+
+void rox_drives_init(void)
+{
+	option_add_int(&o_drives_mount_all_startup,
+		"drives_mount_all_startup", FALSE);
+	option_add_int(&o_drives_mount_removable_startup,
+		"drives_mount_removable_startup", FALSE);
+}
+
+void rox_drives_startup_auto_mount(void)
+{
+	if (startup_automount_scheduled || !o_drives_mount_all_startup.int_value)
+		return;
+	startup_automount_scheduled = TRUE;
+	/* Let the first filer/desktop window become responsive before probing
+	 * disks or presenting an authentication request. */
+	g_timeout_add(750, startup_auto_mount_begin, NULL);
 }
 
 /* Agregado por josejp2424 (2026): API pública compartida con ROX Desktop. */

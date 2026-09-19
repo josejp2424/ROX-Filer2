@@ -1161,6 +1161,8 @@ const char *rox_icon_name(const char *icon_name)
 		 * system icon theme and fall back to common freedesktop names. */
 		{"media-mount", {"media-mount", "media-mount-symbolic", "drive-removable-media", "drive-harddisk", NULL}},
 		{"folder-open", {"folder-open", "folder-open-symbolic", "folder", "folder-symbolic", NULL}},
+		{"folder-publicshare", {"folder-publicshare", "folder-publicshare-symbolic", "folder-remote", "network-server", "folder", NULL}},
+		{"network-workgroup", {"network-workgroup", "network-workgroup-symbolic", "network-server", "folder-remote", NULL}},
 		{"media-eject", {"media-eject", "media-eject-symbolic", "media-removable", "drive-removable-media", NULL}},
 	};
 	GtkIconTheme *theme;

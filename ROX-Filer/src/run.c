@@ -41,6 +41,7 @@
 #include "icon.h"
 #include "choices.h"
 #include "xdg_apps.h"
+#include "modern_ui.h"
 
 /* Static prototypes */
 static void write_data(gpointer data, gint fd, RoxInputCondition cond);
@@ -639,7 +640,7 @@ gboolean run_diritem(const gchar *full_path,
 			}
 			else if (filer_window)
 				filer_change_to(filer_window, full_path, NULL);
-			else
+			else if (!modern_ui_open_path_as_tab_if_configured(src_window, full_path))
 				filer_opendir(full_path, src_window, NULL);
 			return TRUE;
 		case TYPE_FILE:
@@ -940,7 +941,12 @@ static gboolean follow_symlink(const char *full_path,
 	{
 		FilerWindow *new;
 
-		new = filer_opendir(new_dir, src_window, NULL);
+		if (modern_ui_open_path_as_tab_if_configured(src_window, new_dir))
+		{
+			new = src_window;
+		}
+		else
+			new = filer_opendir(new_dir, src_window, NULL);
 		if (new)
 			display_set_autoselect(new, slash + 1);
 	}
@@ -1080,7 +1086,7 @@ static void open_mountpoint(const guchar *full_path, DirItem *item,
 	{
 		if (filer_window)
 			filer_change_to(filer_window, full_path, NULL);
-		else
+		else if (!modern_ui_open_path_as_tab_if_configured(src_window, full_path))
 			filer_opendir(full_path, src_window, NULL);
 	}
 }

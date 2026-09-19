@@ -1,3 +1,156 @@
+2026-09-18 Rox-Filer2 2.13.0-8
+
+* Add optional startup automount to Options > Drives, inspired by PMADAS but
+  implemented entirely through the shared Rox-Filer2 drive/mount backend.
+* Keep automount disabled by default; optionally include removable USB/SD
+  storage with a second preference.
+* Exclude network shares, MTP/PTP/iOS devices, mounted images, optical media,
+  encrypted containers, swap/technical filesystems and system partitions.
+* Mount eligible volumes serially after the UI is ready, avoiding simultaneous
+  authentication prompts in normal-user sessions.
+* Store both preferences in the standard Rox-Filer2 XDG Options file; no
+  PMADAS startup script or separate configuration file is created.
+* Translate all new Options strings in the eleven maintained runtime catalogs.
+
+2026-09-18 Rox-Filer2 2.13.0-7
+
+* Add a visible quick eject/unmount arrow to every mounted partition in the
+  Classic Partitions popover and Modern Devices sidebar, matching ROX Desktop.
+* The arrow is also the mounted-state indicator: it is shown only while the
+  volume is mounted and disappears after a successful unmount/eject.
+* Clicking the arrow unmounts normal volumes and performs safe Eject for media
+  that support it; foreign mounts managed by another application remain untouched.
+* Reuse the existing translated Unmount/Eject strings; no new runtime strings.
+
+2026-09-18 Rox-Filer2 2.13.0-6
+
+* Samba usershare UI: add a simple Shared Folders manager in the Samba menu
+  while keeping the quick Share Folder action on directory context menus.
+* Shared Folders can be opened, edited or stopped from one list.
+* Share Folder is hidden when the Samba `net` helper is unavailable.
+* Prefer the `folder-publicshare` themed icon with a safe fallback.
+* Shared folders receive a small `emblem-shared` overlay when the active icon
+  theme provides one; no private icon is forced.
+* All new strings are translated in ar, ca, de, es, fr, hu, it, ja, pt, ru
+  and zh (English remains the source fallback).
+
+2026-09-13 Rox-Filer2 2.13.0-5
+
+- Unify Options opening between Classic and Modern: Modern now routes through the same `menu_show_options()` path used by Classic instead of calling `options_show()` directly.
+- Keep Options at a 960x600 initial size and add a 900x540 minimum geometry hint so tiling/modern-window paths cannot squeeze the right-hand settings page back to the compact layout.
+- Preserve all 2.13.0-4 behavior and translations unchanged.
+
+2026-09-13 Rox-Filer2 2.13.0-4
+
+- Fix the Options geometry regression: `options_show()` still forced the window back to 640x400 after it was shown, overriding the wider default introduced in 2.13.0-3.
+- Apply a real 960x600 initial Options size after widget realisation, while keeping the window fully resizable.
+- Keep the category tree compact so the additional width goes primarily to the right-hand settings page.
+- Preserve all 2.13.0-3 functionality unchanged.
+
+2026-09-13 Rox-Filer2 2.13.0-3
+
+- Increase the default Options window from 640x400 to 920x560 so the Interface/Modern preview, explanatory text and newer controls are readable without being cramped.
+- Keep the Options window fully resizable; this is only a better initial geometry and does not impose a fixed size.
+- Preserve all 2.13.0-2 Samba sharing, Modern tab/new-instance routing and optional Close Window functionality unchanged.
+
+2026-09-13 Rox-Filer2 2.13.0-2
+
+- Fix the 2.13.0-1 Samba usershare build failure by including `global.h` before `i18n.h`, making the GTK3 `RoxItemFactoryEntry` compatibility type visible to `samba_share.c`.
+- Fix Modern tab activation: tab toggle state is now synchronized explicitly, clicking any inactive tab reliably makes it active/restores its path and view state, and the file view receives focus after the switch.
+- Add **Modern > New Rox-Filer2 instances** in Options, allowing ordinary new-window navigation from a Modern window and forwarded Rox-Filer2 requests to open as a **New Window** (default) or **New Tab**. Explicit New Window actions, custom WM-class requests and window-ID RPC requests remain separate windows.
+- Restore the historical optional **Close Window** toolbar control for tiling window managers such as SpectrWM and BSPWM. It remains disabled by default, is configurable through the existing Toolbar customizer, and Modern mirrors the same setting with a close button in its navigation bar.
+- Keep the Samba usershare feature rootless/runtime-optional and preserve all 2.13.0-1 sharing functionality.
+
+2026-09-13 Rox-Filer2 2.13.0-1
+
+- Start the Rox-Filer2 2.13 series with native rootless Samba folder sharing inspired by the workflow of thunar-shares-plugin, without ThunarX or XFCE dependencies.
+- Add **Share Folder...** to the shared Classic/Modern folder context menu. The dialog can create, edit or remove a Samba usershare, set the share name/comment, allow write access and enable guest access when Samba permits it.
+- Use `net usershare` directly as the current user; Rox-Filer2 never elevates itself for this action. `testparm` is queried when available for `usershare owner only` and `usershare allow guests`.
+- Keep Samba fully runtime-optional: missing commands or an unconfigured usershare environment produce a clear dialog and never prevent Rox-Filer2 from starting.
+- Ask before adding the Unix folder permissions required by writable/guest shares, matching the practical behavior of established usershare frontends.
+- Recommend Samba command-line/server packages in Debian packaging and expose Samba as optional integration in the Arch/Void builders.
+- Extend all eleven runtime catalogues for the new sharing UI and errors.
+
+2026-09-12 Rox-Filer2 2.12.2-99
+
+- Fix Classic type-ahead selection when a non-text toolbar control such as Partitions owns keyboard focus; printable typing now starts the same filename-prefix search already working in Modern.
+- Restrict type-ahead suppression to actual text-input widgets (minibuffer, path/location entries, spin/editable controls and text views) instead of requiring the file view to own focus before typing begins.
+- Move keyboard focus to the matched file view as soon as a prefix match is selected, so subsequent characters refine the same search consistently in Classic and Modern.
+- Preserve the complete 2.12.2-98 timeout, UTF-8 matching, Backspace and shortcut behavior with no new runtime strings.
+
+2026-09-12 Rox-Filer2 2.12.2-98
+
+- Add PCManFM-style type-ahead filename selection to the shared filer backend, so typing letters immediately highlights the first visible filename matching the accumulated prefix in both Classic and Modern interfaces.
+- Make matching case-insensitive and UTF-8 aware, reset the prefix after 1.5 seconds of inactivity, and let Backspace refine an active prefix without changing the historical parent-directory behavior when no prefix is active.
+- Preserve ROX keyboard behavior for numeric selection groups, Space selection toggling and modified Ctrl/Alt/Super shortcuts; path/minibuffer text entry is never intercepted.
+- Keep the implementation view-independent so icon/collection and detailed-list views behave consistently.
+
+2026-09-11 Rox-Filer2 2.12.2-97
+
+- Fix the Apple portable-device configure probe: detect `libimobiledevice-1.0` metadata with the same `pkg-config --modversion` check used manually instead of requiring a fully linkable development dependency graph that Rox-Filer2 never links.
+- Report `idevice_id` and `ifuse` separately in the Meson summary so Apple runtime readiness is visible and cannot be confused with development-package linkability.
+- Make Debian dependency generation portable to Essora/Puppy: use `dpkg-shlibdeps` when available, but fall back to the known core GTK3/GLib/XML/X11 runtime package set when dpkg-dev is intentionally absent.
+- Allow advanced packagers to override the fallback with `ROX_DEB_SHLIBS_DEPENDS` without changing the source tree.
+
+2026-09-11 Rox-Filer2 2.12.2-96
+
+- Make build-package.sh portable to Puppy/Essora systems where a standalone `cp` command is absent from PATH: use normal cp when available and transparently fall back to the BusyBox cp applet.
+- Use the resolved copy backend for Debian staging, AppDir/MIME payload copies, portable-tree creation and optional Arch staging so a completed Meson build is not lost during packaging.
+- Keep the generated Arch PKGBUILD unchanged because native Arch installations provide coreutils cp.
+
+2026-09-11 Rox-Filer2 2.12.2-95
+
+- Add runtime-optional portable-device discovery and mounting without GVfs: Android/MTP via simple-mtpfs or jmtpfs, PTP cameras via gphoto2/gphotofs, and iPhone/iPad via libimobiledevice tools plus ifuse.
+- Show portable devices in a dedicated Portable Devices group in both the Classic Partitions popover and the Modern Devices sidebar, while keeping Rox-Filer2-mounted ISO/SFS images in Mounted Images.
+- Include non-block mountpoints under /media so externally mounted FUSE/media filesystems can be opened and unmounted from the same drive UIs.
+- Watch /sys/bus/usb/devices in addition to GVolumeMonitor so USB portable-device changes refresh promptly; the 45-second poll remains only a safety net.
+- Probe libmtp, libgphoto2 and libimobiledevice at Meson configure time without linking the main executable to them; missing optional mobile stacks never prevent Rox-Filer2 from compiling or starting.
+- Recommend the Debian MTP/PTP/iOS helper/runtime packages instead of making them hard Depends, and extend the release gate against accidental hard mobile-library ELF dependencies.
+
+2026-09-11 Rox-Filer2 2.12.2-94
+
+- Add privilege-aware window-frame icons: normal-user Rox-Filer2 windows use the existing blue ROX-Filer icon and effective UID 0 uses the new orange ROX-Filer-root icon.
+- Keep the privilege icon stable while navigating; per-directory `.DirIcon`/globicons no longer replace the filer window frame icon.
+- Install `ROX-Filer.svg` and `ROX-Filer-root.svg` under `/usr/share/pixmaps`, while retaining the normal blue icon for menu/application identity.
+- Bundle the orange icon inside the ROX AppDir as a portable/source-tree fallback and validate both icons in the release gate.
+
+2026-09-11 Rox-Filer2 2.12.2-93
+
+- Make libsmbclient a true runtime-optional enhancement: Rox-Filer2 no longer has a hard ELF dependency on libsmbclient.so.0.
+- Load libsmbclient lazily with dlopen/dlsym for SMB share listing and post-failure diagnostics; if it is absent, Rox-Filer2 still starts and ordinary file-manager features remain available.
+- Keep mount.cifs independent from libsmbclient so direct SMB mounting can still work when cifs-utils is present.
+- Remove libsmbclient development files from the build requirements and switch Debian libsmbclient0 from a hard dependency path to Recommends.
+- Make Debian, Arch and Void builders use automatic SMB runtime-loader mode and add release-gate checks preventing a future hard libsmbclient dependency regression.
+- Replace the obsolete “This build has no libsmbclient support” message with a runtime-availability message in all eleven catalogues.
+
+2026-09-11 Rox-Filer2 2.12.2-92
+
+- Show only image loops created by Rox-Filer2 Image Mounter; never enumerate Puppy's or the system's other /dev/loop devices.
+- Publish active Rox-Filer2 ISO/SFS/SquashFS/IMG mounts in Classic Partitions and the Modern Devices sidebar under a separate Mounted Images group.
+- Use the original image filename as the visible label while retaining the exact loop/block device and mountpoint internally.
+- Unmounting a managed image from either drive UI removes the mount, detaches its loop device, clears Image Mounter state and refreshes both interfaces immediately.
+- Keep managed image loops out of the Rox-Filer2 Desktop drive-icon layer; this release exposes them only in the requested Partitions/Devices UIs.
+- Add the Mounted Images label to all eleven runtime catalogues.
+
+2026-09-09 Rox-Filer2 2.12.2-91
+
+- Add separate Options switches for confirming Move to Trash and Delete Permanently.
+- Keep both confirmations enabled by default; users can disable either one independently.
+- Wire the preferences into the shared action backend so Classic and Modern behave identically.
+- Remove the misleading permanent-delete quiet toggle from Options; the legacy internal action option remains for compatibility with older code paths.
+- Translate the two new Options labels in all eleven runtime catalogues.
+- Credit rockedge and Sofiya in `build_void.sh` for the Void/KLV XBPS packaging solution and link to the forum discussion where the packaging work was developed.
+
+2026-09-08 Rox-Filer2 2.12.2-90
+
+- Fix desktop/Modern drive mounting on normal-user distributions by using pkexec instead of relying on udisksctl as the authorization path.
+- Add a package-owned `/usr/lib/rox-filer2/rox-mount-helper` that accepts only validated mount, unmount and eject operations and never executes a shell.
+- Add a polkit policy for the fixed helper path; Puppy/root sessions keep the direct mount/umount path unchanged.
+- Mount FAT/exFAT/NTFS removable filesystems with the authenticated user's uid/gid so normal-user mounts are usable after authorization.
+- Keep the existing Image Mounter behaviour separate; its root/udisksctl loop-image path is unchanged in this release.
+- Map the upstream `2.12.2-90` release to Void/XBPS `2.12.2.90_1` in `build_void.sh`, preserving the upstream version while following XBPS version/revision conventions.
+- Make `build_void.sh` emit validated versioned XBPS dependency patterns instead of invalid bare package names.
+
 2026-09-05 Rox-Filer2 2.12.2-89
 
 - Keep each application's real icon in Rox-Filer2 menus but clamp oversized file/pixbuf/GIcon menu artwork to a maximum of 18 px while preserving aspect ratio.

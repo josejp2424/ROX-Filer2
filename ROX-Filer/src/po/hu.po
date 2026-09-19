@@ -5,7 +5,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-89\n"
+"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -4406,8 +4406,8 @@ msgstr ""
 "%s"
 
 #: smb.c:809
-msgid "This build has no libsmbclient support."
-msgstr "Ez a build nem tartalmaz libsmbclient támogatást."
+msgid "libsmbclient is not available on this system."
+msgstr "A libsmbclient nem érhető el ezen a rendszeren."
 
 #: smb.c:832
 #, c-format
@@ -5624,6 +5624,14 @@ msgstr "Áthelyezési műveletek indítása külön megerősítés nélkül"
 #: tips:143 Options.xml.h:137
 msgid "Start link operations without an extra confirmation"
 msgstr "Hivatkozási műveletek indítása külön megerősítés nélkül"
+
+#: Options.xml.h:138
+msgid "Confirm before moving files to Trash"
+msgstr "Megerősítés a fájlok Kukába helyezése előtt"
+
+#: Options.xml.h:139
+msgid "Confirm before permanently deleting files"
+msgstr "Megerősítés a fájlok végleges törlése előtt"
 
 #: tips:144 Options.xml.h:138
 msgid "Start permanent deletion without an extra confirmation"
@@ -7776,3 +7784,196 @@ msgstr "Az SMB-megosztás nem nyitható meg („%s”): %s"
 
 msgid "This network resource is currently inaccessible."
 msgstr "Ez a hálózati erőforrás jelenleg nem érhető el."
+
+#: drives.c modern_ui.c
+msgid "Mounted Images"
+msgstr "Csatolt lemezképek"
+
+#: drives.c modern_ui.c
+msgid "Portable Devices"
+msgstr "Hordozható eszközök"
+
+#: drives.c
+msgid "MTP device"
+msgstr "MTP-eszköz"
+
+#: drives.c
+msgid "iPhone / iPad"
+msgstr "iPhone / iPad"
+
+#: samba_share.c menu.c
+msgid "Command failed."
+msgstr "A parancs végrehajtása sikertelen."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Command failed with exit status %d."
+msgstr "A parancs %d kilépési állapottal meghiúsult."
+
+
+#: samba_share.c menu.c
+msgid "The 'net' command was not found. Install Samba's command-line tools."
+msgstr "A „net” parancs nem található. Telepítse a Samba parancssori eszközeit."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Unable to read Samba usershares: %s"
+msgstr "A Samba felhasználói megosztások nem olvashatók: %s"
+
+
+#: samba_share.c menu.c
+msgid "Invalid output from Samba."
+msgstr "Érvénytelen kimenet a Sambától."
+
+
+#: samba_share.c menu.c
+msgid "Unable to update the Samba share."
+msgstr "A Samba-megosztás nem frissíthető."
+
+
+#: samba_share.c menu.c
+msgid "Rox-Filer2 needs to add filesystem permissions to this folder before it can be shared. Continue?"
+msgstr "A Rox-Filer2-nek fájlrendszer-jogosultságokat kell hozzáadnia ehhez a mappához a megosztás előtt. Folytatja?"
+
+
+#: samba_share.c menu.c
+msgid "These permissions are not removed automatically when you stop sharing the folder."
+msgstr "Ezek a jogosultságok nem kerülnek automatikusan eltávolításra, amikor megszünteti a mappa megosztását."
+
+
+#: samba_share.c menu.c
+msgid "Unable to change folder permissions."
+msgstr "A mappa jogosultságai nem módosíthatók."
+
+
+#: samba_share.c menu.c
+msgid "Samba usershare support is not available."
+msgstr "A Samba felhasználói megosztások támogatása nem érhető el."
+
+
+#: samba_share.c menu.c
+msgid "You are not the owner of this folder."
+msgstr "Nem Ön a mappa tulajdonosa."
+
+
+#: samba_share.c menu.c
+msgid "Folder Sharing"
+msgstr "Mappamegosztás"
+
+
+#: samba_share.c menu.c
+msgid "Share this folder"
+msgstr "Mappa megosztása"
+
+
+#: samba_share.c menu.c
+msgid "Share name:"
+msgstr "Megosztás neve:"
+
+
+#: samba_share.c menu.c
+msgid "Comment:"
+msgstr "Megjegyzés:"
+
+
+#: samba_share.c menu.c
+msgid "Allow others to create and delete files in this folder"
+msgstr "Mások létrehozhatnak és törölhetnek fájlokat ebben a mappában"
+
+
+#: samba_share.c menu.c
+msgid "Guest access"
+msgstr "Vendéghozzáférés"
+
+
+#: samba_share.c menu.c
+msgid "Guest access is disabled by the Samba configuration."
+msgstr "A vendéghozzáférést a Samba beállításai letiltják."
+
+
+#: samba_share.c menu.c
+msgid "Share name cannot be empty."
+msgstr "A megosztás neve nem lehet üres."
+
+
+#: samba_share.c menu.c
+msgid "Share name contains an invalid character."
+msgstr "A megosztás neve érvénytelen karaktert tartalmaz."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Another share already uses the name '%s'."
+msgstr "Egy másik megosztás már használja a(z) „%s” nevet."
+
+
+#: samba_share.c menu.c
+msgid "Share Folder..."
+msgstr "Mappa megosztása..."
+
+
+#: Options.xml.h
+msgid "New Rox-Filer2 instances:"
+msgstr "Új Rox-Filer2-példányok:"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Samba"
+msgstr "Samba"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders..."
+msgstr "Megosztott mappák..."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders"
+msgstr "Megosztott mappák"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Guest"
+msgstr "Vendég"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "_Edit"
+msgstr "_Szerkesztés"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop Sharing"
+msgstr "Megosztás leállítása"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop sharing '%s'?"
+msgstr "Leállítja a(z) „%s” megosztását?"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "No folders are currently shared."
+msgstr "Jelenleg nincs megosztott mappa."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Comment contains an invalid character."
+msgstr "A megjegyzés érvénytelen karaktert tartalmaz."
+
+#: Options.xml.h
+msgid "Drives"
+msgstr "Meghajtók"
+
+#: Options.xml.h
+msgid "Automatic mounting"
+msgstr "Automatikus csatolás"
+
+#: Options.xml.h
+msgid "Mount local drives automatically at startup"
+msgstr "Helyi meghajtók automatikus csatolása indításkor"
+
+#: Options.xml.h
+msgid "Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically."
+msgstr "A Rox-Filer2 indulásakor automatikusan csatolja az elérhető helyi lemezpartíciókat. A hálózati megosztások, telefonok, fényképezőgépek, csatolt lemezképek, optikai adathordozók, titkosított tárolók és rendszerpartíciók nem csatolódnak automatikusan."
+
+#: Options.xml.h
+msgid "Include removable drives"
+msgstr "Cserélhető meghajtók bevonása"
+
+#: Options.xml.h
+msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
+msgstr "Az automatikus indításkori csatolás engedélyezésekor a cserélhető USB-, SD- és hasonló tárolóeszközöket is bevonja."

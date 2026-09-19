@@ -9,7 +9,7 @@ PACKAGE_NAME="rox-filer2"
 
 # Keep package/version naming in sync with Rox-Filer2 itself.
 # AppInfo.xml is the canonical source. Current releases use Debian-style
-# versions such as 2.12.2-1; legacy 2.12-rNN trees remain supported.
+# versions such as 2.13.0-1; legacy 2.12-rNN trees remain supported.
 DISPLAY_VERSION=$(
     sed -n 's/^[[:space:]]*<Version>\([^<][^<]*\)<\/Version>[[:space:]]*$/\1/p' \
         "$APP_DIR/AppInfo.xml" | head -n 1
@@ -47,6 +47,48 @@ ARCH_PACKAGE_MODE=auto
 MESON_BUILD_DIR="${ROX_MESON_BUILD_DIR:-$PROJECT_ROOT/build}"
 ROX_BINARY=""
 ROX_FIND_BINARY=""
+MOUNT_HELPER_BINARY=""
+
+# 2.12.2-97: some Puppy/Essora bases provide file utilities through BusyBox
+# without a standalone `cp` in PATH.  Resolve a copy backend once and use it
+# throughout the packager so a successful Rox-Filer2 build is not discarded
+# merely because the coreutils cp frontend is absent.
+CP_BIN=""
+BUSYBOX_BIN=""
+resolve_copy_backend() {
+    if command -v cp >/dev/null 2>&1; then
+        CP_BIN=$(command -v cp)
+    elif [ -x /bin/cp ]; then
+        CP_BIN=/bin/cp
+    elif [ -x /usr/bin/cp ]; then
+        CP_BIN=/usr/bin/cp
+    elif command -v busybox >/dev/null 2>&1; then
+        BUSYBOX_BIN=$(command -v busybox)
+    elif [ -x /bin/busybox ]; then
+        BUSYBOX_BIN=/bin/busybox
+    elif [ -x /usr/bin/busybox ]; then
+        BUSYBOX_BIN=/usr/bin/busybox
+    else
+        echo "ERROR: neither cp nor BusyBox cp is available; cannot stage package files." >&2
+        exit 1
+    fi
+}
+
+copy_a() {
+    if [ -n "$CP_BIN" ]; then
+        "$CP_BIN" -a "$@"
+    else
+        "$BUSYBOX_BIN" cp -a "$@"
+    fi
+}
+
+copy_f() {
+    if [ -n "$CP_BIN" ]; then
+        "$CP_BIN" -f "$@"
+    else
+        "$BUSYBOX_BIN" cp -f "$@"
+    fi
+}
 
 usage() {
     cat <<USAGE
@@ -86,6 +128,8 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
+resolve_copy_backend
+
 if [ "$SKIP_COMPILE" -eq 0 ]; then
     command -v msgfmt >/dev/null 2>&1 || { echo "ERROR: msgfmt/gettext is required." >&2; exit 1; }
     command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is required for the PO format gate." >&2; exit 1; }
@@ -107,19 +151,19 @@ if [ "$SKIP_COMPILE" -eq 0 ]; then
     command -v ninja >/dev/null 2>&1 || { echo "ERROR: Ninja is required." >&2; exit 1; }
     echo "Building Rox-Filer2 with Meson..." >&2
     rm -rf "$MESON_BUILD_DIR"
-    # 2.12.2-82: hasta -81 se dejaba -Dsmb en "auto", de modo que el mismo
-    # arbol producia un .deb con o sin dependencia dura de libsmbclient0
-    # segun lo que tuviera instalado la maquina de compilacion.  Ahora la
-    # decision es explicita y reproducible.  Use ROX_SMB=disabled para
-    # generar un paquete sin Samba.
-    meson setup --buildtype=release "-Dsmb=${ROX_SMB:-enabled}" \
+    # 2.12.2-93: SMB is runtime-optional. The executable never links directly
+    # against libsmbclient, so one package starts with or without libsmbclient0.
+    # If libsmbclient.so.0 is present it is discovered lazily with dlopen().
+    meson setup --buildtype=release -Dsmb=auto -Dportable_devices=auto \
         "$MESON_BUILD_DIR" "$PROJECT_ROOT"
     meson compile -C "$MESON_BUILD_DIR"
     ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
     ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
+    MOUNT_HELPER_BINARY="$MESON_BUILD_DIR/rox-mount-helper"
 else
     ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
     ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
+    MOUNT_HELPER_BINARY="$MESON_BUILD_DIR/rox-mount-helper"
 fi
 
 if [ ! -x "$ROX_BINARY" ]; then
@@ -129,6 +173,11 @@ fi
 
 if [ ! -x "$ROX_FIND_BINARY" ]; then
     echo "ERROR: ROX File Search binary not found: $ROX_FIND_BINARY" >&2
+    exit 1
+fi
+
+if [ ! -x "$MOUNT_HELPER_BINARY" ]; then
+    echo "ERROR: Rox-Filer2 mount helper not found: $MOUNT_HELPER_BINARY" >&2
     exit 1
 fi
 
@@ -165,18 +214,19 @@ mkdir -p "$OUTPUT_DIR" "$PACKAGE_DIR"
 # have ordinary directory permissions (0755..0775, without special bits).
 chmod u-s,g-s "$OUTPUT_DIR" "$PACKAGE_DIR"
 chmod 0755 "$OUTPUT_DIR" "$PACKAGE_DIR"
-cp -a "$PACKAGE_BASE/." "$PACKAGE_DIR/"
+copy_a "$PACKAGE_BASE/." "$PACKAGE_DIR/"
 find "$PACKAGE_DIR" -type d -exec chmod u-s,g-s {} +
 
 # El AppDir empaquetado vive en /usr/lib/rox-filer2 y es propiedad de dpkg.
 APP_INSTALL_DIR="$PACKAGE_DIR/usr/lib/rox-filer2"
 rm -rf "$APP_INSTALL_DIR"
 mkdir -p "$APP_INSTALL_DIR"
-cp -a "$APP_DIR/." "$APP_INSTALL_DIR/"
+copy_a "$APP_DIR/." "$APP_INSTALL_DIR/"
 install -m0755 "$ROX_BINARY" "$APP_INSTALL_DIR/ROX-Filer"
+install -m0755 "$MOUNT_HELPER_BINARY" "$APP_INSTALL_DIR/rox-mount-helper"
 rm -f "$APP_INSTALL_DIR/ROX-Filer.dbg"
 rm -rf "$APP_INSTALL_DIR/ROX"
-cp -a "$PROJECT_ROOT/package-assets/ROX" "$APP_INSTALL_DIR/ROX"
+copy_a "$PROJECT_ROOT/package-assets/ROX" "$APP_INSTALL_DIR/ROX"
 
 # This is a user file template, not a packaged executable. Preserve the useful
 # Python shebang in newly-created files without creating a runtime dependency.
@@ -229,6 +279,8 @@ for legacy_name in rox-filer2.svg ROX-Filer.svg Rox-Filer2.svg; do
     install -Dm0644 "$ROX_SCALABLE_ICON" \
         "$PACKAGE_DIR/usr/share/pixmaps/$legacy_name"
 done
+install -Dm0644 "$PROJECT_ROOT/ROX-Filer-root.svg" \
+    "$PACKAGE_DIR/usr/share/pixmaps/ROX-Filer-root.svg"
 
 # Install Puppy/ROX MIME SVG icons as ordinary dpkg-owned payload. SVG files
 # belong only in hicolor/scalable, never in fixed-size directories.
@@ -250,7 +302,7 @@ install -Dm0755 "$ROX_FIND_BINARY" \
 # Debian binary packages ship stripped runtime binaries. Keep this explicit so
 # Meson and legacy-built inputs are normalized to the same package policy.
 command -v strip >/dev/null 2>&1 || { echo "ERROR: strip/binutils is required." >&2; exit 1; }
-strip --strip-unneeded "$APP_INSTALL_DIR/ROX-Filer" "$PACKAGE_DIR/usr/bin/rox-find"
+strip --strip-unneeded "$APP_INSTALL_DIR/ROX-Filer" "$APP_INSTALL_DIR/rox-mount-helper" "$PACKAGE_DIR/usr/bin/rox-find"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.desktop" \
     "$PACKAGE_DIR/usr/share/applications/rox-find.desktop"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.svg" \
@@ -262,16 +314,16 @@ for size in 48 64 128; do
 done
 if [ -d "$PROJECT_ROOT/rox-find/locale" ]; then
     mkdir -p "$PACKAGE_DIR/usr/share/locale"
-    cp -a "$PROJECT_ROOT/rox-find/locale/." "$PACKAGE_DIR/usr/share/locale/"
+    copy_a "$PROJECT_ROOT/rox-find/locale/." "$PACKAGE_DIR/usr/share/locale/"
 fi
 
 # Restore package-base integration files and normalize permissions.
 mkdir -p "$PACKAGE_DIR/DEBIAN"
 chmod u-s,g-s "$PACKAGE_DIR/DEBIAN"
 chmod 0755 "$PACKAGE_DIR/DEBIAN"
-cp -a "$PROJECT_ROOT/DEBIAN/preinst" "$PACKAGE_DIR/DEBIAN/preinst"
-cp -a "$PROJECT_ROOT/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postinst"
-cp -a "$PROJECT_ROOT/DEBIAN/postrm" "$PACKAGE_DIR/DEBIAN/postrm"
+copy_a "$PROJECT_ROOT/DEBIAN/preinst" "$PACKAGE_DIR/DEBIAN/preinst"
+copy_a "$PROJECT_ROOT/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postinst"
+copy_a "$PROJECT_ROOT/DEBIAN/postrm" "$PACKAGE_DIR/DEBIAN/postrm"
 chmod 0755 "$PACKAGE_DIR/DEBIAN/preinst" "$PACKAGE_DIR/DEBIAN/postinst" "$PACKAGE_DIR/DEBIAN/postrm"
 find "$PACKAGE_DIR/usr/share/applications" -type f -name '*.desktop' -exec chmod 0644 {} + 2>/dev/null || true
 find "$PACKAGE_DIR/usr/share/pixmaps" -type f -exec chmod 0644 {} + 2>/dev/null || true
@@ -297,13 +349,17 @@ for alias in roxfiler Rox-Filer2 ROX-Filer rox-wayland rox-x11; do
 done
 
 INSTALLED_SIZE=$(du -sk "$PACKAGE_DIR/usr" | awk '{print $1}')
-if ! command -v dpkg-shlibdeps >/dev/null 2>&1; then
-    echo "ERROR: dpkg-shlibdeps is required for Debian dependency generation." >&2
-    exit 1
-fi
-TMP_DEBIAN_DIR="$PROJECT_ROOT/debian"
-mkdir -p "$TMP_DEBIAN_DIR"
-cat > "$TMP_DEBIAN_DIR/control" <<EOF
+
+# Prefer Debian's exact shlib resolver when it exists, but do not make it a
+# prerequisite for building Rox-Filer2 on Essora/Puppy.  Those systems can
+# intentionally provide dpkg-compatible package handling without dpkg-dev and
+# therefore without dpkg-shlibdeps.  The fallback covers Rox-Filer2's direct
+# core stack; optional SMB/MTP/PTP/iOS components remain Recommends.
+SHLIBS_DEPENDS=${ROX_DEB_SHLIBS_DEPENDS:-}
+if [ -z "$SHLIBS_DEPENDS" ] && command -v dpkg-shlibdeps >/dev/null 2>&1; then
+    TMP_DEBIAN_DIR="$PROJECT_ROOT/debian"
+    mkdir -p "$TMP_DEBIAN_DIR"
+    cat > "$TMP_DEBIAN_DIR/control" <<EOF
 Source: rox-filer2
 Section: utils
 Priority: optional
@@ -314,9 +370,14 @@ Package: rox-filer2
 Architecture: any
 Description: Rox-Filer2
 EOF
-SHLIBS_DEPENDS=$(cd "$PROJECT_ROOT" && dpkg-shlibdeps -O "$APP_INSTALL_DIR/ROX-Filer" "$PACKAGE_DIR/usr/bin/rox-find" | sed -n 's/^shlibs:Depends=//p')
-rm -rf "$TMP_DEBIAN_DIR"
-[ -n "$SHLIBS_DEPENDS" ] || { echo "ERROR: dpkg-shlibdeps returned no dependencies." >&2; exit 1; }
+    SHLIBS_DEPENDS=$(cd "$PROJECT_ROOT" && dpkg-shlibdeps -O "$APP_INSTALL_DIR/ROX-Filer" "$APP_INSTALL_DIR/rox-mount-helper" "$PACKAGE_DIR/usr/bin/rox-find" 2>/dev/null | sed -n 's/^shlibs:Depends=//p' || true)
+    rm -rf "$TMP_DEBIAN_DIR"
+fi
+
+if [ -z "$SHLIBS_DEPENDS" ]; then
+    SHLIBS_DEPENDS='libc6, libgtk-3-0t64 | libgtk-3-0, libglib2.0-0t64 | libglib2.0-0, libxml2, libsm6, libice6, libx11-6'
+    echo "WARNING: dpkg-shlibdeps unavailable or unable to resolve dependencies; using the portable Debian/Devuan core dependency fallback." >&2
+fi
 sed \
     -e "s/@VERSION@/$DEB_VERSION/g" \
     -e "s/@ARCH@/$ARCH/g" \
@@ -334,7 +395,7 @@ chmod 0644 "$PACKAGE_DIR/DEBIAN/md5sums"
 
 # Leave a portable filesystem tree for PET, Slackware, Arch or custom packages.
 mkdir -p "$PORTABLE_DIR"
-cp -a "$PACKAGE_DIR/usr" "$PORTABLE_DIR/usr"
+copy_a "$PACKAGE_DIR/usr" "$PORTABLE_DIR/usr"
 cat > "$PORTABLE_DIR/PACKAGE-INFO.txt" <<INFO
 Rox-Filer2 $DISPLAY_VERSION
 Architecture: $ARCH
@@ -433,7 +494,7 @@ if [ "$BUILD_ARCH_PACKAGE" -eq 1 ]; then
 
         rm -rf "$ARCH_BUILD_DIR"
         mkdir -p "$ARCH_BUILD_DIR"
-        cp -a "$PORTABLE_TAR" "$ARCH_BUILD_DIR/$ARCH_SOURCE_BASENAME"
+        copy_a "$PORTABLE_TAR" "$ARCH_BUILD_DIR/$ARCH_SOURCE_BASENAME"
 
         cat > "$ARCH_BUILD_DIR/PKGBUILD" <<ARCHPKG
 pkgname=rox-filer2
@@ -477,7 +538,7 @@ ARCHPKG
             exit 1
         fi
         ARCH_FINAL_FILE="$OUTPUT_DIR/$(basename "$ARCH_PACKAGE_FILE")"
-        cp -f "$ARCH_PACKAGE_FILE" "$ARCH_FINAL_FILE"
+        copy_f "$ARCH_PACKAGE_FILE" "$ARCH_FINAL_FILE"
         ARCH_PACKAGE_FILE=$ARCH_FINAL_FILE
         echo "Arch Linux package: $ARCH_PACKAGE_FILE"
         echo "Generated PKGBUILD: $ARCH_BUILD_DIR/PKGBUILD"

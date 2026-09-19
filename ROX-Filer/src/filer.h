@@ -121,6 +121,12 @@ struct _FilerWindow
 	GtkWidget	*toolbar_back;
 	GtkWidget	*toolbar_forward;
 
+	/* Rox-Filer2 2.12.2-98: type-ahead selection shared by Classic and
+	 * Modern.  The text is never shown as a separate search UI; it simply
+	 * selects the first visible leafname matching the typed prefix. */
+	GString		*typeahead_text;
+	gint64		typeahead_last_us;
+
 	/* Rox-Filer2 Modern window chrome. These widgets are only created when
 	 * the persisted interface style is Modern; the file/view backend remains
 	 * the normal FilerWindow backend shared with Classic ROX. */
@@ -131,6 +137,7 @@ struct _FilerWindow
 	GtkWidget	*modern_path_entry;
 	GtkWidget	*modern_back;
 	GtkWidget	*modern_forward;
+	GtkWidget	*modern_close;
 	GtkWidget	*modern_menu_back;
 	GtkWidget	*modern_menu_forward;
 	GtkWidget	*modern_sidebar;
@@ -163,6 +170,7 @@ extern FilerWindow 	*window_with_focus;
 extern GList		*all_filer_windows;
 extern GHashTable	*child_to_filer;
 extern Option		o_filer_auto_resize, o_unique_filer_windows;
+extern Option		o_modern_new_instance_mode;
 extern Option		o_filer_size_limit;
 
 /* Prototypes */

@@ -117,7 +117,15 @@ The Modern interface adds:
 - Persistent window geometry and Modern session state
 
 Folder tabs show a short folder name while the location field keeps the full
-current path.
+current path. Tabs are fully switchable: clicking a tab activates its saved path,
+view and navigation history, and the `+` button/Ctrl+T create a usable new tab.
+
+In **Options > Interface > Modern**, **New Rox-Filer2 instances** can be set to
+**New Window** or **New Tab**. The tab setting also redirects ordinary
+new-window navigation started from an existing Modern window (folder/bookmark and
+toolbar actions) into a tab. Requests forwarded to the running Modern process use
+the same preference. The explicit **New Window** menu command always remains a
+real separate window.
 
 <p align="center">
   <img src="screenshot/roxfiler2-moder2.png"
@@ -127,6 +135,11 @@ current path.
 The Modern interface is optional; users who prefer the original ROX workflow
 can continue to use Classic mode without changing the underlying file-manager
 functionality.
+
+For tiling or undecorated window managers such as BSPWM and SpectrWM, the
+existing toolbar customizer also offers an optional **Close Window** control. It
+closes only the current filer window. The same preference controls the matching
+Modern navigation-bar close button.
 
 ## New desktop model
 
@@ -162,7 +175,7 @@ rox-wayland
 - Fast GTK3 file manager
 - Classic ROX interface and optional Modern interface
 - Modern tabs with Places, Devices and Network sidebar
-- Native SMB/CIFS browsing through `libsmbclient` without a GVfs dependency
+- Native SMB/CIFS browsing through runtime-detected `libsmbclient` without a GVfs dependency; Rox-Filer2 still starts when the library is absent
 - Built-in Image Mounter for ISO, SFS, SquashFS and raw IMG images
 - X11/XLibre support
 - Native Wayland support
@@ -349,6 +362,30 @@ Supported actions include:
 - Unmount
 - Eject
 
+Mounted volumes show a small eject/unmount arrow directly in both the Classic
+Partitions popover and the Modern Devices sidebar. The arrow doubles as the
+mounted-state indicator and disappears automatically after a successful
+unmount/eject, matching the quick action used by Rox-Filer2 desktop drive icons.
+
+Options > Drives now also provides optional startup automount. **Mount local
+drives automatically at startup** mounts eligible local disk partitions after
+the first Rox-Filer2 window is ready. **Include removable drives** extends this
+to USB, SD and similar removable storage. Both options are disabled by default;
+network shares, phones/cameras, mounted images, optical media, encrypted
+containers and system/technical partitions are excluded. The settings are
+stored with the rest of Rox-Filer2 preferences in the standard XDG Options
+file (`~/.config/rox.sourceforge.net/ROX-Filer/Options` by default; under Puppy
+root this is `/root/.config/rox.sourceforge.net/ROX-Filer/Options`). No PMADAS
+Startup helper or separate automount configuration is created.
+
+When Rox-Filer2 is running as root (the usual Puppy model), drive mount and
+unmount operations are performed directly. When it is running as a normal
+user, Rox-Filer2 uses `pkexec` with its fixed package-owned
+`/usr/lib/rox-filer2/rox-mount-helper`. The helper accepts only validated
+block-device mount, unmount and eject operations; it does not execute shell
+commands. A working polkit authentication agent is required for the graphical
+password prompt.
+
 Device icons come from the active system icon theme.
 
 Examples:
@@ -394,12 +431,28 @@ The Image Mounter does not depend on GVfs. Root sessions can use the normal
 Linux loop/mount tools directly, while non-root systems can use `udisksctl`
 when it is available.
 
+Mounted images created by Rox-Filer2 are also published under **Mounted Images**
+in the Classic Partitions popover and the Modern Devices sidebar. Rox-Filer2
+uses its own Image Mounter runtime state for this list, so Puppy/system loop
+devices that were not created by Rox-Filer2 remain hidden. Unmounting one of
+these entries also detaches its loop device and removes it from both interfaces.
+
 Menu icons come from the active system icon theme.
 
 <p align="center">
   <img src="screenshot/mount_disk.png"
        alt="Rox-Filer2 Mount Image context-menu action">
 </p>
+
+## Trash and delete confirmations
+
+Rox-Filer2 Options > File Operations now provides two independent safety switches:
+
+- **Confirm before moving files to Trash**
+- **Confirm before permanently deleting files**
+
+Both are enabled by default. Classic and Modern use the same settings, so a user
+can keep either confirmation, both, or neither.
 
 ## Trash
 
@@ -539,10 +592,11 @@ Typical development dependencies include:
 
 For the native Wayland desktop, `gtk-layer-shell` is required at runtime.
 
-Optional tools include:
+Optional/runtime integration tools include:
 
 - `rsync`
-- `udisksctl`
+- `pkexec` / polkit for drive mounting as a normal user
+- `udisksctl` for the separate Image Mounter normal-user path
 - `gtk-update-icon-cache`
 - A terminal emulator
 
@@ -562,7 +616,8 @@ The source tree includes a native Arch package builder:
 ./build_arch.sh
 ```
 
-It builds Rox-Filer2 with Meson and SMB support enabled and creates a native
+It builds Rox-Filer2 with Meson, runtime-optional SMB support and automatic
+portable-device support (`-Dportable_devices=auto`) and creates a native
 Arch Linux `.pkg.tar.zst` package in:
 
 ```text
@@ -580,13 +635,36 @@ The source tree also includes a native Void package builder:
 ./build_void.sh
 ```
 
-It builds Rox-Filer2 with Meson and SMB support enabled, creates a native
+It builds Rox-Filer2 with Meson, runtime-optional SMB support and automatic
+portable-device support (`-Dportable_devices=auto`), creates a native
 `.xbps` package in `output/`, and indexes that directory as a local XBPS
-repository.
+repository. The upstream release name is `2.13.0-8`; for XBPS the
+builder maps it to the native package form `2.13.0_8`.
 
 These native builders are separate from `build-package.sh`; they package the
 same Rox-Filer2 source against the libraries of the distribution where the
 build is performed.
+
+Portable devices are optional at runtime. Rox-Filer2 can use simple-mtpfs or
+jmtpfs for Android/MTP, gphoto2/gphotofs for PTP cameras, and ifuse plus the
+libimobiledevice tools for iPhone/iPad. If none are installed, the file manager
+still starts normally. Non-block mountpoints already present below `/media` are
+shown in the drive UIs independently of those helpers.
+
+
+### Samba folder sharing
+
+Rox-Filer2 2.13 adds native Samba usershare management without ThunarX or XFCE.
+Right-click one local folder and choose **Share Folder...** for the quick path, or
+open **Samba > Shared Folders...** to see all local usershares and open, edit or
+stop sharing them from one small manager window. The per-folder action is hidden
+when Samba's `net` helper is unavailable. Rox-Filer2 never elevates itself for
+this action; Samba's normal usershare permissions and `sambashare`-style group
+configuration remain in control. `testparm` is used when available to honor
+`usershare owner only` and `usershare allow guests`. The UI prefers the themed
+`folder-publicshare` icon and, when available, adds a small `emblem-shared` to
+folders already exported through usershare. Missing Samba tools never prevent
+the file manager from starting.
 
 ## Compatibility
 

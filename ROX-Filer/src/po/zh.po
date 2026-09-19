@@ -7,7 +7,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-89\n"
+"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -4339,8 +4339,8 @@ msgstr ""
 "%s"
 
 #: smb.c:809
-msgid "This build has no libsmbclient support."
-msgstr "此构建不支持 libsmbclient。"
+msgid "libsmbclient is not available on this system."
+msgstr "此系统上没有可用的 libsmbclient。"
 
 #: smb.c:832
 #, c-format
@@ -5504,6 +5504,14 @@ msgstr "无需额外确认即可开始移动"
 #: tips:143 Options.xml.h:137
 msgid "Start link operations without an extra confirmation"
 msgstr "无需额外确认即可开始创建链接"
+
+#: Options.xml.h:138
+msgid "Confirm before moving files to Trash"
+msgstr "将文件移至回收站前确认"
+
+#: Options.xml.h:139
+msgid "Confirm before permanently deleting files"
+msgstr "永久删除文件前确认"
 
 #: tips:144 Options.xml.h:138
 msgid "Start permanent deletion without an extra confirmation"
@@ -7493,3 +7501,196 @@ msgstr "无法打开 SMB 共享“%s”：%s"
 
 msgid "This network resource is currently inaccessible."
 msgstr "此网络资源当前无法访问。"
+
+#: drives.c modern_ui.c
+msgid "Mounted Images"
+msgstr "已挂载的映像"
+
+#: drives.c modern_ui.c
+msgid "Portable Devices"
+msgstr "便携设备"
+
+#: drives.c
+msgid "MTP device"
+msgstr "MTP 设备"
+
+#: drives.c
+msgid "iPhone / iPad"
+msgstr "iPhone / iPad"
+
+#: samba_share.c menu.c
+msgid "Command failed."
+msgstr "命令执行失败。"
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Command failed with exit status %d."
+msgstr "命令以退出状态 %d 失败。"
+
+
+#: samba_share.c menu.c
+msgid "The 'net' command was not found. Install Samba's command-line tools."
+msgstr "未找到“net”命令。请安装 Samba 命令行工具。"
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Unable to read Samba usershares: %s"
+msgstr "无法读取 Samba 用户共享：%s"
+
+
+#: samba_share.c menu.c
+msgid "Invalid output from Samba."
+msgstr "Samba 输出无效。"
+
+
+#: samba_share.c menu.c
+msgid "Unable to update the Samba share."
+msgstr "无法更新 Samba 共享。"
+
+
+#: samba_share.c menu.c
+msgid "Rox-Filer2 needs to add filesystem permissions to this folder before it can be shared. Continue?"
+msgstr "共享此文件夹前，Rox-Filer2 需要为该文件夹添加文件系统权限。是否继续？"
+
+
+#: samba_share.c menu.c
+msgid "These permissions are not removed automatically when you stop sharing the folder."
+msgstr "停止共享文件夹时不会自动移除这些权限。"
+
+
+#: samba_share.c menu.c
+msgid "Unable to change folder permissions."
+msgstr "无法更改文件夹权限。"
+
+
+#: samba_share.c menu.c
+msgid "Samba usershare support is not available."
+msgstr "Samba 用户共享支持不可用。"
+
+
+#: samba_share.c menu.c
+msgid "You are not the owner of this folder."
+msgstr "您不是此文件夹的所有者。"
+
+
+#: samba_share.c menu.c
+msgid "Folder Sharing"
+msgstr "文件夹共享"
+
+
+#: samba_share.c menu.c
+msgid "Share this folder"
+msgstr "共享此文件夹"
+
+
+#: samba_share.c menu.c
+msgid "Share name:"
+msgstr "共享名称："
+
+
+#: samba_share.c menu.c
+msgid "Comment:"
+msgstr "注释："
+
+
+#: samba_share.c menu.c
+msgid "Allow others to create and delete files in this folder"
+msgstr "允许其他人在此文件夹中创建和删除文件"
+
+
+#: samba_share.c menu.c
+msgid "Guest access"
+msgstr "访客访问"
+
+
+#: samba_share.c menu.c
+msgid "Guest access is disabled by the Samba configuration."
+msgstr "Samba 配置已禁用访客访问。"
+
+
+#: samba_share.c menu.c
+msgid "Share name cannot be empty."
+msgstr "共享名称不能为空。"
+
+
+#: samba_share.c menu.c
+msgid "Share name contains an invalid character."
+msgstr "共享名称包含无效字符。"
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Another share already uses the name '%s'."
+msgstr "另一个共享已使用名称“%s”。"
+
+
+#: samba_share.c menu.c
+msgid "Share Folder..."
+msgstr "共享文件夹..."
+
+
+#: Options.xml.h
+msgid "New Rox-Filer2 instances:"
+msgstr "新的 Rox-Filer2 实例："
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Samba"
+msgstr "Samba"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders..."
+msgstr "共享文件夹..."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders"
+msgstr "共享文件夹"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Guest"
+msgstr "访客"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "_Edit"
+msgstr "_编辑"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop Sharing"
+msgstr "停止共享"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop sharing '%s'?"
+msgstr "停止共享“%s”？"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "No folders are currently shared."
+msgstr "当前没有共享文件夹。"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Comment contains an invalid character."
+msgstr "注释包含无效字符。"
+
+#: Options.xml.h
+msgid "Drives"
+msgstr "驱动器"
+
+#: Options.xml.h
+msgid "Automatic mounting"
+msgstr "自动挂载"
+
+#: Options.xml.h
+msgid "Mount local drives automatically at startup"
+msgstr "启动时自动挂载本地驱动器"
+
+#: Options.xml.h
+msgid "Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically."
+msgstr "Rox-Filer2 启动时自动挂载可用的本地磁盘分区。网络共享、手机、相机、已挂载镜像、光盘介质、加密容器和系统分区不会自动挂载。"
+
+#: Options.xml.h
+msgid "Include removable drives"
+msgstr "包括可移动驱动器"
+
+#: Options.xml.h
+msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
+msgstr "启用启动时自动挂载后，也包括 USB、SD 等可移动存储设备。"

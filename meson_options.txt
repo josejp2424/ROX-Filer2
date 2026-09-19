@@ -2,5 +2,12 @@ option(
   'smb',
   type : 'feature',
   value : 'auto',
-  description : 'Use libsmbclient for optional SMB share discovery/probing',
+  description : 'Enable runtime auto-loading of optional libsmbclient SMB discovery/probing',
+)
+
+option(
+  'portable_devices',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable runtime discovery/mounting of optional MTP/PTP/iOS devices',
 )

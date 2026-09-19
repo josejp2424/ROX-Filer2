@@ -24,5 +24,6 @@ void toolbar_update_info(FilerWindow *filer_window);
 void toolbar_update_toolbar(FilerWindow *filer_window);
 /* Agregado por josejp2424 (2026): actualizar el estado de Atrás/Adelante. */
 void toolbar_update_navigation(FilerWindow *filer_window);
+gboolean toolbar_close_button_enabled(void);
 
 #endif /* _TOOLBAR_H */

@@ -29,8 +29,10 @@
 #include "drives_monitor.h"
 #include "mount.h"
 #include "smb.h"
+#include "samba_share.h"
 #include "display.h"
 #include "dnd.h"
+#include "toolbar.h"
 
 
 static GtkWidget *icon_button(const gchar *icon, const gchar *tip);
@@ -189,6 +191,7 @@ struct _ModernTabsState
 	ModernTab *drag_hover_tab;
 	guint drag_hover_source;
 	guint session_restore_source;
+	gboolean updating_tab_buttons;
 };
 
 static void modern_tab_cancel_hover(ModernTabsState *state);
@@ -363,6 +366,16 @@ static ModernTabsState *modern_tabs_state(FilerWindow *filer_window)
 	return g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-tabs-state");
 }
 
+FilerWindow *modern_ui_primary_window(void)
+{
+	if (modern_session_owner && modern_session_owner->window &&
+	    GTK_IS_WIDGET(modern_session_owner->window))
+		return modern_session_owner;
+	if (modern_windows)
+		return (FilerWindow *) modern_windows->data;
+	return NULL;
+}
+
 static gchar *modern_tab_title_for_path(const gchar *path)
 {
 	gchar *title;
@@ -436,10 +449,12 @@ static void modern_tabs_refresh_active(ModernTabsState *state)
 	guint i;
 	if (!state || !state->tabs)
 		return;
+	state->updating_tab_buttons = TRUE;
 	for (i = 0; i < state->tabs->len; i++) {
 		ModernTab *tab = g_ptr_array_index(state->tabs, i);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tab->button), tab == state->active);
 	}
+	state->updating_tab_buttons = FALSE;
 }
 
 static gint modern_tab_index(ModernTabsState *state, ModernTab *tab)
@@ -453,18 +468,13 @@ static gint modern_tab_index(ModernTabsState *state, ModernTab *tab)
 	return -1;
 }
 
-static void modern_tab_activate(GtkButton *button, gpointer data)
+static void modern_tab_activate(ModernTab *tab)
 {
-	ModernTab *tab = data;
 	ModernTabsState *state;
-	(void) button;
 	if (!tab || !(state = tab->state) || !state->filer_window)
 		return;
-	/* A GtkToggleButton toggles before the clicked callback.  Clicking the
-	 * already-active tab must therefore force it back on instead of leaving
-	 * the current tab visually unselected. */
 	if (state->active == tab) {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tab->button), TRUE);
+		modern_tabs_refresh_active(state);
 		return;
 	}
 	if (state->active)
@@ -472,6 +482,25 @@ static void modern_tab_activate(GtkButton *button, gpointer data)
 	state->active = tab;
 	modern_tabs_refresh_active(state);
 	modern_tab_restore_state(tab);
+	if (state->filer_window->view)
+		gtk_widget_grab_focus(GTK_WIDGET(state->filer_window->view));
+}
+
+static void modern_tab_toggled(GtkToggleButton *button, gpointer data)
+{
+	ModernTab *tab = data;
+	ModernTabsState *state;
+
+	if (!tab || !(state = tab->state) || state->updating_tab_buttons)
+		return;
+	/* Only activation selects a tab.  Clicking the current tab may toggle it
+	 * off momentarily; immediately restore the one-active-tab invariant. */
+	if (!gtk_toggle_button_get_active(button)) {
+		if (state->active == tab)
+			modern_tabs_refresh_active(state);
+		return;
+	}
+	modern_tab_activate(tab);
 }
 
 static void modern_tab_cancel_hover(ModernTabsState *state)
@@ -496,7 +525,7 @@ static gboolean modern_tab_hover_activate(gpointer data)
 	state->drag_hover_source = 0;
 	state->drag_hover_tab = NULL;
 	if (tab && state->active != tab)
-		modern_tab_activate(NULL, tab);
+		modern_tab_activate(tab);
 	return G_SOURCE_REMOVE;
 }
 
@@ -607,7 +636,7 @@ static ModernTab *modern_tabs_add(ModernTabsState *state, const gchar *path,
 	gtk_box_pack_start(GTK_BOX(state->tabs_box), box, FALSE, FALSE, 0);
 	if (state->new_button && gtk_widget_get_parent(state->new_button) == state->tabs_box)
 		gtk_box_reorder_child(GTK_BOX(state->tabs_box), state->new_button, -1);
-	g_signal_connect(button, "clicked", G_CALLBACK(modern_tab_activate), tab);
+	g_signal_connect(button, "toggled", G_CALLBACK(modern_tab_toggled), tab);
 	make_drop_target(button, 0);
 	g_signal_connect(button, "drag-motion", G_CALLBACK(modern_tab_drag_motion), tab);
 	g_signal_connect(button, "drag-leave", G_CALLBACK(modern_tab_drag_leave), tab);
@@ -723,6 +752,22 @@ void modern_ui_open_path_in_new_tab(FilerWindow *filer_window, const gchar *path
 		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_path_entry),
 		                   filer_window->sym_path);
 	modern_ui_select_current_place(filer_window);
+	/* A newly-created tab is immediately usable even if the + button or
+	 * another Modern chrome control owned keyboard focus. */
+	if (filer_window->view)
+		gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+}
+
+gboolean modern_ui_open_path_as_tab_if_configured(FilerWindow *source, const gchar *path)
+{
+	if (!source || !source->modern_mode || !path || !*path ||
+	    o_modern_new_instance_mode.int_value != 1)
+		return FALSE;
+
+	modern_ui_open_path_in_new_tab(source, path);
+	if (source->window)
+		gtk_window_present(GTK_WINDOW(source->window));
+	return TRUE;
 }
 
 static void modern_new_tab(GtkWidget *widget, FilerWindow *filer_window)
@@ -819,7 +864,7 @@ static void modern_cycle_tab(FilerWindow *filer_window, gint direction)
 		return;
 	next = (index + direction + (gint) state->tabs->len) % (gint) state->tabs->len;
 	tab = g_ptr_array_index(state->tabs, (guint) next);
-	modern_tab_activate(NULL, tab);
+	modern_tab_activate(tab);
 }
 
 static gboolean modern_tabs_key_press(GtkWidget *widget, GdkEventKey *event,
@@ -1102,6 +1147,14 @@ static void search_dir(GtkWidget *widget, FilerWindow *filer_window)
 	search_integration_launch(filer_window);
 }
 
+static void modern_close_window(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	if (filer_window && filer_window->window &&
+	    !filer_window_delete(filer_window->window, NULL, filer_window))
+		gtk_widget_destroy(filer_window->window);
+}
+
 static void path_activated(GtkEntry *entry, FilerWindow *filer_window)
 {
 	const gchar *text;
@@ -1134,7 +1187,11 @@ static void menu_options(GtkMenuItem *item, FilerWindow *filer_window)
 {
 	(void) item;
 	(void) filer_window;
-	options_show();
+
+	/* 2.13.0-5: use exactly the same Options entry point as Classic.
+	 * Besides keeping ROX's window accounting consistent, this prevents
+	 * Modern from drifting into a separate Options-window behaviour. */
+	menu_show_options(NULL, 0, NULL);
 }
 
 static void menu_bookmarks(GtkMenuItem *item, FilerWindow *filer_window)
@@ -1147,6 +1204,12 @@ static void modern_open_smb(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
 	rox_smb_open_dialog(filer_window);
+}
+
+static void modern_shared_folders(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	samba_share_show_manager(filer_window ? GTK_WINDOW(filer_window->window) : NULL);
 }
 
 static GtkWidget *append_menu(GtkWidget *bar, const gchar *label)
@@ -1347,8 +1410,14 @@ static GtkWidget *build_menubar(FilerWindow *filer_window)
 	filer_window->modern_menu_forward = append_item(menu, _("Forward"), G_CALLBACK(go_forward), filer_window);
 	append_item(menu, _("Up"), G_CALLBACK(go_up), filer_window);
 	append_item(menu, _("Home"), G_CALLBACK(go_home), filer_window);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+
+	menu = append_menu(bar, _("Samba"));
 	append_item(menu, _("Connect to SMB Share..."), G_CALLBACK(modern_open_smb), filer_window);
+	{
+		GtkWidget *shared = append_item(menu, _("Shared Folders..."),
+			G_CALLBACK(modern_shared_folders), filer_window);
+		gtk_widget_set_sensitive(shared, samba_share_available());
+	}
 
 	menu = append_menu(bar, _("Bookmarks"));
 	append_item(menu, _("Bookmarks"), G_CALLBACK(menu_bookmarks), filer_window);
@@ -1416,6 +1485,13 @@ void modern_ui_build(FilerWindow *filer_window, GtkWidget *vbox)
 	g_signal_connect(entry, "activate", G_CALLBACK(path_activated), filer_window);
 	gtk_box_pack_start(GTK_BOX(nav), entry, TRUE, TRUE, 4);
 	filer_window->modern_path_entry = entry;
+
+	button = icon_button("window-close-symbolic", _("Close Window"));
+	gtk_widget_set_size_request(button, 48, 48);
+	gtk_widget_set_no_show_all(button, TRUE);
+	g_signal_connect(button, "clicked", G_CALLBACK(modern_close_window), filer_window);
+	gtk_box_pack_end(GTK_BOX(nav), button, FALSE, FALSE, 0);
+	filer_window->modern_close = button;
 
 	button = icon_button("system-search", _("Search"));
 	gtk_widget_set_size_request(button, 48, 48);
@@ -1594,12 +1670,58 @@ static void modern_drive_row_free(gpointer data)
 	g_free(row);
 }
 
+typedef struct
+{
+	gboolean eject;
+} ModernDriveQuickAsync;
+
+static void modern_drive_quick_done(GObject *source_object, GAsyncResult *result,
+		gpointer user_data)
+{
+	ModernDriveQuickAsync *ctx = user_data;
+	gchar *error_text = NULL;
+	gboolean ok;
+	(void) source_object;
+
+	ok = ctx->eject ? rox_drive_eject_finish(result, &error_text)
+	                : rox_drive_unmount_finish(result, &error_text);
+	if (!ok)
+		report_error("%s", error_text ? error_text :
+			(ctx->eject ? _("The device could not be ejected.")
+			            : _("The partition could not be unmounted.")));
+	else
+	{
+		mount_update(TRUE);
+		filer_update_all();
+	}
+	g_free(error_text);
+	g_free(ctx);
+}
+
+static void modern_drive_quick_clicked(GtkButton *button, gpointer data)
+{
+	ModernDriveRow *row = data;
+	ModernDriveQuickAsync *ctx;
+	(void) button;
+
+	if (!row || !row->drive)
+		return;
+	ctx = g_new0(ModernDriveQuickAsync, 1);
+	ctx->eject = rox_drive_can_eject(row->drive);
+	if (ctx->eject)
+		rox_drive_eject_async(row->drive, modern_drive_quick_done, ctx);
+	else
+		rox_drive_unmount_async(row->drive, modern_drive_quick_done, ctx);
+}
+
 static GtkWidget *devices_row_new(const RoxDriveInfo *drive)
 {
 	GtkWidget *row;
 	GtkWidget *box;
 	GtkWidget *image;
 	GtkWidget *label;
+	GtkWidget *quick_button;
+	GtkWidget *quick_image;
 	gchar *mountpoint;
 	const gchar *status_text;
 	ModernDriveRow *data;
@@ -1609,32 +1731,72 @@ static GtkWidget *devices_row_new(const RoxDriveInfo *drive)
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
 	gtk_widget_set_hexpand(box, TRUE);
 	gtk_container_set_border_width(GTK_CONTAINER(box), 5);
-	image = modern_sidebar_icon(drive->optical ? "media-optical" :
-		(drive->removable || drive->hardware_removable ? "drive-removable-media" : "drive-harddisk"), 20);
+	image = modern_sidebar_icon(rox_drive_icon_name(drive), 20);
 	gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 0);
 	label = gtk_label_new(rox_drive_display_name(drive));
 	gtk_label_set_xalign(GTK_LABEL(label), 0.0);
 	gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
 	gtk_widget_set_hexpand(label, TRUE);
 	gtk_box_pack_start(GTK_BOX(box), label, TRUE, TRUE, 0);
-	if (rox_drive_can_eject(drive))
-	{
-		GtkWidget *eject = gtk_image_new_from_icon_name("media-eject-symbolic", GTK_ICON_SIZE_MENU);
-		gtk_widget_set_tooltip_text(eject, _("Eject"));
-		gtk_box_pack_end(GTK_BOX(box), eject, FALSE, FALSE, 2);
-	}
-	mountpoint = rox_drive_current_mountpoint(drive);
-	status_text = mountpoint ? _("Mounted") : _("Not mounted");
-	/* Keep the drive name readable in a narrow sidebar. The mounted state is
-	 * still available without spending a second label's horizontal width. */
-	gtk_widget_set_tooltip_text(row, status_text);
-	gtk_widget_set_tooltip_text(label, status_text);
-	g_free(mountpoint);
-	gtk_container_add(GTK_CONTAINER(row), box);
+
 	data = g_new0(ModernDriveRow, 1);
 	data->drive = rox_drive_info_copy(drive);
 	g_object_set_data_full(G_OBJECT(row), "rox-modern-drive", data,
 		modern_drive_row_free);
+
+	mountpoint = rox_drive_current_mountpoint(drive);
+	status_text = mountpoint ? _("Mounted") : _("Not mounted");
+	/* 2.13.0-7: use the same quick eject/unmount arrow as Desktop.  Its
+	 * presence is intentionally also the visual mounted-state indicator. */
+	if (mountpoint && !drive->foreign)
+	{
+		quick_button = gtk_button_new();
+		gtk_button_set_relief(GTK_BUTTON(quick_button), GTK_RELIEF_NONE);
+		gtk_widget_set_size_request(quick_button, 24, 24);
+		gtk_style_context_add_class(gtk_widget_get_style_context(quick_button),
+			"rox-drive-quick");
+		quick_image = gtk_image_new_from_icon_name("media-eject-symbolic",
+			GTK_ICON_SIZE_MENU);
+		if (!gtk_icon_theme_has_icon(gtk_icon_theme_get_default(),
+			"media-eject-symbolic"))
+			gtk_image_set_from_icon_name(GTK_IMAGE(quick_image), "media-eject",
+				GTK_ICON_SIZE_MENU);
+		gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
+		gtk_widget_set_tooltip_text(quick_button,
+			rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
+		g_signal_connect(quick_button, "clicked",
+			G_CALLBACK(modern_drive_quick_clicked), data);
+		gtk_box_pack_end(GTK_BOX(box), quick_button, FALSE, FALSE, 0);
+	}
+	/* Keep the drive name readable in a narrow sidebar. The mounted state is
+	 * still available via the arrow and tooltip. */
+	gtk_widget_set_tooltip_text(row, status_text);
+	gtk_widget_set_tooltip_text(label, status_text);
+	g_free(mountpoint);
+	gtk_container_add(GTK_CONTAINER(row), box);
+	return row;
+}
+
+
+static GtkWidget *devices_section_row_new(const gchar *text)
+{
+	GtkWidget *row;
+	GtkWidget *label;
+	PangoAttrList *attrs;
+
+	row = gtk_list_box_row_new();
+	gtk_widget_set_sensitive(row, FALSE);
+	label = gtk_label_new(text);
+	gtk_label_set_xalign(GTK_LABEL(label), 0.0);
+	gtk_widget_set_margin_start(label, 8);
+	gtk_widget_set_margin_end(label, 8);
+	gtk_widget_set_margin_top(label, 8);
+	gtk_widget_set_margin_bottom(label, 3);
+	attrs = pango_attr_list_new();
+	pango_attr_list_insert(attrs, pango_attr_weight_new(PANGO_WEIGHT_BOLD));
+	gtk_label_set_attributes(GTK_LABEL(label), attrs);
+	pango_attr_list_unref(attrs);
+	gtk_container_add(GTK_CONTAINER(row), label);
 	return row;
 }
 
@@ -1703,11 +1865,45 @@ static void modern_devices_monitor_changed(GPtrArray *drives,
     modern_devices_clear(list);
     gtk_container_add(GTK_CONTAINER(list),
         places_row_new("drive-harddisk", _("File System"), "/"));
+
+    /* Keep real partitions first. Managed image loops are deliberately
+     * separated and are the only loop devices Rox-Filer2 exposes. */
     for (j = 0; j < drives->len; j++) {
         RoxDriveInfo *drive = g_ptr_array_index(drives, j);
-        if (drive->network)
+        if (drive->network || drive->managed_image || drive->portable)
             continue;
         gtk_container_add(GTK_CONTAINER(list), devices_row_new(drive));
+    }
+
+    {
+        gboolean have_portable = FALSE;
+        for (j = 0; j < drives->len; j++) {
+            RoxDriveInfo *drive = g_ptr_array_index(drives, j);
+            if (!drive->portable)
+                continue;
+            if (!have_portable) {
+                gtk_container_add(GTK_CONTAINER(list),
+                    devices_section_row_new(_("Portable Devices")));
+                have_portable = TRUE;
+            }
+            gtk_container_add(GTK_CONTAINER(list), devices_row_new(drive));
+        }
+    }
+
+    for (j = 0; j < drives->len; j++) {
+        RoxDriveInfo *drive = g_ptr_array_index(drives, j);
+        if (drive->managed_image) {
+            guint k;
+            gtk_container_add(GTK_CONTAINER(list),
+                devices_section_row_new(_("Mounted Images")));
+            for (k = j; k < drives->len; k++) {
+                RoxDriveInfo *image_drive = g_ptr_array_index(drives, k);
+                if (image_drive->managed_image)
+                    gtk_container_add(GTK_CONTAINER(list),
+                        devices_row_new(image_drive));
+            }
+            break;
+        }
     }
     gtk_widget_show_all(list);
 }
@@ -2148,4 +2344,10 @@ void modern_ui_update_navigation(FilerWindow *filer_window)
 		gtk_widget_set_sensitive(filer_window->modern_menu_back, back);
 	if (filer_window->modern_menu_forward)
 		gtk_widget_set_sensitive(filer_window->modern_menu_forward, forward);
+	if (filer_window->modern_close) {
+		if (toolbar_close_button_enabled())
+			gtk_widget_show(filer_window->modern_close);
+		else
+			gtk_widget_hide(filer_window->modern_close);
+	}
 }

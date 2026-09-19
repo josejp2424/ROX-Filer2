@@ -16,6 +16,25 @@
 struct _FilerWindow;
 typedef struct _FilerWindow FilerWindow;
 
+
+typedef struct {
+    gchar *image;
+    gchar *loopdev;
+    gchar *blockdev;
+    gchar *mountpoint;
+} ImageMounterManagedMount;
+
+/* Return active image mounts created by Rox-Filer2 itself.  System/Puppy
+ * loop devices which were not created by Image Mounter are never returned.
+ * The caller owns the array and each ImageMounterManagedMount. */
+GPtrArray *image_mounter_list_managed_mounts(void);
+void image_mounter_managed_mount_free(gpointer data);
+
+/* Synchronous worker-safe unmount used by the shared drive UI.  This removes
+ * the Image Mounter state and detaches the loop device on success. */
+gboolean image_mounter_unmount_managed_sync(const gchar *path,
+                                             gchar **error_text);
+
 /* Supported directly from the filer context menu: ISO, Puppy SFS,
  * SquashFS/SQFS and raw IMG images. */
 gboolean image_mounter_can_handle(const gchar *path);

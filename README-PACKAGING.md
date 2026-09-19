@@ -6,6 +6,47 @@ Run from the project root:
 ./build-package.sh
 ```
 
+### Puppy/Essora copy backend
+
+Since 2.12.2-96 the packager no longer assumes a standalone coreutils `cp` command.
+It uses `cp` when available and falls back automatically to the BusyBox `cp`
+applet for Puppy/Essora-style bases. This affects package staging only; the
+Rox-Filer2 runtime is unchanged.
+
+### Optional libsmbclient at runtime
+
+Rox-Filer2 no longer links the main executable directly against `libsmbclient`.
+The same binary starts normally whether `libsmbclient.so.0` is installed or not.
+When the library is present it is loaded lazily for SMB share listing and
+diagnostics; `mount.cifs` remains an independent path. Debian packages therefore
+recommend `libsmbclient0` instead of making it a hard `Depends`.
+
+### Optional portable-device support at runtime
+
+Meson probes `libmtp` and `libgphoto2` as optional development dependencies.
+For Apple support it probes `libimobiledevice-1.0` pkg-config metadata with
+`pkg-config --modversion` and reports the actual `idevice_id` and `ifuse` runtime
+helpers separately. Rox-Filer2 deliberately does not link the main executable
+to any of those optional mobile libraries. Portable devices are enabled at runtime through optional
+helpers: `simple-mtpfs` or `jmtpfs` for Android/MTP, `gphoto2` + `gphotofs` for
+PTP cameras, and `ifuse` + libimobiledevice tools/usbmuxd for iPhone/iPad.
+Missing helpers never prevent Rox-Filer2 from compiling or starting.
+
+The Debian package lists these stacks plus a FUSE userspace helper under `Recommends`, not `Depends`.
+Already-mounted non-block filesystems below `/media` are discovered independently
+of the helpers and are shown in the drive UIs so they can be opened/unmounted.
+
+
+### Optional Samba usershare support
+
+Rox-Filer2 2.13 manages local folder shares with the runtime `net usershare`
+command and optional `testparm`. The quick **Share Folder...** action and the
+central **Samba > Shared Folders...** manager use the same usershare backend; the
+file manager does not link to Samba libraries and it does not run as root. Debian/Devuan packages therefore keep
+`samba-common-bin` and `samba` under `Recommends`. Arch exposes `samba` as an
+optional dependency and Void includes it only when present on the build host.
+Missing Samba tools never prevent Rox-Filer2 from compiling or starting.
+
 ## Dedicated native builders
 
 The normal builder remains independent. For a package compiled natively on
@@ -15,7 +56,7 @@ the target distribution, the source tree also provides:
 ./build_arch.sh
 ```
 
-On Arch/Arch-based systems this compiles with Meson + `-Dsmb=enabled` and
+On Arch/Arch-based systems this compiles with Meson + `-Dsmb=auto -Dportable_devices=auto` and
 creates a native `output/rox-filer2-*.pkg.tar.zst` with `makepkg`. Run it as a
 normal user.
 
@@ -23,13 +64,16 @@ normal user.
 ./build_void.sh
 ```
 
-On Void/KLV this compiles with Meson + `-Dsmb=enabled` and creates a native
+On Void/KLV this compiles with Meson + `-Dsmb=auto -Dportable_devices=auto` and creates a native
 `output/rox-filer2-*.xbps`, then indexes `output/` as a local XBPS repository.
+The upstream release `2.13.0-8` is represented as `2.13.0_8` for XBPS,
+and runtime dependencies are emitted as validated versioned XBPS patterns.
 Both scripts have `--clean` and intentionally do not call or modify the normal
 `build-package.sh` path.
 
-The script compiles both **Rox-Filer2** and the companion **ROX File Search**
-application. Meson/Ninja is the preferred build path; if Meson is unavailable,
+The script compiles **Rox-Filer2**, the companion **ROX File Search**
+application and the package-owned **rox-mount-helper** used through pkexec for
+normal-user drive operations. Meson/Ninja is the preferred build path; if Meson is unavailable,
 the script falls back to the historical AppRun/autoconf build. It then creates
 everything under `output/`:
 

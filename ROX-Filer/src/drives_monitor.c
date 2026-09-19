@@ -26,6 +26,7 @@ typedef struct {
 static GPtrArray *subscribers;
 static GPtrArray *snapshot;
 static GVolumeMonitor *volume_monitor;
+static GFileMonitor *usb_monitor;
 static guint poll_source;
 static gboolean scan_running;
 static gboolean scan_again;
@@ -49,12 +50,16 @@ static gboolean drive_info_equal(const RoxDriveInfo *a, const RoxDriveInfo *b)
            g_strcmp0(a->transport, b->transport) == 0 &&
            g_strcmp0(a->model, b->model) == 0 &&
            g_strcmp0(a->parent_device, b->parent_device) == 0 &&
+           g_strcmp0(a->backing_file, b->backing_file) == 0 &&
+           a->managed_image == b->managed_image &&
            a->removable == b->removable &&
            a->hardware_removable == b->hardware_removable &&
            a->optical == b->optical &&
            a->network == b->network &&
+           a->portable == b->portable &&
            a->foreign == b->foreign &&
            a->solid_state == b->solid_state &&
+           a->system_partition == b->system_partition &&
            a->label_is_synthetic == b->label_is_synthetic;
 }
 
@@ -244,6 +249,19 @@ static void volume_changed(GVolumeMonitor *monitor, gpointer object,
         start_scan();
 }
 
+static void usb_changed(GFileMonitor *monitor, GFile *file, GFile *other_file,
+                        GFileMonitorEvent event_type, gpointer data)
+{
+    (void) monitor;
+    (void) file;
+    (void) other_file;
+    (void) event_type;
+    (void) data;
+    compact_subscribers();
+    if (subscribers && subscribers->len > 0)
+        start_scan();
+}
+
 static gboolean poll_cb(gpointer data)
 {
     (void) data;
@@ -284,6 +302,16 @@ static void ensure_initialized(void)
         g_signal_connect(volume_monitor, "volume-added", G_CALLBACK(volume_changed), NULL);
         g_signal_connect(volume_monitor, "volume-removed", G_CALLBACK(volume_changed), NULL);
         g_signal_connect(volume_monitor, "volume-changed", G_CALLBACK(volume_changed), NULL);
+    }
+    {
+        GFile *usb_dir = g_file_new_for_path("/sys/bus/usb/devices");
+        GError *usb_error = NULL;
+        usb_monitor = g_file_monitor_directory(usb_dir, G_FILE_MONITOR_NONE, NULL, &usb_error);
+        if (usb_monitor)
+            g_signal_connect(usb_monitor, "changed", G_CALLBACK(usb_changed), NULL);
+        else
+            g_clear_error(&usb_error);
+        g_object_unref(usb_dir);
     }
 }
 

@@ -8,6 +8,12 @@
       <label help='1'>Choose the interface used by Rox-Filer2. The selection is saved for the current user and used again the next time Rox-Filer2 starts.</label>
       <label help='1'>Classic ROX keeps the traditional toolbar layout. Modern follows the tabbed reference layout with Places, Devices and Network in a clean sidebar while using the same file, MIME, mount, Trash and Desktop backends.</label>
     </frame>
+    <frame label='Modern'>
+      <menu name='modern_new_instance_mode' label='New Rox-Filer2 instances:'>
+        <item label='New Window' value='0'/>
+        <item label='New Tab' value='1'/>
+      </menu>
+    </frame>
   </section>
 
   <section title='General'>
@@ -101,6 +107,13 @@
     </frame>
   </section>
 
+  <section title='Drives'>
+    <frame label='Automatic mounting'>
+      <toggle name='drives_mount_all_startup' label='Mount local drives automatically at startup'>Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically.</toggle>
+      <toggle name='drives_mount_removable_startup' label='Include removable drives'>Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled.</toggle>
+    </frame>
+  </section>
+
   <section title='Thumbnails'>
     <frame label='Image and video previews'>
       <toggle name='display_show_thumbs' label='Show image thumbnails by default'>Individual filer windows can still enable or disable thumbnails from the Display menu or toolbar.</toggle>
@@ -176,7 +189,8 @@
       <toggle name='action_copy' label='Start copy operations without an extra confirmation'/>
       <toggle name='action_move' label='Start move operations without an extra confirmation'/>
       <toggle name='action_link' label='Start link operations without an extra confirmation'/>
-      <toggle name='action_delete' label='Start permanent deletion without an extra confirmation'/>
+      <toggle name='confirm_trash' label='Confirm before moving files to Trash'/>
+      <toggle name='confirm_delete_permanently' label='Confirm before permanently deleting files'/>
       <toggle name='action_mount' label='Start mount operations without an extra confirmation'/>
     </frame>
     <frame label='Default action-window settings'>

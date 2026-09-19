@@ -84,5 +84,8 @@
 # define S_ISDOOR(mode) (FALSE)
 #endif
 
-/* Optional libsmbclient support for SMB share validation. */
-#undef HAVE_LIBSMBCLIENT
+/* Runtime loading support for optional libsmbclient SMB helpers. */
+#undef HAVE_DLFCN_H
+
+/* Runtime discovery/mounting of optional MTP/PTP/iOS devices. */
+#define ROX_PORTABLE_DEVICES 1

@@ -2389,6 +2389,8 @@ static gchar *desktop_drive_signature_from_list(GPtrArray *drives)
     signature = g_string_new(NULL);
     for (i = 0; drives && i < drives->len; i++) {
         RoxDriveInfo *drive = g_ptr_array_index(drives, i);
+        if (drive->managed_image)
+            continue;
         g_string_append_printf(signature,
             "%s|%s|%s|%s|%d|%d|%d;",
             drive->device ? drive->device : "",
@@ -2839,6 +2841,10 @@ static gboolean desktop_drive_is_visible(const RoxDriveInfo *drive)
     gboolean removable;
 
     if (!drive)
+        return FALSE;
+    /* Image Mounter loops are exposed in Classic Partitions and Modern
+     * Devices, not as persistent desktop drive icons. */
+    if (drive->managed_image)
         return FALSE;
     if (drive->network)
         return drive_show_network;

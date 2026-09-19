@@ -45,6 +45,7 @@
 #include "main.h"
 #include "filer.h"
 #include "display.h"
+#include "samba_share.h"
 #include "support.h"
 #include "gui_support.h"
 #include "pixmaps.h"
@@ -226,6 +227,12 @@ static void draw_icon_pixbuf(cairo_t *cr, const GdkRectangle *area,
 	if ((item->flags & ITEM_FLAG_HAS_XATTR) && o_xattr_show.int_value)
 		draw_emblem_on_icon(cr, ROX_ICON_XATTR,
 			&image_x, area->y + symlink_y);
+	if (item->flags & ITEM_FLAG_SHARED)
+	{
+		const gchar *shared_icon = samba_share_emblem_icon();
+		if (shared_icon)
+			draw_emblem_on_icon(cr, shared_icon, &image_x, area->y + symlink_y);
+	}
 }
 
 void draw_huge_icon(cairo_t *cr, const GdkRectangle *area,

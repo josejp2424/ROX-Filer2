@@ -1,3 +1,150 @@
+rox-filer2 (2.13.0-8) unstable; urgency=medium
+
+  * Add optional local-drive automount at Rox-Filer2 startup.
+  * Add an optional removable-drive automount preference.
+  * Keep phones, network shares, images, optical and system/technical volumes out of automount.
+  * Store automount choices in the normal Rox-Filer2 Options file.
+
+ -- Rox-Filer2 contributors <noreply@example.invalid>  Fri, 18 Sep 2026 15:30:00 -0300
+
+rox-filer2 (2.13.0-7) unstable; urgency=medium
+
+  * Show a quick eject/unmount arrow on mounted partitions in Classic and Modern.
+  * Make the arrow the visual mounted-state indicator, matching ROX Desktop.
+
+ -- Rox-Filer2 contributors <noreply@example.invalid>  Fri, 18 Sep 2026 15:00:00 -0300
+
+rox-filer2 (2.13.0-6) unstable; urgency=medium
+
+  * Add Samba > Shared Folders manager for local usershares.
+  * Keep Share Folder available as the quick per-folder action.
+  * Use folder-publicshare with theme fallback and shared-folder emblems.
+  * Hide the per-folder share action when Samba usershare tools are absent.
+  * Complete all new runtime strings in the 11 maintained translations.
+
+ -- Rox-Filer2 contributors <noreply@example.invalid>  Fri, 18 Sep 2026 14:30:00 -0300
+
+rox-filer2 (2.13.0-5) unstable; urgency=medium
+
+  * Unify Options opening between Classic and Modern.
+  * Enforce a 900x540 minimum while keeping the 960x600 initial size.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sun, 13 Sep 2026 16:30:00 -0300
+
+rox-filer2 (2.13.0-4) unstable; urgency=medium
+
+  * Fix the late 640x400 resize that overrode the wider Options default.
+  * Make Options actually open at 960x600 while remaining resizable.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sun, 13 Sep 2026 16:00:00 -0300
+
+rox-filer2 (2.13.0-3) unstable; urgency=medium
+
+  * Increase the default Options window size for better readability.
+  * Keep the window resizable and preserve all 2.13.0-2 behavior.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sun, 13 Sep 2026 13:35:00 -0300
+
+rox-filer2 (2.13.0-2) unstable; urgency=medium
+
+  * Fix Samba usershare compilation and Modern tab activation.
+  * Add configurable Modern new-instance routing and optional Close Window toolbar button.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sun, 13 Sep 2026 15:30:00 -0300
+
+rox-filer2 (2.13.0-1) unstable; urgency=medium
+
+  * Add native rootless Samba usershare folder sharing.
+  * Add Share Folder dialog to Classic and Modern context menus.
+  * Keep Samba integration runtime-optional.
+
+ -- josejp2424 <puppylinuxjosejp2424@gmail.com>  Sun, 13 Sep 2026 12:45:00 -0300
+
+rox-filer2 (2.12.2-99) unstable; urgency=medium
+
+  * Fix Classic type-ahead when toolbar buttons retain keyboard focus.
+  * Exclude only real text-entry widgets from incremental filename typing.
+  * Keep Modern behavior and all 2.12.2-98 type-ahead semantics unchanged.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sat, 12 Sep 2026 19:29:00 -0300
+
+rox-filer2 (2.12.2-98) unstable; urgency=medium
+
+  * Add shared Classic/Modern type-ahead filename selection.
+  * Match typed prefixes case-insensitively with UTF-8 support and a short inactivity reset.
+  * Keep existing Backspace, numeric-group, Space and modified-key shortcuts intact outside active type-ahead input.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sat, 12 Sep 2026 19:13:00 -0300
+
+rox-filer2 (2.12.2-97) unstable; urgency=medium
+
+  * Detect libimobiledevice pkg-config metadata without requiring an unused linkable development graph.
+  * Show idevice_id and ifuse runtime-helper detection separately in Meson.
+  * Fall back to the known core Debian/Devuan runtime dependency set when dpkg-shlibdeps is unavailable.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 21:55:00 -0300
+
+rox-filer2 (2.12.2-96) unstable; urgency=medium
+
+  * Make package staging work when cp is supplied only by BusyBox or is outside PATH.
+  * Fall back automatically to the BusyBox cp applet without changing runtime Rox-Filer2 behavior.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 21:25:00 -0300
+
+rox-filer2 (2.12.2-95) unstable; urgency=medium
+
+  * Add runtime-optional MTP, PTP and iOS portable-device discovery/mounting without GVfs.
+  * Group portable devices separately from ordinary partitions and mounted images in Classic and Modern drive UIs.
+  * Include non-block mountpoints below /media so they can be opened and unmounted from Rox-Filer2.
+  * Probe optional mobile libraries at configure time without adding hard ELF dependencies.
+  * Recommend the Debian MTP/PTP/iOS helper stacks instead of making them mandatory Depends.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 21:05:00 -0300
+
+rox-filer2 (2.12.2-94) unstable; urgency=medium
+
+  * Use the normal blue ROX-Filer window icon for regular users and the orange ROX-Filer-root icon when effective UID is 0.
+  * Keep the privilege-state icon fixed while navigating instead of replacing it with per-directory icons.
+  * Install both state icons under /usr/share/pixmaps and keep an AppDir fallback for the root icon.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 15:08:00 -0300
+
+rox-filer2 (2.12.2-93) unstable; urgency=medium
+
+  * Load libsmbclient dynamically so the same Rox-Filer2 binary starts with or without libsmbclient0 installed.
+  * Keep SMB share listing/diagnostics automatic when libsmbclient is present.
+  * Recommend libsmbclient0 instead of making it a hard runtime dependency.
+  * Remove libsmbclient development files from the build requirements.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 12:40:00 -0300
+
+rox-filer2 (2.12.2-92) unstable; urgency=medium
+
+  * Show only Image Mounter-owned loop devices in Classic Partitions and Modern Devices.
+  * Group managed ISO/SFS/SquashFS/IMG mounts under Mounted Images.
+  * Unmount managed images through Image Mounter so the loop device and runtime state are cleaned together.
+  * Refresh both device interfaces immediately after image mount/unmount.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 11 Sep 2026 12:30:00 -0300
+
+rox-filer2 (2.12.2-91) unstable; urgency=medium
+
+  * Add separate Options switches for Move to Trash and Delete Permanently confirmations.
+  * Keep both confirmations enabled by default and allow each one to be disabled independently.
+  * Apply the same confirmation preferences to Classic and Modern through the shared action backend.
+  * Remove the misleading permanent-delete quiet toggle from Options while retaining the legacy internal option for compatibility.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Wed, 09 Sep 2026 01:20:00 -0300
+
+rox-filer2 (2.12.2-90) unstable; urgency=medium
+
+  * Use pkexec with a fixed Rox-Filer2 helper for normal-user drive mount, unmount and eject operations.
+  * Add a polkit policy and install the helper under /usr/lib/rox-filer2.
+  * Preserve direct mount/umount behaviour for root/Puppy sessions.
+  * Map the native Void package version to 2.12.2.90_1 without changing the upstream release name.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Tue, 08 Sep 2026 23:55:00 -0300
+
 rox-filer2 (2.12.2-89) unstable; urgency=medium
 
   * Clamp menu application/action icons to a maximum of 18 px without replacing the real icon.

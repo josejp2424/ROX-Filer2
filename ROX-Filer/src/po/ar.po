@@ -4,7 +4,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-89\n"
+"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -4375,8 +4375,8 @@ msgstr ""
 "%s"
 
 #: smb.c:809
-msgid "This build has no libsmbclient support."
-msgstr "هذا البناء لا يدعم libsmbclient."
+msgid "libsmbclient is not available on this system."
+msgstr "مكتبة libsmbclient غير متوفرة على هذا النظام."
 
 #: smb.c:832
 #, c-format
@@ -5569,6 +5569,14 @@ msgstr "بدء عمليات النقل دون تأكيد إضافي"
 #: tips:143 Options.xml.h:137
 msgid "Start link operations without an extra confirmation"
 msgstr "بدء عمليات إنشاء الروابط دون تأكيد إضافي"
+
+#: Options.xml.h:138
+msgid "Confirm before moving files to Trash"
+msgstr "التأكيد قبل نقل الملفات إلى سلة المهملات"
+
+#: Options.xml.h:139
+msgid "Confirm before permanently deleting files"
+msgstr "التأكيد قبل حذف الملفات نهائيًا"
 
 #: tips:144 Options.xml.h:138
 msgid "Start permanent deletion without an extra confirmation"
@@ -7703,3 +7711,196 @@ msgstr "تعذر فتح مشاركة SMB ‏'%s': ‏%s"
 
 msgid "This network resource is currently inaccessible."
 msgstr "مورد الشبكة هذا غير قابل للوصول حالياً."
+
+#: drives.c modern_ui.c
+msgid "Mounted Images"
+msgstr "صور الأقراص المُركّبة"
+
+#: drives.c modern_ui.c
+msgid "Portable Devices"
+msgstr "الأجهزة المحمولة"
+
+#: drives.c
+msgid "MTP device"
+msgstr "جهاز MTP"
+
+#: drives.c
+msgid "iPhone / iPad"
+msgstr "آيفون / آيباد"
+
+#: samba_share.c menu.c
+msgid "Command failed."
+msgstr "فشل تنفيذ الأمر."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Command failed with exit status %d."
+msgstr "فشل تنفيذ الأمر بحالة خروج %d."
+
+
+#: samba_share.c menu.c
+msgid "The 'net' command was not found. Install Samba's command-line tools."
+msgstr "لم يتم العثور على الأمر 'net'. ثبّت أدوات سطر الأوامر الخاصة بـ Samba."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Unable to read Samba usershares: %s"
+msgstr "تعذرت قراءة مشاركات مستخدم Samba: %s"
+
+
+#: samba_share.c menu.c
+msgid "Invalid output from Samba."
+msgstr "خرج غير صالح من Samba."
+
+
+#: samba_share.c menu.c
+msgid "Unable to update the Samba share."
+msgstr "تعذر تحديث مشاركة Samba."
+
+
+#: samba_share.c menu.c
+msgid "Rox-Filer2 needs to add filesystem permissions to this folder before it can be shared. Continue?"
+msgstr "يحتاج Rox-Filer2 إلى إضافة أذونات لنظام الملفات إلى هذا المجلد قبل مشاركته. هل تريد المتابعة؟"
+
+
+#: samba_share.c menu.c
+msgid "These permissions are not removed automatically when you stop sharing the folder."
+msgstr "لا تتم إزالة هذه الأذونات تلقائيًا عند إيقاف مشاركة المجلد."
+
+
+#: samba_share.c menu.c
+msgid "Unable to change folder permissions."
+msgstr "تعذر تغيير أذونات المجلد."
+
+
+#: samba_share.c menu.c
+msgid "Samba usershare support is not available."
+msgstr "دعم مشاركة مستخدم Samba غير متاح."
+
+
+#: samba_share.c menu.c
+msgid "You are not the owner of this folder."
+msgstr "لست مالك هذا المجلد."
+
+
+#: samba_share.c menu.c
+msgid "Folder Sharing"
+msgstr "مشاركة المجلد"
+
+
+#: samba_share.c menu.c
+msgid "Share this folder"
+msgstr "شارك هذا المجلد"
+
+
+#: samba_share.c menu.c
+msgid "Share name:"
+msgstr "اسم المشاركة:"
+
+
+#: samba_share.c menu.c
+msgid "Comment:"
+msgstr "تعليق:"
+
+
+#: samba_share.c menu.c
+msgid "Allow others to create and delete files in this folder"
+msgstr "السماح للآخرين بإنشاء الملفات وحذفها في هذا المجلد"
+
+
+#: samba_share.c menu.c
+msgid "Guest access"
+msgstr "وصول الضيوف"
+
+
+#: samba_share.c menu.c
+msgid "Guest access is disabled by the Samba configuration."
+msgstr "تم تعطيل وصول الضيوف بواسطة إعدادات Samba."
+
+
+#: samba_share.c menu.c
+msgid "Share name cannot be empty."
+msgstr "لا يمكن أن يكون اسم المشاركة فارغًا."
+
+
+#: samba_share.c menu.c
+msgid "Share name contains an invalid character."
+msgstr "يحتوي اسم المشاركة على محرف غير صالح."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Another share already uses the name '%s'."
+msgstr "توجد مشاركة أخرى تستخدم الاسم '%s' بالفعل."
+
+
+#: samba_share.c menu.c
+msgid "Share Folder..."
+msgstr "مشاركة المجلد..."
+
+
+#: Options.xml.h
+msgid "New Rox-Filer2 instances:"
+msgstr "مثيلات Rox-Filer2 الجديدة:"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Samba"
+msgstr "Samba"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders..."
+msgstr "المجلدات المشتركة..."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders"
+msgstr "المجلدات المشتركة"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Guest"
+msgstr "ضيف"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "_Edit"
+msgstr "_تحرير"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop Sharing"
+msgstr "إيقاف المشاركة"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop sharing '%s'?"
+msgstr "إيقاف مشاركة '%s'؟"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "No folders are currently shared."
+msgstr "لا توجد مجلدات مشتركة حاليًا."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Comment contains an invalid character."
+msgstr "يحتوي التعليق على محرف غير صالح."
+
+#: Options.xml.h
+msgid "Drives"
+msgstr "محركات الأقراص"
+
+#: Options.xml.h
+msgid "Automatic mounting"
+msgstr "التركيب التلقائي"
+
+#: Options.xml.h
+msgid "Mount local drives automatically at startup"
+msgstr "ركّب محركات الأقراص المحلية تلقائيًا عند بدء التشغيل"
+
+#: Options.xml.h
+msgid "Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically."
+msgstr "ركّب أقسام الأقراص المحلية المتاحة تلقائيًا عند بدء Rox-Filer2. لا يتم تلقائيًا تركيب مشاركات الشبكة أو الهواتف أو الكاميرات أو الصور المركبة أو الوسائط الضوئية أو الحاويات المشفرة أو أقسام النظام."
+
+#: Options.xml.h
+msgid "Include removable drives"
+msgstr "تضمين محركات الأقراص القابلة للإزالة"
+
+#: Options.xml.h
+msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
+msgstr "ضمّن أيضًا وحدات تخزين USB وSD القابلة للإزالة وما شابهها عند تمكين التركيب التلقائي عند بدء التشغيل."

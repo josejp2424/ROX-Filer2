@@ -38,6 +38,7 @@
 #include "action.h"
 #include "options.h"
 #include "bind.h"
+#include "modern_ui.h"
 
 static GList *history = NULL;		/* Most recent first */
 static GList *history_tail = NULL;	/* Oldest item */
@@ -522,7 +523,10 @@ static void bookmarks_activate(GtkMenuShell *item, FilerWindow *filer_window)
 	if (strcmp(mark, filer_window->sym_path) != 0)
 	{
 		if(new_win)
-			filer_opendir(mark, filer_window, NULL);
+		{
+			if (!modern_ui_open_path_as_tab_if_configured(filer_window, mark))
+				filer_opendir(mark, filer_window, NULL);
+		}
 		else
 			filer_change_to(filer_window, mark, NULL);
 	}

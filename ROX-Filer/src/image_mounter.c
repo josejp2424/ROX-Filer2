@@ -29,6 +29,7 @@
 #include "i18n.h"
 #include "image_mounter.h"
 #include "modern_ui.h"
+#include "drives_monitor.h"
 
 #define IMAGE_MOUNTER_GROUP "ImageMounter"
 #define IMAGE_MOUNTER_ROOT  "/media/rox-filer2-images"
@@ -375,39 +376,57 @@ static gboolean save_state(const ImageMountState *state)
     return ok;
 }
 
-static gboolean load_state(const gchar *path, ImageMountState *state)
+
+static gboolean load_state_file(const gchar *state_path, ImageMountState *state)
 {
     GKeyFile *key;
-    gchar *state_path;
     GError *error = NULL;
     gboolean ok = FALSE;
 
+    if (!state)
+        return FALSE;
     memset(state, 0, sizeof(*state));
-    state_path = state_path_for_image(path);
-    if (!state_path)
+    if (!state_path || !*state_path)
         return FALSE;
 
     key = g_key_file_new();
     if (!g_key_file_load_from_file(key, state_path, G_KEY_FILE_NONE, &error)) {
         if (error)
             g_error_free(error);
-        goto out;
+        g_key_file_unref(key);
+        return FALSE;
     }
 
     state->image = g_key_file_get_string(key, IMAGE_MOUNTER_GROUP, "image", NULL);
     state->loopdev = g_key_file_get_string(key, IMAGE_MOUNTER_GROUP, "loopdev", NULL);
     state->blockdev = g_key_file_get_string(key, IMAGE_MOUNTER_GROUP, "blockdev", NULL);
     state->mountpoint = g_key_file_get_string(key, IMAGE_MOUNTER_GROUP, "mountpoint", NULL);
-    state->method = (ImageMountMethod) g_key_file_get_integer(key,
-                            IMAGE_MOUNTER_GROUP, "method", NULL);
+    state->method = (ImageMountMethod) g_key_file_get_integer(
+        key, IMAGE_MOUNTER_GROUP, "method", NULL);
 
     ok = state->image && state->loopdev && state->blockdev && state->mountpoint &&
          state->method != IMAGE_MOUNT_METHOD_NONE;
-out:
+
     g_key_file_unref(key);
-    g_free(state_path);
     if (!ok)
         image_mount_state_clear(state);
+    return ok;
+}
+
+static gboolean load_state(const gchar *path, ImageMountState *state)
+{
+    gchar *state_path;
+    gboolean ok;
+
+    if (!state)
+        return FALSE;
+    memset(state, 0, sizeof(*state));
+
+    state_path = state_path_for_image(path);
+    if (!state_path)
+        return FALSE;
+    ok = load_state_file(state_path, state);
+    g_free(state_path);
     return ok;
 }
 
@@ -441,6 +460,118 @@ static gboolean mountpoint_is_ours(const gchar *mountpoint)
     if (strstr(mountpoint, "/../") || g_str_has_suffix(mountpoint, "/.."))
         return FALSE;
     return mountpoint[strlen(prefix)] != '\0';
+}
+
+
+void image_mounter_managed_mount_free(gpointer data)
+{
+    ImageMounterManagedMount *mount = data;
+
+    if (!mount)
+        return;
+    g_free(mount->image);
+    g_free(mount->loopdev);
+    g_free(mount->blockdev);
+    g_free(mount->mountpoint);
+    g_free(mount);
+}
+
+
+static gboolean blockdev_belongs_to_loop(const gchar *loopdev,
+                                         const gchar *blockdev)
+{
+    const gchar *suffix;
+
+    if (!loopdev || !blockdev)
+        return FALSE;
+    if (g_strcmp0(loopdev, blockdev) == 0)
+        return TRUE;
+    if (!g_str_has_prefix(blockdev, loopdev))
+        return FALSE;
+
+    suffix = blockdev + strlen(loopdev);
+    if (*suffix++ != 'p' || !g_ascii_isdigit(*suffix))
+        return FALSE;
+    while (*suffix) {
+        if (!g_ascii_isdigit(*suffix))
+            return FALSE;
+        suffix++;
+    }
+    return TRUE;
+}
+
+static gint managed_mount_compare(gconstpointer a, gconstpointer b)
+{
+    const ImageMounterManagedMount *const *ma = a;
+    const ImageMounterManagedMount *const *mb = b;
+
+    return g_strcmp0((*ma)->image, (*mb)->image);
+}
+
+GPtrArray *image_mounter_list_managed_mounts(void)
+{
+    GPtrArray *mounts;
+    gchar *dir_path;
+    GDir *dir;
+    const gchar *name;
+
+    mounts = g_ptr_array_new_with_free_func(image_mounter_managed_mount_free);
+    dir_path = state_directory();
+    if (!dir_path)
+        return mounts;
+
+    dir = g_dir_open(dir_path, 0, NULL);
+    if (!dir) {
+        g_free(dir_path);
+        return mounts;
+    }
+
+    while ((name = g_dir_read_name(dir)) != NULL) {
+        gchar *state_path;
+        ImageMountState state;
+        ImageMounterManagedMount *managed;
+
+        if (!g_str_has_suffix(name, ".ini"))
+            continue;
+
+        state_path = g_build_filename(dir_path, name, NULL);
+        if (!load_state_file(state_path, &state)) {
+            g_free(state_path);
+            continue;
+        }
+
+        /* The private state directory is the authority.  Never enumerate the
+         * system's loop devices here: Puppy can legitimately have many loops
+         * for its own SFS/layer stack. */
+        {
+            gboolean active = mountpoint_is_active(state.mountpoint);
+            gboolean valid_loop =
+                g_str_has_prefix(state.loopdev, "/dev/loop") &&
+                blockdev_belongs_to_loop(state.loopdev, state.blockdev);
+
+            if (!valid_loop || !active) {
+                (void) g_unlink(state_path);
+                image_mount_state_clear(&state);
+                g_free(state_path);
+                continue;
+            }
+        }
+
+        managed = g_new0(ImageMounterManagedMount, 1);
+        managed->image = g_strdup(state.image);
+        managed->loopdev = g_strdup(state.loopdev);
+        managed->blockdev = g_strdup(state.blockdev);
+        managed->mountpoint = g_strdup(state.mountpoint);
+        g_ptr_array_add(mounts, managed);
+
+        image_mount_state_clear(&state);
+        g_free(state_path);
+    }
+
+    g_dir_close(dir);
+    g_free(dir_path);
+    g_ptr_array_sort(mounts, managed_mount_compare);
+    return mounts;
 }
 
 static gboolean suffix_is(const gchar *path, const gchar *suffix)
@@ -843,6 +974,74 @@ static void detach_loop_udisks(const gchar *loopdev)
     };
     if (loopdev && program_exists("udisksctl"))
         (void) command_run(argv, NULL, NULL);
+}
+
+
+static gboolean unmount_state_sync(ImageMountState *state, gchar **error_text)
+{
+    if (error_text)
+        *error_text = NULL;
+    if (!state || !state->image || !state->mountpoint)
+        return FALSE;
+
+    if (!mountpoint_is_active(state->mountpoint))
+        return TRUE;
+
+    if (state->method == IMAGE_MOUNT_METHOD_ROOT) {
+        const gchar *argv[] = {"umount", state->mountpoint, NULL};
+
+        if (!mountpoint_is_ours(state->mountpoint)) {
+            if (error_text)
+                *error_text = g_strdup_printf(
+                    _("Refusing to unmount '%s': it is outside the directory "
+                      "Rox-Filer2 manages for images (%s)."),
+                    state->mountpoint, IMAGE_MOUNTER_ROOT);
+            return FALSE;
+        }
+        if (!command_run(argv, NULL, error_text))
+            return FALSE;
+        detach_loop_root(state->loopdev);
+        (void) g_rmdir(state->mountpoint);
+        return TRUE;
+    }
+
+    if (state->method == IMAGE_MOUNT_METHOD_UDISKS) {
+        const gchar *argv[] = {
+            "udisksctl", "unmount",
+            "--block-device", state->blockdev, NULL
+        };
+        if (!command_run(argv, NULL, error_text))
+            return FALSE;
+        detach_loop_udisks(state->loopdev);
+        return TRUE;
+    }
+
+    if (error_text)
+        *error_text = g_strdup(_("Unknown error"));
+    return FALSE;
+}
+
+gboolean image_mounter_unmount_managed_sync(const gchar *path,
+                                             gchar **error_text)
+{
+    ImageMountState state;
+    gboolean ok;
+
+    if (error_text)
+        *error_text = NULL;
+    if (!load_state(path, &state)) {
+        if (error_text)
+            *error_text = g_strdup(_("The mounted image is no longer available."));
+        return FALSE;
+    }
+
+    ok = unmount_state_sync(&state, error_text);
+    if (ok) {
+        remove_state_file(state.image);
+        rox_drives_monitor_request_scan();
+    }
+    image_mount_state_clear(&state);
+    return ok;
 }
 
 static gchar *safe_mount_name(const gchar *image, const gchar *blockdev)
@@ -1375,6 +1574,9 @@ static void mount_phase2_done(GObject *source, GAsyncResult *res, gpointer data)
     }
     image_mount_state_clear(&state);
 
+    /* Publish only the loop/image that Rox-Filer2 just created.  The shared
+     * drive monitor deliberately ignores all other system/Puppy loops. */
+    rox_drives_monitor_request_scan();
     job_open_mountpoint(job);
     mount_job_free(job);
 }
@@ -1571,30 +1773,8 @@ static void unmount_thread(GTask *task, gpointer source, gpointer data,
 
     (void) source; (void) cancellable;
 
-    if (job->state.method == IMAGE_MOUNT_METHOD_ROOT) {
-        const gchar *argv[] = {"umount", job->state.mountpoint, NULL};
-        if (!command_run(argv, NULL, &job->error_text)) {
-            g_task_return_boolean(task, FALSE);
-            return;
-        }
-        detach_loop_root(job->state.loopdev);
-        (void) g_rmdir(job->state.mountpoint);
-    } else if (job->state.method == IMAGE_MOUNT_METHOD_UDISKS) {
-        const gchar *argv[] = {"udisksctl", "unmount",
-                               "--block-device", job->state.blockdev, NULL};
-        if (!command_run(argv, NULL, &job->error_text)) {
-            g_task_return_boolean(task, FALSE);
-            return;
-        }
-        detach_loop_udisks(job->state.loopdev);
-    } else {
-        job->error_text = g_strdup(_("Unknown error"));
-        g_task_return_boolean(task, FALSE);
-        return;
-    }
-
-    job->ok = TRUE;
-    g_task_return_boolean(task, TRUE);
+    job->ok = unmount_state_sync(&job->state, &job->error_text);
+    g_task_return_boolean(task, job->ok);
 }
 
 static void unmount_done(GObject *source, GAsyncResult *res, gpointer data)
@@ -1610,6 +1790,7 @@ static void unmount_done(GObject *source, GAsyncResult *res, gpointer data)
 
     if (job->ok) {
         remove_state_file(job->state.image);
+        rox_drives_monitor_request_scan();
     } else {
         gchar *image = g_strdup(job->state.image);
         gchar *msg = g_strdup(job->error_text && *job->error_text

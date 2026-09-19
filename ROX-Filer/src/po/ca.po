@@ -4,7 +4,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.12.2-89\n"
+"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -4397,8 +4397,8 @@ msgstr ""
 "%s"
 
 #: smb.c:809
-msgid "This build has no libsmbclient support."
-msgstr "Aquesta compilació no té suport per a libsmbclient."
+msgid "libsmbclient is not available on this system."
+msgstr "libsmbclient no està disponible en aquest sistema."
 
 #: smb.c:832
 #, c-format
@@ -5622,6 +5622,14 @@ msgstr "Inicia les operacions de moviment sense cap confirmació addicional"
 #: tips:143 Options.xml.h:137
 msgid "Start link operations without an extra confirmation"
 msgstr "Inicia les operacions d’enllaç sense cap confirmació addicional"
+
+#: Options.xml.h:138
+msgid "Confirm before moving files to Trash"
+msgstr "Confirma abans de moure fitxers a la Paperera"
+
+#: Options.xml.h:139
+msgid "Confirm before permanently deleting files"
+msgstr "Confirma abans de suprimir fitxers permanentment"
 
 #: tips:144 Options.xml.h:138
 msgid "Start permanent deletion without an extra confirmation"
@@ -7768,3 +7776,196 @@ msgstr "No s'ha pogut obrir el recurs SMB '%s': %s"
 
 msgid "This network resource is currently inaccessible."
 msgstr "Aquest recurs de xarxa no és accessible actualment."
+
+#: drives.c modern_ui.c
+msgid "Mounted Images"
+msgstr "Imatges muntades"
+
+#: drives.c modern_ui.c
+msgid "Portable Devices"
+msgstr "Dispositius portàtils"
+
+#: drives.c
+msgid "MTP device"
+msgstr "Dispositiu MTP"
+
+#: drives.c
+msgid "iPhone / iPad"
+msgstr "iPhone / iPad"
+
+#: samba_share.c menu.c
+msgid "Command failed."
+msgstr "Ha fallat l'ordre."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Command failed with exit status %d."
+msgstr "L'ordre ha fallat amb l'estat de sortida %d."
+
+
+#: samba_share.c menu.c
+msgid "The 'net' command was not found. Install Samba's command-line tools."
+msgstr "No s'ha trobat l'ordre 'net'. Instal·leu les eines de línia d'ordres del Samba."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Unable to read Samba usershares: %s"
+msgstr "No s'han pogut llegir les comparticions d'usuari del Samba: %s"
+
+
+#: samba_share.c menu.c
+msgid "Invalid output from Samba."
+msgstr "Sortida no vàlida del Samba."
+
+
+#: samba_share.c menu.c
+msgid "Unable to update the Samba share."
+msgstr "No s'ha pogut actualitzar la compartició Samba."
+
+
+#: samba_share.c menu.c
+msgid "Rox-Filer2 needs to add filesystem permissions to this folder before it can be shared. Continue?"
+msgstr "Rox-Filer2 necessita afegir permisos del sistema de fitxers a aquesta carpeta abans de poder compartir-la. Voleu continuar?"
+
+
+#: samba_share.c menu.c
+msgid "These permissions are not removed automatically when you stop sharing the folder."
+msgstr "Aquests permisos no s'eliminen automàticament quan deixeu de compartir la carpeta."
+
+
+#: samba_share.c menu.c
+msgid "Unable to change folder permissions."
+msgstr "No s'han pogut canviar els permisos de la carpeta."
+
+
+#: samba_share.c menu.c
+msgid "Samba usershare support is not available."
+msgstr "El suport de comparticions d'usuari del Samba no està disponible."
+
+
+#: samba_share.c menu.c
+msgid "You are not the owner of this folder."
+msgstr "No sou el propietari d'aquesta carpeta."
+
+
+#: samba_share.c menu.c
+msgid "Folder Sharing"
+msgstr "Compartició de carpetes"
+
+
+#: samba_share.c menu.c
+msgid "Share this folder"
+msgstr "Comparteix aquesta carpeta"
+
+
+#: samba_share.c menu.c
+msgid "Share name:"
+msgstr "Nom de la compartició:"
+
+
+#: samba_share.c menu.c
+msgid "Comment:"
+msgstr "Comentari:"
+
+
+#: samba_share.c menu.c
+msgid "Allow others to create and delete files in this folder"
+msgstr "Permet que altres creïn i suprimeixin fitxers en aquesta carpeta"
+
+
+#: samba_share.c menu.c
+msgid "Guest access"
+msgstr "Accés de convidats"
+
+
+#: samba_share.c menu.c
+msgid "Guest access is disabled by the Samba configuration."
+msgstr "L'accés de convidats està desactivat per la configuració del Samba."
+
+
+#: samba_share.c menu.c
+msgid "Share name cannot be empty."
+msgstr "El nom de la compartició no pot estar buit."
+
+
+#: samba_share.c menu.c
+msgid "Share name contains an invalid character."
+msgstr "El nom de la compartició conté un caràcter no vàlid."
+
+
+#: samba_share.c menu.c
+#, c-format
+msgid "Another share already uses the name '%s'."
+msgstr "Una altra compartició ja utilitza el nom «%s»."
+
+
+#: samba_share.c menu.c
+msgid "Share Folder..."
+msgstr "Comparteix la carpeta..."
+
+
+#: Options.xml.h
+msgid "New Rox-Filer2 instances:"
+msgstr "Noves instàncies de Rox-Filer2:"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Samba"
+msgstr "Samba"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders..."
+msgstr "Carpetes compartides..."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Shared Folders"
+msgstr "Carpetes compartides"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Guest"
+msgstr "Convidat"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "_Edit"
+msgstr "_Edita"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop Sharing"
+msgstr "Deixa de compartir"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Stop sharing '%s'?"
+msgstr "Vols deixar de compartir '%s'?"
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "No folders are currently shared."
+msgstr "Actualment no hi ha cap carpeta compartida."
+
+#: src/samba_share.c src/menu.c src/modern_ui.c
+msgid "Comment contains an invalid character."
+msgstr "El comentari conté un caràcter no vàlid."
+
+#: Options.xml.h
+msgid "Drives"
+msgstr "Unitats"
+
+#: Options.xml.h
+msgid "Automatic mounting"
+msgstr "Muntatge automàtic"
+
+#: Options.xml.h
+msgid "Mount local drives automatically at startup"
+msgstr "Munta automàticament les unitats locals a l’inici"
+
+#: Options.xml.h
+msgid "Automatically mount available local disk partitions when Rox-Filer2 starts. Network shares, phones, cameras, mounted images, optical media, encrypted containers and system partitions are not mounted automatically."
+msgstr "Munta automàticament les particions de disc locals disponibles quan s’inicia Rox-Filer2. Els recursos compartits de xarxa, telèfons, càmeres, imatges muntades, suports òptics, contenidors xifrats i particions del sistema no es munten automàticament."
+
+#: Options.xml.h
+msgid "Include removable drives"
+msgstr "Inclou les unitats extraïbles"
+
+#: Options.xml.h
+msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
+msgstr "Inclou també dispositius d’emmagatzematge extraïbles USB, SD i similars quan el muntatge automàtic a l’inici està activat."

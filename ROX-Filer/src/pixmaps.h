@@ -69,6 +69,7 @@ struct _MaskedPixmap
 };
 
 void pixmaps_init(void);
+void pixmaps_set_window_icon(GtkWindow *window);
 void pixmap_make_huge(MaskedPixmap *mp);
 void pixmap_make_small(MaskedPixmap *mp);
 MaskedPixmap *load_pixmap(const char *name);

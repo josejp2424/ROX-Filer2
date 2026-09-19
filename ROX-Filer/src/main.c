@@ -82,6 +82,7 @@
 #include "bulk_rename.h"
 #include "gtksavebox.h"
 #include "desktop.h"
+#include "drives.h"
 #include "rox_config.h"
 #include "filer_pair.h"
 #include "search_integration.h"
@@ -879,6 +880,7 @@ int main(int argc, char **argv)
 	toolbar_init();
 	display_init();
 	mount_init();
+	rox_drives_init();
 	type_init();
 	action_init();
 	ROX_LOG_DEBUG("startup", "core modules initialized");
@@ -998,6 +1000,11 @@ int main(int argc, char **argv)
 		xmlFreeDoc(rpc);
 		return EXIT_SUCCESS;
 	}
+
+	/* 2.13.0-8: mount local drives from the same saved ROX Options file.
+	 * Config-only helpers return above, so opening Preferences never causes
+	 * disks to be mounted as a side effect. */
+	rox_drives_startup_auto_mount();
 
 	/* Finally, execute the request */
 	reply = run_soap(rpc);

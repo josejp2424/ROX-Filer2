@@ -1,16 +1,111 @@
-# Rox-Filer2 2.12.2-89 translations
+# Rox-Filer2 2.13.0-8 translations
 
 English is the source language. Complete runtime catalogues are maintained
 for: ar, ca, de, es, fr, hu, it, ja, pt, ru and zh.
 
 ## State
 
-All eleven catalogues are at **1611/1611 translated**, with `msgfmt -c` and
+All eleven catalogues are at **1655/1655 translated**, with `msgfmt -c` and
 `check-po-formats.py` clean.
 
 
+## 2.13.0-8
+
+Six new Options strings were added for the Drives startup automount controls and explanatory text. All are translated in ar, ca, de, es, fr, hu, it, ja, pt, ru and zh.
+- Runtime catalog target: **1655/1655** translated entries in all 11 locales, with **0 fuzzy** entries.
+
+## 2.13.0-6
+
+- Added translations for the Samba `Shared Folders...` manager, its actions,
+  empty state, guest column and usershare validation messages.
+- Runtime catalog target: **1649/1649** translated entries in all 11 locales,
+  with **0 fuzzy** entries.
+
+## 2.13.0-5
+
+- No new runtime strings. Modern now opens Options through the same shared menu entry point as Classic, and the Options window has a 900x540 minimum with a 960x600 initial size.
+- All eleven catalogues remain complete at **1640/1640 translated**, with no fuzzy entries.
+
+## 2.13.0-4
+
+- No new runtime strings. The Options window geometry change reuses the existing interface and translations.
+- All eleven catalogues remain complete.
 
 
+## 2.13.0-2
+
+One new Options string, **New Rox-Filer2 instances:**, was added for the Modern
+window/tab routing preference. The Close Window label already existed in the
+runtime catalogue, so the optional toolbar close button reuses that translation.
+All eleven catalogues are complete at **1640/1640 translated**, with no fuzzy
+entries.
+
+## 2.13.0-1
+
+Twenty-two runtime strings were added for the native Samba usershare dialog,
+validation and error reporting, including **Share Folder...**, **Share this folder**,
+write/guest controls and rootless `net usershare` diagnostics. All eleven catalogues
+are complete at **1639/1639 translated**, with no fuzzy entries.
+
+## 2.12.2-99
+
+No new runtime strings were added by the Classic keyboard-focus fix. Type-ahead now accepts ordinary printable typing while non-text toolbar controls own focus, while editable text widgets remain excluded. All eleven catalogues remain **1617/1617 translated**, with no fuzzy entries.
+
+## 2.12.2-98
+
+No new runtime strings were added by type-ahead selection. The feature is implemented in the shared filer backend used by Classic and Modern, so all eleven catalogues remain **1617/1617 translated**, with no fuzzy entries.
+
+## 2.12.2-97
+
+No new runtime strings were added by the packaging portability fix. All eleven
+catalogue headers were synchronized to 2.12.2-97 and remain **1617/1617
+translated**, with no fuzzy entries.
+
+## 2.12.2-95
+
+Three new runtime labels, `Portable Devices`, `MTP device` and `iPhone / iPad`,
+were added for the portable-device integration and its fallback names. All eleven
+runtime catalogues contain translations, their release headers were synchronized
+to 2.12.2-95, and they are complete at **1617/1617 translated**, with no fuzzy
+entries.
+
+## 2.12.2-94
+
+No new runtime strings were required for the privilege-aware window icon.
+All eleven catalogue headers were synchronized to 2.12.2-94 and remained
+**1614/1614 translated**, with no fuzzy entries.
+
+
+## 2.12.2-93
+
+The previous build-time message `This build has no libsmbclient support.` was
+replaced by the runtime-accurate `libsmbclient is not available on this system.`
+All eleven catalogues were updated and their release headers synchronized to
+2.12.2-93. The total remains **1614/1614 translated**, with no fuzzy entries.
+
+
+## 2.12.2-92
+
+One new runtime label, `Mounted Images`, was added for the Classic Partitions
+popover and the Modern Devices sidebar. All eleven runtime catalogues contain
+the translation, the bundled `.mo` files were regenerated, and release headers
+are synchronized to 2.12.2-92. The catalogues are complete at **1614/1614**,
+with no fuzzy entries.
+
+## 2.12.2-91
+
+Two new Options labels were added for independent Trash and permanent-delete
+confirmation. All eleven runtime catalogues contain translations for both new
+strings and the release headers are synchronized to 2.12.2-91. The catalogues
+are complete at **1613/1613**, with no fuzzy entries.
+
+
+## 2.12.2-90
+
+No new runtime `msgid` is required for the pkexec drive-mount correction.
+The existing translated generic command/mount error strings are reused. All
+eleven catalogues remain complete at **1611/1611**, with no fuzzy entries;
+release headers are synchronized to 2.12.2-90.
 
 ## 2.12.2-89
 

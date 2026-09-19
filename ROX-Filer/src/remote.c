@@ -57,6 +57,8 @@
 #include "options.h"
 #include "filer_pair.h"
 #include "debug_log.h"
+#include "modern_ui.h"
+#include "interface_style.h"
 
 static GdkAtom filer_atom;	/* _ROX_FILER_EUID_VERSION_HOST */
 static GdkAtom filer_atom_any;	/* _ROX_FILER_EUID_HOST */
@@ -817,8 +819,24 @@ static xmlNodePtr rpc_OpenDir(GList *args)
 
 	if (!fwin)
 	{
-		fwin = filer_opendir(path, NULL, class);
-		if (window)
+		/* 2.13.0-2: when requested by the user, ordinary external/new
+		 * Rox-Filer2 instances are collected as tabs in the primary Modern
+		 * window. Requests carrying a custom WM class or explicit Window ID
+		 * keep their historical separate-window semantics. */
+		if (!class && !window && interface_style_is_modern() &&
+		    o_modern_new_instance_mode.int_value == 1)
+		{
+			FilerWindow *primary = modern_ui_primary_window();
+			if (primary)
+			{
+				modern_ui_open_path_in_new_tab(primary, path);
+				gtk_window_present(GTK_WINDOW(primary->window));
+				fwin = primary;
+			}
+		}
+		if (!fwin)
+			fwin = filer_opendir(path, NULL, class);
+		if (window && fwin)
 			filer_set_id(fwin, window);
 	}
 	else

@@ -35,14 +35,22 @@ struct _RoxDriveInfo
 	gchar *transport;
 	gchar *model;
 	gchar *parent_device;
+	gchar *backing_file;
+	gboolean managed_image;
 	gboolean removable;
 	gboolean hardware_removable;
 	gboolean optical;
 	gboolean network;
+	gboolean portable;
 	gboolean foreign;
 	gboolean solid_state;
+	gboolean system_partition;
 	gboolean label_is_synthetic;
 };
+
+/* Register and start the optional startup automount preferences. */
+void rox_drives_init(void);
+void rox_drives_startup_auto_mount(void);
 
 GtkToolItem *drives_toolbar_button_new(struct _FilerWindow *filer_window);
 

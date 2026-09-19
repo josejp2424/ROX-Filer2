@@ -83,7 +83,7 @@ static Option o_toolbar_order;
 	ROX_ICON_HOME "," ROX_ICON_BOOKMARKS "," ROX_ICON_REFRESH "," \
 	ROX_ICON_ZOOM_IN "," ROX_ICON_ZOOM_FIT "," ROX_ICON_ZOOM_OUT "," \
 	ROX_ICON_SHOW_DETAILS "," ROX_ICON_SHOW_HIDDEN "," ROX_ICON_SELECT "," \
-	ROX_ICON_ADD "," ROX_ICON_FIND ",window-new"
+	ROX_ICON_ADD "," ROX_ICON_FIND ",window-new," ROX_ICON_CLOSE
 
 static FilerWindow *filer_window_being_counted;
 static gboolean updating_tool_positions = FALSE;
@@ -120,6 +120,7 @@ static void toolbar_new_show_menu(GtkMenuToolButton *button,
 				      FilerWindow *filer_window);
 static void toolbar_search_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window);
+static void toolbar_close_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_preferences_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static void toolbar_network_clicked(GtkWidget *widget, FilerWindow *filer_window);
 static GtkWidget *add_button(GtkWidget *bar, Tool *tool,
@@ -223,6 +224,14 @@ static Tool all_tools[] = {
 
 	{N_("Paired Windows"), "window-new", N_("Open two Rox-Filer2 windows side by side"),
 	 toolbar_pair_clicked, DROP_NONE, FALSE,
+	 FALSE},
+
+	/* 2.13.0-2: optional close button requested for tiling window managers
+	 * such as SpectrWM/BSPWM that may not provide title-bar controls.  The
+	 * existing toolbar_disable default already contains ROX_ICON_CLOSE, so
+	 * this remains opt-in and backward compatible. */
+	{N_("Close Window"), ROX_ICON_CLOSE, N_("Close Window"),
+	 toolbar_close_clicked, DROP_NONE, FALSE,
 	 FALSE},
 };
 
@@ -449,7 +458,8 @@ static void toolbar_refresh_clicked(GtkWidget *widget,
 	if (event->type == GDK_BUTTON_RELEASE &&
 			((GdkEventButton *) event)->button != 1)
 	{
-		filer_opendir(filer_window->sym_path, filer_window, NULL);
+		if (!modern_ui_open_path_as_tab_if_configured(filer_window, filer_window->sym_path))
+			filer_opendir(filer_window->sym_path, filer_window, NULL);
 	}
 	else
 		filer_refresh(filer_window);
@@ -463,7 +473,8 @@ static void toolbar_home_clicked(GtkWidget *widget, FilerWindow *filer_window)
 	event = get_current_event(GDK_BUTTON_RELEASE);
 	if (event->type == GDK_BUTTON_RELEASE && NEW_WIN_BUTTON(event))
 	{
-		filer_opendir(home_dir, filer_window, NULL);
+		if (!modern_ui_open_path_as_tab_if_configured(filer_window, home_dir))
+			filer_opendir(home_dir, filer_window, NULL);
 	}
 	else
 		filer_change_to(filer_window, home_dir, NULL);
@@ -712,6 +723,19 @@ static void toolbar_pair_clicked(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void)widget;
 	filer_pair_open(filer_window, NULL, NULL);
+}
+
+static void toolbar_close_clicked(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	if (filer_window && filer_window->window &&
+	    !filer_window_delete(filer_window->window, NULL, filer_window))
+		gtk_widget_destroy(filer_window->window);
+}
+
+gboolean toolbar_close_button_enabled(void)
+{
+	return !in_list(ROX_ICON_CLOSE, o_toolbar_disable.value);
 }
 
 static void toolbar_preferences_clicked(GtkWidget *widget, FilerWindow *filer_window)

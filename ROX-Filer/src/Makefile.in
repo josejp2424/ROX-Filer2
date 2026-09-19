@@ -14,8 +14,8 @@ LIBS = @LIBS@ @LFS_LDFLAGS@
 PKG_CONFIG_FLAGS=
 
 CFLAGS = -I. -I${srcdir} ${PROF} @CFLAGS@ @LFS_CFLAGS@ \
-	 `${PKG_CONFIG} ${PKG_CONFIG_FLAGS} --cflags gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice @SMBCLIENT_PKG@`
-LDFLAGS = ${PROF} @LDFLAGS@ `${PKG_CONFIG} ${PKG_CONFIG_FLAGS} --libs gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice @SMBCLIENT_PKG@` ${LIBS}
+	 `${PKG_CONFIG} ${PKG_CONFIG_FLAGS} --cflags gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice`
+LDFLAGS = ${PROF} @LDFLAGS@ `${PKG_CONFIG} ${PKG_CONFIG_FLAGS} --libs gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice` ${LIBS}
 
 ############ Things to change for different programs
 
@@ -28,7 +28,7 @@ SRCS = abox.c action.c appinfo.c appmenu.c bind.c bookmarks.c		\
 	gui_support.c i18n.c image_mounter.c icon.c infobox.c interface_style.c modern_ui.c log.c debug_log.c main.c menu.c minibuffer.c\
 	modechange.c mount.c options.c panel.c pixmaps.c rox_config.c	\
 	remote.c run.c sc.c session.c support.c 		\
-	search_integration.c smb.c toolbar.c trash.c type.c usericons.c xdg_apps.c 	\
+	search_integration.c smb.c samba_share.c toolbar.c trash.c type.c usericons.c xdg_apps.c 	\
 	view_collection.c view_details.c view_iface.c wrapped.c xml.c xtypes.c \
 	xdgmime.c xdgmimeglob.c xdgmimeint.c xdgmimemagic.c xdgmimeparent.c xdgmimealias.c xdgmimecache.c 
 
@@ -39,7 +39,7 @@ OBJECTS = abox.o action.o appinfo.o appmenu.o bind.o bookmarks.o	\
 	gui_support.o i18n.o image_mounter.o icon.o infobox.o interface_style.o modern_ui.o log.o debug_log.o main.o menu.o minibuffer.o\
 	modechange.o mount.o options.o panel.o pixmaps.o rox_config.o	\
 	remote.o run.o sc.o session.o support.o		\
-	search_integration.o smb.o toolbar.o trash.o type.o usericons.o xdg_apps.o 	\
+	search_integration.o smb.o samba_share.o toolbar.o trash.o type.o usericons.o xdg_apps.o 	\
 	view_collection.o view_details.o view_iface.o wrapped.o xml.o xtypes.o \
 	xdgmime.o xdgmimeglob.o xdgmimeint.o xdgmimemagic.o xdgmimeparent.o xdgmimealias.o xdgmimecache.o
 

@@ -243,6 +243,7 @@ static gboolean not_local = FALSE;
 static Option o_short_flag_names;
 static Option o_filer_view_type;
 Option o_filer_auto_resize, o_unique_filer_windows;
+Option o_modern_new_instance_mode;
 Option o_filer_size_limit;
 
 #define ROX_RESPONSE_EJECT 99 /**< User clicked on Eject button */
@@ -257,6 +258,10 @@ void filer_init(void)
 	option_add_int(&o_filer_auto_resize, "filer_auto_resize", RESIZE_ALWAYS);
 
 	option_add_int(&o_unique_filer_windows, "filer_unique_windows", 0);
+	/* 2.13.0-2: external/new Rox-Filer2 instances can be routed into a
+	 * new tab of the primary Modern window instead of creating another window.
+	 * 0 = new window (traditional default), 1 = new tab. */
+	option_add_int(&o_modern_new_instance_mode, "modern_new_instance_mode", 0);
 	option_add_int(&o_short_flag_names, "filer_short_flag_names", FALSE);
 	option_add_int(&o_filer_view_type, "filer_view_type", VIEW_TYPE_COLLECTION);
 	/* Enabled by default as requested. mpv is detected at runtime. */
@@ -652,33 +657,14 @@ static void update_display(Directory *dir,
 			 * visibles del directorio y que el scroll abarque la lista completa. */
 			sync_complete_directory_view(filer_window);
 
+			/* Rox-Filer2 2.12.2-94: the frame icon identifies the privilege
+			 * level of this ROX process, not the directory being browsed. */
 			if (filer_window->win_icon)
-				g_object_unref(filer_window->win_icon);
-			MaskedPixmap *fi = NULL;
-
-			/* Modificado por josejp2424 (2026): la ventana de la carpeta
-			 * personal también usa siempre user-home y nunca /root/.DirIcon. */
-			if (path_is_home_dir((const gchar *) filer_window->real_path) ||
-			    path_is_home_dir((const gchar *) filer_window->sym_path))
-				fi = pixmap_home_icon();
-			else
 			{
-				fi = get_globicon(filer_window->sym_path);
-				if (!fi)
-					fi = get_globicon(filer_window->real_path);
-				if (fi)
-					g_object_ref(fi);
-				if (!fi)
-					fi = g_fscache_lookup_full(pixmap_cache,
-							make_path(filer_window->real_path, ".DirIcon"),
-							FSCACHE_LOOKUP_ONLY_NEW, NULL);
+				g_object_unref(filer_window->win_icon);
+				filer_window->win_icon = NULL;
 			}
-
-
-			gtk_window_set_icon(GTK_WINDOW(filer_window->window),
-					fi ? fi->src_pixbuf : NULL);
-
-			filer_window->win_icon = fi;
+			pixmaps_set_window_icon(GTK_WINDOW(filer_window->window));
 
 			if (gtk_widget_get_window(filer_window->window))
 				filer_restore_default_cursor(
@@ -709,23 +695,6 @@ static void update_display(Directory *dir,
 			break;
 		case DIR_UPDATE:
 			view_update_items(view, items);
-
-			if (!filer_window->win_icon)
-			{
-				if (path_is_home_dir((const gchar *) filer_window->real_path) ||
-				    path_is_home_dir((const gchar *) filer_window->sym_path))
-					filer_window->win_icon = pixmap_home_icon();
-				else
-					filer_window->win_icon = g_fscache_lookup_full(
-						pixmap_cache,
-						make_path(filer_window->real_path, ".DirIcon"),
-						FSCACHE_LOOKUP_ONLY_NEW, NULL);
-
-				if (filer_window->win_icon)
-					gtk_window_set_icon(GTK_WINDOW(filer_window->window),
-							filer_window->win_icon->src_pixbuf);
-			}
-
 			break;
 		case DIR_ERROR_CHANGED:
 			filer_set_title(filer_window);
@@ -1023,6 +992,8 @@ static void filer_window_destroyed(GtkWidget *widget, FilerWindow *filer_window)
 	 * ventana al cerrarla. */
 	g_list_free_full(filer_window->history_back, g_free);
 	g_list_free_full(filer_window->history_forward, g_free);
+	if (filer_window->typeahead_text)
+		g_string_free(filer_window->typeahead_text, TRUE);
 	g_free(filer_window);
 
 	one_less_window();
@@ -1686,6 +1657,168 @@ void filer_window_toggle_cursor_item_selected(FilerWindow *filer_window)
 		view_cursor_to_iter(view, &iter);
 }
 
+/* Rox-Filer2 2.12.2-98: PCManFM-style type-ahead selection.
+ *
+ * Keep this at the FilerWindow layer so Collection and Details views, and
+ * therefore both Classic and Modern chrome, get exactly the same behavior. */
+#define TYPEAHEAD_RESET_USEC (1500 * 1000)
+
+static void filer_typeahead_reset(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->typeahead_text)
+		return;
+
+	g_string_truncate(filer_window->typeahead_text, 0);
+	filer_window->typeahead_last_us = 0;
+}
+
+/* Rox-Filer2 2.12.2-99: Classic toolbars can legitimately keep keyboard
+ * focus on a button (for example Partitions) after it is clicked.  Type-ahead
+ * must still work there, exactly as it does in Modern.  Only widgets where
+ * typing is actual text input are allowed to keep the keystroke. */
+static gboolean filer_typeahead_focus_allows(FilerWindow *filer_window,
+					      GtkWidget *focus)
+{
+	GtkWidget *widget;
+
+	if (!filer_window || !filer_window->view)
+		return FALSE;
+
+	if (!focus)
+		return TRUE;
+
+	/* The historical minibuffer, Modern path/location entries, spin buttons
+	 * and any other editable text widget must never be intercepted.  Walk up
+	 * the parent chain too, because some composite controls place focus on an
+	 * internal child. */
+	for (widget = focus; widget; widget = gtk_widget_get_parent(widget))
+	{
+		if (widget == filer_window->minibuffer ||
+		    GTK_IS_EDITABLE(widget) || GTK_IS_TEXT_VIEW(widget))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gchar *filer_typeahead_fold(const gchar *text)
+{
+	gchar *folded;
+	gchar *normalised;
+
+	if (!text || !g_utf8_validate(text, -1, NULL))
+		return NULL;
+
+	folded = g_utf8_casefold(text, -1);
+	normalised = g_utf8_normalize(folded, -1, G_NORMALIZE_ALL_COMPOSE);
+	g_free(folded);
+
+	return normalised;
+}
+
+static gboolean filer_typeahead_select(FilerWindow *filer_window)
+{
+	ViewIter iter;
+	DirItem *item;
+	gchar *prefix_folded;
+	gboolean found = FALSE;
+
+	if (!filer_window || !filer_window->view ||
+	    !filer_window->typeahead_text ||
+	    filer_window->typeahead_text->len == 0)
+		return FALSE;
+
+	prefix_folded = filer_typeahead_fold(filer_window->typeahead_text->str);
+	if (!prefix_folded)
+		return FALSE;
+
+	view_get_iter(filer_window->view, &iter, 0);
+	while ((item = iter.next(&iter)) != NULL)
+	{
+		gchar *leaf_folded = filer_typeahead_fold(item->leafname);
+
+		if (leaf_folded && g_str_has_prefix(leaf_folded, prefix_folded))
+		{
+			/* select_only gives the visible highlight the user expects;
+			 * moving the cursor also scrolls an off-screen match into view. */
+			view_select_only(filer_window->view, &iter);
+			view_cursor_to_iter(filer_window->view, &iter);
+			gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+			found = TRUE;
+			g_free(leaf_folded);
+			break;
+		}
+
+		g_free(leaf_folded);
+	}
+
+	g_free(prefix_folded);
+	return found;
+}
+
+static gboolean filer_typeahead_key(FilerWindow *filer_window,
+				     GtkWidget *focus, GdkEventKey *event)
+{
+	gint64 now;
+	gunichar ch;
+	gchar utf8[7] = {0};
+	int len;
+
+	if (!filer_window || !event ||
+	    !filer_typeahead_focus_allows(filer_window, focus))
+		return FALSE;
+
+	/* Leave menu/application accelerators and modified key combinations alone. */
+	if (event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK | GDK_SUPER_MASK |
+	                    GDK_META_MASK | GDK_HYPER_MASK))
+		return FALSE;
+
+	if (!filer_window->typeahead_text)
+		filer_window->typeahead_text = g_string_new(NULL);
+
+	now = g_get_monotonic_time();
+	if (filer_window->typeahead_last_us > 0 &&
+	    now - filer_window->typeahead_last_us > TYPEAHEAD_RESET_USEC)
+		filer_typeahead_reset(filer_window);
+
+	if (event->keyval == GDK_KEY_BackSpace)
+	{
+		gchar *end;
+
+		if (filer_window->typeahead_text->len == 0)
+			return FALSE;
+
+		end = g_utf8_find_prev_char(filer_window->typeahead_text->str,
+					filer_window->typeahead_text->str +
+					filer_window->typeahead_text->len);
+		if (end)
+			g_string_truncate(filer_window->typeahead_text,
+					  (gsize) (end - filer_window->typeahead_text->str));
+		filer_window->typeahead_last_us = now;
+		if (filer_window->typeahead_text->len > 0)
+			filer_typeahead_select(filer_window);
+		return TRUE;
+	}
+
+	/* Keep the historical Space and digit shortcuts intact.  Once a prefix
+	 * is active, punctuation can be appended for filenames such as foo-bar. */
+	ch = gdk_keyval_to_unicode(event->keyval);
+	if (ch == 0 || g_unichar_iscntrl(ch) || g_unichar_isspace(ch))
+		return FALSE;
+	if (filer_window->typeahead_text->len == 0 && !g_unichar_isalpha(ch))
+		return FALSE;
+
+	len = g_unichar_to_utf8(ch, utf8);
+	utf8[len] = '\0';
+	g_string_append_len(filer_window->typeahead_text, utf8, len);
+	filer_window->typeahead_last_us = now;
+
+	/* Consume typed filename characters even if there is no match yet.  This
+	 * allows the next character or Backspace to keep refining the prefix. */
+	filer_typeahead_select(filer_window);
+	return TRUE;
+}
+
 gint filer_key_press_event(GtkWidget	*widget,
 			   GdkEventKey	*event,
 			   FilerWindow	*filer_window)
@@ -1728,6 +1861,12 @@ gint filer_key_press_event(GtkWidget	*widget,
 	if (!focus)
 		gtk_widget_grab_focus(GTK_WIDGET(view));
 
+	/* Plain typing in the file view performs an incremental prefix lookup.
+	 * This is intentionally handled before Backspace's historical parent-dir
+	 * shortcut so Backspace can edit an active type-ahead prefix. */
+	if (filer_typeahead_key(filer_window, focus, event))
+		return TRUE;
+
 	view_get_cursor(view, &cursor);
 	if (!cursor.peek(&cursor) && (key == GDK_KEY_Up || key == GDK_KEY_KP_Up
 		|| key == GDK_KEY_Down || key == GDK_KEY_KP_Down))
@@ -1743,6 +1882,7 @@ gint filer_key_press_event(GtkWidget	*widget,
 	switch (key)
 	{
 		case GDK_KEY_Escape:
+			filer_typeahead_reset(filer_window);
 			filer_target_mode(filer_window, NULL, NULL, NULL);
 			view_cursor_to_iter(filer_window->view, NULL);
 			view_clear_selection(filer_window->view);
@@ -1940,6 +2080,7 @@ void filer_change_to(FilerWindow *filer_window,
 
 	g_return_if_fail(filer_window != NULL);
 
+	filer_typeahead_reset(filer_window);
 	filer_cancel_thumbnails(filer_window);
 
 	tooltip_show(NULL);
@@ -2135,6 +2276,8 @@ FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 	filer_window->history_navigation = FALSE;
 	filer_window->toolbar_back = NULL;
 	filer_window->toolbar_forward = NULL;
+	filer_window->typeahead_text = g_string_new(NULL);
+	filer_window->typeahead_last_us = 0;
 	filer_window->modern_mode = interface_style_is_modern();
 	filer_window->modern_menubar = NULL;
 	filer_window->modern_navbar = NULL;
@@ -2142,6 +2285,7 @@ FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 	filer_window->modern_path_entry = NULL;
 	filer_window->modern_back = NULL;
 	filer_window->modern_forward = NULL;
+	filer_window->modern_close = NULL;
 	filer_window->modern_menu_back = NULL;
 	filer_window->modern_menu_forward = NULL;
 	filer_window->modern_sidebar = NULL;
@@ -2436,6 +2580,7 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	 * overrides this value.
 	 */
 	filer_window->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	pixmaps_set_window_icon(GTK_WINDOW(filer_window->window));
 	gtk_window_set_position(GTK_WINDOW(filer_window->window), GTK_WIN_POS_CENTER);
 	if (filer_window->modern_mode)
 	{

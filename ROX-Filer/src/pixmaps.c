@@ -43,6 +43,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <gtk/gtk.h>
 
@@ -87,6 +88,60 @@ MaskedPixmap *im_unknown;
 MaskedPixmap *im_appdir;
 
 MaskedPixmap *im_dirs;
+
+/* Rox-Filer2 2.12.2-94: make the window-frame icon an immediate privilege
+ * indicator. Normal sessions use the familiar blue ROX-Filer icon; an
+ * effective UID of 0 uses the orange ROX-Filer-root icon. Keep this separate
+ * from MIME/folder icons: it represents the process privilege level, not the
+ * directory currently being viewed. */
+static GdkPixbuf *role_window_icon = NULL;
+
+static GdkPixbuf *load_role_window_icon(void)
+{
+	const gboolean as_root = geteuid() == 0;
+	const gchar *system_icon = as_root
+		? "/usr/share/pixmaps/ROX-Filer-root.svg"
+		: "/usr/share/pixmaps/ROX-Filer.svg";
+	const gchar *app_icon = as_root ? "ROX-Filer-root.svg" : ".DirIcon";
+	GdkPixbuf *pixbuf;
+	GError *error = NULL;
+
+	pixbuf = gdk_pixbuf_new_from_file_at_scale(system_icon, 64, 64, TRUE,
+			&error);
+	if (pixbuf)
+		return pixbuf;
+	g_clear_error(&error);
+
+	/* Portable/AppDir and unpacked-source fallback. */
+	pixbuf = gdk_pixbuf_new_from_file_at_scale(make_path(app_dir, app_icon),
+			64, 64, TRUE, &error);
+	if (pixbuf)
+		return pixbuf;
+	g_clear_error(&error);
+
+	/* Last resort: retain the normal themed application icon rather than
+	 * leaving the frame without an icon. */
+	pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),
+			"rox-filer2", 64, GTK_ICON_LOOKUP_FORCE_SIZE, &error);
+	if (!pixbuf && error)
+	{
+		g_warning("%s\n", error->message);
+		g_error_free(error);
+	}
+
+	return pixbuf;
+}
+
+void pixmaps_set_window_icon(GtkWindow *window)
+{
+	g_return_if_fail(GTK_IS_WINDOW(window));
+
+	if (!role_window_icon)
+		role_window_icon = load_role_window_icon();
+
+	if (role_window_icon)
+		gtk_window_set_icon(window, role_window_icon);
+}
 
 GtkIconSize mount_icon_size = -1;
 
@@ -1194,9 +1249,6 @@ MaskedPixmap *masked_pixmap_new(GdkPixbuf *full_size)
 /* Load all the standard pixmaps. Also sets the default window icon. */
 static void load_default_pixmaps(void)
 {
-	GdkPixbuf *pixbuf;
-	GError *error = NULL;
-
 	im_error = mp_from_icon(ROX_ICON_DIALOG_WARNING,
 				 GTK_ICON_SIZE_DIALOG);
 	im_unknown = mp_from_icon(ROX_ICON_DIALOG_QUESTION,
@@ -1205,32 +1257,13 @@ static void load_default_pixmaps(void)
 	im_dirs = load_pixmap("dirs");
 	im_appdir = load_pixmap("application");
 
-	/* Rox-Filer2 2.12.2-26: prefer the installed application icon from
-	 * hicolor.  Fall back to the historical .DirIcon when running directly
-	 * from an unpacked source tree before installation. */
-	pixbuf = gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),
-			"rox-filer2", 64, GTK_ICON_LOOKUP_FORCE_SIZE, &error);
-	if (!pixbuf)
-	{
-		g_clear_error(&error);
-		pixbuf = gdk_pixbuf_new_from_file(
-				make_path(app_dir, ".DirIcon"), &error);
-	}
-	if (pixbuf)
-	{
-		GList *icon_list;
-
-		icon_list = g_list_append(NULL, pixbuf);
-		gtk_window_set_default_icon_list(icon_list);
-		g_list_free(icon_list);
-
-		g_object_unref(G_OBJECT(pixbuf));
-	}
-	else if (error)
-	{
-		g_warning("%s\n", error->message);
-		g_error_free(error);
-	}
+	/* 2.12.2-94: all ROX windows inherit the privilege-aware application
+	 * icon. Filer windows call pixmaps_set_window_icon() explicitly too, so
+	 * directory icons never hide the root/user distinction in the frame. */
+	if (!role_window_icon)
+		role_window_icon = load_role_window_icon();
+	if (role_window_icon)
+		gtk_window_set_default_icon(role_window_icon);
 }
 
 /* Delete cached thumbnails directly.  The old implementation passed cache

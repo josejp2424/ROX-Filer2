@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rox-Filer2 native Arch Linux package builder.
-# Compile Rox-Filer2 with Meson + libsmbclient and create a .pkg.tar.zst.
+# Compile Rox-Filer2 with Meson and runtime-optional libsmbclient support.
 set -euo pipefail
 
 PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,8 +16,8 @@ usage() {
     cat <<'USAGE'
 Usage: ./build_arch.sh [--clean]
 
-Builds Rox-Filer2 natively on Arch Linux with Samba/libsmbclient enabled and
-creates an Arch Linux .pkg.tar.zst in output/.
+Builds Rox-Filer2 natively on Arch Linux. libsmbclient is detected at runtime
+and is not required for the file manager to start.
 
 Requirements: install the Arch build dependencies first. makepkg must be
 run as a normal user.
@@ -55,7 +55,7 @@ fi
 DISPLAY_VERSION=$(sed -n 's/^[[:space:]]*<Version>\([^<][^<]*\)<\/Version>[[:space:]]*$/\1/p' "$APP_DIR/AppInfo.xml" | head -n1)
 if [[ ! "$DISPLAY_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)$ ]]; then
     echo "ERROR: unsupported Rox-Filer2 version: $DISPLAY_VERSION" >&2
-    echo "Expected a version like 2.12.2-89." >&2
+    echo "Expected a version like 2.13.0-1." >&2
     exit 1
 fi
 PKGVER="${BASH_REMATCH[1]}"
@@ -80,7 +80,7 @@ for cmd in cc pkg-config meson ninja python3 msgfmt makepkg install gzip; do
     need_cmd "$cmd"
 done
 
-required_pc=(gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice x11 shared-mime-info pango smbclient)
+required_pc=(gtk+-3.0 gio-unix-2.0 libxml-2.0 sm ice x11 shared-mime-info pango)
 missing=0
 for mod in "${required_pc[@]}"; do
     if ! pkg-config --exists "$mod"; then
@@ -113,10 +113,11 @@ prepare_messages() {
 build_rox() {
     echo "==> Building Rox-Filer2 $DISPLAY_VERSION for Arch Linux"
     rm -rf "$BUILD_DIR"
-    meson setup --buildtype=release -Dsmb=enabled "$BUILD_DIR" "$PROJECT_ROOT"
+    meson setup --buildtype=release -Dsmb=auto -Dportable_devices=auto "$BUILD_DIR" "$PROJECT_ROOT"
     meson compile -C "$BUILD_DIR"
     [[ -x "$BUILD_DIR/ROX-Filer" ]] || { echo "ERROR: ROX-Filer binary was not produced." >&2; exit 1; }
     [[ -x "$BUILD_DIR/rox-find" ]] || { echo "ERROR: rox-find binary was not produced." >&2; exit 1; }
+    [[ -x "$BUILD_DIR/rox-mount-helper" ]] || { echo "ERROR: rox-mount-helper binary was not produced." >&2; exit 1; }
 }
 
 stage_runtime() {
@@ -131,6 +132,7 @@ stage_runtime() {
     mkdir -p "$app_install"
     cp -a "$APP_DIR/." "$app_install/"
     install -m0755 "$BUILD_DIR/ROX-Filer" "$app_install/ROX-Filer"
+    install -m0755 "$BUILD_DIR/rox-mount-helper" "$app_install/rox-mount-helper"
     rm -rf "$app_install/build" "$app_install/src" "$app_install/ROX-Filer.dbg" "$app_install/ROX"
     cp -a "$PROJECT_ROOT/package-assets/ROX" "$app_install/ROX"
     install -m0644 "$PROJECT_ROOT/data/icons/hicolor/256x256/apps/rox-filer2.png" "$app_install/ROX-Filer.png"
@@ -147,6 +149,8 @@ stage_runtime() {
         install -Dm0644 "$PROJECT_ROOT/data/icons/hicolor/scalable/apps/rox-filer2.svg" \
             "$STAGE_DIR/usr/share/pixmaps/$icon"
     done
+    install -Dm0644 "$PROJECT_ROOT/ROX-Filer-root.svg" \
+        "$STAGE_DIR/usr/share/pixmaps/ROX-Filer-root.svg"
 
     for icon in application-pet.svg application-x-sfs.svg application-x-squashfs-image.svg; do
         install -Dm0644 "$PROJECT_ROOT/package-assets/ROX/MIME/$icon" \
@@ -196,13 +200,23 @@ url='https://github.com/josejp2424/ROX-Filer2'
 license=('GPL-3.0-or-later')
 depends=(
   'glibc' 'glib2' 'gtk3' 'libxml2' 'libsm' 'libice' 'libx11'
-  'shared-mime-info' 'smbclient' 'hicolor-icon-theme' 'desktop-file-utils'
+  'shared-mime-info' 'hicolor-icon-theme' 'desktop-file-utils'
   'util-linux' 'file'
 )
 optdepends=(
   'gtk-layer-shell: Wayland desktop layer support'
-  'udisks2: mount disk images as a regular user'
+  'polkit: pkexec authorization for drive mount/unmount as a regular user'
+  'udisks2: Image Mounter support as a regular user'
+  'smbclient: SMB share listing/diagnostics loaded automatically when available'
   'cifs-utils: kernel CIFS mounting support'
+  'samba: rootless folder sharing through net usershare'
+  'fuse3: FUSE mount/unmount helpers for portable devices'
+  'jmtpfs: Android/MTP portable-device mounting'
+  'gphoto2: PTP camera detection'
+  'gphotofs: PTP camera FUSE mounting'
+  'ifuse: iPhone/iPad FUSE mounting'
+  'libimobiledevice: iPhone/iPad detection utilities'
+  'usbmuxd: USB transport for Apple mobile devices'
 )
 provides=('rox-filer')
 conflicts=('rox-filer')

@@ -78,6 +78,7 @@
 #include "custom_actions.h"
 #include "trash.h"
 #include "smb.h"
+#include "samba_share.h"
 #include "image_mounter.h"
 
 static gboolean input_trace_enabled(void)
@@ -250,6 +251,19 @@ static void search_current_folders(gpointer data, guint action, GtkWidget *widge
 static void choose_application_selected(gpointer data, guint action, GtkWidget *widget);
 static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget);
 static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget);
+static void share_folder_selected(gpointer data, guint action, GtkWidget *widget);
+static void show_shared_folders(gpointer data, guint action, GtkWidget *widget)
+{
+	(void) data;
+	(void) action;
+	(void) widget;
+
+	if (window_with_focus)
+		samba_share_show_manager(GTK_WINDOW(window_with_focus->window));
+	else
+		samba_share_show_manager(NULL);
+}
+
 static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget);
 static void mount_image_selected(gpointer data, guint action, GtkWidget *widget);
 static void open_mounted_image_selected(gpointer data, guint action, GtkWidget *widget);
@@ -261,6 +275,7 @@ static void open_parent_same(gpointer data, guint action, GtkWidget *widget);
 static void open_parent(gpointer data, guint action, GtkWidget *widget);
 static void home_directory(gpointer data, guint action, GtkWidget *widget);
 static void open_smb_share(gpointer data, guint action, GtkWidget *widget);
+static void show_shared_folders(gpointer data, guint action, GtkWidget *widget);
 static void show_bookmarks(gpointer data, guint action, GtkWidget *widget);
 static void show_log(gpointer data, guint action, GtkWidget *widget);
 static void new_window(gpointer data, guint action, GtkWidget *widget);
@@ -287,6 +302,8 @@ static GtkWidget    *filer_file_cut_item;   /* Cut in quick file menu */
 static GtkWidget    *filer_file_copy_item;  /* Copy in quick file menu */
 static GtkWidget    *filer_file_paste_item; /* Paste in quick file menu */
 static GtkWidget    *filer_add_bookmark_item;
+static GtkWidget    *filer_share_folder_item;
+static GtkWidget    *filer_shared_folders_item;
 static GtkWidget    *filer_restore_item;
 static GtkWidget    *filer_move_to_trash_item;
 static GtkWidget	*file_shift_item;	/* Shift Open label */
@@ -324,6 +341,7 @@ typedef struct {
 	GtkWidget *copy;
 	GtkWidget *paste;
 	GtkWidget *add_bookmark;
+	GtkWidget *share_folder;
 	GtkWidget *restore;
 	GtkWidget *move_to_trash;
 	GtkWidget *duplicate;
@@ -387,6 +405,7 @@ static RoxItemFactoryEntry filer_menu_def[] = {
  * no compatibles se oculta dinámicamente en show_filer_menu(). */
 {">" N_("Search in This Folder..."), "<Ctrl>F", search_current_folders, 0, "<IconItem>", "edit-find"},
 {">" N_("Add to Bookmarks"),	NULL, add_selected_bookmark, 0, "<IconItem>", ROX_ICON_BOOKMARKS},
+{">" N_("Share Folder..."),	NULL, share_folder_selected, 0, "<IconItem>", "folder-publicshare"},
 {">",				NULL, NULL, 0, "<Separator>"},
 /* Rox-Filer2: keep clipboard operations visible in the quick file menu too. */
 {">" N_("Cut"),			NULL, file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
@@ -438,6 +457,9 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Invert Selection"),	NULL, invert_selection, 0, "<IconItem>", ROX_ICON_SELECT},
 {">" N_("Select by Name..."),	"period", mini_buffer, MINI_SELECT_BY_NAME, "<IconItem>", ROX_ICON_FIND},
 {">" N_("Select If..."),	"<Shift>question", mini_buffer, MINI_SELECT_IF, "<IconItem>", ROX_ICON_FIND},
+{N_("Samba"),			NULL, NULL, 0, "<Branch>", "network-workgroup"},
+{">" N_("Connect to SMB Share..."), NULL, open_smb_share, 0, "<IconItem>", "network-server"},
+{">" N_("Shared Folders..."), NULL, show_shared_folders, 0, "<IconItem>", "folder-publicshare"},
 {N_("Options..."),		NULL, menu_show_options, 0, "<IconItem>", ROX_ICON_PREFERENCES},
 {"",				NULL, NULL, 0, "<Separator>"},
 {N_("Cut"),			"<Ctrl>X", file_op, FILE_CUT_TO_CLIPBOARD, "<IconItem>", ROX_ICON_CUT},
@@ -454,7 +476,6 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">" N_("Parent, Same Window"), NULL, open_parent_same, 0, "<IconItem>", ROX_ICON_GO_UP},
 {">" N_("New Window"),		NULL, new_window, 0, "<IconItem>", "window-new"},
 {">" N_("Home Directory"),	"<Ctrl>Home", home_directory, 0, "<IconItem>", ROX_ICON_HOME},
-{">" N_("Connect to SMB Share..."), NULL, open_smb_share, 0, "<IconItem>", "network-server"},
 {">" N_("Show Bookmarks"),	"<Ctrl>B", show_bookmarks, 0, "<IconItem>", ROX_ICON_BOOKMARKS},
 {">" N_("Show Log"),		NULL, show_log, 0, "<IconItem>", ROX_ICON_INFO},
 {">" N_("Follow Symbolic Links"),	NULL, follow_symlinks, 0, "<IconItem>", ROX_ICON_SYMLINK},
@@ -529,6 +550,7 @@ static void file_context_capture_current(FileContextWidgets *ctx)
 	ctx->copy = filer_file_copy_item;
 	ctx->paste = filer_file_paste_item;
 	ctx->add_bookmark = filer_add_bookmark_item;
+	ctx->share_folder = filer_share_folder_item;
 	ctx->restore = filer_restore_item;
 	ctx->move_to_trash = filer_move_to_trash_item;
 	ctx->duplicate = filer_duplicate_item;
@@ -560,6 +582,7 @@ static void file_context_apply(const FileContextWidgets *ctx)
 	filer_file_copy_item = ctx->copy;
 	filer_file_paste_item = ctx->paste;
 	filer_add_bookmark_item = ctx->add_bookmark;
+	filer_share_folder_item = ctx->share_folder;
 	filer_restore_item = ctx->restore;
 	filer_move_to_trash_item = ctx->move_to_trash;
 	filer_duplicate_item = ctx->duplicate;
@@ -634,6 +657,7 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	ctx->copy = file_context_lookup(factory, "Copy");
 	ctx->paste = file_context_lookup(factory, "Paste");
 	ctx->add_bookmark = file_context_lookup(factory, "Add to Bookmarks");
+	ctx->share_folder = file_context_lookup(factory, "Share Folder...");
 	ctx->restore = file_context_lookup(factory, "Restore");
 	ctx->move_to_trash = file_context_lookup(factory, "Move to Trash");
 	ctx->duplicate = file_context_lookup(factory, "Duplicate...");
@@ -666,6 +690,7 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	gtk_widget_set_no_show_all(ctx->run_in_terminal, TRUE);
 	gtk_widget_set_no_show_all(ctx->search, TRUE);
 	gtk_widget_set_no_show_all(ctx->add_bookmark, TRUE);
+	gtk_widget_set_no_show_all(ctx->share_folder, TRUE);
 	gtk_widget_set_no_show_all(ctx->restore, TRUE);
 	gtk_widget_set_no_show_all(ctx->move_to_trash, TRUE);
 
@@ -675,6 +700,7 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	gtk_widget_hide(ctx->unmount_image);
 	gtk_widget_hide(ctx->open_with);
 	gtk_widget_hide(ctx->add_bookmark);
+	gtk_widget_hide(ctx->share_folder);
 	gtk_widget_hide(ctx->restore);
 
 	rox_item_factory_free(factory);
@@ -743,6 +769,9 @@ gboolean ensure_filer_menu(void)
 	GET_SSMENU_ITEM(item, "filer", "File", "Search in This Folder...");
 	filer_search_item = item;
 	GET_SSMENU_ITEM(filer_add_bookmark_item, "filer", "File", "Add to Bookmarks");
+	GET_SSMENU_ITEM(filer_share_folder_item, "filer", "File", "Share Folder...");
+	GET_SSMENU_ITEM(filer_shared_folders_item, "filer", "Samba", "Shared Folders...");
+	gtk_widget_set_sensitive(filer_shared_folders_item, samba_share_available());
 	GET_SSMENU_ITEM(filer_restore_item, "filer", "File", "Restore");
 	GET_SSMENU_ITEM(filer_move_to_trash_item, "filer", "File", "Move to Trash");
 	GET_SSMENU_ITEM(item, "filer", "Window", "Open Paired Windows");
@@ -765,9 +794,11 @@ gboolean ensure_filer_menu(void)
 	gtk_widget_set_no_show_all(filer_run_in_terminal, TRUE);
 	gtk_widget_set_no_show_all(filer_search_item, TRUE);
 	gtk_widget_set_no_show_all(filer_add_bookmark_item, TRUE);
+	gtk_widget_set_no_show_all(filer_share_folder_item, TRUE);
 	gtk_widget_set_no_show_all(filer_restore_item, TRUE);
 	gtk_widget_set_no_show_all(filer_move_to_trash_item, TRUE);
 	gtk_widget_hide(filer_add_bookmark_item);
+	gtk_widget_hide(filer_share_folder_item);
 	gtk_widget_hide(filer_restore_item);
 	gtk_widget_set_no_show_all(filer_pair_open_item, TRUE);
 	gtk_widget_set_no_show_all(filer_pair_realign_item, TRUE);
@@ -1367,6 +1398,8 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 			GTK_CHECK_MENU_ITEM(filer_auto_size_menu),
 			filer_window->display_style_wanted == AUTO_SIZE_ICONS);
 		buffer = g_string_new(NULL);
+		if (filer_shared_folders_item)
+			gtk_widget_set_sensitive(filer_shared_folders_item, samba_share_available());
 
 		if (o_menu_hide_unavailable.int_value)
 		{
@@ -1387,6 +1420,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		gtk_widget_hide(filer_open_with_item);
 		gtk_widget_hide(filer_search_item);
 		gtk_widget_hide(filer_add_bookmark_item);
+		gtk_widget_hide(filer_share_folder_item);
 		gtk_widget_hide(filer_restore_item);
 		if (in_trash)
 			gtk_widget_hide(filer_move_to_trash_item);
@@ -1448,7 +1482,11 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 				}
 				if (file_item && file_item->base_type == TYPE_DIRECTORY &&
 				    !in_trash)
+				{
 					gtk_widget_show(filer_add_bookmark_item);
+					if (samba_share_available())
+						gtk_widget_show(filer_share_folder_item);
+				}
 				if (in_trash) {
 					gtk_menu_item_set_label(GTK_MENU_ITEM(filer_restore_item), _("Restore"));
 					gtk_widget_show(filer_restore_item);
@@ -2551,6 +2589,29 @@ static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget
 	path = (const gchar *) make_path(window_with_focus->sym_path,
 					   item->leafname);
 	bookmarks_add_path(path);
+}
+
+static void share_folder_selected(gpointer data, guint action, GtkWidget *widget)
+{
+	DirItem *item;
+	gchar *path;
+
+	(void) data;
+	(void) action;
+	(void) widget;
+
+	if (!window_with_focus ||
+	    view_count_selected(window_with_focus->view) != 1)
+		return;
+
+	item = filer_selected_item(window_with_focus);
+	if (!item || item->base_type != TYPE_DIRECTORY)
+		return;
+
+	path = g_strdup((const gchar *) make_path(window_with_focus->sym_path,
+		item->leafname));
+	samba_share_show_dialog(GTK_WINDOW(window_with_focus->window), path);
+	g_free(path);
 }
 
 static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget)
@@ -3753,7 +3814,7 @@ static void show_rox_about_dialog(void)
 	/* Rox-Filer2 2.12.2-26: use the installed application icon by name so
 	 * GTK selects the best hicolor size.  Keep the bundled legacy image as
 	 * a fallback when the source tree is run before installation. */
-	gtk_window_set_icon_name(GTK_WINDOW(dialog), "rox-filer2");
+	pixmaps_set_window_icon(GTK_WINDOW(dialog));
 	if (gtk_icon_theme_has_icon(gtk_icon_theme_get_default(), "rox-filer2")) {
 		gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog),
 			"rox-filer2");

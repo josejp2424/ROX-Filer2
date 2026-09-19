@@ -44,6 +44,7 @@
 #include "fscache.h"
 #include "pixmaps.h"
 #include "xtypes.h"
+#include "samba_share.h"
 
 #define RECENT_DELAY (5 * 60)	/* Time in seconds to consider a file recent */
 #define ABOUT_NOW(time) (diritem_recent_time - time < RECENT_DELAY)
@@ -133,6 +134,9 @@ void diritem_restat(
 
 		if (item->base_type == TYPE_DIRECTORY)
 		{
+			if (samba_share_path_is_shared((const gchar *) target_path))
+				item->flags |= ITEM_FLAG_SHARED;
+
 			if (mount_is_mounted(target_path, &info,
 					target_path == path ? parent : NULL))
 				item->flags |= ITEM_FLAG_MOUNT_POINT

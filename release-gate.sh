@@ -13,11 +13,16 @@
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
-for tool in meson ninja msgfmt xgettext python3 lintian; do
+for tool in meson ninja msgfmt xgettext python3 lintian readelf dpkg-deb; do
   command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: $tool missing" >&2; exit 1; }
 done
 
 echo "== 1/9 higiene del source =="
+[ -s "$ROOT/ROX-Filer.svg" ] || { echo "ERROR: falta ROX-Filer.svg" >&2; exit 1; }
+[ -s "$ROOT/ROX-Filer-root.svg" ] || { echo "ERROR: falta ROX-Filer-root.svg" >&2; exit 1; }
+[ -s "$ROOT/ROX-Filer/ROX-Filer-root.svg" ] || { echo "ERROR: falta fallback AppDir ROX-Filer-root.svg" >&2; exit 1; }
+[ -s "$ROOT/ROX-Filer/src/samba_share.c" ] || { echo "ERROR: falta samba_share.c" >&2; exit 1; }
+[ -s "$ROOT/ROX-Filer/src/samba_share.h" ] || { echo "ERROR: falta samba_share.h" >&2; exit 1; }
 for generated in \
   "$ROOT/ROX-Filer/ROX-Filer" \
   "$ROOT/ROX-Filer/ROX-Filer.dbg" \
@@ -100,15 +105,24 @@ done
 
 echo "== 5/9 compilacion release =="
 rm -rf "$ROOT/build-gate"
-meson setup --buildtype=release -Dsmb=enabled "$ROOT/build-gate" "$ROOT" >/dev/null
+meson setup --buildtype=release -Dsmb=enabled -Dportable_devices=enabled "$ROOT/build-gate" "$ROOT" >/dev/null
 meson compile -C "$ROOT/build-gate"
+# 2.12.2-93: libsmbclient is a runtime plugin, never an ELF DT_NEEDED entry.
+if readelf -d "$ROOT/build-gate/ROX-Filer" | grep -qi 'libsmbclient'; then
+  echo "ERROR: ROX-Filer has a hard ELF dependency on libsmbclient" >&2
+  exit 1
+fi
+if readelf -d "$ROOT/build-gate/ROX-Filer" | grep -Eqi 'libmtp|libgphoto|libimobiledevice'; then
+  echo "ERROR: ROX-Filer has a hard ELF dependency on an optional portable-device library" >&2
+  exit 1
+fi
 
 echo "== 6/9 compilacion con sanitizers y arranque headless =="
 # ASan/UBSan detectan corrupcion de memoria que ninguna otra comprobacion ve.
 # Se omite solo si falta xvfb-run, pero entonces se avisa.
 if command -v xvfb-run >/dev/null 2>&1; then
   rm -rf "$ROOT/build-asan"
-  meson setup --buildtype=debug -Dsmb=enabled \
+  meson setup --buildtype=debug -Dsmb=enabled -Dportable_devices=enabled \
       -Db_sanitize=address,undefined -Db_lundef=false \
       "$ROOT/build-asan" "$ROOT" >/dev/null
   meson compile -C "$ROOT/build-asan" >/dev/null
@@ -153,6 +167,36 @@ DEB=$(find "$ROOT/output" -maxdepth 1 -name 'rox-filer2_*.deb' -print | head -n1
 [ -n "$DEB" ] || { echo "ERROR: .deb missing" >&2; exit 1; }
 dpkg-deb --info "$DEB" >/dev/null
 dpkg-deb --contents "$DEB" >/dev/null
+dpkg-deb --contents "$DEB" | grep -q './usr/share/pixmaps/ROX-Filer.svg$' || {
+  echo "ERROR: Debian package is missing ROX-Filer.svg" >&2
+  exit 1
+}
+dpkg-deb --contents "$DEB" | grep -q './usr/share/pixmaps/ROX-Filer-root.svg$' || {
+  echo "ERROR: Debian package is missing ROX-Filer-root.svg" >&2
+  exit 1
+}
+DEB_DEPENDS=$(dpkg-deb -f "$DEB" Depends)
+DEB_RECOMMENDS=$(dpkg-deb -f "$DEB" Recommends)
+if echo "$DEB_DEPENDS" | grep -qi 'libsmbclient'; then
+  echo "ERROR: libsmbclient must not be a hard Debian Depends" >&2
+  exit 1
+fi
+echo "$DEB_RECOMMENDS" | grep -q 'libsmbclient0' || {
+  echo "ERROR: Debian package must recommend libsmbclient0" >&2
+  exit 1
+}
+for samba_pkg in samba-common-bin samba; do
+  echo "$DEB_RECOMMENDS" | grep -q "${samba_pkg}" || {
+    echo "ERROR: Debian package must recommend ${samba_pkg} for usershare integration" >&2
+    exit 1
+  }
+done
+for portable_pkg in fuse jmtpfs libmtp gphoto2 gphotofs libgphoto2 ifuse usbmuxd libimobiledevice-utils libimobiledevice; do
+  echo "$DEB_RECOMMENDS" | grep -q "${portable_pkg}" || {
+    echo "ERROR: Debian package must recommend ${portable_pkg}" >&2
+    exit 1
+  }
+done
 
 echo "== 9/9 lintian =="
 lintian "$DEB"

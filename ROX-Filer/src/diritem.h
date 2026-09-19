@@ -28,6 +28,7 @@ typedef enum
 	ITEM_FLAG_NEED_RESCAN_QUEUE = 0x100,
 
 	ITEM_FLAG_HAS_XATTR      = 0x200, /* Has extended attributes set */
+	ITEM_FLAG_SHARED         = 0x400, /* Exported through Samba usershare */
 } ItemFlags;
 
 struct _DirItem

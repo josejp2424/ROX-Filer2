@@ -295,7 +295,9 @@ static void store_backup(gpointer key, gpointer value, gpointer data)
 /* Allow the user to edit the options. Returns the window widget (you don't
  * normally need this). NULL if already open.
  */
-/* Modificado por josejp2424: ventana de Opciones compacta y redimensionable. */
+/* Rox-Filer2 2.13.0-5: Options is intentionally roomier than ordinary filer
+ * windows.  The Interface/Modern page now contains previews and additional
+ * controls, so the historical compact 640x400 geometry is no longer useful. */
 GtkWidget *options_show(void)
 {
 	/* For debugging
@@ -320,10 +322,11 @@ GtkWidget *options_show(void)
 
 	gtk_widget_show_all(window);
 
-	/* Enforce the requested compact initial geometry after all option
-	 * widgets have been realised.  The scrollable pages prevent their
-	 * natural requisition from expanding the window again. */
-	gtk_window_resize(GTK_WINDOW(window), 640, 400);
+	/* Apply the requested Options geometry after all widgets have been
+	 * realised.  This is deliberate: a late 640x400 resize used by older
+	 * builds overrode gtk_window_set_default_size(), making the wider
+	 * Options size ineffective.  Keep the window resizable. */
+	gtk_window_resize(GTK_WINDOW(window), 960, 600);
 
 	return window;
 }
@@ -980,8 +983,22 @@ static GtkWidget *build_window_frame(GtkTreeView **tree_view)
 
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 	gtk_window_set_title(GTK_WINDOW(window), _("Options"));
-	gtk_window_set_default_size(GTK_WINDOW(window), 640, 400);
+	/* 2.13.0-5: give the Options pages enough horizontal room for the
+	 * Modern interface preview/descriptions while remaining resizable. */
+	gtk_window_set_default_size(GTK_WINDOW(window), 960, 600);
 	gtk_window_set_resizable(GTK_WINDOW(window), TRUE);
+
+	/* Keep the Options dialog usable when opened from either Classic or
+	 * Modern.  Some WMs may choose a smaller initial allocation despite
+	 * the default size; a modest minimum prevents the right-hand page from
+	 * being squeezed back to the old compact layout. */
+	{
+		GdkGeometry geometry = {0};
+		geometry.min_width = 900;
+		geometry.min_height = 540;
+		gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry,
+				      GDK_HINT_MIN_SIZE);
+	}
 	g_signal_connect(window, "destroy",
 			G_CALLBACK(options_destroyed), NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(window), 4);
@@ -1016,7 +1033,7 @@ static GtkWidget *build_window_frame(GtkTreeView **tree_view)
 	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(tv), -1,
 			NULL, gtk_cell_renderer_text_new(), "text", 0, NULL);
 
-	/* Modificado por josejp2424: panel de categorías compacto para 640x400. */
+	/* Keep the category list compact so the right-hand page gets most width. */
 	/* Keep the section list compact and scroll it when required. */
 	tree_scroll = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(tree_scroll),

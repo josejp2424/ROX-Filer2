@@ -68,4 +68,8 @@
 # define S_ISDOOR(mode) (FALSE)
 #endif
 
-#mesondefine HAVE_LIBSMBCLIENT
+/* Runtime loading support for optional libsmbclient SMB helpers. */
+#mesondefine HAVE_DLFCN_H
+
+/* Runtime discovery/mounting of optional MTP/PTP/iOS devices. */
+#mesondefine ROX_PORTABLE_DEVICES
