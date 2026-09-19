@@ -645,6 +645,11 @@ These native builders are separate from `build-package.sh`; they package the
 same Rox-Filer2 source against the libraries of the distribution where the
 build is performed.
 
+Special thanks to **rockedge** and **Sofiya** from the Puppy Linux community
+for their testing, feedback and support around Rox-Filer2 on **KLV/Void Linux**.
+Their work and reports have been very helpful in improving the native Void/KLV
+integration and XBPS packaging.
+
 Portable devices are optional at runtime. Rox-Filer2 can use simple-mtpfs or
 jmtpfs for Android/MTP, gphoto2/gphotofs for PTP cameras, and ifuse plus the
 libimobiledevice tools for iPhone/iPad. If none are installed, the file manager
