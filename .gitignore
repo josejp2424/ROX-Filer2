@@ -1,7 +1,7 @@
 # Ignore emacs backup files
 *~
 # and the generated manual page
-rox.1
+
 # and buildfiles
 ROX-Filer/Help/Manual-fr.html
 ROX-Filer/Help/Manual-it.html
