@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Rox-Filer2-Handbuch</h1>
-<p class="sub">Schneller, ressourcenschonender Dateimanager für X11 und Wayland, Fortführung von ROX-Filer. &mdash; 2.13.0-8</p>
+<p class="sub">Schneller, ressourcenschonender Dateimanager für X11 und Wayland, Fortführung von ROX-Filer. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>Starten Sie den Desktop mit <code>rox --desktop</code>. Es läuft immer nur eine Instanz. Sie zeichnet den Hintergrund, zeigt die Symbole Ihres Desktop-Verzeichnisses und kann Laufwerkssymbole anzeigen.</p>
 <ul><li><b>Hintergrundbild:</b> <code>rox --desktop-wallpaper</code> oder Rechtsklick auf den Desktop. Die Modi sind füllen, einpassen, strecken, zentrieren und kacheln.</li><li><b>Anwendungen:</b> <code>rox --desktop-apps</code> verwaltet die Starter auf dem Desktop.</li><li><b>Laufwerkssymbole:</b> <code>rox --desktop-drive-icon-layout</code> ordnet sie an.</li><li><b>Einstellungen:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>Unter X11 verwendet der Desktop ein normales Fenster mit Desktop-Typhinweis. Unter Wayland nutzt er die Hintergrundebene von Layer Shell; dafür müssen <code>gtk-layer-shell</code> installiert und ein Compositor vorhanden sein, der <code>zwlr_layer_shell_v1</code> bereitstellt, etwa Labwc. Ein Backend erzwingen Sie mit <code>rox-x11 --desktop</code> oder <code>rox-wayland --desktop</code>.</p>
-<p>Damit auch der X11-Wurzelfensterhintergrund gesetzt wird und pseudotransparente Terminals sowie conky dasselbe Bild sehen, installieren Sie <code>feh</code> oder <code>xwallpaper</code>.</p>
+<p>Unter X11 veröffentlicht Rox-Filer2 das Hintergrundbild direkt als Pixmap des Wurzelfensters. Pseudotransparente Terminals und conky sehen dadurch dasselbe Bild ohne <code>feh</code> oder <code>xwallpaper</code>.</p>
 <h2 id="drives">Laufwerke und Einhängen</h2>
 <p>Lokale und Wechseldatenträger erscheinen in der modernen Seitenleiste unter <b>Geräte</b> und wahlweise als Desktop-Symbole. Ein Klick hängt das Laufwerk ein und öffnet es; über das Kontextmenü hängen Sie es wieder aus.</p>
 <p>Die Laufwerksdaten stammen aus <code>lsblk</code>, aus <code>/proc/mounts</code> und aus sysfs, ein Hintergrunddienst ist also nicht nötig. Das Einhängen als gewöhnlicher Benutzer erfordert <code>udisksctl</code> oder einen entsprechenden fstab-Eintrag.</p>

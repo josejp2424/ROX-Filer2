@@ -118,6 +118,8 @@ build_rox() {
     [[ -x "$BUILD_DIR/ROX-Filer" ]] || { echo "ERROR: ROX-Filer binary was not produced." >&2; exit 1; }
     [[ -x "$BUILD_DIR/rox-find" ]] || { echo "ERROR: rox-find binary was not produced." >&2; exit 1; }
     [[ -x "$BUILD_DIR/rox-mount-helper" ]] || { echo "ERROR: rox-mount-helper binary was not produced." >&2; exit 1; }
+    # 2.13.0-9: Open as root uses a second fixed pkexec helper.
+    [[ -x "$BUILD_DIR/rox-open-root-helper" ]] || { echo "ERROR: rox-open-root-helper binary was not produced." >&2; exit 1; }
 }
 
 stage_runtime() {
@@ -133,6 +135,8 @@ stage_runtime() {
     cp -a "$APP_DIR/." "$app_install/"
     install -m0755 "$BUILD_DIR/ROX-Filer" "$app_install/ROX-Filer"
     install -m0755 "$BUILD_DIR/rox-mount-helper" "$app_install/rox-mount-helper"
+    # 2.13.0-9: keep this explicit so downstream native templates can mirror it.
+    install -m0755 "$BUILD_DIR/rox-open-root-helper" "$app_install/rox-open-root-helper"
     rm -rf "$app_install/build" "$app_install/src" "$app_install/ROX-Filer.dbg" "$app_install/ROX"
     cp -a "$PROJECT_ROOT/package-assets/ROX" "$app_install/ROX"
     install -m0644 "$PROJECT_ROOT/data/icons/hicolor/256x256/apps/rox-filer2.png" "$app_install/ROX-Filer.png"

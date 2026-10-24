@@ -37,6 +37,8 @@
 #include <sys/time.h>
 #include <utime.h>
 #include <stdarg.h>
+#include <fcntl.h>
+#include <poll.h>
 #include <gio/gio.h>
 
 #include "global.h"
@@ -59,6 +61,7 @@
 #include "type.h"
 #include "xtypes.h"
 #include "log.h"
+#include "transfer_progress.h"
 
 #if defined(HAVE_GETXATTR)
 # define ATTR_MAN_PAGE N_("See the attr(5) man page for full details.")
@@ -128,6 +131,7 @@ struct _GUIside
 	int		abort_attempts;
 	gboolean	finishing;	/* Completion/pipe cleanup already handled */
 	guint		delayed_show_id; /* Don't flash progress for fast operations */
+	gboolean	byte_progress;	/* 2.14.0-5: 'B' messages drive the bar */
 };
 
 /* These don't need to be in a structure because we fork() before
@@ -593,7 +597,24 @@ static void process_message(GUIside *gui_side, const gchar *buffer)
 	}
 	else if (*buffer == '%')
 	{
-		abox_set_percentage(abox, atoi(buffer+1));
+		int per = atoi(buffer+1);
+
+		/* With byte progress the bar is driven by 'B'; only the final
+		 * 100% (sent after tp_finish()) still comes through here. */
+		if (!gui_side->byte_progress || per == 100)
+			abox_set_percentage(abox, per);
+	}
+	else if (*buffer == 'B')
+	{
+		gint64 done = 0, total = -1;
+		int flushing = 0;
+
+		if (sscanf(buffer + 1, "%" G_GINT64_FORMAT " %" G_GINT64_FORMAT
+			   " %d", &done, &total, &flushing) == 3)
+		{
+			gui_side->byte_progress = TRUE;
+			abox_set_byte_progress(abox, done, total, flushing);
+		}
 	}
 	else
 		abox_log(abox, buffer + 1, NULL);
@@ -741,6 +762,13 @@ static gboolean send_msg(void)
 static gboolean send_dir(const char *dir)
 {
 	return printf_send("/%s", dir);
+}
+
+/* 2.14.0-5: real byte progress (transfer_progress.c), child -> GUI. */
+static void send_bytes(gint64 done, gint64 total, gboolean flushing)
+{
+	printf_send("B%" G_GINT64_FORMAT " %" G_GINT64_FORMAT " %d",
+		    done, total, flushing ? 1 : 0);
 }
 
 static gboolean send_error(void)
@@ -1083,6 +1111,14 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 			act.sa_flags = 0;
 			sigaction(SIGCHLD, &act, NULL);
 
+			/* 2.14.0-5: fork() copies child_reap_mutex as it was.
+			 * If a drive/image worker thread held it at that
+			 * moment, it stays locked forever here and the first
+			 * fork_exec_wait() hangs the whole operation.  There
+			 * is no SIGCHLD reaper in this process any more, so
+			 * the lock has nothing left to protect. */
+			rox_child_reap_disable();
+
 			message = g_string_new(NULL);
 			close(filedes[0]);
 			close(filedes[3]);
@@ -1111,6 +1147,7 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 	gui_side->abort_attempts = 0;
 	gui_side->finishing = FALSE;
 	gui_side->delayed_show_id = 0;
+	gui_side->byte_progress = FALSE;
 
 	gui_side->abox = ABOX(abox);
 	g_signal_connect(abox, "destroy",
@@ -1699,6 +1736,10 @@ static void rsync_progress_line(const gchar *line, GString *output,
     }
 
     percent = strchr(line, '%');
+    /* 2.14.0-5: rsync's percentage counts what reached the page cache;
+     * with byte tracking the bar follows the device instead. */
+    if (percent && tp_active())
+        return;
     if (percent) {
         const gchar *start = percent;
         gint value;
@@ -1725,7 +1766,8 @@ static void rsync_progress_line(const gchar *line, GString *output,
 /* Rox-Filer2 2.12.2-25: run rsync with progress2 and feed its real byte
  * percentage/current filename through the existing child->GUI protocol. */
 static gboolean run_rsync_with_progress(gchar **argv, gchar **captured,
-                                        gint *status)
+                                        gint *status,
+                                        const char *const *tracks)
 {
     GString *command;
     GString *line;
@@ -1754,20 +1796,46 @@ static gboolean run_rsync_with_progress(gchar **argv, gchar **captured,
 
     line = g_string_new(NULL);
     output = g_string_new(NULL);
-    while ((c = fgetc(pipe)) != EOF) {
-        if (c == '\r' || c == '\n') {
-            if (line->len) {
-                rsync_progress_line(line->str, output, &last_percent);
-                g_string_truncate(line, 0);
+    /* 2.14.0-5: read without blocking so the bytes rsync writes can be
+     * confirmed on the device while it runs (transfer_progress.c). */
+    tp_track_begin(tracks);
+    {
+        int fd = fileno(pipe);
+        char chunk[4096];
+        ssize_t n;
+
+        fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+        for (;;) {
+            struct pollfd pfd = { fd, POLLIN, 0 };
+
+            n = read(fd, chunk, sizeof(chunk));
+            if (n > 0) {
+                for (i = 0; i < n; i++) {
+                    c = (guchar) chunk[i];
+                    if (c == '\r' || c == '\n') {
+                        if (line->len) {
+                            rsync_progress_line(line->str, output, &last_percent);
+                            g_string_truncate(line, 0);
+                        }
+                    } else if (line->len < 4096) {
+                        g_string_append_c(line, (gchar) c);
+                    }
+                }
+            } else if (n == 0) {
+                break;
+            } else if (errno != EAGAIN && errno != EINTR) {
+                break;
             }
-        } else if (line->len < 4096) {
-            g_string_append_c(line, (gchar) c);
+            tp_pump();
+            if (n < 0)
+                poll(&pfd, 1, tp_active() ? 50 : -1);
         }
     }
     if (line->len)
         rsync_progress_line(line->str, output, &last_percent);
     g_free(g_string_free(line, FALSE));
     rc = pclose(pipe);
+    tp_track_end();
     if (status)
         *status = rc;
     if (captured)
@@ -1803,7 +1871,7 @@ static gboolean rsync_is_available(void)
 static RsyncResult run_rsync_operation(const char *source, const char *dest_path,
 				      gboolean remove_source)
 {
-	const gchar *argv[16];
+	const gchar *argv[18];
 	gint argc = 0;
 	gchar *source_arg = NULL;
 	gchar *dest_arg = NULL;
@@ -1879,12 +1947,29 @@ static RsyncResult run_rsync_operation(const char *source, const char *dest_path
 		argv[argc++] = "--update";
 	if (remove_source)
 		argv[argc++] = "--remove-source-files";
+	{
+		/* 2.14.0-5: as root, -a's chown fails on FAT/exFAT/NTFS and
+		 * rsync exits 23 although the data was copied. */
+		gchar *parent = g_path_get_dirname(dest_path);
+
+		if (tp_dest_lacks_ownership(parent))
+		{
+			argv[argc++] = "--no-owner";
+			argv[argc++] = "--no-group";
+		}
+		g_free(parent);
+	}
 	argv[argc++] = "--";
 	argv[argc++] = source_arg;
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = run_rsync_with_progress((gchar **) argv, &errors, &status);
+	{
+		const char *tracks[] = { dest_path, NULL };
+
+		ok = run_rsync_with_progress((gchar **) argv, &errors, &status,
+					     tracks);
+	}
 
 	if (!ok)
 	{
@@ -1952,7 +2037,7 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 	gint status = 0;
 	gboolean ok;
 
-	argv = g_new0(gchar *, count + 14);
+	argv = g_new0(gchar *, count + 16);
 	argv[argc++] = g_strdup("rsync");
 	argv[argc++] = g_strdup("-a");
 	argv[argc++] = g_strdup("--partial");
@@ -1967,6 +2052,11 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 		argv[argc++] = g_strdup("--ignore-existing");
 	else if (conflict_policy == CONFLICT_UPDATE_NEWER)
 		argv[argc++] = g_strdup("--update");
+	if (tp_dest_lacks_ownership(dest))
+	{
+		argv[argc++] = g_strdup("--no-owner");
+		argv[argc++] = g_strdup("--no-group");
+	}
 	argv[argc++] = g_strdup("--");
 	for (iter = paths; iter; iter = iter->next)
 		argv[argc++] = g_strdup((const gchar *) iter->data);
@@ -1974,7 +2064,20 @@ static RsyncResult run_rsync_batch_copy(GList *paths, const char *dest)
 	argv[argc++] = dest_arg;
 	argv[argc] = NULL;
 
-	ok = run_rsync_with_progress(argv, &errors, &status);
+	{
+		/* What this rsync writes: dest/<name> for every source. */
+		gchar **tracks = g_new0(gchar *, count + 1);
+
+		for (i = 0, iter = paths; iter; iter = iter->next, i++)
+		{
+			gchar *base = g_path_get_basename((const gchar *) iter->data);
+			tracks[i] = g_build_filename(dest, base, NULL);
+			g_free(base);
+		}
+		ok = run_rsync_with_progress(argv, &errors, &status,
+					     (const char *const *) tracks);
+		g_strfreev(tracks);
+	}
 	if (!ok)
 	{
 		printf_send(_("!Failed to start rsync: %s\n"), g_strerror(errno));
@@ -2005,12 +2108,22 @@ static void rsync_copy_list_cb(gpointer data)
 		return;
 	}
 
+	{
+		GList *l;
+
+		tp_begin(action_dest, send_bytes);
+		for (l = paths; l; l = l->next)
+			tp_add_source((const char *) l->data);
+		tp_counted();
+	}
 	send_dir(action_dest);
 	if (run_rsync_batch_copy(paths, action_dest) == RSYNC_DONE)
 	{
 		printf_send(_("'Fast rsync copy completed\n"));
 		send_check_path(action_dest);
 	}
+	/* Only now is the data on the device. */
+	tp_finish();
 	printf_send("%%100");
 	send_done();
 }
@@ -2294,9 +2407,17 @@ static void do_copy2(const char *path, const char *dest)
 	else
 	{
 		guchar	*error;
+		char	*warnings = NULL;
 
-		error = copy_file(path, dest_path);
+		/* 2.14.0-5: tracked cp (real progress; no false ownership
+		 * error on FAT/exFAT/NTFS when run as root). */
+		error = (guchar *) tp_copy_file(path, dest_path, &warnings);
 
+		if (warnings)
+		{
+			printf_send("'%s\n", warnings);
+			g_free(warnings);
+		}
 		if (error)
 		{
 			printf_send(_("!%s\nFailed to copy '%s'\n"),
@@ -2316,6 +2437,8 @@ static void do_move2(const char *path, const char *dest)
 	struct stat 	info;
 	struct stat 	dest_info;
 	guchar		*error = NULL;
+	char		*warnings = NULL;
+	const char	*track = NULL;
 
 	check_flags();
 	printf_send("@%s", path);
@@ -2390,6 +2513,8 @@ static void do_move2(const char *path, const char *dest)
 
 	argv[2] = path;
 	argv[3] = dest_path;
+	/* Bytes are written only when moving to another filesystem. */
+	track = tp_active() && !tp_same_device(path) ? dest_path : NULL;
 
 	if (S_ISDIR(info.st_mode))
 	{
@@ -2421,7 +2546,7 @@ static void do_move2(const char *path, const char *dest)
 			else
 			{
 				/* Do actual move. */
-				error = fork_exec_wait(argv);
+				error = (guchar *) tp_run(argv, track, &warnings);
 			}
 		}
 
@@ -2431,9 +2556,16 @@ static void do_move2(const char *path, const char *dest)
 	else
 	{
 		/* Do actual move. */
-		error = fork_exec_wait(argv);
+		error = (guchar *) tp_run(argv, track, &warnings);
 	}
 
+	/* mv exits 0 but warns when it cannot keep the owner (FAT as root):
+	 * the data was moved, so it is a log line, not a failure. */
+	if (warnings)
+	{
+		printf_send("'%s\n", warnings);
+		g_free(warnings);
+	}
 	if (error)
 	{
 		printf_send(_("!%s\nFailed to move %s as %s\n"),
@@ -2844,13 +2976,39 @@ static void settype_cb(gpointer data)
 static void list_cb(gpointer data)
 {
 	GList	*paths = (GList *) data;
+	GList	*l;
 	int n, i, per;
+	/* 2.14.0-5: copy and move report bytes confirmed on the device, with
+	 * the classic engine (cp/mv) and with rsync alike. */
+	gboolean copying = action_do_func == do_copy || action_do_func == do_copy_fast;
+	gboolean bytes = copying || action_do_func == do_move ||
+			 action_do_func == do_move_fast;
 
 	n=g_list_length(paths);
 
+	if (bytes)
+	{
+		tp_begin(action_dest, send_bytes);
+		for (l = paths; l; l = l->next)
+		{
+			const char *src = (const char *) l->data;
+			struct stat dinfo;
+			/* A move on the same filesystem is a rename, except
+			 * that do_move_fast() merges into an existing
+			 * destination with rsync, which copies the data. */
+			gboolean writes = copying || !tp_same_device(src) ||
+				(action_do_func == do_move_fast &&
+				 mc_lstat(make_dest_path(src, action_dest), &dinfo) == 0);
+
+			if (writes)
+				tp_add_source(src);
+		}
+		tp_counted();
+	}
+
 	for (i=0; paths; paths = paths->next, i++)
 	{
-		if(n>1 && i>0)
+		if(!bytes && n>1 && i>0)
 		{
 			per=100*i/n;
 			printf_send("%%%d", per);
@@ -2859,6 +3017,11 @@ static void list_cb(gpointer data)
 
 		action_do_func((char *) paths->data, action_dest);
 	}
+
+	/* Only now is the data on the device: confirm the rest and flush the
+	 * destination filesystem before reporting the operation done. */
+	if (bytes)
+		tp_finish();
 
 	if (n > 0)
 		printf_send("%%100");

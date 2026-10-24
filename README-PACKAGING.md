@@ -66,14 +66,16 @@ normal user.
 
 On Void/KLV this compiles with Meson + `-Dsmb=auto -Dportable_devices=auto` and creates a native
 `output/rox-filer2-*.xbps`, then indexes `output/` as a local XBPS repository.
-The upstream release `2.13.0-8` is represented as `2.13.0_8` for XBPS,
+The upstream release `2.14.0-5` is represented as `2.14.0_5` for XBPS,
 and runtime dependencies are emitted as validated versioned XBPS patterns.
 Both scripts have `--clean` and intentionally do not call or modify the normal
 `build-package.sh` path.
 
-The script compiles **Rox-Filer2**, the companion **ROX File Search**
-application and the package-owned **rox-mount-helper** used through pkexec for
-normal-user drive operations. Meson/Ninja is the preferred build path; if Meson is unavailable,
+The script compiles **Rox-Filer2**, the companion **ROX File Search**, the
+package-owned **rox-mount-helper** used through pkexec for normal-user drive
+operations, and the 2.13.0-9 **rox-open-root-helper** used by the context-menu
+Open as root action. Both helpers are fixed package-owned executables; neither
+accepts an arbitrary command. Meson/Ninja is the preferred build path; if Meson is unavailable,
 the script falls back to the historical AppRun/autoconf build. It then creates
 everything under `output/`:
 
@@ -87,6 +89,7 @@ The generated runtime trees include:
 - `/usr/lib/rox-filer2` (runtime real) + `/usr/local/apps/Rox-Filer` y `/usr/local/apps/ROX-Filer` (enlaces de compatibilidad)
 - `/usr/bin/Rox-Filer2`
 - `/usr/bin/rox-find`
+- `/usr/lib/rox-filer2/rox-mount-helper` and `/usr/lib/rox-filer2/rox-open-root-helper`
 - the ROX File Search desktop entry, icon and translation catalogues
 - the standard Puppy MIME icons installed through the Debian maintenance scripts
 

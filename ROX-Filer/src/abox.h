@@ -124,6 +124,8 @@ void	abox_show_compare		(ABox *abox, gboolean show);
 void	abox_set_file			(ABox *abox, int file,
 					 const gchar *path);
 void    abox_set_percentage             (ABox *abox, int per);
+void    abox_set_byte_progress          (ABox *abox, gint64 done,
+					 gint64 total, gboolean flushing);
 void    abox_set_operation_kind         (ABox *abox, ABoxOperationKind kind);
 void    abox_set_operation_route        (ABox *abox, const gchar *source,
                                          const gchar *dest);

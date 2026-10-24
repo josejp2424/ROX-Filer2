@@ -1034,19 +1034,33 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+/* 2.14.0-5: set in forked children that reset SIGCHLD to SIG_DFL (the
+ * action child).  The mutex they inherited may be locked by a thread that
+ * does not exist in the child; using it there would deadlock. */
+static gboolean child_reap_disabled = FALSE;
+
+void rox_child_reap_disable(void)
+{
+	child_reap_disabled = TRUE;
+}
+
 void rox_child_reap_lock(void)
 {
-	g_mutex_lock(&child_reap_mutex);
+	if (!child_reap_disabled)
+		g_mutex_lock(&child_reap_mutex);
 }
 
 gboolean rox_child_reap_trylock(void)
 {
+	if (child_reap_disabled)
+		return TRUE;
 	return g_mutex_trylock(&child_reap_mutex);
 }
 
 void rox_child_reap_unlock(void)
 {
-	g_mutex_unlock(&child_reap_mutex);
+	if (!child_reap_disabled)
+		g_mutex_unlock(&child_reap_mutex);
 }
 
 /* Register a function to be called when process number 'child' dies. */

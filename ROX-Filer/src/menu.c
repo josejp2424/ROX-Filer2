@@ -81,6 +81,11 @@
 #include "samba_share.h"
 #include "image_mounter.h"
 
+/* 2.13.0-9: fixed package-owned helper used by the context-menu
+ * Open as root action.  The helper accepts only one validated directory and
+ * always launches the fixed Rox-Filer2 binary; no shell command is accepted. */
+#define ROX_OPEN_ROOT_HELPER_PATH "/usr/lib/rox-filer2/rox-open-root-helper"
+
 static gboolean input_trace_enabled(void)
 {
 	const gchar *value = g_getenv("ROX_TRACE_INPUT");
@@ -98,7 +103,8 @@ static gboolean input_trace_enabled(void)
 typedef enum {
 	FILE_DUPLICATE_ITEM,
 	FILE_RENAME_ITEM,
-	FILE_LINK_ITEM,
+	FILE_LINK_RELATIVE_ITEM,
+	FILE_LINK_ABSOLUTE_ITEM,
 	FILE_OPEN_FILE,
 	FILE_PROPERTIES,
 	FILE_COPY_TO_BACKGROUNDS,
@@ -189,7 +195,7 @@ static void menu_closed(GtkWidget *widget);
 static void shade_file_menu_items(gboolean shaded);
 static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 			 MaskedPixmap *image, SaveCb callback,
-			 GdkDragAction dnd_action);
+			 GdkDragAction dnd_action, gint link_mode);
 static gint save_to_file(GObject *savebox,
 			 const gchar *pathname, gpointer data);
 static gboolean action_with_leaf(ActionFn action,
@@ -252,6 +258,8 @@ static void choose_application_selected(gpointer data, guint action, GtkWidget *
 static void add_file_action_selected(gpointer data, guint action, GtkWidget *widget);
 static void add_selected_bookmark(gpointer data, guint action, GtkWidget *widget);
 static void share_folder_selected(gpointer data, guint action, GtkWidget *widget);
+static void open_as_root_selected(gpointer data, guint action, GtkWidget *widget);
+static gboolean open_as_root_available(void);
 static void show_shared_folders(gpointer data, guint action, GtkWidget *widget)
 {
 	(void) data;
@@ -303,6 +311,7 @@ static GtkWidget    *filer_file_copy_item;  /* Copy in quick file menu */
 static GtkWidget    *filer_file_paste_item; /* Paste in quick file menu */
 static GtkWidget    *filer_add_bookmark_item;
 static GtkWidget    *filer_share_folder_item;
+static GtkWidget    *filer_open_as_root_item;
 static GtkWidget    *filer_shared_folders_item;
 static GtkWidget    *filer_restore_item;
 static GtkWidget    *filer_move_to_trash_item;
@@ -342,6 +351,7 @@ typedef struct {
 	GtkWidget *paste;
 	GtkWidget *add_bookmark;
 	GtkWidget *share_folder;
+	GtkWidget *open_as_root;
 	GtkWidget *restore;
 	GtkWidget *move_to_trash;
 	GtkWidget *duplicate;
@@ -414,7 +424,11 @@ static RoxItemFactoryEntry filer_menu_def[] = {
 {">",				NULL, NULL, 0, "<Separator>"},
 {">" N_("Duplicate..."),	"<Ctrl>D", file_op, FILE_DUPLICATE_ITEM, "<IconItem>", ROX_ICON_COPY},
 {">" N_("Rename..."),		"F2", file_op, FILE_RENAME_ITEM, "<IconItem>", "document-edit"},
-{">" N_("Link..."),		NULL, file_op, FILE_LINK_ITEM, "<IconItem>", ROX_ICON_SYMLINK},
+/* 2.13.0-9: expose ROX's existing relative/absolute symlink modes directly
+ * in the right-click menu instead of hiding the choice inside Link.... */
+{">" N_("Link"),			NULL, NULL, 0, "<Branch>", ROX_ICON_SYMLINK},
+{">>" N_("Link (relative)"),	NULL, file_op, FILE_LINK_RELATIVE_ITEM, "<IconItem>", ROX_ICON_SYMLINK},
+{">>" N_("Link (absolute)"),	NULL, file_op, FILE_LINK_ABSOLUTE_ITEM, "<IconItem>", ROX_ICON_SYMLINK},
 /* Rox-Filer2: Restore is visible only while browsing the freedesktop Trash. */
 {">" N_("Restore"),		NULL, restore_selected_from_trash, 0, "<IconItem>", "edit-undo"},
 /* Modificado por josejp2424 (2026): Delete usa la papelera estándar y
@@ -427,6 +441,9 @@ static RoxItemFactoryEntry filer_menu_def[] = {
  * muestran directamente arriba. Este elemento abre siempre el selector XDG,
  * incluso cuando la caché MIME de la distribución está incompleta. */
 {">" N_("Open With..."),	NULL, choose_application_selected, 0, "<IconItem>", ROX_ICON_EXECUTE},
+/* 2.13.0-9: normal-user convenience requested by dancytron.  This never
+ * elevates the current filer; it opens a separate authenticated root window. */
+{">" N_("Open as root"),	NULL, open_as_root_selected, 0, "<IconItem>", "dialog-password"},
 {">" N_("Add File Action..."), NULL, add_file_action_selected, 0, "<IconItem>", "list-add"},
 /* Agregado por josejp2424 (2026): visible sólo para imágenes compatibles y
  * situado inmediatamente debajo de Open With. */
@@ -551,6 +568,7 @@ static void file_context_capture_current(FileContextWidgets *ctx)
 	ctx->paste = filer_file_paste_item;
 	ctx->add_bookmark = filer_add_bookmark_item;
 	ctx->share_folder = filer_share_folder_item;
+	ctx->open_as_root = filer_open_as_root_item;
 	ctx->restore = filer_restore_item;
 	ctx->move_to_trash = filer_move_to_trash_item;
 	ctx->duplicate = filer_duplicate_item;
@@ -583,6 +601,7 @@ static void file_context_apply(const FileContextWidgets *ctx)
 	filer_file_paste_item = ctx->paste;
 	filer_add_bookmark_item = ctx->add_bookmark;
 	filer_share_folder_item = ctx->share_folder;
+	filer_open_as_root_item = ctx->open_as_root;
 	filer_restore_item = ctx->restore;
 	filer_move_to_trash_item = ctx->move_to_trash;
 	filer_duplicate_item = ctx->duplicate;
@@ -658,10 +677,11 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	ctx->paste = file_context_lookup(factory, "Paste");
 	ctx->add_bookmark = file_context_lookup(factory, "Add to Bookmarks");
 	ctx->share_folder = file_context_lookup(factory, "Share Folder...");
+	ctx->open_as_root = file_context_lookup(factory, "Open as root");
 	ctx->restore = file_context_lookup(factory, "Restore");
 	ctx->move_to_trash = file_context_lookup(factory, "Move to Trash");
 	ctx->duplicate = file_context_lookup(factory, "Duplicate...");
-	ctx->link = file_context_lookup(factory, "Link...");
+	ctx->link = file_context_lookup(factory, "Link");
 	ctx->shift_open = file_context_lookup(factory, "Shift Open");
 	ctx->set_run_action = file_context_lookup(factory, "Set Default Application...");
 	ctx->open_with = file_context_lookup(factory, "Open With...");
@@ -691,6 +711,7 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	gtk_widget_set_no_show_all(ctx->search, TRUE);
 	gtk_widget_set_no_show_all(ctx->add_bookmark, TRUE);
 	gtk_widget_set_no_show_all(ctx->share_folder, TRUE);
+	gtk_widget_set_no_show_all(ctx->open_as_root, TRUE);
 	gtk_widget_set_no_show_all(ctx->restore, TRUE);
 	gtk_widget_set_no_show_all(ctx->move_to_trash, TRUE);
 
@@ -701,6 +722,7 @@ static gboolean file_context_build_fresh(FileContextWidgets *ctx)
 	gtk_widget_hide(ctx->open_with);
 	gtk_widget_hide(ctx->add_bookmark);
 	gtk_widget_hide(ctx->share_folder);
+	gtk_widget_hide(ctx->open_as_root);
 	gtk_widget_hide(ctx->restore);
 
 	rox_item_factory_free(factory);
@@ -741,7 +763,7 @@ gboolean ensure_filer_menu(void)
 	GET_SSMENU_ITEM(filer_file_copy_item, "filer", "File", "Copy");
 	GET_SSMENU_ITEM(filer_file_paste_item, "filer", "File", "Paste");
 	GET_SSMENU_ITEM(filer_duplicate_item, "filer", "File", "Duplicate...");
-	GET_SSMENU_ITEM(filer_link_item, "filer", "File", "Link...");
+	GET_SSMENU_ITEM(filer_link_item, "filer", "File", "Link");
 	GET_SSMENU_ITEM(filer_shift_open_item, "filer", "File", "Shift Open");
 	GET_SSMENU_ITEM(filer_set_run_action_item, "filer", "File", "Set Default Application...");
 	GET_SSMENU_ITEM(filer_open_with_item, "filer", "File", "Open With...");
@@ -770,6 +792,7 @@ gboolean ensure_filer_menu(void)
 	filer_search_item = item;
 	GET_SSMENU_ITEM(filer_add_bookmark_item, "filer", "File", "Add to Bookmarks");
 	GET_SSMENU_ITEM(filer_share_folder_item, "filer", "File", "Share Folder...");
+	GET_SSMENU_ITEM(filer_open_as_root_item, "filer", "File", "Open as root");
 	GET_SSMENU_ITEM(filer_shared_folders_item, "filer", "Samba", "Shared Folders...");
 	gtk_widget_set_sensitive(filer_shared_folders_item, samba_share_available());
 	GET_SSMENU_ITEM(filer_restore_item, "filer", "File", "Restore");
@@ -795,10 +818,12 @@ gboolean ensure_filer_menu(void)
 	gtk_widget_set_no_show_all(filer_search_item, TRUE);
 	gtk_widget_set_no_show_all(filer_add_bookmark_item, TRUE);
 	gtk_widget_set_no_show_all(filer_share_folder_item, TRUE);
+	gtk_widget_set_no_show_all(filer_open_as_root_item, TRUE);
 	gtk_widget_set_no_show_all(filer_restore_item, TRUE);
 	gtk_widget_set_no_show_all(filer_move_to_trash_item, TRUE);
 	gtk_widget_hide(filer_add_bookmark_item);
 	gtk_widget_hide(filer_share_folder_item);
+	gtk_widget_hide(filer_open_as_root_item);
 	gtk_widget_hide(filer_restore_item);
 	gtk_widget_set_no_show_all(filer_pair_open_item, TRUE);
 	gtk_widget_set_no_show_all(filer_pair_realign_item, TRUE);
@@ -1421,6 +1446,7 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		gtk_widget_hide(filer_search_item);
 		gtk_widget_hide(filer_add_bookmark_item);
 		gtk_widget_hide(filer_share_folder_item);
+		gtk_widget_hide(filer_open_as_root_item);
 		gtk_widget_hide(filer_restore_item);
 		if (in_trash)
 			gtk_widget_hide(filer_move_to_trash_item);
@@ -1486,6 +1512,15 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 					gtk_widget_show(filer_add_bookmark_item);
 					if (samba_share_available())
 						gtk_widget_show(filer_share_folder_item);
+				}
+				/* 2.13.0-9: show Open as root only when it can launch a
+				 * separate X11/XLibre/XWayland root filer safely. */
+				if (file_item && !in_trash && open_as_root_available())
+				{
+					const gchar *root_path = (const gchar *) make_path(
+						filer_window->sym_path, file_item->leafname);
+					if (g_file_test(root_path, G_FILE_TEST_IS_DIR))
+						gtk_widget_show(filer_open_as_root_item);
 				}
 				if (in_trash) {
 					gtk_menu_item_set_label(GTK_MENU_ITEM(filer_restore_item), _("Restore"));
@@ -1854,7 +1889,7 @@ static gboolean last_symlink_check_relative = TRUE;
  */
 static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 			 MaskedPixmap *image, SaveCb callback,
-			 GdkDragAction dnd_action)
+			 GdkDragAction dnd_action, gint link_mode)
 {
 	GtkWidget *savebox = NULL;
 	GtkWidget *check_relative = NULL;
@@ -1868,8 +1903,10 @@ static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 	{
 		check_relative = gtk_check_button_new_with_mnemonic(
 							_("_Relative link"));
+		/* 2.13.0-9: an explicit context-menu link choice fixes the mode for
+		 * this dialog.  Legacy callers may still pass -1 to show the chooser. */
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_relative),
-					     last_symlink_check_relative);
+			link_mode >= 0 ? link_mode != 0 : last_symlink_check_relative);
 
 		gtk_widget_set_can_focus(check_relative, FALSE); /* Modificado por josejp2424: GTK3 */
 		gtk_widget_set_tooltip_text(check_relative, _("If on, the symlink will store the path from the "
@@ -1880,7 +1917,8 @@ static GtkWidget *savebox_show(const gchar *action, const gchar *path,
 			"stay put."));
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(savebox))),
 				check_relative, FALSE, TRUE, 0);
-		gtk_widget_show(check_relative);
+		if (link_mode < 0)
+			gtk_widget_show(check_relative);
 	}
 
 	g_signal_connect(savebox, "save_to_file",
@@ -1991,7 +2029,7 @@ static void src_dest_action_item(const gchar *path, MaskedPixmap *image,
 			 GdkDragAction dnd_action)
 {
 	g_object_ref(image);
-	savebox_show(action, path, image, callback, dnd_action);
+	savebox_show(action, path, image, callback, dnd_action, -1);
 }
 
 static gboolean rename_cb(GObject *savebox,
@@ -2184,7 +2222,7 @@ static void new_directory(gpointer data, guint action, GtkWidget *widget)
 		GtkWidget *savebox = savebox_show(_("Create"),
 			make_path(target->sym_path, _("NewDir")),
 			type_to_icon(inode_directory), new_directory_cb,
-			GDK_ACTION_COPY);
+			GDK_ACTION_COPY, -1);
 		new_savebox_remember_filer(savebox, target);
 	}
 }
@@ -2236,7 +2274,7 @@ static void new_file(gpointer data, guint action, GtkWidget *widget)
 		FilerWindow *target = window_with_focus;
 		GtkWidget *savebox = savebox_show(_("Create"),
 			make_path(target->sym_path, _("NewFile")),
-			type_to_icon(text_plain), new_file_cb, GDK_ACTION_COPY);
+			type_to_icon(text_plain), new_file_cb, GDK_ACTION_COPY, -1);
 		new_savebox_remember_filer(savebox, target);
 	}
 }
@@ -2301,7 +2339,7 @@ static void new_file_type(gchar *templ)
 		GtkWidget *savebox = savebox_show(_("Create"),
 			make_path(target->sym_path, leaf),
 			type_to_icon(type),
-			new_file_type_cb, GDK_ACTION_COPY);
+			new_file_type_cb, GDK_ACTION_COPY, -1);
 		if (savebox)
 		{
 			g_object_set_data_full(G_OBJECT(savebox), "template_path",
@@ -2612,6 +2650,73 @@ static void share_folder_selected(gpointer data, guint action, GtkWidget *widget
 		item->leafname));
 	samba_share_show_dialog(GTK_WINDOW(window_with_focus->window), path);
 	g_free(path);
+}
+
+/* 2.13.0-9: Open a selected directory in a separate root Rox-Filer2
+ * instance.  We deliberately do not elevate the current process.  pkexec may
+ * run only the fixed package-owned helper; that helper validates one directory
+ * and forces X11/XLibre (or XWayland), avoiding unsafe xhost workarounds. */
+static gboolean open_as_root_available(void)
+{
+	gchar *pkexec;
+	gboolean available;
+
+	if (geteuid() == 0 || !g_getenv("DISPLAY") || !*g_getenv("DISPLAY"))
+		return FALSE;
+	if (!g_file_test(ROX_OPEN_ROOT_HELPER_PATH, G_FILE_TEST_IS_EXECUTABLE))
+		return FALSE;
+	pkexec = g_find_program_in_path("pkexec");
+	available = pkexec != NULL;
+	g_free(pkexec);
+	return available;
+}
+
+static void open_as_root_selected(gpointer data, guint action, GtkWidget *widget)
+{
+	DirItem *item;
+	const gchar *path;
+	gchar *pkexec;
+	gchar *argv[4];
+	GError *error = NULL;
+
+	(void)data;
+	(void)action;
+	(void)widget;
+
+	if (!window_with_focus || view_count_selected(window_with_focus->view) != 1)
+		return;
+	item = filer_selected_item(window_with_focus);
+	if (!item)
+		return;
+	path = (const gchar *) make_path(window_with_focus->sym_path, item->leafname);
+	if (!g_file_test(path, G_FILE_TEST_IS_DIR))
+		return;
+
+	pkexec = g_find_program_in_path("pkexec");
+	if (!pkexec)
+	{
+		report_error(_("Required program '%s' was not found."), "pkexec");
+		return;
+	}
+	if (!g_file_test(ROX_OPEN_ROOT_HELPER_PATH, G_FILE_TEST_IS_EXECUTABLE))
+	{
+		report_error(_("Required program '%s' was not found."),
+			ROX_OPEN_ROOT_HELPER_PATH);
+		g_free(pkexec);
+		return;
+	}
+
+	argv[0] = pkexec;
+	argv[1] = (gchar *) ROX_OPEN_ROOT_HELPER_PATH;
+	argv[2] = (gchar *) path;
+	argv[3] = NULL;
+	if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_DEFAULT,
+		NULL, NULL, NULL, &error))
+	{
+		report_error("%s", error ? error->message : _("Could not open the item."));
+		g_clear_error(&error);
+	}
+	g_free(pkexec);
 }
 
 static void restore_selected_from_trash(gpointer data, guint action, GtkWidget *widget)
@@ -3439,7 +3544,7 @@ gboolean menu_rename_path(const gchar *path, GtkWindow *parent)
 
 	g_object_ref(image);
 	dialog = savebox_show(_("Rename"), path, image, rename_cb,
-	                      GDK_ACTION_MOVE);
+	                      GDK_ACTION_MOVE, -1);
 	diritem_free(item);
 	if (!dialog)
 		return FALSE;
@@ -3485,7 +3590,7 @@ gboolean menu_diagnose_rename_dialog(const gchar *path)
 	/* savebox_show() consumes one reference. */
 	g_object_ref(image);
 	dialog = savebox_show(_("Rename"), path, image, rename_cb,
-		GDK_ACTION_MOVE);
+		GDK_ACTION_MOVE, -1);
 	if (!dialog)
 	{
 		g_printerr("DIAG_RENAME_ERROR=no-dialog:%s\n", path);
@@ -3574,7 +3679,7 @@ static void open_terminal_directory(const gchar *directory, gboolean close_filer
 	gboolean success = menu_open_terminal_at(directory);
 
 	if (success && close_filer && window_with_focus)
-		gtk_widget_destroy(window_with_focus->window);
+		filer_close_visible_window(window_with_focus);
 }
 
 static void xterm_here(gpointer data, guint action, GtkWidget *widget)
@@ -3757,7 +3862,7 @@ static void close_window(gpointer data, guint action, GtkWidget *widget)
 
 	if (!filer_window_delete(window_with_focus->window, NULL,
 				 window_with_focus))
-		gtk_widget_destroy(window_with_focus->window);
+		filer_close_visible_window(window_with_focus);
 }
 
 static void mini_buffer(gpointer data, guint action, GtkWidget *widget)
@@ -4332,7 +4437,8 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 			case FILE_RENAME_ITEM:
 				prompt = _("Rename ... ?");
 				break;
-			case FILE_LINK_ITEM:
+			case FILE_LINK_RELATIVE_ITEM:
+			case FILE_LINK_ABSOLUTE_ITEM:
 				prompt = _("Symlink ... ?");
 				break;
 			case FILE_OPEN_FILE:
@@ -4487,11 +4593,15 @@ static void file_op(gpointer data, guint action, GtkWidget *unused)
 					_("Rename"), rename_cb,
 					GDK_ACTION_MOVE);
 			break;
-		case FILE_LINK_ITEM:
-			src_dest_action_item((const gchar *) path, di_image(item),
-					_("Symlink"), link_cb,
-					GDK_ACTION_LINK);
+		case FILE_LINK_RELATIVE_ITEM:
+		case FILE_LINK_ABSOLUTE_ITEM:
+		{
+			MaskedPixmap *image = di_image(item);
+			g_object_ref(image);
+			savebox_show(_("Symlink"), (const gchar *) path, image, link_cb,
+				GDK_ACTION_LINK, action == FILE_LINK_RELATIVE_ITEM ? 1 : 0);
 			break;
+		}
 		case FILE_OPEN_FILE:
 			filer_openitem(window_with_focus, &iter,
 				OPEN_SAME_WINDOW | OPEN_SHIFT);

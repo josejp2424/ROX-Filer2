@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/wait.h>
 
 #include <gtk/gtk.h>
 #include <gio/gio.h>
@@ -27,7 +26,6 @@
 #endif
 
 #include "global.h"
-#include "support.h"
 #include "desktop_wbar.h"
 #include "desktop.h"
 
@@ -157,90 +155,10 @@ static void stop_wbar_processes(void)
     wait_for_wbar_exit(15);
 }
 
-static gboolean spawn_and_wait(gchar **argv)
-{
-    gint status = 0;
-    GError *error = NULL;
-    gboolean ok;
-
-    ok = rox_spawn_sync(NULL, argv, NULL,
-                      G_SPAWN_SEARCH_PATH |
-                      G_SPAWN_STDOUT_TO_DEV_NULL |
-                      G_SPAWN_STDERR_TO_DEV_NULL,
-                      NULL, NULL, NULL, NULL, &status, &error);
-    if (!ok) {
-        g_clear_error(&error);
-        return FALSE;
-    }
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-}
-
-static gboolean apply_root_wallpaper(const gchar *path, const gchar *mode)
-{
-    gchar *program;
-    gboolean ok = FALSE;
-
-    program = g_find_program_in_path("hsetroot");
-    if (program) {
-        const gchar *option = "-fill";
-        gchar *argv[4];
-        if (!g_strcmp0(mode, "center"))
-            option = "-center";
-        else if (!g_strcmp0(mode, "tile"))
-            option = "-tile";
-        argv[0] = program;
-        argv[1] = (gchar *)option;
-        argv[2] = (gchar *)path;
-        argv[3] = NULL;
-        ok = spawn_and_wait(argv);
-        g_free(program);
-        if (ok)
-            return TRUE;
-    }
-
-    program = g_find_program_in_path("feh");
-    if (program) {
-        const gchar *option = "--bg-fill";
-        gchar *argv[4];
-        if (!g_strcmp0(mode, "fit"))
-            option = "--bg-max";
-        else if (!g_strcmp0(mode, "stretch"))
-            option = "--bg-scale";
-        else if (!g_strcmp0(mode, "center"))
-            option = "--bg-center";
-        else if (!g_strcmp0(mode, "tile"))
-            option = "--bg-tile";
-        argv[0] = program;
-        argv[1] = (gchar *)option;
-        argv[2] = (gchar *)path;
-        argv[3] = NULL;
-        ok = spawn_and_wait(argv);
-        g_free(program);
-        if (ok)
-            return TRUE;
-    }
-
-    program = g_find_program_in_path("xwallpaper");
-    if (program) {
-        const gchar *option = "--zoom";
-        gchar *argv[4];
-        if (!g_strcmp0(mode, "fit"))
-            option = "--maximize";
-        else if (!g_strcmp0(mode, "stretch"))
-            option = "--stretch";
-        else if (!g_strcmp0(mode, "center"))
-            option = "--center";
-        else if (!g_strcmp0(mode, "tile"))
-            option = "--tile";
-        argv[0] = program;
-        argv[1] = (gchar *)option;
-        argv[2] = (gchar *)path;
-        argv[3] = NULL;
-        ok = spawn_and_wait(argv);
-        g_free(program);
-    }
-    return ok;
-}
+/* 2.13.0-10: Rox-Filer2 publica el pixmap raíz X11 de forma nativa desde
+ * desktop-x11.c. Este módulo ya no ejecuta hsetroot/feh/xwallpaper: su única
+ * responsabilidad es reiniciar wbar cuando ya estaba activo para que relea
+ * el nuevo _XROOTPMAP_ID. */
 
 static gboolean start_wbar(void)
 {
@@ -288,13 +206,11 @@ static void desktop_wbar_update_thread(GTask *task, gpointer source_object,
         return;
     }
 
-    /* wbar toma su pseudo-transparencia del pixmap raíz, no de la ventana
-     * _NET_WM_WINDOW_TYPE_DESKTOP. Mantener ambos fondos sincronizados. */
-    apply_root_wallpaper(update->path, update->mode);
+    /* El backend X11 ya actualizó _XROOTMAP_ID/_XROOTPMAP_ID. Reiniciar
+     * únicamente una wbar existente para que descarte su caché anterior. */
     before = collect_wbar_processes(NULL, 0);
     if (before > 0) {
         stop_wbar_processes();
-        apply_root_wallpaper(update->path, update->mode);
         g_usleep(250000);
         if (collect_wbar_processes(NULL, 0) > 0)
             stop_wbar_processes();

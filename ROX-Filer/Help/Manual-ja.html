@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Rox-Filer2 マニュアル</h1>
-<p class="sub">X11 と Wayland 向けの高速・軽量なファイルマネージャー。ROX-Filer の後継です。 &mdash; 2.13.0-8</p>
+<p class="sub">X11 と Wayland 向けの高速・軽量なファイルマネージャー。ROX-Filer の後継です。 &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>デスクトップは <code>rox --desktop</code> で起動します。同時に動作するのは 1 つだけです。壁紙を描画し、デスクトップディレクトリのアイコンを表示し、ドライブアイコンを表示することもできます。</p>
 <ul><li><b>壁紙:</b> <code>rox --desktop-wallpaper</code>、またはデスクトップの右クリック。モードは塗りつぶし、全体表示、引き伸ばし、中央、タイルです。</li><li><b>アプリケーション:</b> <code>rox --desktop-apps</code> がデスクトップのランチャーを管理します。</li><li><b>ドライブアイコン:</b> <code>rox --desktop-drive-icon-layout</code> で整列します。</li><li><b>設定:</b> <code>rox --desktop-preferences</code>。</li></ul>
 <p>X11 ではデスクトップ種別のヒントを付けた通常のウィンドウを使います。Wayland では Layer Shell の背景レイヤーを使うため、<code>gtk-layer-shell</code> がインストールされ、Labwc のように <code>zwlr_layer_shell_v1</code> を公開するコンポジターが必要です。<code>rox-x11 --desktop</code> または <code>rox-wayland --desktop</code> でバックエンドを固定できます。</p>
-<p>擬似透過のターミナルや conky に同じ画像を見せるため X11 のルートウィンドウの背景も設定したい場合は、<code>feh</code> または <code>xwallpaper</code> をインストールしてください。</p>
+<p>X11 では Rox-Filer2 が壁紙をルートウィンドウの pixmap として直接公開するため、擬似透過のターミナルや conky でも <code>feh</code> や <code>xwallpaper</code> なしで同じ画像が表示されます。</p>
 <h2 id="drives">ドライブとマウント</h2>
 <p>ローカルおよびリムーバブルのドライブは、モダンのサイドバーの<b>デバイス</b>に表示され、必要に応じてデスクトップアイコンにもなります。ドライブをクリックするとマウントして開き、アンマウントはコンテキストメニューから行います。</p>
 <p>ドライブの情報は <code>lsblk</code>、<code>/proc/mounts</code>、sysfs から取得するため、常駐サービスは不要です。一般ユーザーがマウントするには <code>udisksctl</code> か、それを許可する fstab エントリーが必要です。</p>

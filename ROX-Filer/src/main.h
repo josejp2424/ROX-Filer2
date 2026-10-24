@@ -40,6 +40,7 @@ void on_child_death_status(gint child, ChildStatusCallbackFn callback, gpointer 
 void rox_child_reap_lock(void);
 gboolean rox_child_reap_trylock(void);
 void rox_child_reap_unlock(void);
+void rox_child_reap_disable(void);
 void one_less_window(void);
 
 #endif /* _MAIN_H */

@@ -1,12 +1,59 @@
-# Rox-Filer2 2.13.0-8 translations
+# Rox-Filer2 2.14.0-5 translations
 
 English is the source language. Complete runtime catalogues are maintained
 for: ar, ca, de, es, fr, hu, it, ja, pt, ru and zh.
 
 ## State
 
-All eleven catalogues are at **1655/1655 translated**, with `msgfmt -c` and
-`check-po-formats.py` clean.
+All eleven catalogues are at **1675/1675 translated**, with the internal PO completeness/format gates clean. The generated `.mo` catalogues are rebuilt from these sources.
+
+
+## 2.14.0-5
+
+Three new runtime strings for the byte-accurate copy/move progress
+(`abox.c`): "Calculating size…", "%s of %s" and "Writing to the device. Do not
+remove it until this window closes."  "Remaining: %s" already existed.  All
+eleven catalogues are **1675/1675** translated with **0 fuzzy** entries.
+The new strings were translated by the assistant that wrote the change;
+native-speaker review is welcome.
+
+## 2.14.0-4
+
+No new runtime strings. The type-ahead focus fix is internal Modern UI code.
+All eleven maintained catalogues remain **1672/1672** translated with **0 fuzzy** entries.
+
+
+## 2.14.0-3
+
+Four new Modern-interface strings were added for the optional breadcrumb mode,
+locked quick filter and direct copy/move between F3 panes. All are translated in
+ar, ca, de, es, fr, hu, it, ja, pt, ru and zh. All eleven catalogues are
+complete at **1672/1672** translated entries with **0 fuzzy** entries.
+
+
+## 2.14.0-1
+
+Twelve new Modern-interface strings were added for split view, editable location,
+quick filtering, the preview pane and bookmark actions. All are translated in
+ar, ca, de, es, fr, hu, it, ja, pt, ru and zh. All eleven catalogues are
+complete at **1668/1668** translated entries with **0 fuzzy** entries.
+
+
+## 2.13.0-10
+
+No new runtime strings. The X11 root-pixmap/stacking fixes and the Wayland
+Layer Shell focus cleanup are internal desktop-backend changes. All eleven
+catalogues remain complete at **1656/1656** translated entries with **0 fuzzy**
+entries.
+
+
+## 2.13.0-9
+
+One new runtime string, **Open as root**, was added for the normal-user
+context-menu action. The existing **Link**, **Link (relative)**,
+**Link (absolute)** and **Unmount** strings are reused for the symlink and
+per-partition quick-action changes. All eleven catalogues are complete at
+**1656/1656** translated entries with **0 fuzzy** entries.
 
 
 ## 2.13.0-8

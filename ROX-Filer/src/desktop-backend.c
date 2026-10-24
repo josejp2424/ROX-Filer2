@@ -31,7 +31,6 @@ static void desktop_generic_configure_window(GtkWindow *window)
     gtk_window_set_skip_taskbar_hint(window, TRUE);
     gtk_window_set_skip_pager_hint(window, TRUE);
     gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DESKTOP);
-    gtk_window_set_keep_below(window, TRUE);
     gtk_window_stick(window);
 }
 
@@ -60,6 +59,16 @@ static void desktop_generic_lower_window(GtkWidget *window)
         gdk_window_lower(gwindow);
 }
 
+
+static void desktop_generic_sync_wallpaper(GdkDisplay *display,
+                                           GdkPixbuf *pixbuf,
+                                           const gchar *mode)
+{
+    (void)display;
+    (void)pixbuf;
+    (void)mode;
+}
+
 static gboolean desktop_generic_send_refresh_request(GdkDisplay *display)
 {
     (void)display;
@@ -76,6 +85,7 @@ static const DesktopBackend *desktop_generic_backend_get(void)
         desktop_generic_register_control,
         desktop_generic_unregister_control,
         desktop_generic_lower_window,
+        desktop_generic_sync_wallpaper,
         desktop_generic_send_refresh_request
     };
 
@@ -106,4 +116,17 @@ const DesktopBackend *desktop_backend_select(GdkDisplay *display)
     ROX_LOG_WARNING("desktop-backend", "using fallback backend=%s display=%s",
                     backend->name, display ? G_OBJECT_TYPE_NAME(display) : "none");
     return backend;
+}
+
+
+void desktop_backend_sync_wallpaper(GdkDisplay *display, GdkPixbuf *pixbuf,
+                                    const gchar *mode)
+{
+    const DesktopBackend *backend;
+
+    if (!display)
+        return;
+    backend = desktop_backend_select(display);
+    if (backend && backend->sync_wallpaper)
+        backend->sync_wallpaper(display, pixbuf, mode);
 }

@@ -109,16 +109,24 @@ rox --modern
 The Modern interface adds:
 
 - Compact folder tabs
-- A **Places** sidebar for Home and the standard XDG user directories
+- **F3 split view** with two independent filer panes in one window
+- The original editable **location bar** by default, with optional breadcrumb navigation (`F6`/`Ctrl+L` focuses direct path editing)
+- A compact **Places** sidebar for Home/XDG folders plus existing ROX bookmarks; middle-click opens a location in the other F3 pane
 - A **Devices** section for filesystems, disks and removable media
 - A **Network** section with SMB/CIFS browsing
-- Back, Forward, Up, Home and Reload controls
-- An editable location field
-- Persistent window geometry and Modern session state
+- Back, Forward, Up, Home and Reload controls that follow the active split pane
+- A transient bottom **Quick Filter** (`Ctrl+I`) with an optional lock to keep the filter while changing folders
+- An optional **Preview** pane with image preview and file metadata
+- A richer Modern **Detailed View** exposing type, size, permissions, owner, group and timestamps
+- **Shift+F5** / **Shift+F6** copy or move the selection directly to the other F3 pane
+- Persistent window geometry, tabs, split position/right path, breadcrumb mode and preview state
 
-Folder tabs show a short folder name while the location field keeps the full
-current path. Tabs are fully switchable: clicking a tab activates its saved path,
-view and navigation history, and the `+` button/Ctrl+T create a usable new tab.
+Folder tabs show a short folder name while the location control keeps the full
+current path. Breadcrumb mode is optional and remembered rather than imposed on
+the normal editable Rox-Filer2 path field. Tabs are fully switchable: clicking a tab activates its
+saved path, view and navigation history, and the `+` button/Ctrl+T create a usable
+new tab. When split view is enabled, each pane keeps its own path, history,
+selection, scrollbar, editable location and quick-filter state.
 
 In **Options > Interface > Modern**, **New Rox-Filer2 instances** can be set to
 **New Window** or **New Tab**. The tab setting also redirects ordinary
@@ -174,7 +182,7 @@ rox-wayland
 
 - Fast GTK3 file manager
 - Classic ROX interface and optional Modern interface
-- Modern tabs with Places, Devices and Network sidebar
+- Modern tabs, F3 split view, editable location bar with optional breadcrumbs, locked quick filter, preview and compact Places/Bookmarks/Devices/Network sidebar
 - Native SMB/CIFS browsing through runtime-detected `libsmbclient` without a GVfs dependency; Rox-Filer2 still starts when the library is absent
 - Built-in Image Mounter for ISO, SFS, SquashFS and raw IMG images
 - X11/XLibre support
@@ -274,6 +282,10 @@ may belong to different processes.
 Rox-Filer2 can still show its Copy / Move / Link chooser instead of silently
 falling back to a direct copy.
 
+The normal file context menu also exposes a **Link** submenu with
+**Link (relative)** and **Link (absolute)**, so the same two link modes are
+available without starting a drag-and-drop operation.
+
 This works with normal files, scripts, directories, images, `.desktop` files
 and other filesystem objects.
 
@@ -351,6 +363,22 @@ button at the far right of the filer toolbar. It can also be opened directly:
 rox --config-rox
 ```
 
+## Open as root
+
+When Rox-Filer2 runs as a normal user, right-clicking a directory can show
+**Open as root**. It opens a **separate** Rox-Filer2 process as root; the
+current normal-user filer is never elevated.
+
+The action uses `pkexec` with the fixed package-owned helper
+`/usr/lib/rox-filer2/rox-open-root-helper`. The helper accepts only one
+validated directory and always launches the fixed Rox-Filer2 binary; it never
+executes a shell or an arbitrary command.
+
+For safety and display compatibility the elevated window uses X11/XLibre, or
+XWayland when the normal session is Wayland and `DISPLAY` is available. No
+`xhost` workaround is used. On a pure Wayland session without XWayland the
+action is not offered.
+
 ## Drives and partitions
 
 Rox-Filer2 can display and manage real storage devices.
@@ -362,10 +390,13 @@ Supported actions include:
 - Unmount
 - Eject
 
-Mounted volumes show a small eject/unmount arrow directly in both the Classic
-Partitions popover and the Modern Devices sidebar. The arrow doubles as the
-mounted-state indicator and disappears automatically after a successful
-unmount/eject, matching the quick action used by Rox-Filer2 desktop drive icons.
+Mounted volumes show a small unmount/eject arrow directly in the Classic
+Partitions popover, the Modern Devices sidebar and Rox-Filer2 Desktop. For disk
+partitions the quick arrow **only unmounts the displayed partition**; it never
+powers off the parent disk. Optical media may still use Eject. Whole-device
+**Eject** for removable USB storage remains a separate explicit drive-menu
+action, so unmounting `/dev/sdd4` cannot power off `/dev/sdd` and hide its
+other partitions.
 
 Options > Drives now also provides optional startup automount. **Mount local
 drives automatically at startup** mounts eligible local disk partitions after
@@ -638,17 +669,12 @@ The source tree also includes a native Void package builder:
 It builds Rox-Filer2 with Meson, runtime-optional SMB support and automatic
 portable-device support (`-Dportable_devices=auto`), creates a native
 `.xbps` package in `output/`, and indexes that directory as a local XBPS
-repository. The upstream release name is `2.13.0-8`; for XBPS the
-builder maps it to the native package form `2.13.0_8`.
+repository. The upstream release name is `2.14.0-5`; for XBPS the
+builder maps it to the native package form `2.14.0_4`.
 
 These native builders are separate from `build-package.sh`; they package the
 same Rox-Filer2 source against the libraries of the distribution where the
 build is performed.
-
-Special thanks to **rockedge** and **Sofiya** from the Puppy Linux community
-for their testing, feedback and support around Rox-Filer2 on **KLV/Void Linux**.
-Their work and reports have been very helpful in improving the native Void/KLV
-integration and XBPS packaging.
 
 Portable devices are optional at runtime. Rox-Filer2 can use simple-mtpfs or
 jmtpfs for Android/MTP, gphoto2/gphotofs for PTP cameras, and ifuse plus the

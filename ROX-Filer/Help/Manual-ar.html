@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>دليل Rox-Filer2</h1>
-<p class="sub">مدير ملفات سريع وخفيف لنظامي X11 و Wayland، امتداد لبرنامج ROX-Filer. &mdash; 2.13.0-8</p>
+<p class="sub">مدير ملفات سريع وخفيف لنظامي X11 و Wayland، امتداد لبرنامج ROX-Filer. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>ابدأ سطح المكتب بالأمر <code>rox --desktop</code>. تعمل نسخة واحدة فقط في كل مرة. يرسم الخلفية، ويعرض أيقونات دليل سطح المكتب، ويمكنه عرض أيقونات الأقراص.</p>
 <ul><li><b>الخلفية:</b> <code>rox --desktop-wallpaper</code>، أو بالنقر الأيمن على سطح المكتب. الأوضاع هي: ملء، ملاءمة، تمديد، توسيط، وتبليط.</li><li><b>التطبيقات:</b> <code>rox --desktop-apps</code> يدير مُطلِقات سطح المكتب.</li><li><b>أيقونات الأقراص:</b> <code>rox --desktop-drive-icon-layout</code> يرتّبها.</li><li><b>التفضيلات:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>على X11 يستخدم سطح المكتب نافذة عادية بتلميح من نوع سطح مكتب. وعلى Wayland يستخدم طبقة الخلفية في Layer Shell، وهو ما يتطلب تثبيت <code>gtk-layer-shell</code> ومُركِّبًا ينشر <code>zwlr_layer_shell_v1</code> مثل Labwc. يمكنك فرض خلفية معينة عبر <code>rox-x11 --desktop</code> أو <code>rox-wayland --desktop</code>.</p>
-<p>ولضبط خلفية النافذة الجذرية في X11 أيضًا، كي ترى الطرفيات ذات الشفافية الزائفة وبرنامج conky الصورة نفسها، ثبّت <code>feh</code> أو <code>xwallpaper</code>.</p>
+<p>في X11 ينشر Rox-Filer2 الخلفية مباشرةً كـ pixmap للنافذة الجذرية، لذلك ترى الطرفيات ذات الشفافية الزائفة وconky الصورة نفسها من دون <code>feh</code> أو <code>xwallpaper</code>.</p>
 <h2 id="drives">الأقراص والوصل</h2>
 <p>تظهر الأقراص المحلية والقابلة للإزالة في الشريط الجانبي للواجهة الحديثة تحت <b>الأجهزة</b>، وكأيقونات على سطح المكتب اختياريًا. انقر على قرص لوصله وفتحه، واستخدم قائمة السياق لفصله.</p>
 <p>تأتي معلومات الأقراص من <code>lsblk</code> ومن <code>/proc/mounts</code> ومن sysfs، لذا لا حاجة إلى أي خدمة تعمل في الخلفية. ويحتاج وصل قرص بحساب مستخدم عادي إلى <code>udisksctl</code> أو إلى مدخلة في fstab تسمح بذلك.</p>

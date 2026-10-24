@@ -21,6 +21,15 @@ echo "== 1/9 higiene del source =="
 [ -s "$ROOT/ROX-Filer.svg" ] || { echo "ERROR: falta ROX-Filer.svg" >&2; exit 1; }
 [ -s "$ROOT/ROX-Filer-root.svg" ] || { echo "ERROR: falta ROX-Filer-root.svg" >&2; exit 1; }
 [ -s "$ROOT/ROX-Filer/ROX-Filer-root.svg" ] || { echo "ERROR: falta fallback AppDir ROX-Filer-root.svg" >&2; exit 1; }
+# 2.13.0-9: data/man/rox.1 was present locally but hidden by an old
+# generic .gitignore rule, so clean GitHub builds did not receive it.
+[ -s "$ROOT/data/man/rox.1" ] || { echo "ERROR: falta data/man/rox.1" >&2; exit 1; }
+if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if git -C "$ROOT" check-ignore -q data/man/rox.1; then
+    echo "ERROR: data/man/rox.1 esta siendo ignorado por .gitignore" >&2
+    exit 1
+  fi
+fi
 [ -s "$ROOT/ROX-Filer/src/samba_share.c" ] || { echo "ERROR: falta samba_share.c" >&2; exit 1; }
 [ -s "$ROOT/ROX-Filer/src/samba_share.h" ] || { echo "ERROR: falta samba_share.h" >&2; exit 1; }
 for generated in \
@@ -107,6 +116,9 @@ echo "== 5/9 compilacion release =="
 rm -rf "$ROOT/build-gate"
 meson setup --buildtype=release -Dsmb=enabled -Dportable_devices=enabled "$ROOT/build-gate" "$ROOT" >/dev/null
 meson compile -C "$ROOT/build-gate"
+# 2.13.0-9: both fixed pkexec helpers are release payload and must build.
+[ -x "$ROOT/build-gate/rox-mount-helper" ] || { echo "ERROR: falta rox-mount-helper" >&2; exit 1; }
+[ -x "$ROOT/build-gate/rox-open-root-helper" ] || { echo "ERROR: falta rox-open-root-helper" >&2; exit 1; }
 # 2.12.2-93: libsmbclient is a runtime plugin, never an ELF DT_NEEDED entry.
 if readelf -d "$ROOT/build-gate/ROX-Filer" | grep -qi 'libsmbclient'; then
   echo "ERROR: ROX-Filer has a hard ELF dependency on libsmbclient" >&2
@@ -173,6 +185,15 @@ dpkg-deb --contents "$DEB" | grep -q './usr/share/pixmaps/ROX-Filer.svg$' || {
 }
 dpkg-deb --contents "$DEB" | grep -q './usr/share/pixmaps/ROX-Filer-root.svg$' || {
   echo "ERROR: Debian package is missing ROX-Filer-root.svg" >&2
+  exit 1
+}
+# 2.13.0-9: Open as root must ship both its fixed helper and policy.
+dpkg-deb --contents "$DEB" | grep -q './usr/lib/rox-filer2/rox-open-root-helper$' || {
+  echo "ERROR: Debian package is missing rox-open-root-helper" >&2
+  exit 1
+}
+dpkg-deb --contents "$DEB" | grep -q './usr/share/polkit-1/actions/org.rox-filer2.open-root.policy$' || {
+  echo "ERROR: Debian package is missing the Open-as-root polkit policy" >&2
   exit 1
 }
 DEB_DEPENDS=$(dpkg-deb -f "$DEB" Depends)

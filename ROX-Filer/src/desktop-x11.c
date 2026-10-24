@@ -10,6 +10,7 @@
 #include <gdk/gdkx.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <cairo/cairo-xlib.h>
 #include <string.h>
 
 #include "global.h"
@@ -68,7 +69,9 @@ static void desktop_x11_configure_window(GtkWindow *window)
     gtk_window_set_skip_taskbar_hint(window, TRUE);
     gtk_window_set_skip_pager_hint(window, TRUE);
     gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DESKTOP);
-    gtk_window_set_keep_below(window, TRUE);
+    /* 2.13.0-10: no combinar DESKTOP con _NET_WM_STATE_BELOW. PCManFM
+     * demuestra que el tipo DESKTOP + un lower inicial es suficiente y evita
+     * que JWM/XLibre reordene widgets pseudo-transparentes al hacer clic. */
     gtk_window_stick(window);
 }
 
@@ -181,6 +184,212 @@ static void desktop_x11_lower_window(GtkWidget *window)
     }
 }
 
+/* 2.13.0-10: pixmap raíz nativo para pseudo-transparencia X11.
+ *
+ * Conky, sClock, wbar y muchos widgets X11 tradicionales no ven el contenido
+ * dibujado dentro de una GtkWindow DESKTOP: consultan _XROOTMAP_ID o
+ * _XROOTPMAP_ID y copian píxeles del fondo de la root window. Mantener aquí
+ * el mismo wallpaper que ROX dibuja en desktop.c hace que esa transparencia
+ * funcione sin feh/hsetroot/xwallpaper. */
+static Display *root_wallpaper_display;
+static Window root_wallpaper_window;
+static Pixmap root_wallpaper_pixmap = None;
+static gint root_wallpaper_width;
+static gint root_wallpaper_height;
+
+static gboolean desktop_x11_mode_is(const gchar *mode, const gchar *name)
+{
+    return g_strcmp0(mode ? mode : "fill", name) == 0;
+}
+
+static void desktop_x11_draw_scaled(cairo_t *cr, GdkPixbuf *pixbuf,
+                                    const GdkRectangle *rect,
+                                    gdouble scale_x, gdouble scale_y,
+                                    gboolean center)
+{
+    gint src_w = gdk_pixbuf_get_width(pixbuf);
+    gint src_h = gdk_pixbuf_get_height(pixbuf);
+    gint width = MAX(1, (gint)(src_w * scale_x + 0.5));
+    gint height = MAX(1, (gint)(src_h * scale_y + 0.5));
+    gint x = center ? rect->x + (rect->width - width) / 2 : rect->x;
+    gint y = center ? rect->y + (rect->height - height) / 2 : rect->y;
+    GdkPixbuf *scaled;
+
+    scaled = gdk_pixbuf_scale_simple(pixbuf, width, height,
+                                     GDK_INTERP_BILINEAR);
+    if (!scaled)
+        return;
+    gdk_cairo_set_source_pixbuf(cr, scaled, x, y);
+    cairo_paint(cr);
+    g_object_unref(scaled);
+}
+
+static void desktop_x11_draw_wallpaper_rect(cairo_t *cr, GdkPixbuf *pixbuf,
+                                             const gchar *mode,
+                                             const GdkRectangle *rect)
+{
+    gint src_w;
+    gint src_h;
+
+    if (!pixbuf || !rect || rect->width <= 0 || rect->height <= 0)
+        return;
+    src_w = gdk_pixbuf_get_width(pixbuf);
+    src_h = gdk_pixbuf_get_height(pixbuf);
+    if (src_w <= 0 || src_h <= 0)
+        return;
+
+    cairo_save(cr);
+    cairo_rectangle(cr, rect->x, rect->y, rect->width, rect->height);
+    cairo_clip(cr);
+
+    if (desktop_x11_mode_is(mode, "fit")) {
+        gdouble scale = MIN((gdouble)rect->width / src_w,
+                            (gdouble)rect->height / src_h);
+        desktop_x11_draw_scaled(cr, pixbuf, rect, scale, scale, TRUE);
+    } else if (desktop_x11_mode_is(mode, "stretch")) {
+        desktop_x11_draw_scaled(cr, pixbuf, rect,
+            (gdouble)rect->width / src_w,
+            (gdouble)rect->height / src_h, FALSE);
+    } else if (desktop_x11_mode_is(mode, "center")) {
+        gdk_cairo_set_source_pixbuf(cr, pixbuf,
+            rect->x + (rect->width - src_w) / 2,
+            rect->y + (rect->height - src_h) / 2);
+        cairo_paint(cr);
+    } else if (desktop_x11_mode_is(mode, "tile")) {
+        gint x, y;
+        for (y = rect->y; y < rect->y + rect->height; y += src_h)
+            for (x = rect->x; x < rect->x + rect->width; x += src_w) {
+                gdk_cairo_set_source_pixbuf(cr, pixbuf, x, y);
+                cairo_paint(cr);
+            }
+    } else {
+        gdouble scale = MAX((gdouble)rect->width / src_w,
+                            (gdouble)rect->height / src_h);
+        desktop_x11_draw_scaled(cr, pixbuf, rect, scale, scale, TRUE);
+    }
+
+    cairo_restore(cr);
+}
+
+static Pixmap desktop_x11_root_pixmap(Display *display, Window root,
+                                      gint screen_num, gint width, gint height)
+{
+    Pixmap new_pixmap;
+
+    if (root_wallpaper_display == display &&
+        root_wallpaper_window == root &&
+        root_wallpaper_pixmap != None &&
+        root_wallpaper_width == width &&
+        root_wallpaper_height == height)
+        return root_wallpaper_pixmap;
+
+    new_pixmap = XCreatePixmap(display, root,
+                               (unsigned int)width,
+                               (unsigned int)height,
+                               (unsigned int)DefaultDepth(display,
+                                                          screen_num));
+    if (new_pixmap == None)
+        return None;
+
+    /* Los cambios de geometría son raros. No liberar aquí el pixmap anterior:
+     * un cliente pseudo-transparente puede haber cacheado su XID hasta recibir
+     * el siguiente evento de fondo. El servidor lo recupera al cerrar ROX. */
+    root_wallpaper_pixmap = new_pixmap;
+    root_wallpaper_display = display;
+    root_wallpaper_window = root;
+    root_wallpaper_width = width;
+    root_wallpaper_height = height;
+    return root_wallpaper_pixmap;
+}
+
+static void desktop_x11_sync_wallpaper(GdkDisplay *gdisplay,
+                                       GdkPixbuf *pixbuf,
+                                       const gchar *mode)
+{
+    Display *display;
+    Window root;
+    Pixmap pixmap;
+    cairo_surface_t *surface;
+    cairo_t *cr;
+    Atom rootmap_atom;
+    Atom rootpmap_atom;
+    gint screen_num;
+    gint width;
+    gint height;
+    gint count;
+    gint i;
+
+    if (!desktop_x11_supports_display(gdisplay))
+        return;
+
+    display = gdk_x11_display_get_xdisplay(gdisplay);
+    screen_num = DefaultScreen(display);
+    root = RootWindow(display, screen_num);
+    width = DisplayWidth(display, screen_num);
+    height = DisplayHeight(display, screen_num);
+    if (width <= 0 || height <= 0)
+        return;
+
+    pixmap = desktop_x11_root_pixmap(display, root, screen_num, width, height);
+    if (pixmap == None) {
+        ROX_LOG_WARNING("x11", "unable to create root wallpaper pixmap %dx%d",
+                        width, height);
+        return;
+    }
+
+    surface = cairo_xlib_surface_create(display, pixmap,
+                                        DefaultVisual(display, screen_num),
+                                        width, height);
+    if (!surface || cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) {
+        if (surface)
+            cairo_surface_destroy(surface);
+        ROX_LOG_WARNING("x11", "unable to create cairo root wallpaper surface");
+        return;
+    }
+
+    cr = cairo_create(surface);
+    /* Igual que desktop_draw(): fondo neutro detrás de FIT/CENTER/alpha. */
+    cairo_set_source_rgb(cr, 0.12, 0.14, 0.18);
+    cairo_paint(cr);
+
+    count = gdk_display_get_n_monitors(gdisplay);
+    if (count <= 0) {
+        GdkRectangle rect = {0, 0, width, height};
+        desktop_x11_draw_wallpaper_rect(cr, pixbuf, mode, &rect);
+    } else {
+        for (i = 0; i < count; i++) {
+            GdkMonitor *monitor = gdk_display_get_monitor(gdisplay, i);
+            GdkRectangle rect;
+            if (!monitor)
+                continue;
+            gdk_monitor_get_geometry(monitor, &rect);
+            desktop_x11_draw_wallpaper_rect(cr, pixbuf, mode, &rect);
+        }
+    }
+
+    cairo_destroy(cr);
+    cairo_surface_flush(surface);
+    cairo_surface_destroy(surface);
+
+    rootmap_atom = XInternAtom(display, "_XROOTMAP_ID", False);
+    rootpmap_atom = XInternAtom(display, "_XROOTPMAP_ID", False);
+
+    XGrabServer(display);
+    XChangeProperty(display, root, rootmap_atom, XA_PIXMAP, 32,
+                    PropModeReplace, (const unsigned char *)&pixmap, 1);
+    XChangeProperty(display, root, rootpmap_atom, XA_PIXMAP, 32,
+                    PropModeReplace, (const unsigned char *)&pixmap, 1);
+    XSetWindowBackgroundPixmap(display, root, pixmap);
+    XClearWindow(display, root);
+    XUngrabServer(display);
+    XFlush(display);
+
+    ROX_LOG_INFO("x11",
+                 "root wallpaper published pixmap=0x%lx size=%dx%d mode=%s monitors=%d",
+                 (unsigned long)pixmap, width, height,
+                 mode ? mode : "fill", count);
+}
+
 static gboolean desktop_x11_send_refresh_request(GdkDisplay *gdisplay)
 {
     Display *display;
@@ -240,6 +449,7 @@ const DesktopBackend *desktop_x11_backend_get(void)
         desktop_x11_register_control,
         desktop_x11_unregister_control,
         desktop_x11_lower_window,
+        desktop_x11_sync_wallpaper,
         desktop_x11_send_refresh_request
     };
 

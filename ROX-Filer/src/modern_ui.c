@@ -33,12 +33,65 @@
 #include "display.h"
 #include "dnd.h"
 #include "toolbar.h"
+#include "support.h"
+#include "type.h"
+#include "view_details.h"
+#include "action.h"
 
+
+
+typedef struct
+{
+	FilerWindow *host;
+	FilerWindow *right;
+	FilerWindow *active;
+	GtkWidget *paned;
+	GtkWidget *left_outer;
+	GtkWidget *left_content;
+	GtkWidget *right_outer;
+	GtkWidget *right_content;
+	gboolean enabled;
+	gint last_position;
+} ModernSplitState;
+
+static ModernSplitState *modern_split_state(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->window)
+		return NULL;
+	if (filer_window->modern_embedded)
+	{
+		FilerWindow *host = g_object_get_data(G_OBJECT(filer_window->window),
+			"rox-modern-split-host");
+		if (!host || !host->window)
+			return NULL;
+		return g_object_get_data(G_OBJECT(host->window), "rox-modern-split-state");
+	}
+	return g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-split-state");
+}
+
+static void modern_split_state_free(gpointer data)
+{
+	ModernSplitState *state = data;
+	g_free(state);
+}
 
 static GtkWidget *icon_button(const gchar *icon, const gchar *tip);
 static void modern_sidebar_set_visible(FilerWindow *filer_window, gboolean visible);
 static void modern_ui_select_current_place(FilerWindow *filer_window);
 static void modern_tabs_sync_current(FilerWindow *filer_window);
+static void modern_breadcrumb_rebuild(FilerWindow *filer_window);
+static void modern_location_show_editor(FilerWindow *filer_window);
+static void modern_location_show_breadcrumbs(FilerWindow *filer_window);
+static void modern_location_show_default(FilerWindow *filer_window);
+static GtkWidget *modern_location_widget_new(FilerWindow *filer_window, gboolean compact);
+static GtkWidget *modern_filter_bar_new(FilerWindow *filer_window);
+static void modern_filter_toggle(FilerWindow *filer_window);
+static FilerWindow *modern_preview_owner(FilerWindow *filer_window);
+static void modern_preview_set_visible(FilerWindow *filer_window, gboolean visible);
+static void modern_split_toggle(FilerWindow *filer_window);
+static FilerWindow *modern_nav_target(FilerWindow *host);
+static void modern_transfer_to_other_pane(FilerWindow *host, gboolean move);
+static void modern_bookmarks_refresh(FilerWindow *filer_window);
 
 static void modern_install_style(GtkWidget *widget)
 {
@@ -54,7 +107,9 @@ static void modern_install_style(GtkWidget *widget)
 		".rox-modern-sidebar-heading { font-weight: bold; }\n"
 		".rox-modern-tabbar { background-color: @theme_bg_color; }\n"
 		".rox-modern-tab { border-radius: 0; }\n"
-		".rox-modern-tab-close { padding: 2px; min-width: 24px; min-height: 24px; }\n";
+		".rox-modern-tab-close { padding: 2px; min-width: 24px; min-height: 24px; }\n"
+		".rox-modern-split-pane { border: 1px solid transparent; }\n"
+		".rox-modern-split-pane-active { border-color: @theme_selected_bg_color; }\n";
 
 	if (!widget)
 		return;
@@ -871,16 +926,41 @@ static gboolean modern_tabs_key_press(GtkWidget *widget, GdkEventKey *event,
 		FilerWindow *filer_window)
 {
 	guint state;
+	GtkWidget *focus;
+	FilerWindow *target;
 	(void) widget;
 	if (!event || !filer_window)
 		return FALSE;
 
 	state = event->state & gtk_accelerator_get_default_mod_mask();
+	focus = filer_window->window ? gtk_window_get_focus(GTK_WINDOW(filer_window->window)) : NULL;
+	target = modern_ui_key_target(filer_window, focus);
 
-	/* Common file-manager accelerators are handled by the Modern chrome only.
-	 * The Classic ROX key path is untouched. */
+	/* Dolphin-style workspace shortcuts live only in Modern. */
+	if (event->keyval == GDK_KEY_F3 && state == 0) {
+		modern_split_toggle(filer_window);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_F11 && state == 0) {
+		FilerWindow *owner = modern_preview_owner(target);
+		if (owner && owner->modern_preview_box)
+			modern_preview_set_visible(target, !gtk_widget_get_visible(owner->modern_preview_box));
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_F5 && state == GDK_SHIFT_MASK) {
+		modern_transfer_to_other_pane(filer_window, FALSE);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_F6 && state == GDK_SHIFT_MASK) {
+		modern_transfer_to_other_pane(filer_window, TRUE);
+		return TRUE;
+	}
 	if (event->keyval == GDK_KEY_F5 && state == 0) {
-		filer_refresh(filer_window);
+		filer_refresh(target);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_F6 && state == 0) {
+		modern_location_show_editor(target);
 		return TRUE;
 	}
 	if (event->keyval == GDK_KEY_F9 && state == 0) {
@@ -890,29 +970,43 @@ static gboolean modern_tabs_key_press(GtkWidget *widget, GdkEventKey *event,
 	}
 	if ((state & GDK_MOD1_MASK) && !(state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
 		if (event->keyval == GDK_KEY_Left) {
-			filer_history_back(filer_window);
+			filer_history_back(target);
 			return TRUE;
 		}
 		if (event->keyval == GDK_KEY_Right) {
-			filer_history_forward(filer_window);
+			filer_history_forward(target);
 			return TRUE;
 		}
 		if (event->keyval == GDK_KEY_Up) {
-			change_to_parent(filer_window);
+			change_to_parent(target);
 			return TRUE;
 		}
 	}
 	if (!(state & GDK_CONTROL_MASK))
 		return FALSE;
 	if (event->keyval == GDK_KEY_l || event->keyval == GDK_KEY_L) {
-		if (filer_window->modern_path_entry) {
-			gtk_widget_grab_focus(filer_window->modern_path_entry);
-			gtk_editable_select_region(GTK_EDITABLE(filer_window->modern_path_entry), 0, -1);
-		}
+		modern_location_show_editor(target);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_i || event->keyval == GDK_KEY_I) {
+		modern_filter_toggle(target);
 		return TRUE;
 	}
 	if (event->keyval == GDK_KEY_f || event->keyval == GDK_KEY_F) {
-		search_integration_launch(filer_window);
+		search_integration_launch(target);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_1) {
+		if (target->view_type != VIEW_TYPE_COLLECTION)
+			filer_set_view_type(target, VIEW_TYPE_COLLECTION);
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_2) {
+		target->modern_full_details = TRUE;
+		if (target->view_type != VIEW_TYPE_DETAILS)
+			filer_set_view_type(target, VIEW_TYPE_DETAILS);
+		else
+			view_details_apply_modern_columns(target);
 		return TRUE;
 	}
 	if (event->keyval == GDK_KEY_t || event->keyval == GDK_KEY_T) {
@@ -1114,37 +1208,37 @@ static GtkWidget *modern_nav_button(const gchar *icon, const gchar *label)
 static void go_back(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	filer_history_back(filer_window);
+	filer_history_back(modern_nav_target(filer_window));
 }
 
 static void go_forward(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	filer_history_forward(filer_window);
+	filer_history_forward(modern_nav_target(filer_window));
 }
 
 static void go_up(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	change_to_parent(filer_window);
+	change_to_parent(modern_nav_target(filer_window));
 }
 
 static void go_home(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	filer_change_to(filer_window, home_dir, NULL);
+	filer_change_to(modern_nav_target(filer_window), home_dir, NULL);
 }
 
 static void reload_dir(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	filer_refresh(filer_window);
+	filer_refresh(modern_nav_target(filer_window));
 }
 
 static void search_dir(GtkWidget *widget, FilerWindow *filer_window)
 {
 	(void) widget;
-	search_integration_launch(filer_window);
+	search_integration_launch(modern_nav_target(filer_window));
 }
 
 static void modern_close_window(GtkWidget *widget, FilerWindow *filer_window)
@@ -1169,6 +1263,851 @@ static void path_activated(GtkEntry *entry, FilerWindow *filer_window)
 
 	filer_change_to(filer_window, expanded ? expanded : text, NULL);
 	g_free(expanded);
+	modern_location_show_default(filer_window);
+	if (filer_window->view)
+		gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+}
+
+static void modern_breadcrumb_clicked(GtkButton *button, FilerWindow *filer_window)
+{
+	const gchar *path = g_object_get_data(G_OBJECT(button), "rox-breadcrumb-path");
+	if (path && *path)
+		filer_change_to(filer_window, path, NULL);
+}
+
+static void modern_breadcrumb_add_button(FilerWindow *filer_window,
+		const gchar *label, const gchar *path, gboolean first)
+{
+	GtkWidget *button;
+
+	if (!filer_window || !filer_window->modern_breadcrumb_box || !path)
+		return;
+	if (!first)
+	{
+		GtkWidget *sep = gtk_label_new("›");
+		gtk_widget_set_margin_start(sep, 2);
+		gtk_widget_set_margin_end(sep, 2);
+		gtk_box_pack_start(GTK_BOX(filer_window->modern_breadcrumb_box), sep, FALSE, FALSE, 0);
+	}
+	button = gtk_button_new_with_label(label);
+	gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+	gtk_widget_set_can_focus(button, FALSE);
+	gtk_widget_set_tooltip_text(button, path);
+	g_object_set_data_full(G_OBJECT(button), "rox-breadcrumb-path", g_strdup(path), g_free);
+	g_signal_connect(button, "clicked", G_CALLBACK(modern_breadcrumb_clicked), filer_window);
+	gtk_box_pack_start(GTK_BOX(filer_window->modern_breadcrumb_box), button, FALSE, FALSE, 0);
+}
+
+static void modern_breadcrumb_rebuild(FilerWindow *filer_window)
+{
+	GList *children, *iter;
+	gchar **parts;
+	gchar *accum;
+	gboolean first = TRUE;
+	guint i;
+
+	if (!filer_window || !filer_window->modern_breadcrumb_box || !filer_window->sym_path)
+		return;
+
+	children = gtk_container_get_children(GTK_CONTAINER(filer_window->modern_breadcrumb_box));
+	for (iter = children; iter; iter = iter->next)
+		gtk_widget_destroy(GTK_WIDGET(iter->data));
+	g_list_free(children);
+
+	if (!g_path_is_absolute(filer_window->sym_path))
+	{
+		modern_breadcrumb_add_button(filer_window, filer_window->sym_path,
+			filer_window->sym_path, TRUE);
+		gtk_widget_show_all(filer_window->modern_breadcrumb_box);
+		return;
+	}
+
+	modern_breadcrumb_add_button(filer_window, "/", "/", TRUE);
+	first = FALSE;
+	accum = g_strdup("/");
+	parts = g_strsplit(filer_window->sym_path, "/", -1);
+	for (i = 0; parts && parts[i]; i++)
+	{
+		gchar *next;
+		const gchar *label;
+		if (!parts[i][0])
+			continue;
+		next = g_build_filename(accum, parts[i], NULL);
+		label = (home_dir && g_strcmp0(next, home_dir) == 0) ? _("Home") : parts[i];
+		modern_breadcrumb_add_button(filer_window, label, next, first);
+		first = FALSE;
+		g_free(accum);
+		accum = next;
+	}
+	g_strfreev(parts);
+	g_free(accum);
+	gtk_widget_show_all(filer_window->modern_breadcrumb_box);
+}
+
+static void modern_location_show_editor(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->modern_path_stack ||
+	    !filer_window->modern_path_entry)
+		return;
+	if (filer_window->sym_path)
+		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_path_entry), filer_window->sym_path);
+	gtk_stack_set_visible_child_name(GTK_STACK(filer_window->modern_path_stack), "entry");
+	gtk_widget_grab_focus(filer_window->modern_path_entry);
+	gtk_editable_select_region(GTK_EDITABLE(filer_window->modern_path_entry), 0, -1);
+}
+
+static void modern_location_show_breadcrumbs(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->modern_path_stack)
+		return;
+	modern_breadcrumb_rebuild(filer_window);
+	gtk_stack_set_visible_child_name(GTK_STACK(filer_window->modern_path_stack), "crumbs");
+}
+
+static void modern_location_show_default(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->modern_path_stack)
+		return;
+	if (filer_window->modern_breadcrumbs_enabled)
+		modern_location_show_breadcrumbs(filer_window);
+	else
+		gtk_stack_set_visible_child_name(GTK_STACK(filer_window->modern_path_stack), "entry");
+}
+
+static gboolean modern_path_entry_key(GtkWidget *widget, GdkEventKey *event,
+		FilerWindow *filer_window)
+{
+	(void) widget;
+	if (event && event->keyval == GDK_KEY_Escape)
+	{
+		modern_location_show_default(filer_window);
+		if (filer_window->view)
+			gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static GtkWidget *modern_location_widget_new(FilerWindow *filer_window, gboolean compact)
+{
+	GtkWidget *outer;
+	GtkWidget *stack;
+	GtkWidget *crumb_scroller;
+	GtkWidget *crumb_box;
+	GtkWidget *entry;
+
+	(void) compact;
+	outer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	stack = gtk_stack_new();
+	gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_NONE);
+	gtk_widget_set_hexpand(stack, TRUE);
+
+	/* Keep the original Rox-Filer2 Modern location entry as the default.
+	 * Breadcrumbs remain available as an optional presentation mode instead
+	 * of permanently changing the toolbar's visual language. */
+	entry = gtk_entry_new();
+	gtk_entry_set_placeholder_text(GTK_ENTRY(entry), _("Path"));
+	gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry), GTK_ENTRY_ICON_PRIMARY, "folder");
+	g_signal_connect(entry, "activate", G_CALLBACK(path_activated), filer_window);
+	g_signal_connect(entry, "key-press-event", G_CALLBACK(modern_path_entry_key), filer_window);
+	gtk_stack_add_named(GTK_STACK(stack), entry, "entry");
+
+	crumb_scroller = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(crumb_scroller),
+		GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
+	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(crumb_scroller), GTK_SHADOW_NONE);
+	crumb_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_container_add(GTK_CONTAINER(crumb_scroller), crumb_box);
+	gtk_stack_add_named(GTK_STACK(stack), crumb_scroller, "crumbs");
+
+	gtk_box_pack_start(GTK_BOX(outer), stack, TRUE, TRUE, 0);
+	filer_window->modern_path_stack = stack;
+	filer_window->modern_breadcrumb_box = crumb_box;
+	filer_window->modern_path_entry = entry;
+	if (filer_window->sym_path)
+		gtk_entry_set_text(GTK_ENTRY(entry), filer_window->sym_path);
+	modern_breadcrumb_rebuild(filer_window);
+	modern_location_show_default(filer_window);
+	return outer;
+}
+
+
+
+/* -------------------------------------------------------------------------
+ * Modern quick filter, preview pane and true in-window split view (2.14).
+ */
+
+static void modern_filter_apply(GtkEditable *editable, FilerWindow *filer_window)
+{
+	const gchar *text;
+	(void) editable;
+	if (!filer_window || !filer_window->modern_filter_entry)
+		return;
+	text = gtk_entry_get_text(GTK_ENTRY(filer_window->modern_filter_entry));
+	if (g_strcmp0(text, filer_window->modern_quick_filter) == 0)
+		return;
+	g_free(filer_window->modern_quick_filter);
+	filer_window->modern_quick_filter = (text && *text) ? g_strdup(text) : NULL;
+	g_free(filer_window->modern_quick_filter_path);
+	filer_window->modern_quick_filter_path = filer_window->modern_quick_filter && filer_window->sym_path
+		? g_strdup(filer_window->sym_path) : NULL;
+	filer_detach_rescan(filer_window);
+}
+
+static void modern_filter_set_lock_icon(FilerWindow *filer_window)
+{
+	GtkWidget *image;
+	if (!filer_window || !filer_window->modern_filter_lock)
+		return;
+	image = gtk_image_new_from_icon_name(
+		filer_window->modern_filter_locked ? "changes-prevent-symbolic" : "changes-allow-symbolic",
+		GTK_ICON_SIZE_MENU);
+	gtk_button_set_image(GTK_BUTTON(filer_window->modern_filter_lock), image);
+}
+
+static void modern_filter_lock_toggled(GtkToggleButton *button, FilerWindow *filer_window)
+{
+	if (!filer_window)
+		return;
+	filer_window->modern_filter_locked = gtk_toggle_button_get_active(button);
+	modern_filter_set_lock_icon(filer_window);
+	/* Match Dolphin's useful behaviour: unlocking drops a filter that was
+	 * intentionally carried between folders.  A filter in the current folder
+	 * remains until the user edits/closes it. */
+	if (!filer_window->modern_filter_locked && filer_window->modern_quick_filter_path &&
+	    filer_window->sym_path &&
+	    g_strcmp0(filer_window->modern_quick_filter_path, filer_window->sym_path) != 0 &&
+	    filer_window->modern_filter_entry)
+		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_filter_entry), "");
+}
+
+static void modern_filter_clear_for_navigation(FilerWindow *filer_window)
+{
+	if (!filer_window || filer_window->modern_filter_locked ||
+	    !filer_window->modern_quick_filter || !filer_window->modern_quick_filter_path ||
+	    !filer_window->sym_path ||
+	    g_strcmp0(filer_window->modern_quick_filter_path, filer_window->sym_path) == 0)
+		return;
+
+	g_clear_pointer(&filer_window->modern_quick_filter, g_free);
+	g_clear_pointer(&filer_window->modern_quick_filter_path, g_free);
+	if (filer_window->modern_filter_entry)
+	{
+		g_signal_handlers_block_by_func(filer_window->modern_filter_entry,
+			G_CALLBACK(modern_filter_apply), filer_window);
+		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_filter_entry), "");
+		g_signal_handlers_unblock_by_func(filer_window->modern_filter_entry,
+			G_CALLBACK(modern_filter_apply), filer_window);
+	}
+	if (filer_window->modern_filter_bar)
+		gtk_widget_hide(filer_window->modern_filter_bar);
+}
+
+static gboolean modern_filter_key(GtkWidget *widget, GdkEventKey *event,
+		FilerWindow *filer_window)
+{
+	if (!event || !filer_window)
+		return FALSE;
+	if (event->keyval == GDK_KEY_Escape)
+	{
+		if (gtk_entry_get_text_length(GTK_ENTRY(widget)) > 0)
+			gtk_entry_set_text(GTK_ENTRY(widget), "");
+		else if (filer_window->modern_filter_bar)
+			gtk_widget_hide(filer_window->modern_filter_bar);
+		if (filer_window->view)
+			gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+		return TRUE;
+	}
+	if (event->keyval == GDK_KEY_Return || event->keyval == GDK_KEY_KP_Enter)
+	{
+		if (filer_window->view)
+			gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void modern_filter_close(GtkButton *button, FilerWindow *filer_window)
+{
+	(void) button;
+	if (!filer_window)
+		return;
+	if (filer_window->modern_filter_entry)
+		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_filter_entry), "");
+	filer_window->modern_filter_locked = FALSE;
+	if (filer_window->modern_filter_lock)
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(filer_window->modern_filter_lock), FALSE);
+	if (filer_window->modern_filter_bar)
+		gtk_widget_hide(filer_window->modern_filter_bar);
+	if (filer_window->view)
+		gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
+}
+
+static GtkWidget *modern_filter_bar_new(FilerWindow *filer_window)
+{
+	GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+	GtkWidget *lock = gtk_toggle_button_new();
+	GtkWidget *entry = gtk_entry_new();
+	GtkWidget *close = icon_button("window-close-symbolic", _("Close"));
+
+	gtk_container_set_border_width(GTK_CONTAINER(bar), 4);
+	gtk_button_set_relief(GTK_BUTTON(lock), GTK_RELIEF_NONE);
+	gtk_widget_set_can_focus(lock, FALSE);
+	gtk_widget_set_tooltip_text(lock, _("Keep Filter When Changing Folders"));
+	gtk_box_pack_start(GTK_BOX(bar), lock, FALSE, FALSE, 0);
+	gtk_entry_set_placeholder_text(GTK_ENTRY(entry), _("Quick Filter"));
+	gtk_widget_set_tooltip_text(entry, _("Filter the current folder as you type"));
+	gtk_box_pack_start(GTK_BOX(bar), entry, TRUE, TRUE, 0);
+	gtk_widget_set_size_request(close, 30, 30);
+	gtk_box_pack_end(GTK_BOX(bar), close, FALSE, FALSE, 0);
+	filer_window->modern_filter_bar = bar;
+	filer_window->modern_filter_entry = entry;
+	filer_window->modern_filter_lock = lock;
+	filer_window->modern_filter_locked = FALSE;
+	modern_filter_set_lock_icon(filer_window);
+	g_signal_connect(lock, "toggled", G_CALLBACK(modern_filter_lock_toggled), filer_window);
+	g_signal_connect(entry, "changed", G_CALLBACK(modern_filter_apply), filer_window);
+	g_signal_connect(entry, "key-press-event", G_CALLBACK(modern_filter_key), filer_window);
+	g_signal_connect(close, "clicked", G_CALLBACK(modern_filter_close), filer_window);
+	gtk_widget_set_no_show_all(bar, TRUE);
+	gtk_widget_hide(bar);
+	return bar;
+}
+
+
+static void modern_filter_toggle(FilerWindow *filer_window)
+{
+	if (!filer_window || !filer_window->modern_filter_bar || !filer_window->modern_filter_entry)
+		return;
+	if (gtk_widget_get_visible(filer_window->modern_filter_bar))
+	{
+		if (gtk_entry_get_text_length(GTK_ENTRY(filer_window->modern_filter_entry)) == 0)
+			gtk_widget_hide(filer_window->modern_filter_bar);
+		else
+			gtk_widget_grab_focus(filer_window->modern_filter_entry);
+	}
+	else
+	{
+		gtk_widget_show_all(filer_window->modern_filter_bar);
+		gtk_widget_show(filer_window->modern_filter_bar);
+		gtk_widget_grab_focus(filer_window->modern_filter_entry);
+		gtk_editable_select_region(GTK_EDITABLE(filer_window->modern_filter_entry), 0, -1);
+	}
+}
+
+static GtkWidget *modern_preview_box_new(FilerWindow *filer_window)
+{
+	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
+	GtkWidget *heading = gtk_label_new(NULL);
+	GtkWidget *image = gtk_image_new_from_icon_name("text-x-generic", GTK_ICON_SIZE_DIALOG);
+	GtkWidget *name = gtk_label_new(_("No selection"));
+	GtkWidget *meta = gtk_label_new("");
+	PangoAttrList *attrs = pango_attr_list_new();
+
+	pango_attr_list_insert(attrs, pango_attr_weight_new(PANGO_WEIGHT_BOLD));
+	gtk_label_set_attributes(GTK_LABEL(heading), attrs);
+	pango_attr_list_unref(attrs);
+	gtk_label_set_text(GTK_LABEL(heading), _("Preview"));
+	gtk_label_set_xalign(GTK_LABEL(heading), 0.0);
+	gtk_label_set_xalign(GTK_LABEL(name), 0.0);
+	gtk_label_set_line_wrap(GTK_LABEL(name), TRUE);
+	gtk_label_set_xalign(GTK_LABEL(meta), 0.0);
+	gtk_label_set_yalign(GTK_LABEL(meta), 0.0);
+	gtk_label_set_line_wrap(GTK_LABEL(meta), TRUE);
+	gtk_widget_set_size_request(box, 250, -1);
+	gtk_container_set_border_width(GTK_CONTAINER(box), 10);
+	gtk_box_pack_start(GTK_BOX(box), heading, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), image, FALSE, FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(box), name, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(box), meta, FALSE, FALSE, 0);
+	gtk_widget_set_no_show_all(box, TRUE);
+	gtk_widget_hide(box);
+	filer_window->modern_preview_box = box;
+	filer_window->modern_preview_image = image;
+	filer_window->modern_preview_name = name;
+	filer_window->modern_preview_meta = meta;
+	return box;
+}
+
+static FilerWindow *modern_preview_owner(FilerWindow *filer_window)
+{
+	FilerWindow *host;
+	if (!filer_window)
+		return NULL;
+	if (!filer_window->modern_embedded)
+		return filer_window;
+	host = g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-split-host");
+	return host ? host : filer_window;
+}
+
+void modern_ui_selection_changed(FilerWindow *filer_window)
+{
+	FilerWindow *owner;
+	ViewIter iter;
+	DirItem *item;
+	gint selected;
+	gchar *path = NULL;
+	gchar *mtime = NULL;
+	gchar *meta = NULL;
+
+	if (!filer_window || !filer_window->modern_mode || !filer_window->view)
+		return;
+	owner = modern_preview_owner(filer_window);
+	if (!owner || !owner->modern_preview_box ||
+	    !gtk_widget_get_visible(owner->modern_preview_box))
+		return;
+
+	selected = view_count_selected(filer_window->view);
+	if (selected <= 0)
+	{
+		gtk_image_set_from_icon_name(GTK_IMAGE(owner->modern_preview_image),
+			"text-x-generic", GTK_ICON_SIZE_DIALOG);
+		gtk_label_set_text(GTK_LABEL(owner->modern_preview_name), _("No selection"));
+		gtk_label_set_text(GTK_LABEL(owner->modern_preview_meta), "");
+		return;
+	}
+	if (selected > 1)
+	{
+		gchar *label = g_strdup_printf(_("%d items selected"), selected);
+		gtk_image_set_from_icon_name(GTK_IMAGE(owner->modern_preview_image),
+			"edit-select-all", GTK_ICON_SIZE_DIALOG);
+		gtk_label_set_text(GTK_LABEL(owner->modern_preview_name), label);
+		gtk_label_set_text(GTK_LABEL(owner->modern_preview_meta), "");
+		g_free(label);
+		return;
+	}
+
+	view_get_iter(filer_window->view, &iter, VIEW_ITER_SELECTED);
+	item = iter.next(&iter);
+	if (!item)
+		return;
+	path = g_build_filename(filer_window->sym_path, item->leafname, NULL);
+	gtk_label_set_text(GTK_LABEL(owner->modern_preview_name), item->leafname);
+
+	if (item->mime_type && g_strcmp0(item->mime_type->media_type, "image") == 0 &&
+	    item->base_type != TYPE_DIRECTORY)
+	{
+		GError *error = NULL;
+		GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(path, 230, 180, TRUE, &error);
+		if (pixbuf)
+		{
+			gtk_image_set_from_pixbuf(GTK_IMAGE(owner->modern_preview_image), pixbuf);
+			g_object_unref(pixbuf);
+		}
+		else
+		{
+			gtk_image_set_from_icon_name(GTK_IMAGE(owner->modern_preview_image),
+				"image-x-generic", GTK_ICON_SIZE_DIALOG);
+			g_clear_error(&error);
+		}
+	}
+	else
+	{
+		const gchar *icon = item->base_type == TYPE_DIRECTORY ? "folder" :
+			(item->mime_type && g_strcmp0(item->mime_type->media_type, "text") == 0 ?
+			 "text-x-generic" : "application-x-generic");
+		gtk_image_set_from_icon_name(GTK_IMAGE(owner->modern_preview_image), icon, GTK_ICON_SIZE_DIALOG);
+	}
+
+	mtime = pretty_time(&item->mtime);
+	meta = g_strdup_printf("%s: %s/%s\n%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s",
+		_("Type"), item->mime_type ? item->mime_type->media_type : "inode",
+		item->mime_type ? item->mime_type->subtype : "unknown",
+		_("Size"), item->base_type == TYPE_DIRECTORY ? "—" : format_size(item->size),
+		_("Permissions"), pretty_permissions(item->mode),
+		_("Owner"), user_name(item->uid),
+		_("Group"), group_name(item->gid),
+		_("Last Modified"), mtime ? mtime : "—");
+	gtk_label_set_text(GTK_LABEL(owner->modern_preview_meta), meta);
+	g_free(meta);
+	g_free(mtime);
+	g_free(path);
+}
+
+static void modern_preview_set_visible(FilerWindow *filer_window, gboolean visible)
+{
+	FilerWindow *owner = modern_preview_owner(filer_window);
+	if (!owner || !owner->modern_preview_box)
+		return;
+	if (visible)
+	{
+		gtk_widget_show_all(owner->modern_preview_box);
+		gtk_widget_show(owner->modern_preview_box);
+		modern_ui_selection_changed(filer_window);
+	}
+	else
+		gtk_widget_hide(owner->modern_preview_box);
+	if (owner->modern_preview_menu_item && GTK_IS_CHECK_MENU_ITEM(owner->modern_preview_menu_item) &&
+	    gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(owner->modern_preview_menu_item)) != visible)
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(owner->modern_preview_menu_item), visible);
+}
+
+static void modern_preview_toggled(GtkCheckMenuItem *item, FilerWindow *filer_window)
+{
+	FilerWindow *target = modern_nav_target(filer_window);
+	modern_preview_set_visible(target, gtk_check_menu_item_get_active(item));
+}
+
+static void modern_split_update_active_style(ModernSplitState *state)
+{
+	GtkStyleContext *context;
+	if (!state)
+		return;
+	if (state->left_outer)
+	{
+		context = gtk_widget_get_style_context(state->left_outer);
+		gtk_style_context_add_class(context, "rox-modern-split-pane");
+		if (state->enabled && state->active == state->host)
+			gtk_style_context_add_class(context, "rox-modern-split-pane-active");
+		else
+			gtk_style_context_remove_class(context, "rox-modern-split-pane-active");
+	}
+	if (state->right_outer)
+	{
+		context = gtk_widget_get_style_context(state->right_outer);
+		gtk_style_context_add_class(context, "rox-modern-split-pane");
+		if (state->enabled && state->active == state->right)
+			gtk_style_context_add_class(context, "rox-modern-split-pane-active");
+		else
+			gtk_style_context_remove_class(context, "rox-modern-split-pane-active");
+	}
+}
+
+static void modern_split_focus_changed(GtkWindow *window, GtkWidget *focus, gpointer data)
+{
+	ModernSplitState *state = data;
+	(void) window;
+	if (!state || !focus)
+		return;
+	if (state->right_outer &&
+	    (focus == state->right_outer || gtk_widget_is_ancestor(focus, state->right_outer)))
+		state->active = state->right;
+	else if (state->left_outer &&
+	         (focus == state->left_outer || gtk_widget_is_ancestor(focus, state->left_outer)))
+		state->active = state->host;
+	else
+		return;
+	modern_split_update_active_style(state);
+	modern_ui_update_navigation(state->active);
+	modern_ui_select_current_place(state->host);
+	modern_ui_selection_changed(state->active);
+}
+
+FilerWindow *modern_ui_key_target(FilerWindow *host, GtkWidget *focus)
+{
+	ModernSplitState *state;
+	if (!host)
+		return host;
+	if (host->modern_embedded)
+		return host;
+	state = modern_split_state(host);
+	if (!state || !state->enabled || !state->right)
+		return host;
+	if (focus && state->right_outer &&
+	    (focus == state->right_outer || gtk_widget_is_ancestor(focus, state->right_outer)))
+		return state->right;
+	if (focus && state->left_outer &&
+	    (focus == state->left_outer || gtk_widget_is_ancestor(focus, state->left_outer)))
+		return host;
+	return state->active ? state->active : host;
+}
+
+static FilerWindow *modern_nav_target(FilerWindow *host)
+{
+	GtkWidget *focus = NULL;
+	if (!host || !host->window)
+		return host;
+	focus = gtk_window_get_focus(GTK_WINDOW(host->window));
+	return modern_ui_key_target(host, focus);
+}
+
+static FilerWindow *modern_split_other_pane(FilerWindow *host, FilerWindow *active)
+{
+	ModernSplitState *state = modern_split_state(host);
+	if (!state || !state->enabled || !state->right)
+		return NULL;
+	return active == state->right ? state->host : state->right;
+}
+
+static void modern_transfer_to_other_pane(FilerWindow *host, gboolean move)
+{
+	FilerWindow *active;
+	FilerWindow *other;
+	GList *paths;
+
+	if (!host)
+		return;
+	active = modern_nav_target(host);
+	other = modern_split_other_pane(host, active);
+	if (!active || !other || !other->sym_path ||
+	    g_strcmp0(active->sym_path, other->sym_path) == 0)
+		return;
+	paths = filer_selected_items(active);
+	if (!paths)
+		return;
+	if (move)
+		action_move(paths, other->sym_path, NULL, -1);
+	else
+		action_copy(paths, other->sym_path, NULL, -1);
+	destroy_glist(&paths);
+}
+
+static void modern_copy_other_pane(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	modern_transfer_to_other_pane(filer_window, FALSE);
+}
+
+static void modern_move_other_pane(GtkWidget *widget, FilerWindow *filer_window)
+{
+	(void) widget;
+	modern_transfer_to_other_pane(filer_window, TRUE);
+}
+
+static void modern_split_create_right(ModernSplitState *state)
+{
+	FilerWindow *right;
+	GtkWidget *right_outer;
+	GtkWidget *right_header;
+	GtkWidget *right_hbox;
+	GtkWidget *filter_bar;
+	gchar *path = NULL;
+	GKeyFile *kf;
+
+	if (!state || state->right)
+		return;
+	kf = modern_session_load();
+	path = g_key_file_get_string(kf, MODERN_SESSION_GROUP, "SplitRightPath", NULL);
+	g_key_file_unref(kf);
+	if (!path || !*path || !g_file_test(path, G_FILE_TEST_IS_DIR))
+	{
+		g_free(path);
+		path = g_strdup(state->host->sym_path ? state->host->sym_path : home_dir);
+	}
+
+	right = filer_opendir_embedded(path, state->host);
+	g_free(path);
+	if (!right)
+		return;
+	right->modern_breadcrumbs_enabled = state->host->modern_breadcrumbs_enabled;
+	g_object_set_data(G_OBJECT(right->window), "rox-modern-split-host", state->host);
+	gtk_widget_hide(right->window);
+
+	right_outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_style_context_add_class(gtk_widget_get_style_context(right_outer), "rox-modern-split-pane");
+	right_header = modern_location_widget_new(right, TRUE);
+	gtk_container_set_border_width(GTK_CONTAINER(right_header), 4);
+	gtk_box_pack_start(GTK_BOX(right_outer), right_header, FALSE, FALSE, 0);
+	filter_bar = modern_filter_bar_new(right);
+
+	right_hbox = GTK_WIDGET(right->view_hbox);
+	g_object_ref(right_hbox);
+	if (gtk_widget_get_parent(right_hbox))
+		gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(right_hbox)), right_hbox);
+	gtk_box_pack_start(GTK_BOX(right_outer), right_hbox, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(right_outer), filter_bar, FALSE, FALSE, 0);
+	g_object_unref(right_hbox);
+
+	state->right = right;
+	state->right_outer = right_outer;
+	state->right_content = right_hbox;
+	gtk_paned_pack2(GTK_PANED(state->paned), right_outer, TRUE, FALSE);
+	gtk_widget_hide(right_outer);
+}
+
+static void modern_split_toggle(FilerWindow *filer_window)
+{
+	ModernSplitState *state = modern_split_state(filer_window);
+	gint width;
+	if (!state)
+		return;
+	if (!state->right)
+		modern_split_create_right(state);
+	if (!state->right || !state->right_outer)
+		return;
+
+	state->enabled = !state->enabled;
+	if (state->enabled)
+	{
+		gtk_widget_show_all(state->right_outer);
+		if (state->right->modern_filter_bar &&
+		    !state->right->modern_quick_filter)
+			gtk_widget_hide(state->right->modern_filter_bar);
+		width = gtk_widget_get_allocated_width(state->paned);
+		gtk_paned_set_position(GTK_PANED(state->paned),
+			state->last_position > 0 ? state->last_position : MAX(width / 2, 250));
+		state->active = state->right;
+		modern_split_update_active_style(state);
+		if (state->right->view)
+			gtk_widget_grab_focus(GTK_WIDGET(state->right->view));
+	}
+	else
+	{
+		state->last_position = gtk_paned_get_position(GTK_PANED(state->paned));
+		gtk_widget_hide(state->right_outer);
+		state->active = state->host;
+		modern_split_update_active_style(state);
+		if (state->host->view)
+			gtk_widget_grab_focus(GTK_WIDGET(state->host->view));
+	}
+}
+
+static void modern_split_menu(GtkMenuItem *item, FilerWindow *filer_window)
+{
+	(void) item;
+	modern_split_toggle(filer_window);
+}
+
+static void modern_filter_button(GtkWidget *widget, FilerWindow *filer_window)
+{
+	FilerWindow *target;
+	(void) widget;
+	target = modern_nav_target(filer_window);
+	modern_filter_toggle(target);
+}
+
+static void modern_icons_view(GtkWidget *widget, FilerWindow *filer_window)
+{
+	FilerWindow *target = modern_nav_target(filer_window);
+	(void) widget;
+	if (target && target->view_type != VIEW_TYPE_COLLECTION)
+		filer_set_view_type(target, VIEW_TYPE_COLLECTION);
+}
+
+static void modern_details_view(GtkWidget *widget, FilerWindow *filer_window)
+{
+	FilerWindow *target = modern_nav_target(filer_window);
+	(void) widget;
+	if (!target)
+		return;
+	target->modern_full_details = TRUE;
+	if (target->view_type != VIEW_TYPE_DETAILS)
+		filer_set_view_type(target, VIEW_TYPE_DETAILS);
+	else
+		view_details_apply_modern_columns(target);
+}
+
+static gboolean modern_split_restore_idle(gpointer data)
+{
+	FilerWindow *filer_window = data;
+	ModernSplitState *state;
+	if (!filer_window || !filer_exists(filer_window))
+		return G_SOURCE_REMOVE;
+	state = modern_split_state(filer_window);
+	if (state && !state->enabled)
+		modern_split_toggle(filer_window);
+	return G_SOURCE_REMOVE;
+}
+
+/* 2.14.0-4: Modern reparents the ROX view while building the F3/preview
+ * workspace.  Reparenting a focused GtkWidget drops keyboard focus; GTK then
+ * tends to choose the editable location entry as the next focus target.  That
+ * broke ROX's long-standing type-ahead selection: typing "peke" edited the
+ * path bar instead of selecting a matching file.
+ *
+ * Restore focus only after the workspace (and an optional restored F3 pane)
+ * has settled.  Explicit text modes still own focus when the user invokes
+ * Ctrl+L/F6 or Ctrl+I. */
+static gboolean modern_restore_file_view_focus_idle(gpointer data)
+{
+	FilerWindow *filer_window = data;
+	ModernSplitState *state;
+	FilerWindow *target;
+
+	if (!filer_window || !filer_exists(filer_window) || !filer_window->modern_mode)
+		return G_SOURCE_REMOVE;
+
+	state = modern_split_state(filer_window);
+	target = (state && state->enabled && state->active) ? state->active : filer_window;
+	if (target && target->view)
+		gtk_widget_grab_focus(GTK_WIDGET(target->view));
+
+	return G_SOURCE_REMOVE;
+}
+
+void modern_ui_finalize_content(FilerWindow *filer_window)
+{
+	ModernSplitState *state;
+	GtkWidget *view;
+	GtkWidget *scrollbar;
+	GtkWidget *paned;
+	GtkWidget *left_outer;
+	GtkWidget *left_content;
+	GtkWidget *filter_bar;
+	GtkWidget *preview;
+	GKeyFile *kf;
+	gboolean preview_visible = FALSE;
+	gboolean split_enabled = FALSE;
+
+	if (!filer_window || !filer_window->modern_mode || filer_window->modern_embedded ||
+	    !filer_window->modern_content_box || !filer_window->view || !filer_window->scrollbar)
+		return;
+	if (modern_split_state(filer_window))
+		return;
+
+	state = g_new0(ModernSplitState, 1);
+	state->host = filer_window;
+	state->active = filer_window;
+	state->last_position = 0;
+	paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+	left_outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_style_context_add_class(gtk_widget_get_style_context(left_outer), "rox-modern-split-pane");
+	left_content = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	filter_bar = modern_filter_bar_new(filer_window);
+	gtk_box_pack_start(GTK_BOX(left_outer), left_content, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(left_outer), filter_bar, FALSE, FALSE, 0);
+
+	view = GTK_WIDGET(filer_window->view);
+	scrollbar = filer_window->scrollbar;
+	g_object_ref(view);
+	g_object_ref(scrollbar);
+	if (gtk_widget_get_parent(view))
+		gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(view)), view);
+	if (gtk_widget_get_parent(scrollbar))
+		gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(scrollbar)), scrollbar);
+	gtk_box_pack_start(GTK_BOX(left_content), view, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(left_content), scrollbar, FALSE, TRUE, 0);
+	g_object_unref(view);
+	g_object_unref(scrollbar);
+	filer_window->view_hbox = GTK_BOX(left_content);
+
+	gtk_paned_pack1(GTK_PANED(paned), left_outer, TRUE, FALSE);
+	gtk_box_pack_start(GTK_BOX(filer_window->modern_content_box), paned, TRUE, TRUE, 0);
+	preview = modern_preview_box_new(filer_window);
+	gtk_box_pack_end(GTK_BOX(filer_window->modern_content_box), preview, FALSE, FALSE, 0);
+
+	state->paned = paned;
+	state->left_outer = left_outer;
+	state->left_content = left_content;
+	modern_split_update_active_style(state);
+	g_object_set_data_full(G_OBJECT(filer_window->window), "rox-modern-split-state",
+		state, modern_split_state_free);
+	g_signal_connect(filer_window->window, "set-focus",
+		G_CALLBACK(modern_split_focus_changed), state);
+
+	kf = modern_session_load();
+	if (g_key_file_has_key(kf, MODERN_SESSION_GROUP, "PreviewVisible", NULL))
+		preview_visible = g_key_file_get_boolean(kf, MODERN_SESSION_GROUP, "PreviewVisible", NULL);
+	if (g_key_file_has_key(kf, MODERN_SESSION_GROUP, "SplitEnabled", NULL))
+		split_enabled = g_key_file_get_boolean(kf, MODERN_SESSION_GROUP, "SplitEnabled", NULL);
+	state->last_position = g_key_file_get_integer(kf, MODERN_SESSION_GROUP, "SplitPosition", NULL);
+	g_key_file_unref(kf);
+
+	gtk_widget_show(paned);
+	gtk_widget_show(left_outer);
+	gtk_widget_show(left_content);
+	gtk_widget_show(view);
+	gtk_widget_show(scrollbar);
+	gtk_widget_hide(filter_bar);
+	if (preview_visible)
+		modern_preview_set_visible(filer_window, TRUE);
+	if (split_enabled)
+		g_idle_add(modern_split_restore_idle, filer_window);
+
+	/* filer_add_widgets() focused the file view before this function moved it
+	 * into the Modern workspace. Re-acquire focus after all reparenting so
+	 * unmodified typing continues to drive ROX type-ahead selection. */
+	g_idle_add(modern_restore_file_view_focus_idle, filer_window);
 }
 
 static void menu_new_window(GtkMenuItem *item, FilerWindow *filer_window)
@@ -1253,9 +2192,27 @@ static void modern_toggle_sidebar(GtkCheckMenuItem *item, FilerWindow *filer_win
 		item ? gtk_check_menu_item_get_active(item) : !gtk_widget_get_visible(filer_window->modern_sidebar));
 }
 
+static void modern_breadcrumbs_toggled(GtkCheckMenuItem *item, FilerWindow *filer_window)
+{
+	ModernSplitState *split;
+	gboolean enabled;
+	if (!filer_window || !item)
+		return;
+	enabled = gtk_check_menu_item_get_active(item);
+	filer_window->modern_breadcrumbs_enabled = enabled;
+	modern_location_show_default(filer_window);
+	split = modern_split_state(filer_window);
+	if (split && split->right)
+	{
+		split->right->modern_breadcrumbs_enabled = enabled;
+		modern_location_show_default(split->right);
+	}
+}
+
 static void modern_save_session(GtkWidget *widget, FilerWindow *filer_window)
 {
 	ModernTabsState *state;
+	ModernSplitState *split;
 	GKeyFile *kf;
 	gchar **paths;
 	guint i;
@@ -1286,7 +2243,20 @@ static void modern_save_session(GtkWidget *widget, FilerWindow *filer_window)
 	if (filer_window->modern_paned)
 		g_key_file_set_integer(kf, MODERN_SESSION_GROUP, "SidebarWidth",
 			gtk_paned_get_position(GTK_PANED(filer_window->modern_paned)));
-	g_key_file_set_integer(kf, MODERN_SESSION_GROUP, "SidebarLayoutVersion", 80);
+	g_key_file_set_boolean(kf, MODERN_SESSION_GROUP, "PreviewVisible",
+		filer_window->modern_preview_box ? gtk_widget_get_visible(filer_window->modern_preview_box) : FALSE);
+	g_key_file_set_boolean(kf, MODERN_SESSION_GROUP, "UseBreadcrumbs",
+		filer_window->modern_breadcrumbs_enabled);
+	split = modern_split_state(filer_window);
+	if (split)
+	{
+		g_key_file_set_boolean(kf, MODERN_SESSION_GROUP, "SplitEnabled", split->enabled);
+		g_key_file_set_integer(kf, MODERN_SESSION_GROUP, "SplitPosition",
+			split->paned ? gtk_paned_get_position(GTK_PANED(split->paned)) : split->last_position);
+		if (split->right && split->right->sym_path)
+			g_key_file_set_string(kf, MODERN_SESSION_GROUP, "SplitRightPath", split->right->sym_path);
+	}
+	g_key_file_set_integer(kf, MODERN_SESSION_GROUP, "SidebarLayoutVersion", 81);
 	g_key_file_set_integer(kf, MODERN_SESSION_GROUP, "TabLayoutVersion", 80);
 	if (state && state->tabs && state->tabs->len) {
 		paths = g_new0(gchar *, state->tabs->len);
@@ -1319,6 +2289,7 @@ static gboolean modern_promote_session_owner_idle(gpointer data)
 static void modern_window_destroy(GtkWidget *widget, FilerWindow *filer_window)
 {
 	gboolean was_owner;
+	ModernSplitState *split;
 	(void) widget;
 	if (!filer_window)
 		return;
@@ -1326,6 +2297,24 @@ static void modern_window_destroy(GtkWidget *widget, FilerWindow *filer_window)
 	was_owner = modern_session_owner == filer_window;
 	if (was_owner)
 		modern_save_session(NULL, filer_window);
+
+	/* Do not leave the invisible backend of an F3 pane alive after its host
+	 * closes. Move its content back under its own hidden window first so GTK
+	 * destroys the widgets and FilerWindow in their normal ownership order. */
+	split = modern_split_state(filer_window);
+	if (split && split->right && split->right->window)
+	{
+		GtkWidget *right_hbox = GTK_WIDGET(split->right->view_hbox);
+		if (right_hbox && split->right->toplevel_vbox && gtk_widget_get_parent(right_hbox))
+		{
+			g_object_ref(right_hbox);
+			gtk_container_remove(GTK_CONTAINER(gtk_widget_get_parent(right_hbox)), right_hbox);
+			gtk_box_pack_start(split->right->toplevel_vbox, right_hbox, TRUE, TRUE, 0);
+			g_object_unref(right_hbox);
+		}
+		gtk_widget_destroy(split->right->window);
+		split->right = NULL;
+	}
 
 	modern_windows = g_list_remove(modern_windows, filer_window);
 	if (was_owner) {
@@ -1391,16 +2380,34 @@ static GtkWidget *build_menubar(FilerWindow *filer_window)
 	append_item(menu, _("Close"), G_CALLBACK(menu_close), filer_window);
 
 	menu = append_menu(bar, _("Edit"));
+	append_item(menu, _("Copy to Other Pane (Shift+F5)"), G_CALLBACK(modern_copy_other_pane), filer_window);
+	append_item(menu, _("Move to Other Pane (Shift+F6)"), G_CALLBACK(modern_move_other_pane), filer_window);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
 	append_item(menu, _("Options..."), G_CALLBACK(menu_options), filer_window);
 
 	menu = append_menu(bar, _("View"));
 	{
 		GtkWidget *sidebar_item = gtk_check_menu_item_new_with_mnemonic(_("Show Sidebar"));
+		GtkWidget *preview_item = gtk_check_menu_item_new_with_mnemonic(_("Show Preview Pane"));
+		GtkWidget *breadcrumbs_item = gtk_check_menu_item_new_with_mnemonic(_("Breadcrumb Location Bar"));
 		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(sidebar_item), TRUE);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), sidebar_item);
 		g_signal_connect(sidebar_item, "toggled", G_CALLBACK(modern_toggle_sidebar), filer_window);
 		filer_window->modern_sidebar_menu_item = sidebar_item;
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), preview_item);
+		g_signal_connect(preview_item, "toggled", G_CALLBACK(modern_preview_toggled), filer_window);
+		filer_window->modern_preview_menu_item = preview_item;
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(breadcrumbs_item),
+			filer_window->modern_breadcrumbs_enabled);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), breadcrumbs_item);
+		g_signal_connect(breadcrumbs_item, "toggled", G_CALLBACK(modern_breadcrumbs_toggled), filer_window);
+		filer_window->modern_breadcrumb_menu_item = breadcrumbs_item;
 	}
+	append_item(menu, _("Split View (F3)"), G_CALLBACK(modern_split_menu), filer_window);
+	append_item(menu, _("Quick Filter (Ctrl+I)"), G_CALLBACK(modern_filter_button), filer_window);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+	append_item(menu, _("Icon View"), G_CALLBACK(modern_icons_view), filer_window);
+	append_item(menu, _("Detailed View"), G_CALLBACK(modern_details_view), filer_window);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
 	append_item(menu, _("Scan"), G_CALLBACK(reload_dir), filer_window);
 	append_item(menu, _("Search"), G_CALLBACK(search_dir), filer_window);
@@ -1434,12 +2441,22 @@ void modern_ui_build(FilerWindow *filer_window, GtkWidget *vbox)
 	GtkWidget *menubar;
 	GtkWidget *nav;
 	GtkWidget *button;
-	GtkWidget *entry;
+	GtkWidget *location;
+	GKeyFile *kf;
 
 	g_return_if_fail(filer_window != NULL);
 	g_return_if_fail(GTK_IS_BOX(vbox));
 
 	modern_install_style(filer_window->window);
+
+	/* 2.14.0-3 restores the original editable location bar by default.
+	 * Breadcrumbs are an optional presentation mode remembered per Modern
+	 * session, not a permanent replacement for Rox-Filer2's path entry. */
+	kf = modern_session_load();
+	filer_window->modern_breadcrumbs_enabled =
+		g_key_file_has_key(kf, MODERN_SESSION_GROUP, "UseBreadcrumbs", NULL) &&
+		g_key_file_get_boolean(kf, MODERN_SESSION_GROUP, "UseBreadcrumbs", NULL);
+	g_key_file_unref(kf);
 
 	/* Track Modern windows separately so only one window owns the persisted
 	 * session at a time.  Additional windows remain normal independent ROX
@@ -1477,14 +2494,8 @@ void modern_ui_build(FilerWindow *filer_window, GtkWidget *vbox)
 	g_signal_connect(button, "clicked", G_CALLBACK(reload_dir), filer_window);
 	gtk_box_pack_start(GTK_BOX(nav), button, FALSE, FALSE, 0);
 
-	entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(entry), filer_window->sym_path);
-	gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry), GTK_ENTRY_ICON_PRIMARY,
-		"folder");
-	gtk_entry_set_placeholder_text(GTK_ENTRY(entry), _("Path"));
-	g_signal_connect(entry, "activate", G_CALLBACK(path_activated), filer_window);
-	gtk_box_pack_start(GTK_BOX(nav), entry, TRUE, TRUE, 4);
-	filer_window->modern_path_entry = entry;
+	location = modern_location_widget_new(filer_window, FALSE);
+	gtk_box_pack_start(GTK_BOX(nav), location, TRUE, TRUE, 4);
 
 	button = icon_button("window-close-symbolic", _("Close Window"));
 	gtk_widget_set_size_request(button, 48, 48);
@@ -1493,6 +2504,8 @@ void modern_ui_build(FilerWindow *filer_window, GtkWidget *vbox)
 	gtk_box_pack_end(GTK_BOX(nav), button, FALSE, FALSE, 0);
 	filer_window->modern_close = button;
 
+	/* Keep one clear search action in the toolbar, as in the original Modern
+	 * design. Quick Filter lives on Ctrl+I/View and Preview on F11/View. */
 	button = icon_button("system-search", _("Search"));
 	gtk_widget_set_size_request(button, 48, 48);
 	g_signal_connect(button, "clicked", G_CALLBACK(search_dir), filer_window);
@@ -1611,34 +2624,121 @@ static void places_add_xdg(GtkWidget *list, GUserDirectory directory,
 	g_free(fallback);
 }
 
+static void modern_bookmarks_refresh(FilerWindow *filer_window)
+{
+	GList *children, *iter;
+	GPtrArray *entries;
+	guint i;
+	GtkWidget *row;
+
+	if (!filer_window || !filer_window->modern_bookmarks_list)
+		return;
+	children = gtk_container_get_children(GTK_CONTAINER(filer_window->modern_bookmarks_list));
+	for (iter = children; iter; iter = iter->next)
+		gtk_widget_destroy(GTK_WIDGET(iter->data));
+	g_list_free(children);
+
+	entries = bookmarks_get_entries();
+	for (i = 0; entries && i < entries->len; i++)
+	{
+		RoxBookmarkInfo *info = g_ptr_array_index(entries, i);
+		if (!info || !info->path || !*info->path)
+			continue;
+		row = places_row_new("starred", info->title && *info->title ? info->title : info->path,
+			info->path);
+		gtk_container_add(GTK_CONTAINER(filer_window->modern_bookmarks_list), row);
+	}
+	if (entries)
+		g_ptr_array_free(entries, TRUE);
+
+	/* Management stays in the existing Bookmarks menu.  The sidebar only
+	 * shows actual favourite locations so it keeps the compact pre-2.14 look. */
+	gtk_widget_show_all(filer_window->modern_bookmarks_list);
+}
+
 static void places_row_activated(GtkListBox *box, GtkListBoxRow *row,
                                  FilerWindow *filer_window)
 {
 	const gchar *path;
+	FilerWindow *target;
 
 	(void) box;
+	target = modern_nav_target(filer_window);
 	if (g_object_get_data(G_OBJECT(row), "rox-modern-smb")) {
-		rox_smb_open_dialog(filer_window);
+		rox_smb_open_dialog(target);
+		return;
+	}
+	if (g_object_get_data(G_OBJECT(row), "rox-modern-bookmark-add")) {
+		if (target && target->sym_path)
+			bookmarks_add_path(target->sym_path);
+		modern_bookmarks_refresh(filer_window);
+		return;
+	}
+	if (g_object_get_data(G_OBJECT(row), "rox-modern-bookmark-edit")) {
+		bookmarks_edit();
 		return;
 	}
 	path = g_object_get_data(G_OBJECT(row), "rox-modern-path");
-	if (path && *path)
-		filer_change_to(filer_window, path, NULL);
+	if (path && *path && target)
+		filer_change_to(target, path, NULL);
+}
+
+static gboolean modern_places_button_press(GtkWidget *widget, GdkEventButton *event,
+		FilerWindow *filer_window)
+{
+	GtkListBoxRow *row;
+	const gchar *path;
+	ModernSplitState *state;
+	FilerWindow *active;
+	FilerWindow *other;
+
+	if (!filer_window || !event || event->type != GDK_BUTTON_PRESS || event->button != 2)
+		return FALSE;
+	row = gtk_list_box_get_row_at_y(GTK_LIST_BOX(widget), (gint) event->y);
+	if (!row)
+		return FALSE;
+	path = g_object_get_data(G_OBJECT(row), "rox-modern-path");
+	if (!path || !*path)
+		return FALSE;
+
+	state = modern_split_state(filer_window);
+	if (!state)
+		return FALSE;
+	/* Capture the pane that was active before opening F3.  modern_split_toggle()
+	 * deliberately gives focus to the new right pane, but a middle-click on a
+	 * Place means “open this in the other pane”, so the original pane must
+	 * remain the reference. */
+	active = modern_nav_target(filer_window);
+	if (!state->enabled)
+		modern_split_toggle(filer_window);
+	if (!state->enabled || !state->right)
+		return FALSE;
+	other = modern_split_other_pane(filer_window, active);
+	if (!other)
+		return FALSE;
+	filer_change_to(other, path, NULL);
+	if (other->view)
+		gtk_widget_grab_focus(GTK_WIDGET(other->view));
+	return TRUE;
 }
 
 static void modern_ui_select_current_place(FilerWindow *filer_window)
 {
 	GList *rows;
 	GList *iter;
+	FilerWindow *target;
 
-	if (!filer_window || !filer_window->modern_places_list || !filer_window->sym_path)
+	if (!filer_window || !filer_window->modern_places_list)
+		return;
+	target = modern_nav_target(filer_window);
+	if (!target || !target->sym_path)
 		return;
 
 	rows = gtk_container_get_children(GTK_CONTAINER(filer_window->modern_places_list));
 	for (iter = rows; iter; iter = iter->next) {
 		GtkListBoxRow *row = GTK_LIST_BOX_ROW(iter->data);
 		const gchar *path = g_object_get_data(G_OBJECT(row), "rox-modern-path");
-		if (path && g_strcmp0(path, filer_window->sym_path) == 0) {
+		if (path && g_strcmp0(path, target->sym_path) == 0) {
 			gtk_list_box_select_row(GTK_LIST_BOX(filer_window->modern_places_list), row);
 			g_list_free(rows);
 			return;
@@ -1707,7 +2807,9 @@ static void modern_drive_quick_clicked(GtkButton *button, gpointer data)
 	if (!row || !row->drive)
 		return;
 	ctx = g_new0(ModernDriveQuickAsync, 1);
-	ctx->eject = rox_drive_can_eject(row->drive);
+	/* 2.13.0-9: never power off a removable parent disk from a partition
+	 * quick action. Optical rows may still perform a real Eject. */
+	ctx->eject = row->drive->optical && rox_drive_can_eject(row->drive);
 	if (ctx->eject)
 		rox_drive_eject_async(row->drive, modern_drive_quick_done, ctx);
 	else
@@ -1762,8 +2864,9 @@ static GtkWidget *devices_row_new(const RoxDriveInfo *drive)
 			gtk_image_set_from_icon_name(GTK_IMAGE(quick_image), "media-eject",
 				GTK_ICON_SIZE_MENU);
 		gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
+		/* 2.13.0-9: partition rows unmount only; optical media may eject. */
 		gtk_widget_set_tooltip_text(quick_button,
-			rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
+			drive->optical && rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
 		g_signal_connect(quick_button, "clicked",
 			G_CALLBACK(modern_drive_quick_clicked), data);
 		gtk_box_pack_end(GTK_BOX(box), quick_button, FALSE, FALSE, 0);
@@ -1988,12 +3091,14 @@ static void devices_row_activated(GtkListBox *box, GtkListBoxRow *row,
 	ModernDriveRow *data;
 	const gchar *path;
 	gchar *mountpoint;
+	FilerWindow *target;
 	(void) box;
+	target = modern_nav_target(filer_window);
 
 	path = g_object_get_data(G_OBJECT(row), "rox-modern-path");
 	if (path)
 	{
-		filer_change_to(filer_window, path, NULL);
+		filer_change_to(target, path, NULL);
 		return;
 	}
 	data = g_object_get_data(G_OBJECT(row), "rox-modern-drive");
@@ -2002,7 +3107,7 @@ static void devices_row_activated(GtkListBox *box, GtkListBoxRow *row,
 	mountpoint = rox_drive_current_mountpoint(data->drive);
 	if (mountpoint)
 	{
-		filer_change_to(filer_window, mountpoint, NULL);
+		filer_change_to(target, mountpoint, NULL);
 		g_free(mountpoint);
 		return;
 	}
@@ -2013,7 +3118,7 @@ static void devices_row_activated(GtkListBox *box, GtkListBoxRow *row,
 	}
 	{
 		ModernDriveMountAsync *ctx = g_new0(ModernDriveMountAsync, 1);
-		ctx->filer_window = filer_window;
+		ctx->filer_window = target;
 		ctx->open_after_mount = TRUE;
 		rox_drive_mount_async(data->drive, modern_drive_mount_done, ctx);
 	}
@@ -2111,6 +3216,7 @@ static gboolean devices_button_press(GtkWidget *list, GdkEventButton *event,
 	GtkWidget *menu;
 	GtkWidget *mount_item;
 	GtkWidget *unmount_item;
+	FilerWindow *target;
 	gchar *mountpoint;
 	gboolean mounted;
 
@@ -2126,18 +3232,19 @@ static gboolean devices_button_press(GtkWidget *list, GdkEventButton *event,
 	mountpoint = rox_drive_current_mountpoint(data->drive);
 	mounted = mountpoint != NULL;
 	g_free(mountpoint);
+	target = modern_nav_target(filer_window);
 	menu = rox_menu_new();
-	modern_drive_menu_item(menu, _("Open"), filer_window, data->drive, MODERN_DRIVE_OPEN);
-	mount_item = modern_drive_menu_item(menu, _("Mount"), filer_window,
+	modern_drive_menu_item(menu, _("Open"), target, data->drive, MODERN_DRIVE_OPEN);
+	mount_item = modern_drive_menu_item(menu, _("Mount"), target,
 		data->drive, MODERN_DRIVE_MOUNT);
-	unmount_item = modern_drive_menu_item(menu, _("Unmount"), filer_window,
+	unmount_item = modern_drive_menu_item(menu, _("Unmount"), target,
 		data->drive, MODERN_DRIVE_UNMOUNT);
 	gtk_widget_set_sensitive(mount_item, !mounted && !data->drive->foreign);
 	gtk_widget_set_sensitive(unmount_item, mounted && !data->drive->foreign);
 	if (rox_drive_can_eject(data->drive))
 	{
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
-		modern_drive_menu_item(menu, _("Eject"), filer_window, data->drive,
+		modern_drive_menu_item(menu, _("Eject"), target, data->drive,
 			MODERN_DRIVE_EJECT);
 	}
 	g_signal_connect_swapped(menu, "selection-done", G_CALLBACK(gtk_widget_destroy), menu);
@@ -2153,6 +3260,7 @@ void modern_ui_attach_sidebar(FilerWindow *filer_window, GtkWidget *view_hbox)
 	GtkWidget *content;
 	GtkWidget *heading;
 	GtkWidget *list;
+	GtkWidget *bookmarks_list;
 	GtkWidget *devices_heading;
 	GtkWidget *devices_list;
 	GtkWidget *network_heading;
@@ -2196,6 +3304,8 @@ void modern_ui_attach_sidebar(FilerWindow *filer_window, GtkWidget *view_hbox)
 	gtk_style_context_add_class(gtk_widget_get_style_context(list), "rox-modern-sidebar-list");
 	gtk_list_box_set_selection_mode(GTK_LIST_BOX(list), GTK_SELECTION_SINGLE);
 	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(list), TRUE);
+	gtk_widget_add_events(list, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(list, "button-press-event", G_CALLBACK(modern_places_button_press), filer_window);
 	gtk_box_pack_start(GTK_BOX(content), list, FALSE, FALSE, 0);
 
 	places_add_path(list, "user-home", _("Home"), home_dir);
@@ -2217,6 +3327,17 @@ void modern_ui_attach_sidebar(FilerWindow *filer_window, GtkWidget *view_hbox)
 		g_clear_error(&error);
 	}
 	g_signal_connect(list, "row-activated", G_CALLBACK(places_row_activated), filer_window);
+
+	bookmarks_list = gtk_list_box_new();
+	gtk_style_context_add_class(gtk_widget_get_style_context(bookmarks_list), "rox-modern-sidebar-list");
+	gtk_list_box_set_selection_mode(GTK_LIST_BOX(bookmarks_list), GTK_SELECTION_NONE);
+	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(bookmarks_list), TRUE);
+	gtk_widget_add_events(bookmarks_list, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(bookmarks_list, "button-press-event", G_CALLBACK(modern_places_button_press), filer_window);
+	g_signal_connect(bookmarks_list, "row-activated", G_CALLBACK(places_row_activated), filer_window);
+	gtk_box_pack_start(GTK_BOX(content), bookmarks_list, FALSE, FALSE, 0);
+	filer_window->modern_bookmarks_list = bookmarks_list;
+	modern_bookmarks_refresh(filer_window);
 
 	devices_heading = gtk_label_new(_("Devices"));
 	{
@@ -2270,7 +3391,6 @@ void modern_ui_attach_sidebar(FilerWindow *filer_window, GtkWidget *view_hbox)
 	gtk_box_pack_start(GTK_BOX(content), network_list, FALSE, FALSE, 0);
 
 	filer_window->modern_tree_view = NULL;
-	filer_window->modern_bookmarks_list = NULL;
 
 	{
 		GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
@@ -2317,37 +3437,62 @@ void modern_ui_attach_sidebar(FilerWindow *filer_window, GtkWidget *view_hbox)
 
 void modern_ui_update_path(FilerWindow *filer_window)
 {
-	if (!filer_window || !filer_window->modern_mode || !filer_window->modern_path_entry)
+	FilerWindow *host;
+	ModernSplitState *state;
+	if (!filer_window || !filer_window->modern_mode)
 		return;
-	if (g_strcmp0(gtk_entry_get_text(GTK_ENTRY(filer_window->modern_path_entry)),
+	modern_filter_clear_for_navigation(filer_window);
+	if (filer_window->modern_path_entry && filer_window->sym_path &&
+	    g_strcmp0(gtk_entry_get_text(GTK_ENTRY(filer_window->modern_path_entry)),
 		filer_window->sym_path) != 0)
 		gtk_entry_set_text(GTK_ENTRY(filer_window->modern_path_entry), filer_window->sym_path);
-	modern_tabs_sync_current(filer_window);
-	modern_ui_select_current_place(filer_window);
+	modern_breadcrumb_rebuild(filer_window);
+	if (!filer_window->modern_embedded)
+	{
+		modern_tabs_sync_current(filer_window);
+		modern_bookmarks_refresh(filer_window);
+		modern_ui_select_current_place(filer_window);
+	}
+	else
+	{
+		host = g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-split-host");
+		state = host ? modern_split_state(host) : NULL;
+		if (host && state && state->active == filer_window)
+			modern_ui_select_current_place(host);
+	}
 }
 
 void modern_ui_update_navigation(FilerWindow *filer_window)
 {
 	gboolean back;
 	gboolean forward;
+	FilerWindow *chrome = filer_window;
+	ModernSplitState *state;
 
 	if (!filer_window || !filer_window->modern_mode)
 		return;
+	if (filer_window->modern_embedded)
+	{
+		chrome = g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-split-host");
+		state = chrome ? modern_split_state(chrome) : NULL;
+		if (!chrome || !state || state->active != filer_window)
+			return;
+	}
 
 	back = filer_history_can_back(filer_window);
 	forward = filer_history_can_forward(filer_window);
-	if (filer_window->modern_back)
-		gtk_widget_set_sensitive(filer_window->modern_back, back);
-	if (filer_window->modern_forward)
-		gtk_widget_set_sensitive(filer_window->modern_forward, forward);
-	if (filer_window->modern_menu_back)
-		gtk_widget_set_sensitive(filer_window->modern_menu_back, back);
-	if (filer_window->modern_menu_forward)
-		gtk_widget_set_sensitive(filer_window->modern_menu_forward, forward);
-	if (filer_window->modern_close) {
+	if (chrome->modern_back)
+		gtk_widget_set_sensitive(chrome->modern_back, back);
+	if (chrome->modern_forward)
+		gtk_widget_set_sensitive(chrome->modern_forward, forward);
+	if (chrome->modern_menu_back)
+		gtk_widget_set_sensitive(chrome->modern_menu_back, back);
+	if (chrome->modern_menu_forward)
+		gtk_widget_set_sensitive(chrome->modern_menu_forward, forward);
+	if (chrome->modern_close) {
 		if (toolbar_close_button_enabled())
-			gtk_widget_show(filer_window->modern_close);
+			gtk_widget_show(chrome->modern_close);
 		else
-			gtk_widget_hide(filer_window->modern_close);
+			gtk_widget_hide(chrome->modern_close);
 	}
 }

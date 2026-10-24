@@ -976,6 +976,93 @@ void abox_set_percentage(ABox *abox, int per)
 	}
 }
 
+/* 2.14.0-5: byte-accurate progress for copy/move (transfer_progress.c).
+ * 'done' only counts bytes confirmed on the destination device.  While
+ * 'flushing' every cp/mv has exited and the kernel is still writing:
+ * nothing is left to cancel, so Cancel is made insensitive. */
+void abox_set_byte_progress(ABox *abox, gint64 done, gint64 total,
+			    gboolean flushing)
+{
+	GtkWidget *progress;
+	GString *text;
+	gchar *bar;
+	int per;
+
+	g_return_if_fail(abox != NULL);
+	g_return_if_fail(IS_ABOX(abox));
+
+	progress = abox_ensure_progress(abox);
+	if (!progress)
+		return;
+
+	text = g_string_new(NULL);
+	if (total < 0)
+	{
+		per = 0;
+		g_string_assign(text, _("Calculating size…"));
+	}
+	else
+	{
+		gchar *done_s = g_format_size_full(done, G_FORMAT_SIZE_IEC_UNITS);
+		gchar *total_s = g_format_size_full(total, G_FORMAT_SIZE_IEC_UNITS);
+
+		per = total > 0 ? (int) (done * 100 / total) : 100;
+		/* 100% only once the operation is really finished. */
+		if (per > 99 && (flushing || done < total))
+			per = 99;
+		g_string_printf(text, _("%s of %s"), done_s, total_s);
+		g_free(done_s);
+		g_free(total_s);
+
+		if (done > 0 && done < total && abox->progress_started_us > 0)
+		{
+			gdouble elapsed = (g_get_monotonic_time() -
+					   abox->progress_started_us) / 1000000.0;
+
+			if (elapsed > 1.5)
+			{
+				gint seconds = (gint) MAX(0.0, elapsed *
+					(gdouble) (total - done) / (gdouble) done);
+				gchar *duration, *remaining;
+
+				if (seconds >= 3600)
+					duration = g_strdup_printf("%d:%02d:%02d",
+						seconds / 3600,
+						(seconds % 3600) / 60, seconds % 60);
+				else
+					duration = g_strdup_printf("%02d:%02d",
+						seconds / 60, seconds % 60);
+				remaining = g_strdup_printf(_("Remaining: %s"),
+							    duration);
+				g_string_append(text, "    ");
+				g_string_append(text, remaining);
+				g_free(remaining);
+				g_free(duration);
+			}
+		}
+		if (flushing)
+		{
+			g_string_append_c(text, '\n');
+			g_string_append(text, _("Writing to the device. "
+				"Do not remove it until this window closes."));
+		}
+	}
+
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress), TRUE);
+	bar = g_strdup_printf("%d%%", per);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress), bar);
+	g_free(bar);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), per / 100.0);
+	gtk_widget_show(progress);
+
+	gtk_label_set_text(GTK_LABEL(abox->operation_remaining_label), text->str);
+	gtk_widget_show(abox->operation_remaining_label);
+	g_string_free(text, TRUE);
+
+	gtk_dialog_set_response_sensitive(GTK_DIALOG(abox),
+					  GTK_RESPONSE_CANCEL, !flushing);
+}
+
 void abox_start_operation_progress(ABox *abox)
 {
 	GtkWidget *progress;

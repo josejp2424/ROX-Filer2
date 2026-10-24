@@ -545,19 +545,54 @@ static void cell_edited(GtkCellRendererText *cell,
 		delayed_error(_("'%s' is no longer a symlink"), fullpath);
 		return;
 	}
-	if (strcmp(oldlink, new_text) == 0)
+	if (strcmp(oldlink, new_text) == 0) {
+		g_free(oldlink);
 		return;	/* No change */
-	g_free(oldlink);
-	if (unlink(fullpath)) {
-		delayed_error(_("Failed to unlink '%s':\n%s"),
-				fullpath, g_strerror(errno));
-		return;
 	}
-	if (symlink(new_text, fullpath)) {
-		delayed_error(_("Failed to create symlink from '%s':\n%s\n"
-				"(note: old link has been deleted)"),
-				fullpath, g_strerror(errno));
-		return;
+	g_free(oldlink);
+
+	/* Create the replacement on the SAME filesystem and atomically rename
+	 * it over the original symlink.  Previously we unlinked the original
+	 * first: if symlink() failed (full disk, invalid target, permission
+	 * error) the user's link was permanently lost.
+	 * Use existing translated error messages to keep all PO catalogues
+	 * synchronized with this safety fix. */
+	{
+		gchar *parent = g_path_get_dirname(fullpath);
+		gchar *tmpdir = g_build_filename(parent, ".rox-link-XXXXXX", NULL);
+		gchar *tmp_link = NULL;
+		gboolean made_dir = FALSE;
+		gboolean replaced = FALSE;
+
+		if (!g_mkdtemp(tmpdir)) {
+			delayed_error(_("Error creating '%s': %s"),
+					fullpath, g_strerror(errno));
+			goto link_cleanup;
+		}
+		made_dir = TRUE;
+		tmp_link = g_build_filename(tmpdir, "new", NULL);
+		if (symlink(new_text, tmp_link) != 0) {
+			delayed_error(_("Error creating '%s': %s"),
+					fullpath, g_strerror(errno));
+			goto link_cleanup;
+		}
+		if (rename(tmp_link, fullpath) != 0) {
+			delayed_error(_("Error saving %s: %s"),
+					fullpath, g_strerror(errno));
+			goto link_cleanup;
+		}
+		replaced = TRUE;
+
+	link_cleanup:
+		if (tmp_link)
+			unlink(tmp_link);
+		if (made_dir)
+			rmdir(tmpdir);
+		g_free(tmp_link);
+		g_free(tmpdir);
+		g_free(parent);
+		if (!replaced)
+			return;
 	}
 
 	g_object_ref(window);

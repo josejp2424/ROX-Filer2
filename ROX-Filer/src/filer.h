@@ -149,6 +149,26 @@ struct _FilerWindow
 	GtkWidget	*modern_content_box;
 	GtkWidget	*modern_sidebar_menu_item;
 
+	/* Rox-Filer2 2.14: Modern-only workspace state. Embedded filer windows
+	 * back the F3 split view but never create their own visible chrome. */
+	gboolean	modern_embedded;
+	gboolean	modern_full_details;
+	gchar		*modern_quick_filter;
+	GtkWidget	*modern_path_stack;
+	GtkWidget	*modern_breadcrumb_box;
+	gboolean	modern_breadcrumbs_enabled;
+	GtkWidget	*modern_breadcrumb_menu_item;
+	GtkWidget	*modern_filter_bar;
+	GtkWidget	*modern_filter_entry;
+	GtkWidget	*modern_filter_lock;
+	gboolean	modern_filter_locked;
+	gchar		*modern_quick_filter_path;
+	GtkWidget	*modern_preview_box;
+	GtkWidget	*modern_preview_image;
+	GtkWidget	*modern_preview_name;
+	GtkWidget	*modern_preview_meta;
+	GtkWidget	*modern_preview_menu_item;
+
 	gint		open_timeout;	/* Will resize and show window... */
 	/* Agregado por josejp2424: estado del tamaño inicial GTK3. */
 	gboolean	initial_geometry_pending; /* Suppress initial auto-size */
@@ -176,6 +196,9 @@ extern Option		o_filer_size_limit;
 /* Prototypes */
 void filer_init(void);
 FilerWindow *filer_opendir(const char *path, FilerWindow *src_win, const gchar *wm_class);
+FilerWindow *filer_opendir_embedded(const char *path, FilerWindow *src_win);
+FilerWindow *filer_visible_host(FilerWindow *filer_window);
+void filer_close_visible_window(FilerWindow *filer_window);
 gboolean filer_update_dir(FilerWindow *filer_window, gboolean warning);
 void filer_update_all(void);
 DirItem *filer_selected_item(FilerWindow *filer_window);

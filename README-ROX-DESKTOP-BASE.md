@@ -153,13 +153,17 @@ longer block the GTK main loop or delay the desktop context menu.
 
 ## wbar integration on X11
 
-ROX Desktop draws its own desktop window, while wbar reads pseudo-transparency
-from the X11 root pixmap. When the wallpaper changes, ROX mirrors it to the root
-window with `hsetroot`, `feh` or `xwallpaper`. If wbar is already running, ROX
-uses the same guarded refresh sequence as EssoraWM: detect live PIDs in `/proc`,
-ignore zombies, stop the old instance completely, reapply the wallpaper and
-start exactly one new wbar process. This work is asynchronous and does not block
-menus or desktop interaction.
+ROX Desktop draws its desktop window and, on X11/XLibre, now creates the
+matching root pixmap itself. It publishes `_XROOTMAP_ID` and `_XROOTPMAP_ID`
+and installs that pixmap as the real root-window background, so wbar, Conky and
+other pseudo-transparent X11 clients no longer require `hsetroot`, `feh` or
+`xwallpaper`. If wbar is already running, ROX keeps the guarded EssoraWM refresh
+sequence: detect live PIDs in `/proc`, ignore zombies, stop the old instance
+completely and start exactly one new wbar process so it reloads the new pixmap.
+This work is asynchronous and does not block menus or desktop interaction.
+
+Wayland does not use this mechanism: `rox-wayland --desktop` remains a native
+Layer Shell `BACKGROUND` surface and transparency is composed by the compositor.
 
 ## Configuration
 

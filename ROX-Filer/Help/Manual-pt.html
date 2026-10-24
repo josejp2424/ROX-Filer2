@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Manual do Rox-Filer2</h1>
-<p class="sub">Gestor de ficheiros rápido e leve para X11 e Wayland, continuação do ROX-Filer. &mdash; 2.13.0-8</p>
+<p class="sub">Gestor de ficheiros rápido e leve para X11 e Wayland, continuação do ROX-Filer. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>Inicie o ambiente de trabalho com <code>rox --desktop</code>. Só corre uma instância de cada vez. Desenha o fundo, mostra os ícones do seu diretório de ambiente de trabalho e pode mostrar ícones de unidades.</p>
 <ul><li><b>Fundo:</b> <code>rox --desktop-wallpaper</code>, ou clique direito no ambiente de trabalho. Os modos são preencher, ajustar, esticar, centrar e mosaico.</li><li><b>Aplicações:</b> <code>rox --desktop-apps</code> gere os lançadores do ambiente de trabalho.</li><li><b>Ícones de unidades:</b> <code>rox --desktop-drive-icon-layout</code> organiza-os.</li><li><b>Preferências:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>Em X11 o ambiente de trabalho usa uma janela normal com sugestão de tipo desktop. Em Wayland usa a camada de fundo do Layer Shell, que exige <code>gtk-layer-shell</code> instalado e um compositor que publique <code>zwlr_layer_shell_v1</code>, como o Labwc. Force um backend com <code>rox-x11 --desktop</code> ou <code>rox-wayland --desktop</code>.</p>
-<p>Para definir também o fundo da janela raiz do X11, de modo que terminais com transparência falsa e o conky vejam a mesma imagem, instale <code>feh</code> ou <code>xwallpaper</code>.</p>
+<p>No X11, o Rox-Filer2 publica diretamente o papel de parede como pixmap da janela raiz, para que terminais com pseudotransparência e o conky vejam a mesma imagem sem <code>feh</code> nem <code>xwallpaper</code>.</p>
 <h2 id="drives">Unidades e montagem</h2>
 <p>As unidades locais e amovíveis aparecem na barra lateral da Moderna em <b>Dispositivos</b> e, opcionalmente, como ícones no ambiente de trabalho. Clique numa unidade para a montar e abrir; use o menu de contexto para a desmontar.</p>
 <p>A informação das unidades vem do <code>lsblk</code>, de <code>/proc/mounts</code> e do sysfs, pelo que não é necessário nenhum serviço em segundo plano. Montar uma unidade como utilizador normal exige <code>udisksctl</code> ou uma entrada no fstab que o permita.</p>

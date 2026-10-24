@@ -1,4 +1,4 @@
-.TH ROX 1 "September 2026" "Rox-Filer2 2.13.0-8" "User Commands"
+.TH ROX 1 "October 2026" "Rox-Filer2 2.14.0-5" "User Commands"
 .SH NAME
 rox, roxfiler, Rox-Filer2, ROX-Filer \- open the Rox-Filer2 file manager
 .SH SYNOPSIS
@@ -39,6 +39,15 @@ and
 Run
 .B rox --help
 for the complete list of options supported by the installed version.
+.SH CONTEXT MENU
+The file context menu provides separate relative and absolute symlink actions.
+On normal-user installations with polkit and an X11/XLibre or XWayland display,
+Open as root starts a separate authenticated Rox-Filer2 process for the selected
+directory; the current filer is not elevated.
+.PP
+Mounted-drive quick arrows unmount only the selected disk partition; optical
+media may still eject. Whole-device USB Eject remains a separate explicit
+drive-menu action.
 .SH FILES
 .I ~/.config/rox.sourceforge.net/ROX-Filer/
 contains per-user Rox-Filer2 configuration.

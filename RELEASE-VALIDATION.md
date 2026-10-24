@@ -1,5 +1,81 @@
-Rox-Filer2 2.13.0-8 release validation
+Rox-Filer2 2.14.0-5 release validation
 ========================================
+
+## 2.14.0-5 focused checks
+
+- Copy a large ISO (several GB) to a USB stick with and without rsync
+  installed. The bar must advance steadily with the stick's real speed, show
+  "X of Y" and the remaining time, and the window must stay open with "Writing
+  to the device..." until the data is on the stick. Right after it closes,
+  `sync -f /media/<user>/<stick>` must return at once.
+- Same with exFAT/NTFS mounted through FUSE (exfat-fuse, ntfs-3g).
+- As root (ROOT window), copy and move a file owned by your user to a FAT or
+  exFAT stick: no "failed to preserve ownership" / "rsync failed (code 23)"
+  error, and a move removes the source.
+- Merge a folder into an existing one that already has other files: the total
+  counts only what is copied.
+- Cancel while cp/rsync is running: the operation stops and no cp/rsync
+  process is left (`pgrep -a 'cp|rsync'`).
+- Wayland (`rox-wayland`): open a panel with `--top=Default`, and one whose
+  icon has a keyboard shortcut. ROX must keep running (2.14.0-4 crashed with
+  SIGSEGV). The shortcut stays saved in `pan_*` for X11 sessions.
+- Run `python3 tools/check-po-completeness.py ROX-Filer/src/po/*.po`; all
+  eleven catalogues must be **1675/1675**, 0 fuzzy.
+
+## 2.14.0-4 focused checks
+
+- Start **Modern** in a normal folder and do not click the location bar. Type a filename prefix such as `peke`; confirm ROX incrementally selects/scrolls to the matching file instead of inserting text into the path field.
+- Repeat after changing folders, switching tabs and restoring a saved session. Plain unmodified typing must continue to target the active file view.
+- Enable **F3** and click each pane in turn. Type a prefix and confirm type-ahead targets only the active pane. Restart with F3 saved as enabled and repeat immediately after startup.
+- Press **Ctrl+L** or **F6** and confirm typing edits the location field; press Enter/Escape and confirm focus returns to the file view. Press **Ctrl+I** and confirm typing goes to Quick Filter only while that entry explicitly owns focus.
+- Re-run the 2.14.0-3 toolbar/filter/split checks and all earlier desktop/drag-and-drop regressions.
+- Run `python3 tools/check-po-completeness.py ROX-Filer/src/po/*.po`; all eleven maintained catalogues must remain **1672/1672**, 0 fuzzy.
+
+
+## 2.14.0-3 focused checks
+
+- Start **Modern** and confirm the toolbar has returned to the compact pre-2.14 layout: Back, Forward, Up, Home, Reload, the editable path field, one Search button and the optional Close button. There must be no permanent Quick Filter, Preview or edit-location buttons.
+- Confirm the normal location field is editable immediately. Press **F6** or **Ctrl+L** and verify the full path is focused/selected. Enable **View > Breadcrumb Location Bar**, confirm breadcrumb navigation replaces the entry, then disable it and confirm the original editable path returns. Restart and confirm the chosen mode is remembered.
+- Confirm **Search** remains the original ROX File Search action (**Ctrl+F**) and is visually/functionally separate from **Quick Filter** (**Ctrl+I**).
+- Press **Ctrl+I** and confirm the filter bar appears at the bottom of the active pane. Type a substring and verify live case-insensitive filtering. Change folder with the lock off and confirm the filter clears/hides. Enable the lock, change folders and confirm the filter is retained. Escape clears then hides the bar.
+- Press **F3** and confirm split view remains in-window. Select files in the active pane, press **Shift+F5**, and confirm the existing ROX copy engine copies them to the other pane. Repeat with **Shift+F6** and confirm the existing move engine is used. The shortcuts must do nothing when split view is inactive, no selection exists, or both panes show the same directory.
+- In F3 mode, click between panes and confirm only the active pane gets the subtle GTK-theme selection-colour border. Disable F3 and confirm no active-pane border remains around the normal single view.
+- Confirm the sidebar keeps the compact original aesthetic: no permanent **Bookmarks** management heading and no **Add Current Folder/Edit Bookmarks** rows. Existing user bookmarks may appear as favourite location rows; editing/adding remains available through the existing **Bookmarks** menu.
+- Middle-click a normal Place or bookmark. If split view is closed, confirm F3 split opens and the location is loaded in the opposite pane; if split view is already open, confirm only the inactive pane navigates.
+- Re-run the 2.14.0-1 split/details/preview checks and all 2.13.0-10 X11/Wayland desktop stacking/transparency checks.
+- Run `python3 tools/check-po-completeness.py ROX-Filer/src/po/*.po` and confirm all eleven maintained catalogues are **1672/1672**, 0 fuzzy. Run `python3 check-po-formats.py ROX-Filer/src/po/*.po` and confirm PASS.
+
+
+## 2.14.0-1 focused checks
+
+- Start **Modern** and press **F3**. Confirm a second filer pane appears inside the same window, not as a second top-level window. Press F3 again and confirm it hides cleanly.
+- Navigate the two panes to different folders. Click each pane in turn and verify Back, Forward, Up, Home, Reload, Search, Places, Devices and SMB open/navigation actions target the pane that owns focus.
+- Close and restart the main Modern window with split view enabled. Confirm the split state, divider position and right-pane path are restored from `modern-session.ini`.
+- Confirm each split pane has independent selection, scrollbar, history, editable location and quick-filter state. Changing Icon/Detailed view on one pane must not navigate the other pane.
+- With **Unique filer windows** enabled, navigate the right split pane to the same directory as the left pane and confirm neither pane nor the host window is destroyed; embedded panes must not participate in the top-level unique-window policy.
+- Historical 2.14.0-1 breadcrumb implementation: core breadcrumb navigation must still work when the optional **Breadcrumb Location Bar** mode is enabled in 2.14.0-3.
+- Press **Ctrl+I**, type part of a filename and confirm the current pane filters immediately with Unicode case-insensitive substring matching. Escape clears/hides the filter as documented. Classic must retain its historical type-ahead/filter behavior.
+- Historical 2.14.0-1 bookmarks backend: confirm existing ROX bookmarks still populate Modern and bookmark management still uses the shared ROX bookmark backend; 2.14.0-3 intentionally removes the extra management rows from the sidebar.
+- Switch Modern to **Detailed View** and confirm headers show Name, Type, Size, Permissions, Owner, Group, Modified, Changed and Accessed. Confirm Classic still follows its existing column preferences.
+- Enable **Show Preview Pane** (or F11). Select one image and confirm a bounded preview plus metadata is shown; select a folder/non-image and confirm a themed fallback icon and metadata; select multiple items and confirm the selection count. 2.14.0-3 intentionally removes the permanent preview toolbar button.
+- Restart Modern with the preview pane visible and confirm that visibility is restored. Confirm theme changes remain GTK3-driven; no hardcoded light/dark colors were introduced.
+- Historical 2.14.0-1 translation baseline was **1668/1668**; 2.14.0-3 raises the runtime catalogues to **1672/1672**.
+- Re-run all 2.13.0-10 X11/Wayland desktop stacking/transparency checks plus the 2.13.0-9 link/Open-as-root and drive unmount regression checks.
+
+
+## 2.13.0-10 focused checks
+
+- Right-click one normal file or directory and open **Link**. Confirm the submenu exposes **Link (relative)** and **Link (absolute)**. Create one of each and verify `readlink` shows a relative target for the first and an absolute target for the second.
+- Confirm drag-and-drop still offers the historical **Link (relative)** / **Link (absolute)** choices and that both use the same symlink backend.
+- In a normal-user X11/XLibre session with polkit, right-click a directory and confirm **Open as root** appears. Authenticate and confirm a **separate** Rox-Filer2 window opens at that directory as root while the original filer remains a normal-user process.
+- Repeat from a Wayland session with XWayland (`DISPLAY` set) and confirm the root window opens through XWayland. On a pure Wayland session without `DISPLAY`, confirm **Open as root** is not offered; never use an `xhost` workaround.
+- Start Rox-Filer2 as root and confirm **Open as root** is hidden. Confirm `/usr/lib/rox-filer2/rox-open-root-helper` and `org.rox-filer2.open-root.policy` are present in packaged installs.
+- On a removable USB disk with multiple partitions (for example `/dev/sdd1`, `/dev/sdd3`, `/dev/sdd4`), mount all three and click the quick arrow for only `/dev/sdd4`. Confirm only `/dev/sdd4` unmounts, `/dev/sdd` is not powered off, and the other partition icons remain visible.
+- Use the explicit **Eject** drive-menu action on removable USB storage and confirm whole-device eject/power-off remains available as a distinct action. Confirm optical media can still use Eject from its quick action when supported.
+- Run `git check-ignore -v data/man/rox.1` and confirm it prints nothing. Run `git ls-files data/man/` and confirm both `data/man/rox.1` and `data/man/rox-find.1` are tracked in a clean clone.
+- Build the Meson target and confirm `ROX-Filer`, `rox-find`, `rox-mount-helper` and `rox-open-root-helper` are all produced. Build each native package path and confirm the Open-as-root helper and its polkit policy are included.
+- Confirm all 11 maintained catalogues include **Open as root**, have no fuzzy entries, pass `msgfmt -c`, and pass `check-po-formats.py`.
+- Re-run the 2.13.0-8 startup automount checks, 2.13.0-6 Samba sharing checks, and the complete 2.13.0-5/2 tab-routing regression checks.
 
 ## 2.13.0-8 focused checks
 
@@ -19,7 +95,8 @@ Rox-Filer2 2.13.0-8 release validation
 - In Classic Partitions and Modern Devices, confirm an unmounted partition has no quick-action arrow.
 - Mount the partition and confirm `media-eject-symbolic`/`media-eject` appears immediately as the mounted-state indicator.
 - Click the arrow on a normal filesystem and confirm only that volume is unmounted; the arrow must disappear after refresh.
-- On removable media that supports safe eject, confirm the same control performs Eject rather than only unmounting.
+- On removable USB storage, confirm a per-partition quick arrow only unmounts that partition and never powers off the parent disk. Use the explicit drive-menu **Eject** action for whole-device removal.
+- On optical media that supports Eject, confirm the quick action may still eject the optical device.
 - Confirm foreign mounts owned by another application do not expose the quick unmount/eject action.
 
 ## 2.13.0-6 focused checks
@@ -123,7 +200,7 @@ Help and About
 - Modern: Help contains Show Help Files and About; the former direct Manual
   item is intentionally absent.
 - Modern: Help > About opens the native About dialog and shows version
-  2.13.0-8.
+  2.14.0-3.
 - Classic About remains unchanged.
 - Open Manual-es.html, Manual-ja.html and Manual-ar.html from the bundled Help
   directory and confirm they open in `defaultbrowser` on Puppy and
@@ -149,9 +226,15 @@ Packaging
   still there afterwards. In -81 preinst deleted them.
 - Confirm the package installs nothing under /usr/local.
 - Confirm rox, ROX-Filer and Rox-Filer2 all resolve to /usr/bin/roxfiler.
-- Install without feh and without xwallpaper and confirm the desktop still
-  draws its own wallpaper; install feh and confirm the X11 root window
-  background is set too.
+- On X11/XLibre, test with `feh`, `hsetroot` and `xwallpaper` all absent.
+  Confirm ROX still draws its wallpaper and that `_XROOTMAP_ID` plus
+  `_XROOTPMAP_ID` both point to the native ROX root pixmap.
+- Start Conky, sClock or Nixie-clock with pseudo-transparency. Click repeatedly
+  on empty ROX Desktop space and use **Refresh Desktop**; the widget must stay
+  above the wallpaper and its transparent area must show the current wallpaper.
+- On Wayland/Labwc, confirm ROX remains in Layer Shell BACKGROUND, accepts
+  pointer interaction but does not take keyboard focus, and native RGBA widgets
+  remain composited above it without any X11 root-pixmap dependency.
 
 Image Mounter
 - Right-click `.iso`, `.sfs`, `.squashfs`, `.sqfs` and `.img` files and confirm

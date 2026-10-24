@@ -62,8 +62,8 @@ if [[ ! "$DISPLAY_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)$ ]]; then
     exit 1
 fi
 # XBPS uses the suffix after an underscore as the package revision.  Rox-Filer2
-# releases already use Debian-style X.Y.Z-N versions, so map 2.13.0-8 to
-# 2.13.0_8 without inventing an extra numeric component.
+# releases already use Debian-style X.Y.Z-N versions, so map 2.13.0-9 to
+# 2.13.0_9 without inventing an extra numeric component.
 VERSION="${BASH_REMATCH[1]}"
 REVISION="${BASH_REMATCH[2]}"
 PKGVER="${PACKAGE_NAME}-${VERSION}_${REVISION}"
@@ -119,6 +119,8 @@ build_rox() {
     [[ -x "$BUILD_DIR/ROX-Filer" ]] || { echo "ERROR: ROX-Filer binary was not produced." >&2; exit 1; }
     [[ -x "$BUILD_DIR/rox-find" ]] || { echo "ERROR: rox-find binary was not produced." >&2; exit 1; }
     [[ -x "$BUILD_DIR/rox-mount-helper" ]] || { echo "ERROR: rox-mount-helper binary was not produced." >&2; exit 1; }
+    # 2.13.0-9 ADDED: Open as root uses a second fixed pkexec helper.
+    [[ -x "$BUILD_DIR/rox-open-root-helper" ]] || { echo "ERROR: rox-open-root-helper binary was not produced." >&2; exit 1; }
 }
 
 stage_runtime() {
@@ -134,6 +136,8 @@ stage_runtime() {
     cp -a "$APP_DIR/." "$app_install/"
     install -m0755 "$BUILD_DIR/ROX-Filer" "$app_install/ROX-Filer"
     install -m0755 "$BUILD_DIR/rox-mount-helper" "$app_install/rox-mount-helper"
+    # 2.13.0-9 ADDED: downstream Void templates must install this helper too.
+    install -m0755 "$BUILD_DIR/rox-open-root-helper" "$app_install/rox-open-root-helper"
     rm -rf "$app_install/build" "$app_install/src" "$app_install/ROX-Filer.dbg" "$app_install/ROX"
     cp -a "$PROJECT_ROOT/package-assets/ROX" "$app_install/ROX"
     install -m0644 "$PROJECT_ROOT/data/icons/hicolor/256x256/apps/rox-filer2.png" "$app_install/ROX-Filer.png"
@@ -186,8 +190,12 @@ stage_runtime() {
     done
 
     # xbps-create does not perform the stripping stage that xbps-src normally
-    # applies, so normalize the two native binaries here.
-    strip --strip-unneeded "$app_install/ROX-Filer" "$app_install/rox-mount-helper" "$STAGE_DIR/usr/bin/rox-find"
+    # applies, so normalize the native binaries here.
+    strip --strip-unneeded \
+        "$app_install/ROX-Filer" \
+        "$app_install/rox-mount-helper" \
+        "$app_install/rox-open-root-helper" \
+        "$STAGE_DIR/usr/bin/rox-find"
 
     find "$STAGE_DIR/usr/share/applications" -type f -name '*.desktop' -exec chmod 0644 {} + 2>/dev/null || true
     find "$STAGE_DIR/usr/share/pixmaps" -type f -exec chmod 0644 {} + 2>/dev/null || true
@@ -198,6 +206,7 @@ collect_shlib_requires() {
     {
         readelf -d "$STAGE_DIR/usr/lib/rox-filer2/ROX-Filer"
         readelf -d "$STAGE_DIR/usr/lib/rox-filer2/rox-mount-helper"
+        readelf -d "$STAGE_DIR/usr/lib/rox-filer2/rox-open-root-helper"
         readelf -d "$STAGE_DIR/usr/bin/rox-find"
     } | awk -F'[][]' '/Shared library:/{print $2}' | LC_ALL=C sort -u | tr '\n' ' '
 }

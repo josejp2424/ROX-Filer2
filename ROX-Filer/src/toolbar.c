@@ -730,7 +730,7 @@ static void toolbar_close_clicked(GtkWidget *widget, FilerWindow *filer_window)
 	(void) widget;
 	if (filer_window && filer_window->window &&
 	    !filer_window_delete(filer_window->window, NULL, filer_window))
-		gtk_widget_destroy(filer_window->window);
+		filer_close_visible_window(filer_window);
 }
 
 gboolean toolbar_close_button_enabled(void)

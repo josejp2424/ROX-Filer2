@@ -7,7 +7,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
+"Project-Id-Version: Rox-Filer2 2.14.0-5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -7694,3 +7694,87 @@ msgstr "包括可移动驱动器"
 #: Options.xml.h
 msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
 msgstr "启用启动时自动挂载后，也包括 USB、SD 等可移动存储设备。"
+
+# 2.13.0-9: separate authenticated root filer window.
+msgid "Open as root"
+msgstr "以 root 身份打开"
+
+#: modern_ui.c:1580
+#, c-format
+msgid "%d items selected"
+msgstr "已选择 %d 个项目"
+
+#: modern_ui.c:2434
+msgid "Add Current Folder"
+msgstr "添加当前文件夹"
+
+#: modern_ui.c:2192
+msgid "Detailed View"
+msgstr "详细视图"
+
+#: modern_ui.c:2437
+msgid "Edit Bookmarks..."
+msgstr "编辑书签..."
+
+#: modern_ui.c:1399
+msgid "Edit Location"
+msgstr "编辑位置"
+
+#: modern_ui.c:1475
+msgid "Filter the current folder as you type"
+msgstr "输入时筛选当前文件夹"
+
+#: modern_ui.c:1513
+msgid "No selection"
+msgstr "未选择"
+
+#: modern_ui.c:1520
+msgid "Preview"
+msgstr "预览"
+
+#: modern_ui.c:1474
+msgid "Quick Filter"
+msgstr "快速筛选"
+
+#: modern_ui.c:2189
+msgid "Quick Filter (Ctrl+I)"
+msgstr "快速筛选 (Ctrl+I)"
+
+#: modern_ui.c:2179
+msgid "Show Preview Pane"
+msgstr "显示预览面板"
+
+#: modern_ui.c:2188
+msgid "Split View (F3)"
+msgstr "分栏视图 (F3)"
+
+#: modern_ui.c
+msgid "Keep Filter When Changing Folders"
+msgstr "切换文件夹时保留筛选条件"
+
+#: modern_ui.c
+msgid "Breadcrumb Location Bar"
+msgstr "面包屑位置栏"
+
+#: modern_ui.c
+msgid "Copy to Other Pane (Shift+F5)"
+msgstr "复制到另一窗格 (Shift+F5)"
+
+#: modern_ui.c
+msgid "Move to Other Pane (Shift+F6)"
+msgstr "移动到另一窗格 (Shift+F6)"
+
+# 2.14.0-5: real byte progress for copy/move (transfer_progress.c)
+#: abox.c
+msgid "Calculating size…"
+msgstr "正在计算大小…"
+
+#: abox.c
+#, c-format
+msgid "%s of %s"
+msgstr "%s / %s"
+
+#: abox.c
+msgid "Writing to the device. Do not remove it until this window closes."
+msgstr "正在写入设备。在此窗口关闭前请勿移除设备。"
+

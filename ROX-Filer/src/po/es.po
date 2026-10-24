@@ -2,7 +2,7 @@
 # Updated for Rox-Filer2 2.12-r63: synchronized GTK3 interface catalogue.
 msgid ""
 msgstr ""
-"Project-Id-Version: Rox-Filer2 2.13.0-8\n"
+"Project-Id-Version: Rox-Filer2 2.14.0-5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-05 19:26+0000\n"
 "PO-Revision-Date: 2026-08-20 13:47-0300\n"
@@ -8048,3 +8048,87 @@ msgstr "Incluir unidades extraíbles"
 #: Options.xml.h
 msgid "Also include removable USB, SD and similar storage devices when automatic startup mounting is enabled."
 msgstr "Incluye también dispositivos de almacenamiento extraíbles USB, SD y similares cuando el montaje automático al iniciar está activado."
+
+# 2.13.0-9: separate authenticated root filer window.
+msgid "Open as root"
+msgstr "Abrir como root"
+
+#: modern_ui.c:1580
+#, c-format
+msgid "%d items selected"
+msgstr "%d elementos seleccionados"
+
+#: modern_ui.c:2434
+msgid "Add Current Folder"
+msgstr "Añadir carpeta actual"
+
+#: modern_ui.c:2192
+msgid "Detailed View"
+msgstr "Vista detallada"
+
+#: modern_ui.c:2437
+msgid "Edit Bookmarks..."
+msgstr "Editar marcadores..."
+
+#: modern_ui.c:1399
+msgid "Edit Location"
+msgstr "Editar ubicación"
+
+#: modern_ui.c:1475
+msgid "Filter the current folder as you type"
+msgstr "Filtrar la carpeta actual mientras escribes"
+
+#: modern_ui.c:1513
+msgid "No selection"
+msgstr "Sin selección"
+
+#: modern_ui.c:1520
+msgid "Preview"
+msgstr "Vista previa"
+
+#: modern_ui.c:1474
+msgid "Quick Filter"
+msgstr "Filtro rápido"
+
+#: modern_ui.c:2189
+msgid "Quick Filter (Ctrl+I)"
+msgstr "Filtro rápido (Ctrl+I)"
+
+#: modern_ui.c:2179
+msgid "Show Preview Pane"
+msgstr "Mostrar panel de vista previa"
+
+#: modern_ui.c:2188
+msgid "Split View (F3)"
+msgstr "Vista dividida (F3)"
+
+#: modern_ui.c
+msgid "Keep Filter When Changing Folders"
+msgstr "Mantener el filtro al cambiar de carpeta"
+
+#: modern_ui.c
+msgid "Breadcrumb Location Bar"
+msgstr "Barra de ubicación por segmentos"
+
+#: modern_ui.c
+msgid "Copy to Other Pane (Shift+F5)"
+msgstr "Copiar al otro panel (Mayús+F5)"
+
+#: modern_ui.c
+msgid "Move to Other Pane (Shift+F6)"
+msgstr "Mover al otro panel (Mayús+F6)"
+
+# 2.14.0-5: real byte progress for copy/move (transfer_progress.c)
+#: abox.c
+msgid "Calculating size…"
+msgstr "Calculando el tamaño…"
+
+#: abox.c
+#, c-format
+msgid "%s of %s"
+msgstr "%s de %s"
+
+#: abox.c
+msgid "Writing to the device. Do not remove it until this window closes."
+msgstr "Escribiendo en el dispositivo. No lo retires hasta que se cierre esta ventana."
+

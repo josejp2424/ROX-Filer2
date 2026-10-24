@@ -837,7 +837,7 @@ guchar *get_relative_path(const guchar *from, const guchar *to)
 		g_string_append_c(path, '/');
 	}
 
-	if (path->str[path->len - 1] == '/')
+	if (path->len > 0 && path->str[path->len - 1] == '/')
 		g_string_truncate(path, path->len - 1);
 	if (path->len == 0)
 		g_string_assign(path, ".");

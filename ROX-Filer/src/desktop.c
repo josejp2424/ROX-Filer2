@@ -788,6 +788,13 @@ gboolean desktop_set_wallpaper(const gchar *path, gboolean save,
     if (desktop_window)
         gtk_widget_queue_draw(desktop_window);
 
+    /* 2.13.0-10: X11 publishes the exact ROX wallpaper itself instead of
+     * depending on feh/hsetroot/xwallpaper. Wayland intentionally does
+     * nothing here because Layer Shell provides real compositor alpha. */
+    desktop_backend_sync_wallpaper(gdk_display_get_default(),
+                                   wallpaper_pixbuf,
+                                   wallpaper_mode_name(wallpaper_mode));
+
     if (save && !desktop_save_wallpaper(error)) {
         desktop_wbar_wallpaper_changed(wallpaper_path,
                                        wallpaper_mode_name(wallpaper_mode));
@@ -843,6 +850,8 @@ static void desktop_load_wallpaper_from_config(void)
         g_clear_pointer(&wallpaper_path, g_free);
         if (desktop_window)
             gtk_widget_queue_draw(desktop_window);
+        desktop_backend_sync_wallpaper(gdk_display_get_default(), NULL,
+                                       wallpaper_mode_name(wallpaper_mode));
         g_free(path);
         return;
     }
@@ -2710,8 +2719,9 @@ static void desktop_drive_button_clicked(GtkButton *button, gpointer data)
     desktop_open_drive_device(action->device);
 }
 
-/* Agregado por josejp2424 (2026): el pequeño botón de la esquina superior
- * derecha desmonta una unidad montada. En medios ópticos ejecuta Eject. */
+/* 2.13.0-9: for disk partitions the small mounted-state button only
+ * unmounts that partition; it must never power off the removable parent.
+ * Optical rows may still eject. Whole-device USB Eject remains explicit. */
 static void desktop_drive_quick_action(GtkButton *button, gpointer data)
 {
     DesktopDriveAction *action = data;
@@ -2723,7 +2733,7 @@ static void desktop_drive_quick_action(GtkButton *button, gpointer data)
     if (!drive)
         return;
     ctx = g_new0(DesktopDriveActionAsync, 1);
-    ctx->eject = rox_drive_can_eject(drive);
+    ctx->eject = drive->optical && rox_drive_can_eject(drive);
     if (ctx->eject)
         rox_drive_eject_async(drive, desktop_drive_action_done, ctx);
     else
@@ -2822,8 +2832,9 @@ static GtkWidget *desktop_drive_widget_new(const RoxDriveInfo *drive)
             gtk_image_set_from_icon_name(GTK_IMAGE(quick_image), "media-eject",
                                          GTK_ICON_SIZE_MENU);
         gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
+        /* 2.13.0-9: partition rows unmount only; optical media may eject. */
         gtk_widget_set_tooltip_text(quick_button,
-            rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
+            drive->optical && rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
         g_signal_connect(quick_button, "clicked",
                          G_CALLBACK(desktop_drive_quick_action), action);
         gtk_overlay_add_overlay(GTK_OVERLAY(overlay), quick_button);
@@ -5115,7 +5126,6 @@ static gboolean desktop_apply_geometry(gpointer data)
     }
     desktop_apply_drive_layout();
     gtk_widget_queue_draw(desktop_window);
-    desktop_lower_window();
     return G_SOURCE_REMOVE;
 }
 
@@ -5181,6 +5191,9 @@ static void desktop_screen_changed(GdkScreen *screen, gpointer data)
 {
     (void)screen; (void)data;
     desktop_schedule_geometry_update();
+    desktop_backend_sync_wallpaper(gdk_display_get_default(),
+                                   wallpaper_pixbuf,
+                                   wallpaper_mode_name(wallpaper_mode));
 }
 
 static gboolean desktop_map_event(GtkWidget *widget, GdkEvent *event,
@@ -5189,6 +5202,14 @@ static gboolean desktop_map_event(GtkWidget *widget, GdkEvent *event,
     (void)widget; (void)event; (void)data;
     ROX_LOG_INFO("desktop", "desktop window mapped");
     desktop_schedule_geometry_update();
+
+    /* 2.13.0-10: igual que PCManFM, bajar el escritorio una sola vez al
+     * mapearlo. No repetirlo en cada Refresh/geometría: eso reordenaba capas
+     * de JWM/XLibre y podía dejar Conky/sClock/Nixie-clock detrás del fondo. */
+    desktop_lower_window();
+    desktop_backend_sync_wallpaper(gdk_display_get_default(),
+                                   wallpaper_pixbuf,
+                                   wallpaper_mode_name(wallpaper_mode));
     return FALSE;
 }
 
@@ -5262,8 +5283,9 @@ void desktop_start(void)
     GError *backend_error = NULL;
 
     if (desktop_window) {
-        ROX_LOG_INFO("desktop", "desktop already exists; presenting current window");
-        gtk_window_present(GTK_WINDOW(desktop_window));
+        ROX_LOG_INFO("desktop", "desktop already exists; keeping desktop layer");
+        /* gtk_window_present() can request a raise from the WM. A desktop
+         * window should never be presented like an application window. */
         desktop_lower_window();
         return;
     }

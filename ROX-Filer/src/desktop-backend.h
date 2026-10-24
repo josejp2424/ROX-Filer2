@@ -20,6 +20,8 @@ typedef struct _DesktopBackend {
                              gpointer user_data);
     void (*unregister_control)(GtkWidget *window);
     void (*lower_window)(GtkWidget *window);
+    void (*sync_wallpaper)(GdkDisplay *display, GdkPixbuf *pixbuf,
+                           const gchar *mode);
     gboolean (*send_refresh_request)(GdkDisplay *display);
 } DesktopBackend;
 
@@ -30,5 +32,12 @@ const DesktopBackend *desktop_backend_select(GdkDisplay *display);
 /* Implementaciones proporcionadas por los backends gráficos. */
 const DesktopBackend *desktop_x11_backend_get(void);
 const DesktopBackend *desktop_wayland_backend_get(void);
+
+/* Mantiene sincronizado el fondo nativo del servidor gráfico cuando el
+ * backend lo necesita. En X11 publica _XROOTMAP_ID/_XROOTPMAP_ID; en Wayland
+ * es deliberadamente un no-op porque el compositor compone la superficie
+ * BACKGROUND directamente. */
+void desktop_backend_sync_wallpaper(GdkDisplay *display, GdkPixbuf *pixbuf,
+                                    const gchar *mode);
 
 #endif

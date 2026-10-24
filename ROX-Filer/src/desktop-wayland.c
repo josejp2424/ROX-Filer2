@@ -223,7 +223,9 @@ static void desktop_wayland_configure_window(GtkWindow *window)
 
     gtk_window_set_skip_taskbar_hint(window, TRUE);
     gtk_window_set_skip_pager_hint(window, TRUE);
-    gtk_window_set_accept_focus(window, TRUE);
+    /* Layer Shell BACKGROUND recibe puntero, pero no debe convertirse en
+     * destino de foco de teclado al hacer clic en el escritorio. */
+    gtk_window_set_accept_focus(window, FALSE);
     gtk_window_set_focus_on_map(window, FALSE);
 }
 
@@ -360,6 +362,19 @@ static void desktop_wayland_lower_window(GtkWidget *window)
     (void)window;
 }
 
+
+static void desktop_wayland_sync_wallpaper(GdkDisplay *display,
+                                           GdkPixbuf *pixbuf,
+                                           const gchar *mode)
+{
+    /* Wayland no tiene root window ni pseudo-transparencia X11. El wallpaper
+     * ya se dibuja en la superficie Layer Shell BACKGROUND y el compositor
+     * mezcla las superficies RGBA de Conky/widgets que estén por encima. */
+    (void)display;
+    (void)pixbuf;
+    (void)mode;
+}
+
 static gboolean desktop_wayland_send_refresh_request(GdkDisplay *display)
 {
     struct sockaddr_un address;
@@ -406,6 +421,7 @@ const DesktopBackend *desktop_wayland_backend_get(void)
         desktop_wayland_register_control,
         desktop_wayland_unregister_control,
         desktop_wayland_lower_window,
+        desktop_wayland_sync_wallpaper,
         desktop_wayland_send_refresh_request
     };
 

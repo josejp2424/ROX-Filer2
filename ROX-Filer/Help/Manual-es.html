@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Manual de Rox-Filer2</h1>
-<p class="sub">Gestor de archivos rápido y liviano para X11 y Wayland, continuación de ROX-Filer. &mdash; 2.13.0-8</p>
+<p class="sub">Gestor de archivos rápido y liviano para X11 y Wayland, continuación de ROX-Filer. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -90,18 +90,18 @@ footer {
 <p>Hace una sola cosa en un solo proceso: gestiona archivos y, si usted quiere, el escritorio. No hay demonio, ni capa de sistema de archivos virtual, ni dependencia de un entorno de escritorio. Todo lo que ve son rutas POSIX corrientes.</p>
 <h2 id="interfaces">Interfaces Clásica y Moderna</h2>
 <p>Rox-Filer2 incluye dos aspectos de interfaz que comparten los mismos motores de archivos, MIME, montaje, Papelera y Escritorio.</p>
-<ul><li><b>Clásica ROX</b> conserva la disposición y la barra de herramientas tradicionales de ROX-Filer. Si viene de ROX-Filer, nada cambió de lugar.</li><li><b>Moderna</b> agrega barra de menús, fila de navegación, pestañas y una barra lateral con Lugares, Dispositivos y Red.</li></ul>
+<ul><li><b>Clásica ROX</b> conserva la disposición y la barra de herramientas tradicionales de ROX-Filer. Si viene de ROX-Filer, nada cambió de lugar.</li><li><b>Moderna</b> conserva la barra de ubicación editable de Rox-Filer2 y agrega pestañas, breadcrumbs opcionales, vista dividida con F3, filtro rápido, vista previa y una barra lateral con Lugares, Marcadores, Dispositivos y Red.</li></ul>
 <p>Elija el estilo permanente en <b>Opciones &gt; Interfaz</b>. El cambio se aplica a las ventanas que abra después de reiniciar Rox-Filer2.</p>
 <p>Para probar un estilo una sola vez sin tocar la preferencia guardada, ejecute <code>rox --classic</code> o <code>rox --modern</code>.</p>
 <h2 id="window">La ventana del gestor</h2>
 <p>Abra directorios con doble clic. Un clic simple selecciona; arrastre con el botón izquierdo sobre espacio vacío para seleccionar con goma elástica.</p>
-<ul><li>El botón derecho abre el menú contextual del elemento bajo el puntero, o el de la ventana entera si está sobre espacio vacío.</li><li>El botón central abre un directorio en una ventana nueva.</li><li><kbd>Retroceso</kbd> sube un nivel; <kbd>Ctrl+L</kbd> enfoca la entrada de ruta.</li><li>En Moderna, <kbd>Ctrl+T</kbd> abre una pestaña y <kbd>Ctrl+W</kbd> la cierra. Cada pestaña mantiene su propia ruta e historial.</li></ul>
+<ul><li>El botón derecho abre el menú contextual del elemento bajo el puntero, o el de la ventana entera si está sobre espacio vacío.</li><li>El botón central abre un directorio en una ventana nueva.</li><li><kbd>Retroceso</kbd> sube un nivel; <kbd>Ctrl+L</kbd> enfoca la entrada de ruta.</li><li>En Moderna, <kbd>Ctrl+T</kbd> abre una pestaña y <kbd>Ctrl+W</kbd> la cierra. Cada pestaña mantiene su propia ruta e historial.</li><li>Pulse <kbd>F3</kbd> para tener dos paneles independientes en la misma ventana. <kbd>Mayús+F5</kbd> copia la selección al otro panel y <kbd>Mayús+F6</kbd> la mueve. <kbd>F6</kbd>/<kbd>Ctrl+L</kbd> enfoca la ubicación activa y <kbd>Ctrl+I</kbd> abre el filtro rápido.</li></ul>
 <p>Cambie entre la vista de iconos y la vista detallada con el selector de vista, y ajuste el tamaño de los iconos con el deslizador.</p>
 <h2 id="desktop">Escritorio ROX</h2>
 <p>Inicie el escritorio con <code>rox --desktop</code>. Solo corre una instancia a la vez. Dibuja el fondo de pantalla, muestra los iconos de su directorio de escritorio y puede mostrar iconos de unidades.</p>
 <ul><li><b>Fondo de pantalla:</b> <code>rox --desktop-wallpaper</code>, o clic derecho en el escritorio. Los modos son llenar, ajustar, estirar, centrar y mosaico.</li><li><b>Aplicaciones:</b> <code>rox --desktop-apps</code> gestiona los lanzadores del escritorio.</li><li><b>Iconos de unidades:</b> <code>rox --desktop-drive-icon-layout</code> los ordena.</li><li><b>Preferencias:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>En X11 el escritorio usa una ventana normal con sugerencia de tipo escritorio. En Wayland usa la capa de fondo de Layer Shell, que requiere <code>gtk-layer-shell</code> instalado y un compositor que publique <code>zwlr_layer_shell_v1</code>, como Labwc. Fuerce un backend con <code>rox-x11 --desktop</code> o <code>rox-wayland --desktop</code>.</p>
-<p>Para fijar además el fondo de la ventana raíz de X11, de modo que las terminales con transparencia falsa y conky vean la misma imagen, instale <code>feh</code> o <code>xwallpaper</code>.</p>
+<p>En X11 Rox-Filer2 publica directamente el fondo como pixmap de la ventana raíz, por lo que las terminales con seudotransparencia y conky ven la misma imagen sin <code>feh</code> ni <code>xwallpaper</code>.</p>
 <h2 id="drives">Unidades y montaje</h2>
 <p>Las unidades locales y extraíbles aparecen en la barra lateral de Moderna bajo <b>Dispositivos</b>, y opcionalmente como iconos en el escritorio. Haga clic en una unidad para montarla y abrirla; use el menú contextual para desmontarla.</p>
 <p>La información de unidades proviene de <code>lsblk</code>, de <code>/proc/mounts</code> y de sysfs, así que no hace falta ningún servicio en segundo plano. Montar una unidad como usuario normal requiere <code>udisksctl</code> o una entrada en fstab que lo permita.</p>

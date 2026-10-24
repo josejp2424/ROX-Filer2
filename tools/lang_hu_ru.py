@@ -74,9 +74,9 @@ T["hu"] = {
         "a <code>zwlr_layer_shell_v1</code> protokollt, például a Labwc. A "
         "háttérprogramot a <code>rox-x11 --desktop</code> vagy a "
         "<code>rox-wayland --desktop</code> paranccsal kényszerítheti.</p>",
-        "<p>Ha az X11 gyökérablak hátterét is be szeretné állítani, hogy az "
-        "álátlátszó terminálok és a conky ugyanazt a képet lássák, telepítse a "
-        "<code>feh</code> vagy az <code>xwallpaper</code> programot.</p>",
+        "<p>X11 alatt a Rox-Filer2 közvetlenül a gyökérablak pixmapjeként teszi "
+        "közzé a háttérképet, így a pszeudoátlátszó terminálok és a conky ugyanazt "
+        "a képet látják <code>feh</code> vagy <code>xwallpaper</code> nélkül.</p>",
     ]),
     "drives": ("Meghajtók és csatolás", [
         "<p>A helyi és cserélhető meghajtók a Modern oldalsávban az "
@@ -280,9 +280,9 @@ T["ru"] = {
         "<code>zwlr_layer_shell_v1</code>, например Labwc. Принудительно выбрать "
         "механизм можно командами <code>rox-x11 --desktop</code> или "
         "<code>rox-wayland --desktop</code>.</p>",
-        "<p>Чтобы фон также устанавливался на корневом окне X11 и терминалы с "
-        "псевдопрозрачностью и conky видели то же изображение, установите "
-        "<code>feh</code> или <code>xwallpaper</code>.</p>",
+        "<p>В X11 Rox-Filer2 сам публикует обои как pixmap корневого окна, "
+        "поэтому терминалы с псевдопрозрачностью и conky видят то же изображение "
+        "без <code>feh</code> и <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Накопители и монтирование", [
         "<p>Локальные и съёмные накопители отображаются в боковой панели "

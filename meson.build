@@ -1,7 +1,7 @@
 project(
   'rox-filer2',
   'c',
-  version : '2.13.0-8',
+  version : '2.14.0-5',
   meson_version : '>=0.61.0',
   default_options : [
     'c_std=gnu11',
@@ -147,6 +147,7 @@ configure_file(
 rox_sources = files(
   'ROX-Filer/src/abox.c',
   'ROX-Filer/src/action.c',
+  'ROX-Filer/src/transfer_progress.c',
   'ROX-Filer/src/appinfo.c',
   'ROX-Filer/src/appmenu.c',
   'ROX-Filer/src/bind.c',
@@ -278,11 +279,22 @@ rox_mount_helper = executable(
   install : false,
 )
 
+# 2.13.0-9: fixed pkexec target for the context-menu Open as root action.
+rox_open_root_helper = executable(
+  'rox-open-root-helper',
+  'ROX-Filer/src/rox_open_root_helper.c',
+  c_args : cc.get_supported_arguments(
+    '-Wall', '-Wextra', '-Wformat=2', '-Wshadow', '-Wpointer-arith'
+  ),
+  install : false,
+)
+
 summary(
   {
     'ROX-Filer binary' : join_paths(meson.project_build_root(), 'ROX-Filer'),
     'rox-find binary' : join_paths(meson.project_build_root(), 'rox-find'),
     'mount helper' : join_paths(meson.project_build_root(), 'rox-mount-helper'),
+    'Open-as-root helper' : join_paths(meson.project_build_root(), 'rox-open-root-helper'),
     'GTK3' : gtk_dep.version(),
     'Pango word wrapping' : pango_dep.found(),
     '64-bit file offsets' : off_t_size >= 8,

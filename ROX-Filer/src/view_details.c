@@ -224,6 +224,30 @@ static void details_update_header_visibility(ViewDetails *view_details)
 					  o_display_show_headers.int_value);
 }
 
+void view_details_apply_modern_columns(FilerWindow *filer_window)
+{
+	ViewDetails *view_details;
+	if (!filer_window || !filer_window->modern_mode ||
+	    filer_window->view_type != VIEW_TYPE_DETAILS || !filer_window->view)
+		return;
+	if (!G_TYPE_CHECK_INSTANCE_TYPE((GTypeInstance *) filer_window->view, view_details_get_type()))
+		return;
+	view_details = VIEW_DETAILS(filer_window->view);
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view_details), TRUE);
+	gtk_tree_view_column_set_visible(view_details->name_column, TRUE);
+	gtk_tree_view_column_set_visible(view_details->type_column, TRUE);
+	gtk_tree_view_column_set_visible(view_details->size_column, TRUE);
+	gtk_tree_view_column_set_visible(view_details->mtime_column, TRUE);
+	if (filer_window->modern_full_details)
+	{
+		gtk_tree_view_column_set_visible(view_details->permissions_column, TRUE);
+		gtk_tree_view_column_set_visible(view_details->owner_column, TRUE);
+		gtk_tree_view_column_set_visible(view_details->group_column, TRUE);
+		gtk_tree_view_column_set_visible(view_details->ctime_column, TRUE);
+		gtk_tree_view_column_set_visible(view_details->atime_column, TRUE);
+	}
+}
+
 /* Fulfill the GtkTreeModel requirements */
 static guint details_get_flags(GtkTreeModel *tree_model)
 {
@@ -1361,6 +1385,7 @@ static void view_details_style_changed(ViewIface *view, int flags)
 		gtk_tree_view_column_set_visible(view_details->atime_column,
 			o_display_show_atime.int_value);
 
+	view_details_apply_modern_columns(view_details->filer_window);
 	gtk_tree_view_columns_autosize((GtkTreeView *) view);
 
 	if (flags & VIEW_UPDATE_HEADERS)

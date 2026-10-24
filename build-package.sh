@@ -160,10 +160,12 @@ if [ "$SKIP_COMPILE" -eq 0 ]; then
     ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
     ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
     MOUNT_HELPER_BINARY="$MESON_BUILD_DIR/rox-mount-helper"
+    ROOT_HELPER_BINARY="$MESON_BUILD_DIR/rox-open-root-helper"
 else
     ROX_BINARY="$MESON_BUILD_DIR/ROX-Filer"
     ROX_FIND_BINARY="$MESON_BUILD_DIR/rox-find"
     MOUNT_HELPER_BINARY="$MESON_BUILD_DIR/rox-mount-helper"
+    ROOT_HELPER_BINARY="$MESON_BUILD_DIR/rox-open-root-helper"
 fi
 
 if [ ! -x "$ROX_BINARY" ]; then
@@ -178,6 +180,11 @@ fi
 
 if [ ! -x "$MOUNT_HELPER_BINARY" ]; then
     echo "ERROR: Rox-Filer2 mount helper not found: $MOUNT_HELPER_BINARY" >&2
+    exit 1
+fi
+# 2.13.0-9: fixed helper used by the normal-user Open as root action.
+if [ ! -x "$ROOT_HELPER_BINARY" ]; then
+    echo "ERROR: Rox-Filer2 Open-as-root helper not found: $ROOT_HELPER_BINARY" >&2
     exit 1
 fi
 
@@ -224,6 +231,8 @@ mkdir -p "$APP_INSTALL_DIR"
 copy_a "$APP_DIR/." "$APP_INSTALL_DIR/"
 install -m0755 "$ROX_BINARY" "$APP_INSTALL_DIR/ROX-Filer"
 install -m0755 "$MOUNT_HELPER_BINARY" "$APP_INSTALL_DIR/rox-mount-helper"
+# 2.13.0-9: package the fixed Open-as-root helper beside the mount helper.
+install -m0755 "$ROOT_HELPER_BINARY" "$APP_INSTALL_DIR/rox-open-root-helper"
 rm -f "$APP_INSTALL_DIR/ROX-Filer.dbg"
 rm -rf "$APP_INSTALL_DIR/ROX"
 copy_a "$PROJECT_ROOT/package-assets/ROX" "$APP_INSTALL_DIR/ROX"
@@ -302,7 +311,11 @@ install -Dm0755 "$ROX_FIND_BINARY" \
 # Debian binary packages ship stripped runtime binaries. Keep this explicit so
 # Meson and legacy-built inputs are normalized to the same package policy.
 command -v strip >/dev/null 2>&1 || { echo "ERROR: strip/binutils is required." >&2; exit 1; }
-strip --strip-unneeded "$APP_INSTALL_DIR/ROX-Filer" "$APP_INSTALL_DIR/rox-mount-helper" "$PACKAGE_DIR/usr/bin/rox-find"
+strip --strip-unneeded \
+    "$APP_INSTALL_DIR/ROX-Filer" \
+    "$APP_INSTALL_DIR/rox-mount-helper" \
+    "$APP_INSTALL_DIR/rox-open-root-helper" \
+    "$PACKAGE_DIR/usr/bin/rox-find"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.desktop" \
     "$PACKAGE_DIR/usr/share/applications/rox-find.desktop"
 install -Dm0644 "$PROJECT_ROOT/rox-find/data/rox-find.svg" \
@@ -370,7 +383,7 @@ Package: rox-filer2
 Architecture: any
 Description: Rox-Filer2
 EOF
-    SHLIBS_DEPENDS=$(cd "$PROJECT_ROOT" && dpkg-shlibdeps -O "$APP_INSTALL_DIR/ROX-Filer" "$APP_INSTALL_DIR/rox-mount-helper" "$PACKAGE_DIR/usr/bin/rox-find" 2>/dev/null | sed -n 's/^shlibs:Depends=//p' || true)
+    SHLIBS_DEPENDS=$(cd "$PROJECT_ROOT" && dpkg-shlibdeps -O "$APP_INSTALL_DIR/ROX-Filer" "$APP_INSTALL_DIR/rox-mount-helper" "$APP_INSTALL_DIR/rox-open-root-helper" "$PACKAGE_DIR/usr/bin/rox-find" 2>/dev/null | sed -n 's/^shlibs:Depends=//p' || true)
     rm -rf "$TMP_DEBIAN_DIR"
 fi
 

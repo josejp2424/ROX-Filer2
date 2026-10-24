@@ -64,5 +64,6 @@ struct _ViewDetails {
 
 GtkWidget *view_details_new(FilerWindow *filer_window);
 GType view_details_get_type(void);
+void view_details_apply_modern_columns(FilerWindow *filer_window);
 
 #endif /* __VIEW_DETAILS_H__ */

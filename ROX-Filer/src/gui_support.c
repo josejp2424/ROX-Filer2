@@ -1575,7 +1575,10 @@ void entry_set_error(GtkWidget *entry, gboolean error)
  */
 void window_put_just_above(GdkWindow *higher, GdkWindow *lower)
 {
-	if (o_override_redirect.int_value && lower)
+	/* 2.14.0-5: XConfigureWindow restacking exists only on X11; on Wayland
+	 * gdk_x11_*() returned NULL/0 and Xlib crashed on the NULL Display. */
+	if (o_override_redirect.int_value && lower &&
+	    GDK_IS_X11_DISPLAY(gdk_window_get_display(higher)))
 	{
 		XWindowChanges restack;
 		GdkDisplay *display;
@@ -2041,6 +2044,10 @@ static void rox_wmspec_change_state(gboolean add, GdkWindow *window,
 	g_return_if_fail(window != NULL);
 
 	display = gdk_window_get_display(window);
+	/* 2.14.0-5: _NET_WM_STATE is an X11 protocol.  On Wayland this used to
+	 * reach XSendEvent() with a NULL Display (SIGSEGV opening a panel). */
+	if (!GDK_IS_X11_DISPLAY(display))
+		return;
 	screen = gdk_window_get_screen(window);
 	root = gdk_screen_get_root_window(screen);
 	xdisplay = gdk_x11_display_get_xdisplay(display);

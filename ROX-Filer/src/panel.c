@@ -1966,6 +1966,12 @@ static void run_applet(PanelIcon *pi)
 	if (access(argv[0], X_OK) != 0)
 		return;
 
+	/* 2.14.0-5: applets are embedded with GtkSocket (XEmbed), which only
+	 * exists on X11; XGrabButton() below also needs an X Display.  On
+	 * Wayland the item stays an ordinary panel icon. */
+	if (!rox_x11_display())
+		return;
+
 	pi->socket = gtk_socket_new();
 
 	gtk_container_add(GTK_CONTAINER(pi->widget), pi->socket);

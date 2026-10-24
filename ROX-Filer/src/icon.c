@@ -507,6 +507,16 @@ void icon_set_shortcut(Icon *icon, const gchar *shortcut)
 	if (icon->shortcut && shortcut && strcmp(icon->shortcut, shortcut) == 0)
 		return;
 
+	/* 2.14.0-5: global shortcuts are XGrabKey() on the root window; a
+	 * Wayland client cannot grab keys and initModifiers() crashed on the
+	 * NULL Display.  Keep the setting so it works again under X11. */
+	if (!rox_x11_display())
+	{
+		g_free(icon->shortcut);
+		icon->shortcut = g_strdup(shortcut);
+		return;
+	}
+
 	initModifiers();
 
 	ungrab_key(icon);
@@ -809,7 +819,11 @@ static void get_shortcut(GtkWidget *button, GtkWidget *label)
 	GtkWidget *popup, *frame, *msg;
 	GdkWindow *pwin;
 	Window    xid;
-	Display	  *dpy = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+	Display	  *dpy = rox_x11_display();
+
+	/* 2.14.0-5: capturing a key uses XGrabKeyboard/XGrabPointer. */
+	if (!dpy)
+		return;
 
 	popup = gtk_window_new(GTK_WINDOW_POPUP);
 

@@ -72,9 +72,9 @@ T["it"] = {
         "richiede <code>gtk-layer-shell</code> installato e un compositor che "
         "pubblichi <code>zwlr_layer_shell_v1</code>, come Labwc. Forzi un backend "
         "con <code>rox-x11 --desktop</code> o <code>rox-wayland --desktop</code>.</p>",
-        "<p>Per impostare anche lo sfondo della finestra radice di X11, così che "
-        "i terminali con falsa trasparenza e conky vedano la stessa immagine, "
-        "installi <code>feh</code> o <code>xwallpaper</code>.</p>",
+        "<p>Su X11 Rox-Filer2 pubblica direttamente lo sfondo come pixmap della "
+        "finestra radice, così i terminali con pseudotrasparenza e conky vedono la "
+        "stessa immagine senza <code>feh</code> né <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Unità e montaggio", [
         "<p>Le unità locali e rimovibili compaiono nella barra laterale Moderna "
@@ -274,9 +274,9 @@ T["ca"] = {
         "que publiqui <code>zwlr_layer_shell_v1</code>, com el Labwc. Forceu un "
         "rerefons amb <code>rox-x11 --desktop</code> o "
         "<code>rox-wayland --desktop</code>.</p>",
-        "<p>Per fixar també el fons de la finestra arrel d'X11, de manera que els "
-        "terminals amb transparència falsa i el conky vegin la mateixa imatge, "
-        "instal·leu <code>feh</code> o <code>xwallpaper</code>.</p>",
+        "<p>A X11, Rox-Filer2 publica directament el fons com a pixmap de la "
+        "finestra arrel, de manera que els terminals amb pseudotransparència i conky "
+        "veuen la mateixa imatge sense <code>feh</code> ni <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Unitats i muntatge", [
         "<p>Les unitats locals i extraïbles apareixen a la barra lateral de la "
@@ -481,9 +481,9 @@ T["de"] = {
         "ein Compositor vorhanden sein, der <code>zwlr_layer_shell_v1</code> "
         "bereitstellt, etwa Labwc. Ein Backend erzwingen Sie mit "
         "<code>rox-x11 --desktop</code> oder <code>rox-wayland --desktop</code>.</p>",
-        "<p>Damit auch der X11-Wurzelfensterhintergrund gesetzt wird und "
-        "pseudotransparente Terminals sowie conky dasselbe Bild sehen, "
-        "installieren Sie <code>feh</code> oder <code>xwallpaper</code>.</p>",
+        "<p>Unter X11 veröffentlicht Rox-Filer2 das Hintergrundbild direkt als "
+        "Pixmap des Wurzelfensters. Pseudotransparente Terminals und conky sehen "
+        "dadurch dasselbe Bild ohne <code>feh</code> oder <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Laufwerke und Einhängen", [
         "<p>Lokale und Wechseldatenträger erscheinen in der modernen "

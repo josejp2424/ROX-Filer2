@@ -1,3 +1,59 @@
+rox-filer2 (2.14.0-5) unstable; urgency=medium
+
+  * Copy/move progress follows bytes confirmed on the destination device
+    (cp, mv and rsync); the operation ends only after syncfs() of it.
+  * No false ownership errors as root on FAT/exFAT/NTFS/SMB/FUSE.
+  * Fix a possible hang of the action child on an inherited mutex.
+  * Wayland: fix crashes opening a panel and loading icons with shortcuts.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sat, 24 Oct 2026 12:00:00 -0300
+
+rox-filer2 (2.14.0-4) unstable; urgency=medium
+
+  * Fix Modern type-ahead after the F3/preview workspace reparents the file view.
+  * Restore focus to the active file pane after workspace/session setup.
+  * Keep Ctrl+L/F6 location editing and Ctrl+I quick filtering explicit.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sun, 11 Oct 2026 19:10:00 -0300
+
+rox-filer2 (2.14.0-3) unstable; urgency=medium
+
+  * Restore the original clean Modern toolbar and editable path field.
+  * Make breadcrumb navigation optional instead of replacing the path field.
+  * Keep Quick Filter off the toolbar; add a lock and clear unlocked filters on navigation.
+  * Add Shift+F5/Shift+F6 copy/move between F3 split panes.
+  * Keep Places compact while exposing real bookmarks and middle-click split navigation.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 09 Oct 2026 13:40:00 -0300
+
+rox-filer2 (2.14.0-1) unstable; urgency=medium
+
+  * Add Modern F3 in-window split view with independent pane navigation.
+  * Add editable breadcrumbs, quick filter and a richer Places/bookmarks sidebar.
+  * Add complete Modern details columns and an optional image/metadata preview pane.
+  * Persist Modern split and preview state without changing Classic ROX behavior.
+  * Complete all new runtime strings in the eleven maintained translations.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Fri, 09 Oct 2026 11:50:00 -0300
+
+rox-filer2 (2.13.0-10) unstable; urgency=medium
+
+  * Fix X11/XLibre desktop stacking for Conky, sClock and Nixie-clock.
+  * Publish the ROX wallpaper natively through _XROOTMAP_ID/_XROOTPMAP_ID.
+  * Remove the external feh/hsetroot/xwallpaper dependency for pseudo-transparency.
+  * Keep Wayland on Layer Shell BACKGROUND and prevent desktop keyboard focus.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Wed, 07 Oct 2026 17:30:00 -0300
+
+rox-filer2 (2.13.0-9) unstable; urgency=medium
+
+  * Expose relative and absolute symlink creation in the file context menu.
+  * Add a fixed pkexec helper for opening a separate Rox-Filer2 window as root.
+  * Make disk-partition quick arrows unmount only that partition; keep whole-device USB Eject explicit.
+  * Ensure data/man/rox.1 is tracked and validated in clean release sources.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Sun, 04 Oct 2026 20:45:00 -0300
+
 rox-filer2 (2.13.0-8) unstable; urgency=medium
 
   * Add optional local-drive automount at Rox-Filer2 startup.

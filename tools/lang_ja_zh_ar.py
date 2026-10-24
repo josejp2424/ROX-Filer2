@@ -69,9 +69,9 @@ T["ja"] = {
         "<code>zwlr_layer_shell_v1</code> を公開するコンポジターが必要です。"
         "<code>rox-x11 --desktop</code> または <code>rox-wayland --desktop</code> "
         "でバックエンドを固定できます。</p>",
-        "<p>擬似透過のターミナルや conky に同じ画像を見せるため X11 のルート"
-        "ウィンドウの背景も設定したい場合は、<code>feh</code> または "
-        "<code>xwallpaper</code> をインストールしてください。</p>",
+        "<p>X11 では Rox-Filer2 が壁紙をルートウィンドウの pixmap として直接公開"
+        "するため、擬似透過のターミナルや conky でも <code>feh</code> や "
+        "<code>xwallpaper</code> なしで同じ画像が表示されます。</p>",
     ]),
     "drives": ("ドライブとマウント", [
         "<p>ローカルおよびリムーバブルのドライブは、モダンのサイドバーの"
@@ -249,8 +249,8 @@ T["zh"] = {
         "<code>zwlr_layer_shell_v1</code>，例如 Labwc。可用 "
         "<code>rox-x11 --desktop</code> 或 <code>rox-wayland --desktop</code> "
         "强制指定后端。</p>",
-        "<p>若还希望设置 X11 根窗口背景，使伪透明终端和 conky 看到同一张图像，"
-        "请安装 <code>feh</code> 或 <code>xwallpaper</code>。</p>",
+        "<p>在 X11 下，Rox-Filer2 会直接把壁纸发布为根窗口 pixmap，因此伪透明终端和 "
+        "conky 无需 <code>feh</code> 或 <code>xwallpaper</code> 也能看到同一张图像。</p>",
     ]),
     "drives": ("驱动器与挂载", [
         "<p>本地和可移动驱动器显示在现代界面侧边栏的<b>设备</b>下，也可显示为桌面"
@@ -416,9 +416,9 @@ T["ar"] = {
         "<code>gtk-layer-shell</code> ومُركِّبًا ينشر "
         "<code>zwlr_layer_shell_v1</code> مثل Labwc. يمكنك فرض خلفية معينة عبر "
         "<code>rox-x11 --desktop</code> أو <code>rox-wayland --desktop</code>.</p>",
-        "<p>ولضبط خلفية النافذة الجذرية في X11 أيضًا، كي ترى الطرفيات ذات الشفافية "
-        "الزائفة وبرنامج conky الصورة نفسها، ثبّت <code>feh</code> أو "
-        "<code>xwallpaper</code>.</p>",
+        "<p>في X11 ينشر Rox-Filer2 الخلفية مباشرةً كـ pixmap للنافذة الجذرية، لذلك "
+        "ترى الطرفيات ذات الشفافية الزائفة وconky الصورة نفسها من دون "
+        "<code>feh</code> أو <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("الأقراص والوصل", [
         "<p>تظهر الأقراص المحلية والقابلة للإزالة في الشريط الجانبي للواجهة "

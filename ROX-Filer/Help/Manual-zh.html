@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Rox-Filer2 手册</h1>
-<p class="sub">适用于 X11 和 Wayland 的快速轻量文件管理器，ROX-Filer 的延续。 &mdash; 2.13.0-8</p>
+<p class="sub">适用于 X11 和 Wayland 的快速轻量文件管理器，ROX-Filer 的延续。 &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>使用 <code>rox --desktop</code> 启动桌面。同一时间只运行一个实例。它会绘制壁纸、显示桌面目录中的图标，并可显示驱动器图标。</p>
 <ul><li><b>壁纸：</b><code>rox --desktop-wallpaper</code>，或在桌面上右键。模式包括填充、适应、拉伸、居中和平铺。</li><li><b>应用程序：</b><code>rox --desktop-apps</code> 管理桌面上的启动器。</li><li><b>驱动器图标：</b><code>rox --desktop-drive-icon-layout</code> 用于排列。</li><li><b>首选项：</b><code>rox --desktop-preferences</code>。</li></ul>
 <p>在 X11 上，桌面使用带桌面类型提示的普通窗口。在 Wayland 上使用 Layer Shell 的背景层，这需要安装 <code>gtk-layer-shell</code>，并且合成器需公开 <code>zwlr_layer_shell_v1</code>，例如 Labwc。可用 <code>rox-x11 --desktop</code> 或 <code>rox-wayland --desktop</code> 强制指定后端。</p>
-<p>若还希望设置 X11 根窗口背景，使伪透明终端和 conky 看到同一张图像，请安装 <code>feh</code> 或 <code>xwallpaper</code>。</p>
+<p>在 X11 下，Rox-Filer2 会直接把壁纸发布为根窗口 pixmap，因此伪透明终端和 conky 无需 <code>feh</code> 或 <code>xwallpaper</code> 也能看到同一张图像。</p>
 <h2 id="drives">驱动器与挂载</h2>
 <p>本地和可移动驱动器显示在现代界面侧边栏的<b>设备</b>下，也可显示为桌面图标。单击驱动器即可挂载并打开；通过上下文菜单卸载。</p>
 <p>驱动器信息来自 <code>lsblk</code>、<code>/proc/mounts</code> 和 sysfs，因此无需任何后台服务。以普通用户身份挂载需要 <code>udisksctl</code>，或在 fstab 中有允许挂载的条目。</p>

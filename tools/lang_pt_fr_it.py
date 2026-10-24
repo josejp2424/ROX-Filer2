@@ -75,9 +75,9 @@ T["pt"] = {
         "<code>gtk-layer-shell</code> instalado e um compositor que publique "
         "<code>zwlr_layer_shell_v1</code>, como o Labwc. Force um backend com "
         "<code>rox-x11 --desktop</code> ou <code>rox-wayland --desktop</code>.</p>",
-        "<p>Para definir também o fundo da janela raiz do X11, de modo que "
-        "terminais com transparência falsa e o conky vejam a mesma imagem, "
-        "instale <code>feh</code> ou <code>xwallpaper</code>.</p>",
+        "<p>No X11, o Rox-Filer2 publica diretamente o papel de parede como pixmap "
+        "da janela raiz, para que terminais com pseudotransparência e o conky vejam "
+        "a mesma imagem sem <code>feh</code> nem <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Unidades e montagem", [
         "<p>As unidades locais e amovíveis aparecem na barra lateral da Moderna "
@@ -281,9 +281,9 @@ T["fr"] = {
         "publiant <code>zwlr_layer_shell_v1</code>, comme Labwc. Forcez un "
         "backend avec <code>rox-x11 --desktop</code> ou "
         "<code>rox-wayland --desktop</code>.</p>",
-        "<p>Pour définir également le fond de la fenêtre racine X11, afin que les "
-        "terminaux à fausse transparence et conky voient la même image, installez "
-        "<code>feh</code> ou <code>xwallpaper</code>.</p>",
+        "<p>Sous X11, Rox-Filer2 publie directement le fond d’écran comme pixmap "
+        "de la fenêtre racine, afin que les terminaux pseudo-transparents et conky "
+        "voient la même image sans <code>feh</code> ni <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Périphériques et montage", [
         "<p>Les disques locaux et amovibles apparaissent dans le panneau latéral "

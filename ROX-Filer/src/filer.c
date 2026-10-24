@@ -166,6 +166,78 @@ enum settings_flags{
 
 static GHashTable *unmount_prompt_actions = NULL;
 
+/* Rox-Filer2 2.14: GTK is single-threaded here, so this small construction
+ * flag is sufficient to create an invisible FilerWindow backend for the
+ * Modern F3 split view without duplicating the filer engine. */
+static gboolean opening_modern_embedded = FALSE;
+
+/* Rox-Filer2 2.14.0-3: Modern keeps normal WM resize support, but some very
+ * thin JWM/XLibre themes make the frame edge difficult (or impossible) to
+ * grab reliably.  Provide a small theme-aware client-side resize grip as a
+ * fallback.  gtk_window_begin_resize_drag() delegates to the X11 window
+ * manager or Wayland compositor, so this is not an X11-only workaround. */
+static gboolean modern_resize_grip_draw(GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+	GtkStyleContext *context;
+	GdkRGBA colour;
+	GtkAllocation allocation;
+	gint i;
+
+	(void) data;
+	context = gtk_widget_get_style_context(widget);
+	gtk_style_context_get_color(context, gtk_style_context_get_state(context), &colour);
+	gtk_widget_get_allocation(widget, &allocation);
+	gdk_cairo_set_source_rgba(cr, &colour);
+	cairo_set_line_width(cr, 1.0);
+
+	for (i = 0; i < 3; i++)
+	{
+		gdouble offset = 3.5 + (i * 4.0);
+		cairo_move_to(cr, allocation.width - offset, allocation.height - 2.5);
+		cairo_line_to(cr, allocation.width - 2.5, allocation.height - offset);
+	}
+	cairo_stroke(cr);
+	return FALSE;
+}
+
+static void modern_resize_grip_realize(GtkWidget *widget, gpointer data)
+{
+	GdkWindow *window;
+	GdkDisplay *display;
+	GdkCursor *cursor;
+
+	(void) data;
+	window = gtk_widget_get_window(widget);
+	display = gtk_widget_get_display(widget);
+	if (!window || !display)
+		return;
+
+	cursor = gdk_cursor_new_from_name(display, "se-resize");
+	if (!cursor)
+		cursor = gdk_cursor_new_for_display(display, GDK_BOTTOM_RIGHT_CORNER);
+	if (cursor)
+	{
+		gdk_window_set_cursor(window, cursor);
+		g_object_unref(cursor);
+	}
+}
+
+static gboolean modern_resize_grip_press(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+	FilerWindow *filer_window = data;
+
+	(void) widget;
+	if (!filer_window || !GTK_IS_WINDOW(filer_window->window) ||
+	    event->button != GDK_BUTTON_PRIMARY ||
+	    !gtk_window_get_resizable(GTK_WINDOW(filer_window->window)))
+		return FALSE;
+
+	gtk_window_begin_resize_drag(GTK_WINDOW(filer_window->window),
+		GDK_WINDOW_EDGE_SOUTH_EAST, event->button,
+		(gint) event->x_root, (gint) event->y_root, event->time);
+	return TRUE;
+}
+
 /* Static prototypes */
 static void attach(FilerWindow *filer_window);
 static void detach(FilerWindow *filer_window);
@@ -522,6 +594,15 @@ static gint open_filer_window(FilerWindow *filer_window)
 	{
 		g_source_remove(filer_window->open_timeout);
 		filer_window->open_timeout = 0;
+	}
+
+	/* Embedded Modern filers are real independent directory backends, but
+	 * their top-level GtkWindow must never be mapped: their view is reparented
+	 * into the host window's GtkPaned by modern_ui.c. */
+	if (filer_window->modern_embedded)
+	{
+		filer_window->initial_geometry_pending = FALSE;
+		return FALSE;
 	}
 
 	if (!gtk_widget_get_visible(filer_window->window))
@@ -982,6 +1063,8 @@ static void filer_window_destroyed(GtkWidget *widget, FilerWindow *filer_window)
 		g_free(filer_window->filter_string);
 	if(filer_window->regexp)
 		g_free(filer_window->regexp);
+	g_free(filer_window->modern_quick_filter);
+	g_free(filer_window->modern_quick_filter_path);
 	if(filer_window->win_icon)
 		g_object_unref(filer_window->win_icon);
 
@@ -1013,7 +1096,7 @@ static gboolean may_rescan(FilerWindow *filer_window, gboolean warning)
 	if (!dir)
 	{
 		if (!warning)
-			gtk_widget_destroy(filer_window->window);
+			filer_close_visible_window(filer_window);
 		return FALSE;
 	}
 	if (dir == filer_window->directory)
@@ -1113,6 +1196,7 @@ void filer_selection_changed(FilerWindow *filer_window, gint time)
 	g_return_if_fail(filer_window != NULL);
 
 	toolbar_update_info(filer_window);
+	modern_ui_selection_changed(filer_window);
 	if (window_with_primary == filer_window)
 		return;		/* Already got primary */
 
@@ -1180,7 +1264,7 @@ void filer_openitem(FilerWindow *filer_window, ViewIter *iter, OpenFlags flags)
 			return;
 
 		if (close_window)
-			gtk_widget_destroy(filer_window->window);
+			filer_close_visible_window(filer_window);
 		else
 		{
 			if (wink)
@@ -1823,11 +1907,18 @@ gint filer_key_press_event(GtkWidget	*widget,
 			   GdkEventKey	*event,
 			   FilerWindow	*filer_window)
 {
-	ViewIface *view = filer_window->view;
-	ViewIter cursor;
 	GtkWidget *focus = gtk_window_get_focus(GTK_WINDOW(widget));
+	ViewIface *view;
+	ViewIter cursor;
 	guint key = event->keyval;
 	char group[2] = "1";
+
+	/* A split pane is backed by a second FilerWindow embedded in this same
+	 * top-level window. Route normal ROX shortcuts to whichever pane owns
+	 * keyboard focus so Return/Backspace/type-ahead behave naturally. */
+	if (filer_window->modern_mode && !filer_window->modern_embedded)
+		filer_window = modern_ui_key_target(filer_window, focus);
+	view = filer_window->view;
 
 	window_with_focus = filer_window;
 
@@ -2102,7 +2193,8 @@ void filer_change_to(FilerWindow *filer_window,
 	new_dir = g_fscache_lookup(dir_cache, real_path) ?:
 		dir_new(real_path); //dummy dir
 
-	if (o_unique_filer_windows.int_value && !spring_in_progress)
+	if (o_unique_filer_windows.int_value && !spring_in_progress &&
+	    !filer_window->modern_embedded)
 	{
 		FilerWindow *fw;
 
@@ -2225,6 +2317,38 @@ static void modern_status_view_clicked(GtkButton *button, FilerWindow *filer_win
 		VIEW_TYPE_DETAILS : VIEW_TYPE_COLLECTION);
 }
 
+FilerWindow *filer_opendir_embedded(const char *path, FilerWindow *src_win)
+{
+	FilerWindow *filer_window;
+	gboolean old_embedded = opening_modern_embedded;
+	gint old_unique = o_unique_filer_windows.int_value;
+
+	opening_modern_embedded = TRUE;
+	/* A split pane must be independent even when the same directory is open
+	 * on the left, so bypass the unique-window policy just for construction. */
+	o_unique_filer_windows.int_value = FALSE;
+	filer_window = filer_opendir(path, src_win, NULL);
+	o_unique_filer_windows.int_value = old_unique;
+	opening_modern_embedded = old_embedded;
+	return filer_window;
+}
+
+FilerWindow *filer_visible_host(FilerWindow *filer_window)
+{
+	FilerWindow *host;
+	if (!filer_window || !filer_window->modern_embedded || !filer_window->window)
+		return filer_window;
+	host = g_object_get_data(G_OBJECT(filer_window->window), "rox-modern-split-host");
+	return host ? host : filer_window;
+}
+
+void filer_close_visible_window(FilerWindow *filer_window)
+{
+	FilerWindow *host = filer_visible_host(filer_window);
+	if (host && host->window)
+		gtk_widget_destroy(host->window);
+}
+
 FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 			   const gchar *wm_class)
 {
@@ -2293,6 +2417,24 @@ FilerWindow *filer_opendir(const char *path, FilerWindow *src_win,
 	filer_window->modern_tree_view = NULL;
 	filer_window->modern_bookmarks_list = NULL;
 	filer_window->modern_devices_list = NULL;
+	filer_window->modern_sidebar_menu_item = NULL;
+	filer_window->modern_embedded = opening_modern_embedded;
+	filer_window->modern_full_details = TRUE;
+	filer_window->modern_quick_filter = NULL;
+	filer_window->modern_breadcrumbs_enabled = FALSE;
+	filer_window->modern_breadcrumb_menu_item = NULL;
+	filer_window->modern_path_stack = NULL;
+	filer_window->modern_breadcrumb_box = NULL;
+	filer_window->modern_filter_bar = NULL;
+	filer_window->modern_filter_entry = NULL;
+	filer_window->modern_filter_lock = NULL;
+	filer_window->modern_filter_locked = FALSE;
+	filer_window->modern_quick_filter_path = NULL;
+	filer_window->modern_preview_box = NULL;
+	filer_window->modern_preview_image = NULL;
+	filer_window->modern_preview_name = NULL;
+	filer_window->modern_preview_meta = NULL;
+	filer_window->modern_preview_menu_item = NULL;
 	filer_window->toplevel_vbox = NULL;
 	filer_window->view_hbox = NULL;
 	filer_window->view = NULL;
@@ -2524,6 +2666,8 @@ void filer_set_view_type(FilerWindow *filer_window, ViewType type)
 
 	filer_window->view = VIEW(view);
 	filer_window->view_type = type;
+	if (filer_window->modern_mode && type == VIEW_TYPE_DETAILS)
+		view_details_apply_modern_columns(filer_window);
 
 	gtk_box_pack_start(filer_window->view_hbox, view, TRUE, TRUE, 0);
 	gtk_widget_show(view);
@@ -2649,13 +2793,13 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	/* Modern is an alternative window shell only. The directory view created
 	 * below is still the normal Rox-Filer2 view and therefore shares all file,
 	 * MIME, mount, Trash, Desktop and operation code with Classic ROX. */
-	if (filer_window->modern_mode)
+	if (filer_window->modern_mode && !filer_window->modern_embedded)
 		modern_ui_build(filer_window, vbox);
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	filer_window->view_hbox = GTK_BOX(hbox);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-	if (filer_window->modern_mode)
+	if (filer_window->modern_mode && !filer_window->modern_embedded)
 		modern_ui_attach_sidebar(filer_window, hbox);
 	/* Add the main View widget.  In Modern mode the existing ROX view is
 	 * placed in the right side of the resizable sidebar paned container. */
@@ -2667,13 +2811,17 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	if (filer_window->modern_mode && filer_window->view)
 		gtk_widget_grab_focus(GTK_WIDGET(filer_window->view));
 	/* Put the scrollbar next to the View */
-	if (filer_window->modern_mode && filer_window->modern_content_box)
+	if (filer_window->modern_mode && !filer_window->modern_embedded &&
+	    filer_window->modern_content_box)
 		gtk_box_pack_end(GTK_BOX(filer_window->modern_content_box),
 			filer_window->scrollbar, FALSE, TRUE, 0);
 	else
 		gtk_box_pack_end(GTK_BOX(hbox),
 			filer_window->scrollbar, FALSE, TRUE, 0);
 	gtk_widget_show(hbox);
+
+	if (filer_window->modern_mode && !filer_window->modern_embedded)
+		modern_ui_finalize_content(filer_window);
 
 	/* Classic keeps the original configurable ROX toolbar unchanged. Modern
 	 * supplies its own navigation row from modern_ui.c. */
@@ -2752,6 +2900,24 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 			gtk_box_pack_start(GTK_BOX(controls), view_button, FALSE, FALSE, 0);
 			g_signal_connect(view_button, "clicked", G_CALLBACK(modern_status_view_clicked), filer_window);
 
+			/* Always leave a mouse-resizable corner available even when the WM
+			 * theme has a zero/very thin resize border.  It uses the current GTK
+			 * foreground colour and does not impose an Essora-specific theme. */
+			{
+				GtkWidget *grip_event = gtk_event_box_new();
+				GtkWidget *grip = gtk_drawing_area_new();
+				gtk_widget_set_size_request(grip, 16, 16);
+				gtk_widget_set_halign(grip_event, GTK_ALIGN_END);
+				gtk_widget_set_valign(grip_event, GTK_ALIGN_END);
+				gtk_container_add(GTK_CONTAINER(grip_event), grip);
+				gtk_widget_add_events(grip_event, GDK_BUTTON_PRESS_MASK);
+				g_signal_connect(grip, "draw", G_CALLBACK(modern_resize_grip_draw), NULL);
+				g_signal_connect(grip_event, "realize", G_CALLBACK(modern_resize_grip_realize), NULL);
+				g_signal_connect(grip_event, "button-press-event",
+					G_CALLBACK(modern_resize_grip_press), filer_window);
+				gtk_box_pack_start(GTK_BOX(controls), grip_event, FALSE, FALSE, 2);
+			}
+
 			gtk_box_pack_end(GTK_BOX(status_row), controls, FALSE, FALSE, 6);
 		}
 		else
@@ -2782,6 +2948,18 @@ static void filer_add_widgets(FilerWindow *filer_window, const gchar *wm_class)
 	gtk_widget_show(vbox);
 	gtk_widget_show(filer_window->scrollbar);
 	gtk_widget_realize(filer_window->window);
+
+	/* Be explicit for Modern: normal top-level window, freely resizable.
+	 * This also repairs stale/over-restrictive WM function hints that some
+	 * X11 window managers may have cached while the window was being built. */
+	if (filer_window->modern_mode && !filer_window->modern_embedded)
+	{
+		GdkWindow *gdk_window = gtk_widget_get_window(filer_window->window);
+		gtk_window_set_resizable(GTK_WINDOW(filer_window->window), TRUE);
+		gtk_widget_set_size_request(filer_window->window, -1, -1);
+		if (gdk_window)
+			gdk_window_set_functions(gdk_window, GDK_FUNC_ALL);
+	}
 
 	gdk_window_set_role(gtk_widget_get_window(filer_window->window),
 			    filer_window->sym_path);
@@ -2911,8 +3089,10 @@ static FilerWindow *find_filer_window(const char *sym_path, FilerWindow *diff)
 	{
 		FilerWindow *filer_window = (FilerWindow *) next->data;
 
-		if (filer_window != diff &&
-		    	strcmp(sym_path, filer_window->sym_path) == 0)
+		/* Embedded F3 panes are part of their host window, not independent
+		 * top-level windows for the unique-window policy. */
+		if (filer_window != diff && !filer_window->modern_embedded &&
+		    strcmp(sym_path, filer_window->sym_path) == 0)
 			return filer_window;
 	}
 
@@ -2982,7 +3162,7 @@ gboolean filer_close_recursive(char *path)
 			char s = filer_window->real_path[len];
 
 			if (len == 1 || s == '/' || s == '\0')
-				gtk_widget_destroy(filer_window->window);
+				filer_close_visible_window(filer_window);
 		}
 	}
 	g_free(real);
@@ -4107,6 +4287,21 @@ gboolean filer_match_filter(FilerWindow *filer_window, DirItem *item)
 	if(is_hidden(filer_window->real_path, item) &&
 	   (!filer_window->temp_show_hidden && !filer_window->show_hidden))
 		return FALSE;
+
+	/* 2.14: Modern's quick filter is transient and separate from ROX's
+	 * historical persistent glob filter. Classic therefore keeps its exact
+	 * behaviour, while Modern filters by a Unicode case-insensitive substring. */
+	if (filer_window->modern_mode && filer_window->modern_quick_filter &&
+	    *filer_window->modern_quick_filter)
+	{
+		gchar *name_fold = g_utf8_casefold(item->leafname, -1);
+		gchar *needle_fold = g_utf8_casefold(filer_window->modern_quick_filter, -1);
+		gboolean match = name_fold && needle_fold && strstr(name_fold, needle_fold) != NULL;
+		g_free(name_fold);
+		g_free(needle_fold);
+		if (!match)
+			return FALSE;
+	}
 
 	/* Modificado por josejp2424 (2026): no aplicar filtros de tipo ni
 	 * patrones glob a la vista normal. La prioridad es que la carpeta o

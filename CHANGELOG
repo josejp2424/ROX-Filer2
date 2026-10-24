@@ -1,3 +1,49 @@
+2026-10-24 Rox-Filer2 2.14.0-5
+
+* Copy/move: the progress bar now follows the bytes really written to the
+  destination device, with the classic engine (cp/mv) and with rsync.  It used
+  to advance per top-level item (one ISO: 0% -> 100%) and the window closed
+  while the kernel was still writing to a USB stick.  New transfer_progress.c
+  confirms data with sync_file_range() (FUSE block filesystems: the device's
+  sectors-written counter) and flushes only the destination filesystem with
+  syncfs() before the operation ends.  The window shows "X of Y", the remaining
+  time and, while the kernel finishes writing, "Writing to the device. Do not
+  remove it until this window closes." (Cancel is insensitive in that phase).
+* Copy/move as root to FAT, exFAT, NTFS, SMB or FUSE no longer reports a false
+  error: cp gets --no-preserve=ownership and rsync --no-owner --no-group there.
+  Before, rsync exited 23 and a move left the source in place (two copies).
+* mv/cp messages printed on stderr by a command that exits 0 are logged, not
+  reported as "Failed to move/copy" (fork_exec_wait() treated any stderr text
+  as an error).
+* Fix a possible permanent hang at the start of any file operation: the action
+  child is forked from a threaded process and could inherit child_reap_mutex
+  locked by a drive/image worker thread; it is now disabled in that child,
+  which has no SIGCHLD reaper (rox_child_reap_disable()).
+* Wayland: opening a panel (--top/--bottom/--left/--right or a saved session)
+  crashed with SIGSEGV: keep_below() and window_put_just_above() sent
+  _NET_WM_STATE / XConfigureWindow through a NULL X Display.  Both are now
+  X11-only; on Wayland the compositor owns stacking.
+* Wayland: a pinboard or panel icon with a keyboard shortcut crashed the same
+  way (initModifiers() -> XGetModifierMapping(NULL)).  Global key grabs are
+  X11-only; the shortcut is kept in the configuration for X11 sessions.
+  Panel applets (GtkSocket/XEmbed, X11-only) stay ordinary icons on Wayland.
+* Three new runtime strings, translated in all eleven catalogues (1675/1675).
+* Expose Link (relative) and Link (absolute) directly in the file context menu
+  while reusing the existing ROX symlink backend.
+* Add Open as root for normal-user sessions as a separate authenticated
+  Rox-Filer2 window through a fixed package-owned pkexec helper; never elevate
+  the current filer and never use xhost. The root window uses X11/XLibre or
+  XWayland when DISPLAY is available.
+* Fix the mounted-state quick arrow in Classic, Modern and Desktop so disk
+  partitions only unmount themselves. Optical media may still eject; whole-
+  device USB Eject remains an explicit context-menu action, preventing one
+  partition button from powering off a multi-partition USB disk.
+* Add the Open-as-root helper and polkit policy to all native package builders.
+* Stop ignoring data/man/rox.1 and add a release-gate check so clean Git clones
+  cannot silently lose the main Rox-Filer2 man page again.
+* Keep all eleven runtime catalogues complete; only Open as root is a new
+  translatable string because both link labels already existed.
+
 2026-09-18 Rox-Filer2 2.13.0-8
 
 * Add optional startup automount to Options > Drives, inspired by PMADAS but

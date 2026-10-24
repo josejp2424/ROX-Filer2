@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Manual del Rox-Filer2</h1>
-<p class="sub">Gestor de fitxers ràpid i lleuger per a X11 i Wayland, continuació del ROX-Filer. &mdash; 2.13.0-8</p>
+<p class="sub">Gestor de fitxers ràpid i lleuger per a X11 i Wayland, continuació del ROX-Filer. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>Inicieu l'escriptori amb <code>rox --desktop</code>. Només s'executa una instància alhora. Dibuixa el fons de pantalla, mostra les icones del vostre directori d'escriptori i pot mostrar icones d'unitats.</p>
 <ul><li><b>Fons de pantalla:</b> <code>rox --desktop-wallpaper</code>, o clic dret a l'escriptori. Els modes són omplir, ajustar, estirar, centrar i mosaic.</li><li><b>Aplicacions:</b> <code>rox --desktop-apps</code> gestiona els llançadors de l'escriptori.</li><li><b>Icones d'unitats:</b> <code>rox --desktop-drive-icon-layout</code> les ordena.</li><li><b>Preferències:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>A X11 l'escriptori fa servir una finestra normal amb suggeriment de tipus escriptori. A Wayland utilitza la capa de fons del Layer Shell, que requereix <code>gtk-layer-shell</code> instal·lat i un compositor que publiqui <code>zwlr_layer_shell_v1</code>, com el Labwc. Forceu un rerefons amb <code>rox-x11 --desktop</code> o <code>rox-wayland --desktop</code>.</p>
-<p>Per fixar també el fons de la finestra arrel d'X11, de manera que els terminals amb transparència falsa i el conky vegin la mateixa imatge, instal·leu <code>feh</code> o <code>xwallpaper</code>.</p>
+<p>A X11, Rox-Filer2 publica directament el fons com a pixmap de la finestra arrel, de manera que els terminals amb pseudotransparència i conky veuen la mateixa imatge sense <code>feh</code> ni <code>xwallpaper</code>.</p>
 <h2 id="drives">Unitats i muntatge</h2>
 <p>Les unitats locals i extraïbles apareixen a la barra lateral de la Moderna sota <b>Dispositius</b> i, opcionalment, com a icones a l'escriptori. Feu clic en una unitat per muntar-la i obrir-la; feu servir el menú contextual per desmuntar-la.</p>
 <p>La informació de les unitats prové de <code>lsblk</code>, de <code>/proc/mounts</code> i de sysfs, de manera que no cal cap servei en segon pla. Muntar una unitat com a usuari normal requereix <code>udisksctl</code> o una entrada a fstab que ho permeti.</p>

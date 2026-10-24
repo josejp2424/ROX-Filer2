@@ -64,7 +64,7 @@ footer {
 <img class="manual-logo" src="rox-filer2.svg" alt="Rox-Filer2">
 <div class="brand-copy">
 <h1>Rox-Filer2 kézikönyv</h1>
-<p class="sub">Gyors és könnyű fájlkezelő X11 és Wayland rendszerhez, a ROX-Filer folytatása. &mdash; 2.13.0-8</p>
+<p class="sub">Gyors és könnyű fájlkezelő X11 és Wayland rendszerhez, a ROX-Filer folytatása. &mdash; 2.14.0-5</p>
 </div>
 </div>
 </header>
@@ -101,7 +101,7 @@ footer {
 <p>Az asztalt a <code>rox --desktop</code> paranccsal indítja. Egyszerre csak egy példány fut. Kirajzolja a háttérképet, megjeleníti az asztali könyvtár ikonjait, és megmutathatja a meghajtóikonokat is.</p>
 <ul><li><b>Háttérkép:</b> <code>rox --desktop-wallpaper</code>, vagy jobb kattintás az asztalon. A módok: kitöltés, illesztés, nyújtás, középre és mozaik.</li><li><b>Alkalmazások:</b> a <code>rox --desktop-apps</code> kezeli az asztali indítóikonokat.</li><li><b>Meghajtóikonok:</b> a <code>rox --desktop-drive-icon-layout</code> rendezi őket.</li><li><b>Beállítások:</b> <code>rox --desktop-preferences</code>.</li></ul>
 <p>X11 alatt az asztal egy közönséges, asztali típusjelzésű ablakot használ. Wayland alatt a Layer Shell háttérrétegét, amihez telepített <code>gtk-layer-shell</code> és olyan kompozitor kell, amely közzéteszi a <code>zwlr_layer_shell_v1</code> protokollt, például a Labwc. A háttérprogramot a <code>rox-x11 --desktop</code> vagy a <code>rox-wayland --desktop</code> paranccsal kényszerítheti.</p>
-<p>Ha az X11 gyökérablak hátterét is be szeretné állítani, hogy az álátlátszó terminálok és a conky ugyanazt a képet lássák, telepítse a <code>feh</code> vagy az <code>xwallpaper</code> programot.</p>
+<p>X11 alatt a Rox-Filer2 közvetlenül a gyökérablak pixmapjeként teszi közzé a háttérképet, így a pszeudoátlátszó terminálok és a conky ugyanazt a képet látják <code>feh</code> vagy <code>xwallpaper</code> nélkül.</p>
 <h2 id="drives">Meghajtók és csatolás</h2>
 <p>A helyi és cserélhető meghajtók a Modern oldalsávban az <b>Eszközök</b> alatt jelennek meg, és igény szerint asztali ikonként is. Kattintson egy meghajtóra a csatoláshoz és megnyitáshoz; a leválasztáshoz használja a helyi menüt.</p>
 <p>A meghajtóadatok az <code>lsblk</code> programból, a <code>/proc/mounts</code> állományból és a sysfs-ből származnak, így nincs szükség háttérszolgáltatásra. Egy meghajtó csatolásához hétköznapi felhasználóként <code>udisksctl</code> vagy ezt engedélyező fstab-bejegyzés szükséges.</p>

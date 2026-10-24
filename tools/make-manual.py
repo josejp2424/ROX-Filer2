@@ -27,7 +27,7 @@ import sys
 LANGS = ["en", "es", "pt", "fr", "it", "ca", "de", "hu", "ru", "ja", "zh", "ar"]
 RTL = {"ar"}
 
-VERSION = "2.13.0-8"
+VERSION = "2.14.0-5"
 
 CSS = """
 :root {
@@ -114,8 +114,9 @@ TEXTS["en"] = {
         "<ul>"
         "<li><b>Classic ROX</b> keeps the traditional ROX-Filer layout and "
         "toolbar. If you are coming from ROX-Filer, nothing moved.</li>"
-        "<li><b>Modern</b> adds a menu bar, a navigation row, tabs and a sidebar "
-        "with Places, Devices and Network.</li>"
+        "<li><b>Modern</b> keeps the editable Rox-Filer2 location bar and adds tabs, "
+        "optional breadcrumb navigation, F3 split view, quick filtering, previews "
+        "and a sidebar with Places, bookmarks, Devices and Network.</li>"
         "</ul>",
         "<p>Choose the permanent style in <b>Options &gt; Interface</b>. The "
         "change applies to windows opened after you restart Rox-Filer2.</p>",
@@ -133,6 +134,10 @@ TEXTS["en"] = {
         "the path entry.</li>"
         "<li>In Modern, <kbd>Ctrl+T</kbd> opens a tab and <kbd>Ctrl+W</kbd> "
         "closes it. Each tab keeps its own path and history.</li>"
+        "<li>Press <kbd>F3</kbd> for two independent panes in one window. "
+        "<kbd>Shift+F5</kbd> copies the selection to the other pane and "
+        "<kbd>Shift+F6</kbd> moves it. <kbd>F6</kbd>/<kbd>Ctrl+L</kbd> focuses "
+        "the active location and <kbd>Ctrl+I</kbd> opens the quick filter.</li>"
         "</ul>",
         "<p>Switch between the icon view and the detailed list view from the "
         "view switcher, and change icon size with the slider.</p>",
@@ -155,9 +160,9 @@ TEXTS["en"] = {
         "<code>gtk-layer-shell</code> installed and a compositor that publishes "
         "<code>zwlr_layer_shell_v1</code>, such as Labwc. Force a backend with "
         "<code>rox-x11 --desktop</code> or <code>rox-wayland --desktop</code>.</p>",
-        "<p>To also set the X11 root window background, so that pseudo-transparent "
-        "terminals and conky see the same image, install <code>feh</code> or "
-        "<code>xwallpaper</code>.</p>",
+        "<p>On X11 Rox-Filer2 publishes its wallpaper directly as the root-window "
+        "pixmap, so pseudo-transparent terminals and conky see the same image "
+        "without <code>feh</code> or <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Drives and mounting", [
         "<p>Local and removable drives appear in the Modern sidebar under "
@@ -328,8 +333,10 @@ TEXTS["es"] = {
         "<li><b>Clásica ROX</b> conserva la disposición y la barra de "
         "herramientas tradicionales de ROX-Filer. Si viene de ROX-Filer, nada "
         "cambió de lugar.</li>"
-        "<li><b>Moderna</b> agrega barra de menús, fila de navegación, pestañas y "
-        "una barra lateral con Lugares, Dispositivos y Red.</li>"
+        "<li><b>Moderna</b> conserva la barra de ubicación editable de Rox-Filer2 y "
+        "agrega pestañas, breadcrumbs opcionales, vista dividida con F3, filtro "
+        "rápido, vista previa y una barra lateral con Lugares, Marcadores, "
+        "Dispositivos y Red.</li>"
         "</ul>",
         "<p>Elija el estilo permanente en <b>Opciones &gt; Interfaz</b>. El cambio "
         "se aplica a las ventanas que abra después de reiniciar Rox-Filer2.</p>",
@@ -348,6 +355,10 @@ TEXTS["es"] = {
         "entrada de ruta.</li>"
         "<li>En Moderna, <kbd>Ctrl+T</kbd> abre una pestaña y <kbd>Ctrl+W</kbd> "
         "la cierra. Cada pestaña mantiene su propia ruta e historial.</li>"
+        "<li>Pulse <kbd>F3</kbd> para tener dos paneles independientes en la misma "
+        "ventana. <kbd>Mayús+F5</kbd> copia la selección al otro panel y "
+        "<kbd>Mayús+F6</kbd> la mueve. <kbd>F6</kbd>/<kbd>Ctrl+L</kbd> enfoca "
+        "la ubicación activa y <kbd>Ctrl+I</kbd> abre el filtro rápido.</li>"
         "</ul>",
         "<p>Cambie entre la vista de iconos y la vista detallada con el selector "
         "de vista, y ajuste el tamaño de los iconos con el deslizador.</p>",
@@ -371,9 +382,9 @@ TEXTS["es"] = {
         "<code>gtk-layer-shell</code> instalado y un compositor que publique "
         "<code>zwlr_layer_shell_v1</code>, como Labwc. Fuerce un backend con "
         "<code>rox-x11 --desktop</code> o <code>rox-wayland --desktop</code>.</p>",
-        "<p>Para fijar además el fondo de la ventana raíz de X11, de modo que las "
-        "terminales con transparencia falsa y conky vean la misma imagen, instale "
-        "<code>feh</code> o <code>xwallpaper</code>.</p>",
+        "<p>En X11 Rox-Filer2 publica directamente el fondo como pixmap de la "
+        "ventana raíz, por lo que las terminales con seudotransparencia y conky "
+        "ven la misma imagen sin <code>feh</code> ni <code>xwallpaper</code>.</p>",
     ]),
     "drives": ("Unidades y montaje", [
         "<p>Las unidades locales y extraíbles aparecen en la barra lateral de "

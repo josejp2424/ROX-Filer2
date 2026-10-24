@@ -2805,9 +2805,12 @@ static void drive_menu_eject(GtkMenuItem *item, gpointer data)
 	rox_drive_eject_async(action->drive, drive_action_ui_done, ui);
 }
 
-/* 2.13.0-7: quick mounted-state action for the Classic partitions
- * popover.  It mirrors the small eject/unmount arrow used by desktop drive
- * icons: mounted volumes show the arrow; unmounted volumes do not. */
+/* 2.13.0-9: the quick mounted-state arrow is partition-level for disks.
+ * 2.13.0-7 used rox_drive_can_eject() for removable disk partitions, so
+ * clicking the arrow on /dev/sdd4 could power off the parent /dev/sdd and
+ * make every partition disappear. Disk partitions now only unmount; optical
+ * media may still use Eject because the row represents the optical device.
+ * Whole-device USB Eject remains an explicit context-menu action. */
 static void drive_grid_quick_action(GtkButton *button, gpointer data)
 {
 	DriveMenuAction *action = data;
@@ -2819,7 +2822,7 @@ static void drive_grid_quick_action(GtkButton *button, gpointer data)
 
 	ui = g_new0(DriveActionUi, 1);
 	ui->popover = drive_action_ref_popover(action);
-	ui->eject = rox_drive_can_eject(action->drive);
+	ui->eject = action->drive->optical && rox_drive_can_eject(action->drive);
 	if (ui->eject)
 		rox_drive_eject_async(action->drive, drive_action_ui_done, ui);
 	else
@@ -3311,8 +3314,9 @@ static void drives_popover_attach_drive(DrivePopoverLive *live,
 			gtk_image_set_from_icon_name(GTK_IMAGE(quick_image), "media-eject",
 				GTK_ICON_SIZE_MENU);
 		gtk_container_add(GTK_CONTAINER(quick_button), quick_image);
+		/* 2.13.0-9: partition rows unmount only; optical media may eject. */
 		gtk_widget_set_tooltip_text(quick_button,
-			rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
+			drive->optical && rox_drive_can_eject(drive) ? _("Eject") : _("Unmount"));
 		g_signal_connect(quick_button, "clicked",
 			G_CALLBACK(drive_grid_quick_action), action);
 		gtk_overlay_add_overlay(GTK_OVERLAY(cell), quick_button);
