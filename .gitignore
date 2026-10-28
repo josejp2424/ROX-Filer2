@@ -1,11 +1,7 @@
 # Ignore emacs backup files
 *~
-# and the generated manual page
-
+# 2.13.0-9: data/man/rox.1 is a tracked source file; do not ignore rox.1 globally.
 # and buildfiles
-ROX-Filer/Help/Manual-fr.html
-ROX-Filer/Help/Manual-it.html
-ROX-Filer/Help/Manual.html
 ROX-Filer/ROX-Filer
 ROX-Filer/ROX-Filer.dbg
 rox-find/rox-find

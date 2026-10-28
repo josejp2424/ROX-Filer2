@@ -1575,8 +1575,13 @@ void show_filer_menu(FilerWindow *filer_window, GdkEvent *event, ViewIter *iter)
 		if (n_selected > 0)
 		{
 			GList *mime_paths = filer_selected_items(filer_window);
+			gboolean grouped_open_with = FALSE;
 			n_added += xdg_apps_add_mime_tools(filer_file_menu, mime_paths,
-				GTK_WINDOW(filer_window->window));
+				GTK_WINDOW(filer_window->window), &grouped_open_with);
+			/* The Open With submenu includes the application chooser.
+			 * Do not display a second, nearly identical top-level entry. */
+			if (grouped_open_with)
+				gtk_widget_hide(filer_open_with_item);
 			destroy_glist(&mime_paths);
 		}
 	}

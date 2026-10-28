@@ -1,5 +1,13 @@
-Rox-Filer2 2.14.0-5 release validation
+Rox-Filer2 2.14.0-6 release validation
 ========================================
+
+## 2.14.0-6 version consistency checks
+
+- Run `python3 tools/check-release-version.py`; both Meson and AppInfo must report 2.14.0-6.
+- Compile from a clean tree, then run `build/ROX-Filer --version` and verify it prints `Rox-Filer2 2.14.0-6`.
+- Verify the Debian/Devuan package is `rox-filer2_2.14.0-6_*.deb` and Void package uses XBPS version `2.14.0_6`.
+- Create the GitHub release tag `v2.14.0-6` **after** committing the version bump on `main`, and ensure the tag points at that commit. The generated release tarball is taken from the tagged commit, not from the current `main` branch.
+- Re-run the 2.14.0-5 focused checks below; this release changes only version metadata and adds packaging consistency checks.
 
 ## 2.14.0-5 focused checks
 

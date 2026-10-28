@@ -27,7 +27,7 @@ import sys
 LANGS = ["en", "es", "pt", "fr", "it", "ca", "de", "hu", "ru", "ja", "zh", "ar"]
 RTL = {"ar"}
 
-VERSION = "2.14.0-5"
+VERSION = "2.14.0-6"
 
 CSS = """
 :root {

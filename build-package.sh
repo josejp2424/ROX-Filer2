@@ -20,6 +20,9 @@ if [ -z "$DISPLAY_VERSION" ]; then
     exit 1
 fi
 
+# Keep the compiled version in Meson in sync with the package version.
+python3 "$PROJECT_ROOT/tools/check-release-version.py"
+
 case "$DISPLAY_VERSION" in
     *-r*)
         BASE_VERSION=${DISPLAY_VERSION%-r*}

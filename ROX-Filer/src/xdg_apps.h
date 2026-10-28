@@ -31,7 +31,10 @@ GtkWidget *xdg_apps_create_open_with_menu(GList *paths, GtkWindow *parent);
 
 /* Put the applications and matching file actions directly at the start of the
  * selected-item menu, preserving the classic ROX MIME-tools workflow. */
-int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths, GtkWindow *parent);
+/* On four or more MIME applications, grouped_out is set to TRUE so the
+ * caller can hide the standalone chooser (now included in the submenu). */
+int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths,
+                            GtkWindow *parent, gboolean *grouped_out);
 void xdg_apps_remove_mime_tools(void);
 
 /* Open the modern chooser and optionally remember the selected application. */

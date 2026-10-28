@@ -1,3 +1,11 @@
+rox-filer2 (2.14.0-6) unstable; urgency=medium
+
+  * Synchronize upstream source and compiled version to 2.14.0-6.
+  * Add a version consistency check before packaging.
+  * No functional changes compared with 2.14.0-5.
+
+ -- josejp2424 <josejp2424@users.noreply.github.com>  Wed, 28 Oct 2026 10:49:00 -0300
+
 rox-filer2 (2.14.0-5) unstable; urgency=medium
 
   * Copy/move progress follows bytes confirmed on the destination device

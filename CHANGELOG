@@ -1,3 +1,16 @@
+2026-10-28 Rox-Filer2 2.14.0-6
+
+* Version-only release correction: align the Meson-generated executable
+  version, AppInfo, translations, man pages, manuals and package metadata.
+* Add a packaging preflight check that refuses to build if the version in
+  meson.build differs from ROX-Filer/AppInfo.xml.
+* Context menu: show up to three MIME-associated applications directly;
+  with four or more, move all matching applications into a translated
+  "Open With" submenu with a "Choose Another Application..." entry.
+  The standalone chooser is hidden when grouped to avoid duplicates, while
+  custom file actions remain independent. Works in Classic and Modern.
+* Other file-manager functions unchanged since 2.14.0-5.
+
 2026-10-24 Rox-Filer2 2.14.0-5
 
 * Copy/move: the progress bar now follows the bytes really written to the
@@ -28,21 +41,6 @@
   X11-only; the shortcut is kept in the configuration for X11 sessions.
   Panel applets (GtkSocket/XEmbed, X11-only) stay ordinary icons on Wayland.
 * Three new runtime strings, translated in all eleven catalogues (1675/1675).
-* Expose Link (relative) and Link (absolute) directly in the file context menu
-  while reusing the existing ROX symlink backend.
-* Add Open as root for normal-user sessions as a separate authenticated
-  Rox-Filer2 window through a fixed package-owned pkexec helper; never elevate
-  the current filer and never use xhost. The root window uses X11/XLibre or
-  XWayland when DISPLAY is available.
-* Fix the mounted-state quick arrow in Classic, Modern and Desktop so disk
-  partitions only unmount themselves. Optical media may still eject; whole-
-  device USB Eject remains an explicit context-menu action, preventing one
-  partition button from powering off a multi-partition USB disk.
-* Add the Open-as-root helper and polkit policy to all native package builders.
-* Stop ignoring data/man/rox.1 and add a release-gate check so clean Git clones
-  cannot silently lose the main Rox-Filer2 man page again.
-* Keep all eleven runtime catalogues complete; only Open as root is a new
-  translatable string because both link labels already existed.
 
 2026-09-18 Rox-Filer2 2.13.0-8
 

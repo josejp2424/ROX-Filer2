@@ -17,6 +17,8 @@ for tool in meson ninja msgfmt xgettext python3 lintian readelf dpkg-deb; do
   command -v "$tool" >/dev/null 2>&1 || { echo "ERROR: $tool missing" >&2; exit 1; }
 done
 
+python3 "$ROOT/tools/check-release-version.py"
+
 echo "== 1/9 higiene del source =="
 [ -s "$ROOT/ROX-Filer.svg" ] || { echo "ERROR: falta ROX-Filer.svg" >&2; exit 1; }
 [ -s "$ROOT/ROX-Filer-root.svg" ] || { echo "ERROR: falta ROX-Filer-root.svg" >&2; exit 1; }

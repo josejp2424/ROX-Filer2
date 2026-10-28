@@ -669,8 +669,8 @@ The source tree also includes a native Void package builder:
 It builds Rox-Filer2 with Meson, runtime-optional SMB support and automatic
 portable-device support (`-Dportable_devices=auto`), creates a native
 `.xbps` package in `output/`, and indexes that directory as a local XBPS
-repository. The upstream release name is `2.14.0-5`; for XBPS the
-builder maps it to the native package form `2.14.0_4`.
+repository. The upstream release name is `2.14.0-6`; for XBPS the
+builder maps it to the native package form `2.14.0_6`.
 
 These native builders are separate from `build-package.sh`; they package the
 same Rox-Filer2 source against the libraries of the distribution where the

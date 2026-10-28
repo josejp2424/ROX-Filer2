@@ -1,7 +1,7 @@
 project(
   'rox-filer2',
   'c',
-  version : '2.14.0-5',
+  version : '2.14.0-6',
   meson_version : '>=0.61.0',
   default_options : [
     'c_std=gnu11',

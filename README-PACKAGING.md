@@ -66,7 +66,7 @@ normal user.
 
 On Void/KLV this compiles with Meson + `-Dsmb=auto -Dportable_devices=auto` and creates a native
 `output/rox-filer2-*.xbps`, then indexes `output/` as a local XBPS repository.
-The upstream release `2.14.0-5` is represented as `2.14.0_5` for XBPS,
+The upstream release `2.14.0-6` is represented as `2.14.0_6` for XBPS,
 and runtime dependencies are emitted as validated versioned XBPS patterns.
 Both scripts have `--clean` and intentionally do not call or modify the normal
 `build-package.sh` path.

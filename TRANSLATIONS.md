@@ -1,4 +1,4 @@
-# Rox-Filer2 2.14.0-5 translations
+# Rox-Filer2 2.14.0-6 translations
 
 English is the source language. Complete runtime catalogues are maintained
 for: ar, ca, de, es, fr, hu, it, ja, pt, ru and zh.
@@ -7,6 +7,10 @@ for: ar, ca, de, es, fr, hu, it, ja, pt, ru and zh.
 
 All eleven catalogues are at **1675/1675 translated**, with the internal PO completeness/format gates clean. The generated `.mo` catalogues are rebuilt from these sources.
 
+
+## 2.14.0-6
+
+Version metadata corrected; no new runtime strings. The eleven translations remain complete at **1675/1675**, with **0 fuzzy** entries.
 
 ## 2.14.0-5
 

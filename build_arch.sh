@@ -61,6 +61,9 @@ fi
 PKGVER="${BASH_REMATCH[1]}"
 PKGREL="${BASH_REMATCH[2]}"
 
+# Fail early if source metadata and compiled binary version would disagree.
+python3 "$PROJECT_ROOT/tools/check-release-version.py"
+
 case "$(uname -m)" in
     x86_64) ARCH=x86_64 ;;
     i?86) ARCH=i686 ;;

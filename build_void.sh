@@ -68,6 +68,9 @@ VERSION="${BASH_REMATCH[1]}"
 REVISION="${BASH_REMATCH[2]}"
 PKGVER="${PACKAGE_NAME}-${VERSION}_${REVISION}"
 
+# Fail early if source metadata and compiled binary version would disagree.
+python3 "$PROJECT_ROOT/tools/check-release-version.py"
+
 need_cmd() {
     command -v "$1" >/dev/null 2>&1 || {
         echo "ERROR: required command not found: $1" >&2

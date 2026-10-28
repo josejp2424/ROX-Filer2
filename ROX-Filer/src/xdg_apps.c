@@ -960,7 +960,8 @@ static void insert_current_mime_item(GtkWidget *menu, GtkWidget *item,
     current_mime_items = g_list_append(current_mime_items, item);
 }
 
-int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths, GtkWindow *parent)
+int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths,
+                            GtkWindow *parent, gboolean *grouped_out)
 {
     gchar *mime_type;
     GList *node;
@@ -970,6 +971,8 @@ int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths, GtkWindow *parent)
     guint i;
 
     xdg_apps_remove_mime_tools();
+    if (grouped_out)
+        *grouped_out = FALSE;
     if (!menu || !paths)
         return 0;
 
@@ -980,11 +983,45 @@ int xdg_apps_add_mime_tools(GtkWidget *menu, GList *paths, GtkWindow *parent)
      * an object without a MIME type. */
     if (mime_type) {
         apps = collect_apps_for_mime(mime_type);
-        for (i = 0; i < apps->len; i++) {
-            GAppInfo *app = G_APP_INFO(g_ptr_array_index(apps, i));
-            GtkWidget *item = app_menu_item_new_direct(app);
-            bind_app_item(item, app, paths, parent);
-            insert_current_mime_item(menu, item, position++);
+
+        /* Keep at most three MIME-associated applications in the main
+         * context menu. With four or more, place them into one translated
+         * Open With submenu, including the chooser for other applications.
+         * The caller then hides the standalone chooser to avoid duplicates.
+         * This is shared by Classic and Modern; custom file actions remain
+         * separate. Only the top-level item is tracked: destroying it also
+         * destroys the GTK-owned submenu and each app's launch context. */
+        if (apps->len > 3) {
+            GtkWidget *submenu = rox_menu_new();
+            GtkWidget *group_item = rox_menu_item_new_with_image(
+                _("Open With"),
+                gtk_image_new_from_icon_name("application-x-executable",
+                                             GTK_ICON_SIZE_MENU));
+
+            for (i = 0; i < apps->len; i++) {
+                GAppInfo *app = G_APP_INFO(g_ptr_array_index(apps, i));
+                GtkWidget *item = app_menu_item_new_direct(app);
+                bind_app_item(item, app, paths, parent);
+                gtk_menu_shell_append(GTK_MENU_SHELL(submenu), item);
+            }
+            gtk_menu_shell_append(GTK_MENU_SHELL(submenu),
+                                  gtk_separator_menu_item_new());
+            append_context_item(submenu, _("Choose Another Application..."),
+                                "application-x-executable",
+                                G_CALLBACK(choose_another_activate),
+                                paths, parent, mime_type, "rox-group-choose-data");
+            gtk_menu_item_set_submenu(GTK_MENU_ITEM(group_item), submenu);
+            gtk_widget_show_all(group_item);
+            insert_current_mime_item(menu, group_item, position++);
+            if (grouped_out)
+                *grouped_out = TRUE;
+        } else {
+            for (i = 0; i < apps->len; i++) {
+                GAppInfo *app = G_APP_INFO(g_ptr_array_index(apps, i));
+                GtkWidget *item = app_menu_item_new_direct(app);
+                bind_app_item(item, app, paths, parent);
+                insert_current_mime_item(menu, item, position++);
+            }
         }
     }
 
